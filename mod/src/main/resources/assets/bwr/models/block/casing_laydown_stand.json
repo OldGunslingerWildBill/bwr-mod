@@ -1,0 +1,106 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/iron_block",
+    "base": "minecraft:block/gray_concrete",
+    "beam": "minecraft:block/yellow_concrete"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        4,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#base"
+        },
+        "south": {
+          "texture": "#base"
+        },
+        "east": {
+          "texture": "#base"
+        },
+        "west": {
+          "texture": "#base"
+        },
+        "up": {
+          "texture": "#base"
+        },
+        "down": {
+          "texture": "#base"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        4,
+        0
+      ],
+      "to": [
+        4,
+        8,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#beam"
+        },
+        "south": {
+          "texture": "#beam"
+        },
+        "east": {
+          "texture": "#beam"
+        },
+        "west": {
+          "texture": "#beam"
+        },
+        "up": {
+          "texture": "#beam"
+        },
+        "down": {
+          "texture": "#beam"
+        }
+      }
+    },
+    {
+      "from": [
+        12,
+        4,
+        0
+      ],
+      "to": [
+        15,
+        8,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#beam"
+        },
+        "south": {
+          "texture": "#beam"
+        },
+        "east": {
+          "texture": "#beam"
+        },
+        "west": {
+          "texture": "#beam"
+        },
+        "up": {
+          "texture": "#beam"
+        },
+        "down": {
+          "texture": "#beam"
+        }
+      }
+    }
+  ]
+}

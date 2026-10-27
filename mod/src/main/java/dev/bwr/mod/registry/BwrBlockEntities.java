@@ -122,6 +122,10 @@ public final class BwrBlockEntities {
             BLOCK_ENTITIES.register("motor_operated_water_valve", () -> BlockEntityType.Builder.of(dev.bwr.mod.water.MotorOperatedWaterValveBlockEntity::new,
                     BwrBlocks.MOTOR_OPERATED_WATER_VALVE.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.power.TurbineStandBlockEntity>> TURBINE_STAND =
+            BLOCK_ENTITIES.register("turbine_stand", () -> BlockEntityType.Builder.of(dev.bwr.mod.power.TurbineStandBlockEntity::new,
+                    BwrBlocks.LP_BLADE_STAND.get(), BwrBlocks.CASING_LAYDOWN_STAND.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.power.TurbineAuxBlockEntity>> TURBINE_AUX =
             BLOCK_ENTITIES.register("turbine_aux", () -> BlockEntityType.Builder.of(dev.bwr.mod.power.TurbineAuxBlockEntity::new,
                     BwrBlocks.MAIN_OIL_TANK.get(), BwrBlocks.SHAFT_OIL_PUMP.get(), BwrBlocks.GENERATOR_COOLING_SKID.get()).build(null));

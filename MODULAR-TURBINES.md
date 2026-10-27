@@ -51,6 +51,14 @@ load chunks. Arrange chunk loading for the complete plant when operating it.
 A turbine section placed new also needs its lube oil system, a turning gear and generator cooling, or it wears out and overheats:
 see [TURBINE-AUX.md](TURBINE-AUX.md). Sections already in a world are not changed.
 
+## Blades, missiles and maintenance
+
+An LP section's rotor is two blade sections (one per flow) with their own condition. Wet steam, an out-of-phase breaker close,
+reverse power (a generator motored by the grid with no steam) and overspeed wear them; a failed section on a shaft over half speed
+throws a blade (a disc bursts at 150 % speed) as a missile that breaks blocks by its energy. The building crane, built over the
+turbines, lifts an LP's hood off (COVER OFF) onto a Casing Laydown Stand and its blade sections out and in (BLADES OUT / IN) from an
+LP Blade Storage Stand. See [TURBINE-MAINTENANCE.md](TURBINE-MAINTENANCE.md). Nothing trips anything.
+
 ## Power and water accounting
 
 - HP and LP sections have finite steam inventories. Multiple consumers share

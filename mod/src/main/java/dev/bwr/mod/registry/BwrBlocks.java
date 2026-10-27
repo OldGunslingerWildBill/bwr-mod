@@ -588,6 +588,11 @@ public final class BwrBlocks {
             BLOCKS.register("shaft_oil_pump", () -> new dev.bwr.mod.power.TurbineAuxBlock(machine(), dev.bwr.mod.power.TurbineAuxBlock.Kind.SHAFT_PUMP));
     public static final DeferredBlock<dev.bwr.mod.power.TurbineAuxBlock> GENERATOR_COOLING_SKID =
             BLOCKS.register("generator_cooling_skid", () -> new dev.bwr.mod.power.TurbineAuxBlock(machine(), dev.bwr.mod.power.TurbineAuxBlock.Kind.GEN_COOLING));
+    /** The turbine hall (TURBINE-MAINTENANCE.md): a rack for spare and damaged LP blade sections, and the cradle an LP hood is set on. */
+    public static final DeferredBlock<dev.bwr.mod.power.TurbineStandBlock> LP_BLADE_STAND =
+            BLOCKS.register("lp_blade_stand", () -> new dev.bwr.mod.power.TurbineStandBlock(machine().noOcclusion(), dev.bwr.mod.power.TurbineStandBlock.Kind.BLADES));
+    public static final DeferredBlock<dev.bwr.mod.power.TurbineStandBlock> CASING_LAYDOWN_STAND =
+            BLOCKS.register("casing_laydown_stand", () -> new dev.bwr.mod.power.TurbineStandBlock(machine().noOcclusion(), dev.bwr.mod.power.TurbineStandBlock.Kind.CASING));
     public static final DeferredBlock<CondenserBlock> ARABELLE_CONDENSER =
             BLOCKS.register("arabelle_condenser", () -> new CondenserBlock(machine()));
 

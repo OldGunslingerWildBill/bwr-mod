@@ -20,6 +20,10 @@ public class PowerModuleMenu extends BwrMenu {
     public boolean lubeGov,bowGov,genGov,oilTank,shaftPump,gearOn,gearRolling,gearFed;
     public double oilPsig,oilC,oilLevel,oilFilm,bearingC,vibration,bow,rotorC,windingC,statorFlow,h2Psig,coolantC;
     public int alarms;
+    /** The blade sections and the casing (TURBINE-MAINTENANCE.md). Section masks: bit 0 flow A, bit 1 flow B. */
+    public boolean lp,coverOff,motoring,hasClose;
+    public int sectionsIn,thrown;
+    public double bladeA,bladeB,hoodC,reverseMW,closeAngle,closePu,shaftDamage,damage;
     public String status="Waiting for server";
     public PowerModuleMenu(int id,Inventory inv,RegistryFriendlyByteBuf b){this(id,inv,b.readBlockPos(),b.readBlockPos());}
     public PowerModuleMenu(int id,Inventory inv,BlockPos root,BlockPos anchor){super(BwrMenus.POWER_MODULE.get(),id,inv,root,inv.player.level().getBlockState(root).getBlock());this.anchor=anchor.immutable();expected=inv.player.level().getBlockState(root).getBlock();}
@@ -44,6 +48,10 @@ public class PowerModuleMenu extends BwrMenu {
         oilPsig=a.oilPsig;oilC=a.oilC;oilLevel=a.oilLevel;oilFilm=a.oilFilm;bearingC=m.bearingC;vibration=m.vibration;bow=m.bow();rotorC=m.rotorC;
         windingC=m.windingC;statorFlow=a.statorFlow;h2Psig=a.h2Psig;coolantC=a.coolantC;
         alarms=(a.oilPressureAlarm?1:0)|(a.oilLevelAlarm?2:0)|(a.oilTempAlarm?4:0)|(a.bearingAlarm?8:0)|(a.vibrationAlarm?16:0)|(a.windingAlarm?32:0)|(a.h2Alarm?64:0);
+        lp=m.lp();coverOff=m.coverOff();motoring=m.motoring;hasClose=m.hasCloseShock();
+        sectionsIn=(m.bladeIn(0)?1:0)|(m.bladeIn(1)?2:0);thrown=(m.bladeThrown(0)?1:0)|(m.bladeThrown(1)?2:0);
+        bladeA=m.blade(0);bladeB=m.blade(1);hoodC=m.hoodC;reverseMW=m.reverseMW;closeAngle=m.closeAngle();closePu=m.closeTorquePu();
+        shaftDamage=m.shaftDamage();damage=m.damage();
     }
     @Override protected void writeSnapshot(FriendlyByteBuf b){
         sample();b.writeBoolean(present);if(!present)return;
@@ -53,6 +61,9 @@ public class PowerModuleMenu extends BwrMenu {
         b.writeInt(alarms);
         for(boolean v:new boolean[]{lubeGov,bowGov,genGov,oilTank,shaftPump,gearOn,gearRolling,gearFed})b.writeBoolean(v);
         for(double v:new double[]{oilPsig,oilC,oilLevel,oilFilm,bearingC,vibration,bow,rotorC,windingC,statorFlow,h2Psig,coolantC})b.writeDouble(v);
+        for(boolean v:new boolean[]{lp,coverOff,motoring,hasClose})b.writeBoolean(v);
+        b.writeByte(sectionsIn);b.writeByte(thrown);
+        for(double v:new double[]{bladeA,bladeB,hoodC,reverseMW,closeAngle,closePu,shaftDamage,damage})b.writeDouble(v);
     }
     @Override protected void readSnapshot(FriendlyByteBuf b){
         present=b.readBoolean();if(!present)return;running=b.readBoolean();generator=b.readBoolean();hp=b.readBoolean();
@@ -62,6 +73,10 @@ public class PowerModuleMenu extends BwrMenu {
         lubeGov=b.readBoolean();bowGov=b.readBoolean();genGov=b.readBoolean();oilTank=b.readBoolean();shaftPump=b.readBoolean();gearOn=b.readBoolean();gearRolling=b.readBoolean();gearFed=b.readBoolean();
         oilPsig=b.readDouble();oilC=b.readDouble();oilLevel=b.readDouble();oilFilm=b.readDouble();bearingC=b.readDouble();vibration=b.readDouble();bow=b.readDouble();rotorC=b.readDouble();
         windingC=b.readDouble();statorFlow=b.readDouble();h2Psig=b.readDouble();coolantC=b.readDouble();
+        lp=b.readBoolean();coverOff=b.readBoolean();motoring=b.readBoolean();hasClose=b.readBoolean();
+        sectionsIn=b.readByte();thrown=b.readByte();
+        bladeA=b.readDouble();bladeB=b.readDouble();hoodC=b.readDouble();reverseMW=b.readDouble();closeAngle=b.readDouble();closePu=b.readDouble();
+        shaftDamage=b.readDouble();damage=b.readDouble();
     }
     @Override public void handleCommand(ServerPlayer sender,int command,int a,int unused){
         // Turbine sections have no local steam actuator; use the upstream steam valve. The generator's turning gear is the one switch here.

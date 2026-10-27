@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased: turbine blades, missiles and the turbine hall crane
+
+LP turbine blades now wear from four real causes, a failed one thrown at speed becomes a turbine missile, and the building crane (built
+over the turbines) opens an LP casing and changes its blade sections. Full write-up: [TURBINE-MAINTENANCE.md](TURBINE-MAINTENANCE.md);
+the Operator's Guide has a new chapter, "The turbine hall" (6 pages).
+
+- **Two blade sections per LP** (one per flow, A and B), each 0 to 100 % worn. **Wet steam** erodes them by the existing law (unchanged;
+  HP sections keep their one damage counter). **Out-of-phase closing**: the transient `2 sin(delta/2) / 0.35` times rated torque (5.0 at
+  120 degrees) damages every LP's blades (`0.12 (T-2)^1.5`) and every turbine's shaft (`0.06 (T-2)`) above 2 pu; past 5.5 pu an LP disc
+  bursts. The generator's own damage law is unchanged. **Reverse power**: a closed generator within 1 Hz of synchronous speed is held in step;
+  with less steam work than the train's windage the grid motors it (reverse power shown, no FE), the LP exhaust hood heads for 150 K over its
+  base and over 120 C the blades lose condition (fail in about 9 minutes at rated speed). **Overspeed**: the shaft's law also on the blades.
+- **Turbine missiles**: a failed section with the shaft over 750 rpm throws a last-stage blade (45 kg, 408 m/s, 3.75 MJ at rated); a burst
+  throws a 2.5 t disc fragment (84 MJ at 150 %). It flies in the plane of the wheel, breaks blocks while its energy lasts (6 x the head
+  missile's crush energy a block, about 0.6 MJ for stone, the blasts' protected path, always on), hurts entities, and stops at unbreakable
+  blocks, another casing or a chunk that is not loaded (never loads one). The train then shakes (45 mm/s per thrown blade at rated speed).
+- **The turbine hall crane**: COVER OFF / ON (an LP's 110 t hood onto a **Casing Laydown Stand**) and BLADES OUT / IN (a 62 t blade section
+  to and from an **LP Blade Storage Stand**) on the building crane's pendant and computer. Refused with reasons: shaft turning or turning gear
+  on, steam in the casing, casing over 100 C, cover on, not under the crane, rails too low, over the 125 t rating. ABORT/RESUME, drawn
+  hanging from the hook, saved mid-lift, never lost or duplicated. An open casing vents admitted steam and does no work.
+- **New items and blocks**: LP Turbine Blade Section (iron blocks, iron ingots, a diamond), Damaged LP Blade Section (scraps to 2 iron
+  blocks), LP Turbine Hood, LP Blade Storage Stand (an item handler for hoppers and pipes, two sections drawn on its saddles), Casing Laydown
+  Stand. Server options `turbineHoodMassT` (110) and `lpBladeSectionMassT` (62).
+- **Readouts**: the turbine screen's new BLADES tab (sections, cover, exhaust hood, reverse power, last breaker close angle and torque); CC
+  `getStatus()` adds `shaftDamage`, `reversePowerMW`, `motoring`, `lastCloseAngleDegrees`, `lastCloseTorquePu`, and on an LP `coverOff`,
+  `hoodTempC`, `bladeDamageA/B`, `bladeSections`. The crane peripheral gains `queueCoverOff/On`, `queueBladesOut/In`, `getTurbineSections`.
+- **Hooks**: server-side NeoForge events `TurbineEvents.Missile` (position, direction, energy) and `TurbineEvents.Vibration` (once a second per
+  turning train, mm/s), for sound and screen shake to subscribe to.
+- **Saves**: an old LP's damage becomes its blade sections' wear (at most 0.95, so nothing is thrown on load); new keys only when not the
+  default (an LP always writes `Blades`). LP cells gain the block state `open` (false by default).
+- **Tests**: core `TurbineBladesTest` (6); GameTests `bwrturbine` (`TurbineMaintenanceTests`, 14); client check `-PbwrTurbineHallCheck`
+  (pictures in `art/turbine-hall/`); the GUI check gains the BLADES tab and the crane's turbine hall card.
+
 ## Unreleased: spent fuel pools of plant size
 
 A real plant's pool holds thousands of assemblies. A pool now holds **up to 2,048 racks (8,192 assemblies)**, and the shell may be **5 to 64 blocks wide and deep and 8 to 24 high** outside (was 48 racks in 5 to 25 by 8 to 16). A 2,048-rack pool needs 2,048 m2 of floor (48 x 48 outside will do); the largest, 64 x 64, has room for 3,844 rack positions. Write-up: [SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md), "Building one" and "Scale"; the guide's pool page and the size message give the new limits.

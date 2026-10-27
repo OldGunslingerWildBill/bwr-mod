@@ -565,6 +565,35 @@ public final class GuiScreenCheck {
         s.add(new Scenario("power-generator-aux", i -> new PowerModuleScreen(powerAux(i, 2, false), i, t("Turbine Generator")), screen -> click(screen, "AUXILIARIES")));
         s.add(new Scenario("power-generator-aux-alarms", i -> new PowerModuleScreen(powerAux(i, 2, true), i, t("Turbine Generator")), screen -> click(screen, "AUXILIARIES")));
         s.add(new Scenario("power-hp-aux", i -> new PowerModuleScreen(powerAux(i, 0, false), i, t("TX-10 Style HP Turbine")), screen -> click(screen, "AUXILIARIES")));
+        // the turbine hall (TURBINE-MAINTENANCE.md): an LP's BLADES tab, open with a section out and the grid motoring it, and a generator after a bad close
+        s.add(new Scenario("power-lp-blades", i -> {
+            var m = power(i, 1);
+            m.lp = true;
+            m.coverOff = true;
+            m.sectionsIn = 2;
+            m.bladeB = 0.31;
+            m.hoodC = 41;
+            m.shaftDamage = 0.02;
+            m.damage = 0.31;
+            return new PowerModuleScreen(m, i, t("TX-10 Style LP Turbine"));
+        }, screen -> click(screen, "BLADES")));
+        s.add(new Scenario("power-lp-blades-motoring", i -> {
+            var m = power(i, 1);
+            m.lp = true;
+            m.sectionsIn = 3;
+            m.thrown = 1;
+            m.bladeA = 1.0;
+            m.bladeB = 0.64;
+            m.hoodC = 168;
+            m.motoring = true;
+            m.reverseMW = 7.5;
+            m.hasClose = true;
+            m.closeAngle = 118.4;
+            m.closePu = 4.91;
+            m.shaftDamage = 0.18;
+            m.damage = 1.0;
+            return new PowerModuleScreen(m, i, t("TX-10 Style LP Turbine"));
+        }, screen -> click(screen, "BLADES")));
         s.add(new Scenario("aux-oil-tank", i -> new TurbineAuxScreen(auxMenu(i, 0, false), i, t("Turbine Main Oil Tank"))));
         s.add(new Scenario("aux-oil-tank-unpowered", i -> new TurbineAuxScreen(auxMenu(i, 0, true), i, t("Turbine Main Oil Tank"))));
         s.add(new Scenario("aux-shaft-pump", i -> new TurbineAuxScreen(auxMenu(i, 1, false), i, t("Turbine Shaft-Driven Main Oil Pump"))));
@@ -879,6 +908,18 @@ public final class GuiScreenCheck {
             m.plugHeld = true;
             m.plugsLaid = 1;
             m.move = "the shield plug section at 199,209,199 to the shield plug section at 207,209,191";
+            return new CraneScreen(m, i, t("Reactor Building Crane"));
+        }));
+        s.add(new Scenario("crane-turbine-hall-hood-on-hook", i -> {
+            var m = crane("TRANSIT", false, false, 0);
+            m.reactorFound = false;
+            m.turbineFound = true;
+            m.turbineLine = "LP 200,100,200: cover off, A 72%, B 31%";
+            m.nearestCoverOff = true;
+            m.nearestSectionsIn = 3;
+            m.turbineLoad = 1;
+            m.carried = "an LP turbine hood (110 t)";
+            m.move = "the casing of the LP turbine at 200,100,200 to the casing laydown stand at 200,100,208";
             return new CraneScreen(m, i, t("Reactor Building Crane"));
         }));
         s.add(new Scenario("crane-no-runway", i -> {

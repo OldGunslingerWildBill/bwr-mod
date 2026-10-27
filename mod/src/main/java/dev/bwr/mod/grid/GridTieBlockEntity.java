@@ -85,7 +85,10 @@ public final class GridTieBlockEntity extends GridDevice {
         var g=generator();if(g==null)return false;
         lastAngle=phase;lastSlip=Synchronizer.slip(g.rpm);hasClose=true;
         double damage=Synchronizer.closingDamage(lastAngle,lastSlip);lastCloseFault=damage>0;
-        g.addShaftDamage(damage);closed=true;setChanged();return true;
+        g.addShaftDamage(damage);
+        // The same transient goes through the turbine sections of the train (TURBINE-MAINTENANCE.md); the generator's damage stays the law above.
+        dev.bwr.mod.power.PowerTrain.closingShock(g,lastAngle,lastSlip);
+        closed=true;setChanged();g.markGridHeld(level.getGameTime());return true;
     }
     public void tripBreaker(){if(live())tickDevice();if(closed){closed=false;phase=0;setChanged();}}
     @Override public void tickDevice(){
@@ -95,6 +98,7 @@ public final class GridTieBlockEntity extends GridDevice {
             for(long n=1;n<Math.min(now>tick?now-tick:1,21);n++){requested[requestCursor]=0;requestCursor=(requestCursor+1)%20;}
             curvePhase=(curvePhase+1)%settings.periodTicks();
             var g=generator();if(!closed&&g!=null)phase=Synchronizer.advance(phase,g.rpm,.05);
+            if(closed&&g!=null)g.markGridHeld(now);
         }
         settings=settings();curvePhase=Math.floorMod(curvePhase,settings.periodTicks());
         demand=settings.mw(curvePhase,GridConfig.maximumMW());ledger.beginTick(now);

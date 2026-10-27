@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/casing_laydown_stand"
+    },
+    "facing=east": {
+      "model": "bwr:block/casing_laydown_stand",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/casing_laydown_stand",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/casing_laydown_stand",
+      "y": 270
+    }
+  }
+}

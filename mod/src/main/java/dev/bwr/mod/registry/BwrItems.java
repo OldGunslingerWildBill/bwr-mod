@@ -350,6 +350,15 @@ public final class BwrItems {
     public static final DeferredItem<Item> TURBINE_OIL_DRUM = ITEMS.registerSimpleItem("turbine_oil_drum", new Item.Properties().stacksTo(16));
     /** Recharges a Generator Cooling Skid with 5 kg of hydrogen. */
     public static final DeferredItem<Item> HYDROGEN_CYLINDER = ITEMS.registerSimpleItem("hydrogen_cylinder", new Item.Properties().stacksTo(16));
+    /** The turbine hall (TURBINE-MAINTENANCE.md): blade sections and the hood are crane loads; as items they sit on stands or the hook. */
+    public static final DeferredItem<dev.bwr.mod.power.TurbineLoadItem> LP_BLADE_SECTION = ITEMS.register("lp_blade_section",
+            () -> new dev.bwr.mod.power.TurbineLoadItem(new Item.Properties(), dev.bwr.mod.power.TurbineLoadItem.Kind.BLADE_SECTION));
+    public static final DeferredItem<dev.bwr.mod.power.TurbineLoadItem> DAMAGED_LP_BLADE_SECTION = ITEMS.register("damaged_lp_blade_section",
+            () -> new dev.bwr.mod.power.TurbineLoadItem(new Item.Properties(), dev.bwr.mod.power.TurbineLoadItem.Kind.DAMAGED_BLADE_SECTION));
+    public static final DeferredItem<dev.bwr.mod.power.TurbineLoadItem> LP_TURBINE_HOOD = ITEMS.register("lp_turbine_hood",
+            () -> new dev.bwr.mod.power.TurbineLoadItem(new Item.Properties(), dev.bwr.mod.power.TurbineLoadItem.Kind.HOOD));
+    public static final DeferredItem<BlockItem> LP_BLADE_STAND = ITEMS.registerSimpleBlockItem(BwrBlocks.LP_BLADE_STAND);
+    public static final DeferredItem<BlockItem> CASING_LAYDOWN_STAND = ITEMS.registerSimpleBlockItem(BwrBlocks.CASING_LAYDOWN_STAND);
     public static final DeferredItem<BlockItem> CAVITY_DRAIN_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.CAVITY_DRAIN_PORT);
     public static final DeferredItem<BlockItem> ARABELLE_CONDENSER = ITEMS.register("arabelle_condenser",
             () -> new dev.bwr.mod.condenser.CondenserItem(BwrBlocks.ARABELLE_CONDENSER.get(), new Item.Properties()));
@@ -601,6 +610,11 @@ public final class BwrItems {
                         output.accept(GENERATOR_COOLING_SKID.get());
                         output.accept(TURBINE_OIL_DRUM.get());
                         output.accept(HYDROGEN_CYLINDER.get());
+                        output.accept(LP_BLADE_SECTION.get());
+                        output.accept(DAMAGED_LP_BLADE_SECTION.get());
+                        output.accept(LP_TURBINE_HOOD.get());
+                        output.accept(LP_BLADE_STAND.get());
+                        output.accept(CASING_LAYDOWN_STAND.get());
                         output.accept(ARABELLE_CONDENSER.get());
                         output.accept(NATURAL_DRAFT_TOWER.get());
                         output.accept(MECHANICAL_DRAFT_TOWER.get());

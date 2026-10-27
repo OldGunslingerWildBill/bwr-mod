@@ -48,6 +48,18 @@ public class PowerModuleBlockEntity extends BlockEntity {
     /** Bearing metal, rotor metal and winding temperatures, C; the shaft vibration of the last tick, mm/s. */
     public double bearingC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,rotorC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,windingC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,vibration;
     private TurbineAuxTrain.Readout aux=new TurbineAuxTrain.Readout();
+    // ---- LP blade sections, reverse power and the casing (TURBINE-MAINTENANCE.md). Written only when not the default, except an LP's Blades.
+    private final double[] blades=new double[TurbineBlades.FLOWS];
+    /** Bit per flow: a blade of that section has been thrown; a blade section lifted out of the casing. */
+    private int bladesThrown,bladesOut;
+    private boolean coverOff;
+    /** The LP exhaust hood temperature, C; the reverse power the grid drives the train with this tick, MW. */
+    public double hoodC=dev.bwr.core.turbine.TurbineAux.AMBIENT_C,reverseMW;
+    public boolean motoring;
+    private boolean hasCloseShock;
+    private double closeAngle,closeTorquePu;
+    long gridHeldTick=Long.MIN_VALUE;
+    private static final Map<Level,Set<BlockPos>> LP_SECTIONS=new WeakHashMap<>();
     public PowerModuleBlockEntity(BlockPos pos,BlockState state) { super(BwrBlockEntities.POWER_MODULE.get(),pos,state); }
     public PowerModuleBlock block() { return (PowerModuleBlock)getBlockState().getBlock(); }
     public double energyStored() { return energyFe; }
@@ -63,7 +75,56 @@ public class PowerModuleBlockEntity extends BlockEntity {
     public double generatedMW1s(){return dev.bwr.core.grid.EnergyUnits.mw(generated.averageFE(20));}
     public double generatedFELastTick(){return lastGeneratedFE;}
     public double bufferDeltaFELastTick(){return lastBufferDelta;}
-    public double damage() { return damage; }
+    /** The section's condition, 0..1: the shaft counter, and on an LP the worse of it and its blade sections. */
+    public double damage() { return lp()?Math.max(damage,bladeMax()):damage; }
+    /** The shaft, bearing and winding counter alone (overspeed, bearings, vibration, winding, a bad close). */
+    public double shaftDamage() { return damage; }
+    public boolean lp() { return getBlockState().getBlock() instanceof PowerModuleBlock b&&b.kind()==dev.bwr.mod.eccs.PumpAssemblyBlock.Kind.LP_TURBINE; }
+    // ---- LP blade sections (TURBINE-MAINTENANCE.md)
+    /** The condition of one flow's bladed section, 0 new to 1 failed; 0 for a section that is out of the casing or a module that is not an LP. */
+    public double blade(int flow){return lp()&&bladeIn(flow)?blades[flow]:0;}
+    public double bladeMax(){double m=0;for(int f=0;f<blades.length;f++)m=Math.max(m,blade(f));return m;}
+    public boolean bladeIn(int flow){return (bladesOut&(1<<flow))==0;}
+    public boolean bladeThrown(int flow){return (bladesThrown&(1<<flow))!=0;}
+    public int bladesThrownCount(){return Integer.bitCount(bladesThrown);}
+    public boolean coverOff(){return coverOff&&lp();}
+    public boolean allBladesIn(){return bladesOut==0;}
+    public void addBladeDamage(int flow,double amount){
+        if(lp()&&bladeIn(flow)&&Double.isFinite(amount)&&amount>0){blades[flow]=Math.min(1,blades[flow]+amount);setChanged();}
+    }
+    public void addBladeDamageAll(double amount){for(int f=0;f<blades.length;f++)addBladeDamage(f,amount);}
+    /** The flow whose section is in worst condition (the first on a tie); -1 with none in. */
+    public int worstFlow(){int w=-1;for(int f=0;f<blades.length;f++)if(bladeIn(f)&&(w<0||blades[f]>blades[w]))w=f;return w;}
+    void markThrown(int flow){bladesThrown|=1<<flow;blades[flow]=1;setChanged();syncMaintenance();}
+    /** The cover (the upper casing half) is lifted off by the crane, or set back. Only the turbine hall crane calls this. */
+    public void setCoverOff(boolean off){
+        if(!lp()||coverOff==off)return;coverOff=off;setChanged();
+        if(level!=null&&!level.isClientSide())PowerModuleBlock.setOpen(level,worldPosition,getBlockState(),off);
+        syncMaintenance();
+    }
+    /** A blade section lifted out by the crane: its condition (1 if it threw a blade), which this flow then no longer has. NaN if it is not there. */
+    public double takeBladeSection(int flow){
+        if(!lp()||!bladeIn(flow))return Double.NaN;
+        double d=bladeThrown(flow)?1:blades[flow];
+        bladesOut|=1<<flow;blades[flow]=0;bladesThrown&=~(1<<flow);setChanged();syncMaintenance();return d;
+    }
+    /** A blade section set into an empty flow by the crane, with its condition. */
+    public boolean installBladeSection(int flow,double condition){
+        if(!lp()||bladeIn(flow)||!Double.isFinite(condition))return false;
+        bladesOut&=~(1<<flow);blades[flow]=Math.max(0,Math.min(1,condition));setChanged();syncMaintenance();return true;
+    }
+    public boolean hasCloseShock(){return hasCloseShock;}
+    public double closeAngle(){return closeAngle;}
+    public double closeTorquePu(){return closeTorquePu;}
+    void recordClose(double angle,double pu){hasCloseShock=true;closeAngle=angle;closeTorquePu=pu;setChanged();}
+    /** The breaker of a grid tie bound to this generator is closed this tick (the tie says so each tick it is closed). */
+    public void markGridHeld(long now){gridHeldTick=now;}
+    boolean gridHeld(long now){return gridHeldTick!=Long.MIN_VALUE&&gridHeldTick>=now-1&&gridHeldTick<=now;}
+    /** Every loaded LP section of a level (the turbine hall crane's survey), server side. */
+    public static synchronized Set<BlockPos> lpSections(Level level){var s=LP_SECTIONS.get(level);return s==null?Set.of():Set.copyOf(s);}
+    private void rememberLp(){if(level!=null&&!level.isClientSide()&&!isRemoved()&&lp())synchronized(PowerModuleBlockEntity.class){LP_SECTIONS.computeIfAbsent(level,k->new HashSet<>()).add(worldPosition.immutable());}}
+    private void forgetLp(){if(level!=null&&!level.isClientSide())synchronized(PowerModuleBlockEntity.class){var s=LP_SECTIONS.get(level);if(s!=null)s.remove(worldPosition);}}
+    private void syncMaintenance(){if(level!=null&&!level.isClientSide())level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),2);}
     public boolean live(){return level!=null&&!isRemoved()&&dev.bwr.mod.world.LoadedWorld.blockEntity(level, worldPosition)==this;}
     void beginAccounting(){
         long now=level.getGameTime();if(now==accountingTick)return;
@@ -80,10 +141,13 @@ public class PowerModuleBlockEntity extends BlockEntity {
     }
     public CompoundTag retainedCondition(){
         var t=new CompoundTag();t.putDouble("ShaftDamage",damage);if(auxRequired)t.putBoolean("AuxRequired",true);
+        if(lp())saveBlades(t);
         t.putLong("DeliveredFE",delivered.totalFE());t.putBoolean("CounterSaturated",delivered.saturated());return t;
     }
     public void restoreCondition(CompoundTag t){
         damage=finite(t.getDouble("ShaftDamage"),1);auxRequired=t.getBoolean("AuxRequired");
+        loadBlades(t);
+        if(coverOff&&level!=null&&!level.isClientSide())PowerModuleBlock.setOpen(level,worldPosition,getBlockState(),true);
         delivered.restore(t.getLong("DeliveredFE"),t.getBoolean("CounterSaturated"));setChanged();
     }
     public boolean failed() { return damage>=1; }
@@ -143,7 +207,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
     void resetReadouts() { running=false;flowKgPerS=shaftMW=electricMW=trainMW=rejectedMW=trainLossKJ=inletMoisturePercent=0;inletPsia=outletPsia=inletC=outletC=0; }
     double headerDemandKg() {
         if(!hasWorkLoad||block().generator())return 0;
-        double room=outletRoom();
+        double room=coverOff()?admissionCapacityKgPerS()/20:outletRoom();
         double rate=admissionCapacityKgPerS()/20;
         return Math.max(0,Math.min(room,rate)-inlet.mass());
     }
@@ -180,7 +244,9 @@ public class PowerModuleBlockEntity extends BlockEntity {
         if(workBudgetKJ<=0)return 0;
         var stage=block().highPressure()?PowerTurbine.Stage.HP:PowerTurbine.Stage.LP;
         var condenser=condenser();
-        double room=outletRoom();
+        // An open casing (the crane has its hood off) holds no steam: what the valves admit vents into the hall, doing no work.
+        boolean open=coverOff();
+        double room=open?admissionCapacityKgPerS()/20:outletRoom();
         if(room<1e-9){status=block().highPressure()?"HP exhaust buffer full":condenser==null?"Fit a condenser six blocks below, same facing":"Condenser steam buffer full";return 0;}
         double rate=admissionCapacityKgPerS();
         double wanted=Math.min(rate/20,room);
@@ -212,6 +278,12 @@ public class PowerModuleBlockEntity extends BlockEntity {
             }
         }
         inletPsia=inlet.pressure();inletC=inlet.mass()>0?Saturation.temperatureCelsiusFromPsia(inletPsia):0;
+        if(open){
+            var vented=inlet.take(Math.min(inlet.mass(),wanted));
+            flowKgPerS=vented.mass()*20;shaftMW=0;outletPsia=0;outletC=0;running=false;setChanged();
+            status=flowKgPerS>0?"Casing open: the steam vents into the hall":"Casing open (cover off)";
+            return 0;
+        }
         double inletMoisture=inlet.moisture();
         var result=PowerTurbine.expand(stage,inlet,stage==PowerTurbine.Stage.HP?exhaust:condenser.plant().steam,wanted,workBudgetKJ,stage==PowerTurbine.Stage.HP?PowerTurbine.outletPressure(stage,inlet.pressure()):condenser.plant().backpressurePsia());
         if(stage==PowerTurbine.Stage.HP && exhaustLedgerTick==level.getGameTime())exhaustOfferedKg+=result.mass();
@@ -219,8 +291,10 @@ public class PowerModuleBlockEntity extends BlockEntity {
         flowKgPerS=result.mass()*20;shaftMW=result.workKJ()*20/1000;
         if(result.mass()>0){
             inletMoisturePercent=inletMoisture*100;
-            // Blade wear is the turbine's existing damage (the one overspeed adds to), not a second counter.
-            addShaftDamage(PowerTurbine.erosionIncrement(result.mass(),inletMoisture));
+            // Blade wear is the turbine's existing damage (the one overspeed adds to), not a second counter. On an LP it is
+            // the condition of its two blade sections (both flows see the same steam), which damage() reports with the shaft.
+            double wear=PowerTurbine.erosionIncrement(result.mass(),inletMoisture);
+            if(lp())addBladeDamageAll(wear);else addShaftDamage(wear);
         }
         outletPsia=result.outletPressure();outletC=result.mass()>0?Saturation.temperatureCelsiusFromPsia(outletPsia):0;
         rejectedMW=result.rejectedHeatKJ()*20/1000;
@@ -262,9 +336,25 @@ public class PowerModuleBlockEntity extends BlockEntity {
             if(n>0){energyFe-=n;recordDelivery(n);}return n;
         } finally {reservedFE-=offered;}
     }
-    @Override public void onLoad() { super.onLoad(); dev.bwr.mod.advancement.PlantMilestones.loaded(this); }
-    @Override public void setRemoved() { dev.bwr.mod.advancement.PlantMilestones.unloaded(this); super.setRemoved(); }
-    @Override public void onChunkUnloaded() { dev.bwr.mod.advancement.PlantMilestones.unloaded(this); super.onChunkUnloaded(); }
+    @Override public void onLoad() { super.onLoad(); dev.bwr.mod.advancement.PlantMilestones.loaded(this); rememberLp(); }
+    @Override public void setLevel(Level level) { super.setLevel(level); rememberLp(); }
+    @Override public void setRemoved() { forgetLp(); dev.bwr.mod.advancement.PlantMilestones.unloaded(this); super.setRemoved(); }
+    @Override public void onChunkUnloaded() { forgetLp(); dev.bwr.mod.advancement.PlantMilestones.unloaded(this); super.onChunkUnloaded(); }
+    // ---- client sync: only what the open casing's drawing needs (the cover, which sections are in, their condition)
+    @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries){
+        var t=new CompoundTag();if(lp()){if(coverOff)t.putBoolean("CoverOff",true);if(bladesOut!=0)t.putByte("BladesOut",(byte)bladesOut);
+            if(bladesThrown!=0)t.putByte("Thrown",(byte)bladesThrown);t.put("Blades",doubles(blades));}
+        return t;
+    }
+    @Override public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket(){
+        return lp()?net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this):null;
+    }
+    @Override public void handleUpdateTag(CompoundTag t,HolderLookup.Provider registries){readMaintenance(t);}
+    @Override public void onDataPacket(net.minecraft.network.Connection net,net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket pkt,HolderLookup.Provider registries){readMaintenance(pkt.getTag());}
+    private void readMaintenance(CompoundTag t){
+        coverOff=t.getBoolean("CoverOff");bladesOut=t.getByte("BladesOut")&3;bladesThrown=t.getByte("Thrown")&3;
+        var l=t.getList("Blades",6);for(int f=0;f<blades.length;f++)blades[f]=f<l.size()?finite(l.getDouble(f),1):0;
+    }
     @Override protected void saveAdditional(CompoundTag t,HolderLookup.Provider registries) {
         super.saveAdditional(t,registries);t.putDouble("RPM",rpm);
         identityReady=true;
@@ -274,6 +364,33 @@ public class PowerModuleBlockEntity extends BlockEntity {
         t.putDouble("Energy",energyFe);t.putDouble("Water",waterKg);
         saveSteam(t,"Inlet",inlet);saveSteam(t,"Exhaust",exhaust);
         saveAux(t);
+        if(lp())saveBlades(t);
+        double ambient=dev.bwr.core.turbine.TurbineAux.AMBIENT_C;
+        if(hoodC>ambient+.01)t.putDouble("HoodC",hoodC);
+        if(hasCloseShock){t.putDouble("CloseAngle",closeAngle);t.putDouble("ClosePu",closeTorquePu);}
+    }
+    private static net.minecraft.nbt.ListTag doubles(double[] v){var l=new net.minecraft.nbt.ListTag();for(double d:v)l.add(net.minecraft.nbt.DoubleTag.valueOf(d));return l;}
+    /** An LP always writes its Blades (the mark of a save made since the blade sections exist); the rest only when not the default. */
+    private void saveBlades(CompoundTag t){
+        t.put("Blades",doubles(blades));
+        if(bladesThrown!=0)t.putByte("BladesThrown",(byte)bladesThrown);
+        if(bladesOut!=0)t.putByte("BladesOut",(byte)bladesOut);
+        if(coverOff)t.putBoolean("CoverOff",true);
+    }
+    /**
+     * Reads the blade sections. An LP saved before they existed kept its blade wear in the one damage counter (wet steam was the
+     * LP's only wear of its own): that wear becomes the condition of both sections, at most 0.95, so an old failed LP reads as
+     * blades about to fail rather than throwing one the moment the world loads. HP sections and generators keep everything.
+     */
+    private void loadBlades(CompoundTag t){
+        java.util.Arrays.fill(blades,0);bladesThrown=bladesOut=0;coverOff=false;
+        if(!lp())return;
+        if(t.contains("Blades",9)){
+            var l=t.getList("Blades",6);for(int f=0;f<blades.length;f++)blades[f]=f<l.size()?finite(l.getDouble(f),1):0;
+            bladesThrown=t.getByte("BladesThrown")&3;bladesOut=t.getByte("BladesOut")&3;coverOff=t.getBoolean("CoverOff");
+        }else if(damage>0){
+            double old=Math.min(.95,damage);java.util.Arrays.fill(blades,old);damage=0;
+        }
     }
     private void saveAux(CompoundTag t){
         if(!auxLinks.isEmpty())t.putLongArray("AuxLinks",auxLinks.stream().mapToLong(BlockPos::asLong).toArray());
@@ -307,7 +424,12 @@ public class PowerModuleBlockEntity extends BlockEntity {
         energyFe=finite(t.getDouble("Energy"),ENERGY_CAPACITY);waterKg=finite(t.getDouble("Water"),WATER_CAPACITY);
         loadSteam(t,"Inlet",inlet);loadSteam(t,"Exhaust",exhaust);lastTick=Long.MIN_VALUE;exhaustLedgerTick=Long.MIN_VALUE;exhaustClaims.clear();hasWorkLoad=false;
         loadAux(t);
+        loadBlades(t);
+        double ambient=dev.bwr.core.turbine.TurbineAux.AMBIENT_C;
+        hoodC=t.contains("HoodC")?Math.max(ambient,finite(t.getDouble("HoodC"),1000)):ambient;reverseMW=0;motoring=false;gridHeldTick=Long.MIN_VALUE;
+        hasCloseShock=t.contains("CloseAngle");closeAngle=hasCloseShock?wrapped(t.getDouble("CloseAngle")):0;closeTorquePu=hasCloseShock?finite(t.getDouble("ClosePu"),100):0;
     }
     private static void loadSteam(CompoundTag t,String key,SteamInventory s){var p=t.getCompound(key);s.restore(p.getDouble("Mass"),p.getDouble("Enthalpy"),p.getDouble("Pressure"),p.getDouble("Moisture"));}
+    private static double wrapped(double v){return Double.isFinite(v)?dev.bwr.core.grid.Synchronizer.wrap(v):0;}
     private static double finite(double v,double max){return Double.isFinite(v)?Math.max(0,Math.min(max,v)):0;}
 }

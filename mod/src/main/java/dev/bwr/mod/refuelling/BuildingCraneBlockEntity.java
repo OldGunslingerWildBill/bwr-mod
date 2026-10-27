@@ -68,7 +68,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     // Moves
     // ---------------------------------------------------------------
 
-    public enum Kind { HEAD_SEAT, HEAD_STAND, HEAD_LAID, INTERNAL, PAD, HELD, PLUG }
+    public enum Kind { HEAD_SEAT, HEAD_STAND, HEAD_LAID, INTERNAL, PAD, HELD, PLUG, TURBINE_COVER, CASING_STAND, TURBINE_BLADES, BLADE_STAND }
 
     /** A place: the head's seat on the flange, a head stand, the head laid down (older worlds), the dryer's or separators' seat, a pad, or the hook itself. */
     public record Loc(Kind kind, BlockPos at, int which) {
@@ -93,6 +93,25 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             return new Loc(Kind.PLUG, min.immutable(), 0);
         }
 
+        /** The hood of the LP turbine section whose controller is at {@code lp} (TURBINE-MAINTENANCE.md). */
+        public static Loc cover(BlockPos lp) {
+            return new Loc(Kind.TURBINE_COVER, lp.immutable(), 0);
+        }
+
+        public static Loc casing(BlockPos stand) {
+            return new Loc(Kind.CASING_STAND, stand.immutable(), 0);
+        }
+
+        /** One flow's bladed rotor section in the LP turbine at {@code lp}: 0 is flow A (towards its facing), 1 flow B. */
+        public static Loc blades(BlockPos lp, int flow) {
+            return new Loc(Kind.TURBINE_BLADES, lp.immutable(), flow);
+        }
+
+        /** A saddle (0 or 1) of an LP Blade Storage Stand. */
+        public static Loc bladeStand(BlockPos stand, int slot) {
+            return new Loc(Kind.BLADE_STAND, stand.immutable(), slot);
+        }
+
         public VesselInternal internal() {
             return VesselInternal.values()[Math.clamp(which, 0, VesselInternal.values().length - 1)];
         }
@@ -104,10 +123,10 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         CompoundTag save() {
             CompoundTag t = new CompoundTag();
             t.putString("K", kind.name());
-            if (kind == Kind.HEAD_STAND || kind == Kind.PAD || kind == Kind.PLUG) {
+            if (kind == Kind.HEAD_STAND || kind == Kind.PAD || kind == Kind.PLUG || TurbineHallLifts.isTurbineLoc(this)) {
                 t.putLong("R", at.asLong());
             }
-            if (kind == Kind.INTERNAL || kind == Kind.PAD) {
+            if (kind == Kind.INTERNAL || kind == Kind.PAD || kind == Kind.TURBINE_BLADES || kind == Kind.BLADE_STAND) {
                 t.putByte("C", (byte) which);
             }
             return t;
@@ -127,6 +146,8 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 case INTERNAL -> new Loc(Kind.INTERNAL, BlockPos.ZERO, t.getByte("C"));
                 case PAD -> new Loc(Kind.PAD, BlockPos.of(t.getLong("R")), t.getByte("C"));
                 case PLUG -> new Loc(Kind.PLUG, BlockPos.of(t.getLong("R")), 0);
+                case TURBINE_COVER, CASING_STAND -> new Loc(k, BlockPos.of(t.getLong("R")), 0);
+                case TURBINE_BLADES, BLADE_STAND -> new Loc(k, BlockPos.of(t.getLong("R")), Math.clamp(t.getByte("C"), 0, 1));
                 default -> HELD;
             };
         }
@@ -140,6 +161,10 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 case PAD -> String.format(Locale.ROOT, "the equipment pad at %d,%d,%d", at.getX(), at.getY(), at.getZ());
                 case HELD -> "the hook";
                 case PLUG -> String.format(Locale.ROOT, "the shield plug section at %d,%d,%d", at.getX(), at.getY(), at.getZ());
+                case TURBINE_COVER -> String.format(Locale.ROOT, "the casing of the LP turbine at %d,%d,%d", at.getX(), at.getY(), at.getZ());
+                case CASING_STAND -> String.format(Locale.ROOT, "the casing laydown stand at %d,%d,%d", at.getX(), at.getY(), at.getZ());
+                case TURBINE_BLADES -> String.format(Locale.ROOT, "flow %s of the LP turbine at %d,%d,%d", which == 0 ? "A" : "B", at.getX(), at.getY(), at.getZ());
+                case BLADE_STAND -> String.format(Locale.ROOT, "saddle %d of the LP blade stand at %d,%d,%d", which + 1, at.getX(), at.getY(), at.getZ());
             };
         }
     }
@@ -241,6 +266,8 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     private UUID plugEntity;
     /** Sections set down on the laydown by PLUG OFF, oldest first; PLUG ON takes the newest. */
     private final List<Laid> laid = new ArrayList<>();
+    /** The turbine hall load on the hook (TURBINE-MAINTENANCE.md): an LP hood or blade section, as its item; empty with none. */
+    private net.minecraft.world.item.ItemStack carriedTurbine = net.minecraft.world.item.ItemStack.EMPTY;
 
     // transient
     private BridgeSite site;
@@ -370,9 +397,58 @@ public class BuildingCraneBlockEntity extends BlockEntity {
                 : VesselProfile.of(carriedVessel[0], carriedVessel[1], carriedVessel[2], carriedVessel[3] != 0);
     }
 
-    /** True while the hook holds the head, the dryer or the separator assembly. */
+    /** True while the hook holds the head, the dryer or the separator assembly, a shield plug section or a turbine hall load. */
     public boolean holding() {
-        return carriedHead || carriedInternal != null || plugEntity != null;
+        return carriedHead || carriedInternal != null || plugEntity != null || !carriedTurbine.isEmpty();
+    }
+
+    // ---------------------------------------------------------------
+    // The turbine hall (TURBINE-MAINTENANCE.md): COVER OFF / ON, BLADES OUT / IN
+    // ---------------------------------------------------------------
+
+    /** The LP hood or blade section on the hook (do not change it), or empty. */
+    public net.minecraft.world.item.ItemStack carriedTurbine() {
+        return carriedTurbine;
+    }
+
+    void setCarriedTurbine(net.minecraft.world.item.ItemStack s) {
+        carriedTurbine = s == null ? net.minecraft.world.item.ItemStack.EMPTY : s;
+        setChanged();
+    }
+
+    /** COVER OFF ({@code off}) or COVER ON, for the LP turbine with a block at {@code lp} or (null) the nearest under the crane. Null when queued. */
+    @Nullable
+    public Component queueCover(boolean off, @Nullable BlockPos lp) {
+        return level instanceof ServerLevel ? TurbineHallLifts.queueCover(this, off, lp) : null;
+    }
+
+    /** BLADES OUT ({@code out}) or BLADES IN, for the LP turbine with a block at {@code lp} or (null) the nearest under the crane. Null when queued. */
+    @Nullable
+    public Component queueBlades(boolean out, @Nullable BlockPos lp) {
+        return level instanceof ServerLevel ? TurbineHallLifts.queueBlades(this, out, lp) : null;
+    }
+
+    /** The LP turbine sections under the crane, nearest the hook first (a scan on demand). */
+    public List<java.util.Map<String, Object>> turbineSections() {
+        return TurbineHallLifts.survey(this);
+    }
+
+    /** The nearest LP under the crane in one line ("" with none). */
+    public String turbineSummary() {
+        return TurbineHallLifts.summary(this);
+    }
+
+    /** True while the crane works a turbine hall lift or holds its load (no reactor is needed for these). */
+    private boolean turbineWork() {
+        if (!carriedTurbine.isEmpty() || (move != null && TurbineHallLifts.isTurbineMove(this, move))) {
+            return true;
+        }
+        for (Move m : queue) {
+            if (TurbineHallLifts.isTurbineMove(this, m)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The shield plug lift in progress (the client draws its slings from this), or null. */
@@ -593,6 +669,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         }
         if (m.from().equals(m.to())) {
             return BwrText.tr("status.bwr.refuelling_bridge.same_place", "That move starts and ends in the same place.");
+        }
+        if (TurbineHallLifts.isTurbineMove(this, m)) {
+            return TurbineHallLifts.refuse(this, m);
         }
         ReactorControllerBlockEntity r = reactor();
         if (r == null || r.vesselEnvelope() == null) {
@@ -841,6 +920,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             case PLUG -> {
                 return plan == null ? null : new Point(loc.at().getX() + plan.px(), 0, loc.at().getZ() + plan.pz());
             }
+            case TURBINE_COVER, CASING_STAND, TURBINE_BLADES, BLADE_STAND -> {
+                return TurbineHallLifts.column(this, loc);
+            }
             default -> {
                 return pos == null ? null : new Point(pos.x(), 0, pos.z());
             }
@@ -987,6 +1069,12 @@ public class BuildingCraneBlockEntity extends BlockEntity {
 
     /** Where the hook tip is when the load sits on this place. */
     private BridgeMotion.Stop stopOf(Loc loc) {
+        if (TurbineHallLifts.isTurbineLoc(loc)) {
+            return TurbineHallLifts.stop(this, loc);
+        }
+        if (loc.kind() == Kind.HELD || reactor() == null) {
+            return new BridgeMotion.Stop(pos.x(), pos.z(), pos.y(), Double.NaN);
+        }
         ReactorControllerBlockEntity r = reactor();
         VesselProfile vp = carriedProfile() != null ? carriedProfile() : profileOf(r);
         double baseY = r.vesselEnvelope().min().getY();
@@ -1112,6 +1200,18 @@ public class BuildingCraneBlockEntity extends BlockEntity {
 
     private void latch(ServerLevel server) {
         Loc from = move.from();
+        if (TurbineHallLifts.isTurbineLoc(from)) {
+            Component why = TurbineHallLifts.take(this, from);
+            if (why != null) {
+                move = null;
+                queue.clear();
+                fault(server, Phase.IDLE, why);
+                return;
+            }
+            Point up = new Point(pos.x(), route.get(0).y(), pos.z());
+            begin(server, Phase.RAISE_LOADED, up, ticks(pos, up, true));
+            return;
+        }
         ReactorControllerBlockEntity r = reactor();
         Component reason = BwrText.tr("status.bwr.building_crane.nothing_to_latch", "Stopped: the hook closed on nothing; the load is no longer there.");
         boolean taken = false;
@@ -1185,6 +1285,16 @@ public class BuildingCraneBlockEntity extends BlockEntity {
 
     private void finishRelease(ServerLevel server) {
         Loc to = move.to();
+        if (!carriedTurbine.isEmpty()) {
+            Component why = TurbineHallLifts.put(this, to);
+            if (why != null) {
+                fault(server, Phase.RELEASE, why);
+                return;
+            }
+            Point up = pos.withY(site.homeY());
+            begin(server, Phase.RAISE_EMPTY, up, ticks(pos, up, false));
+            return;
+        }
         ReactorControllerBlockEntity r = reactor();
         boolean placed = false;
         if (plugEntity != null) {
@@ -1722,7 +1832,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             plugReleased(server, plugEntity);
             return;
         }
-        if (reactor() == null) {
+        if (reactor() == null && !turbineWork()) {
             // the reactor under the crane is gone (broken, unformed): stop where it is; a load stays on the hook
             pos = tip();
             move = null;
@@ -1745,6 +1855,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     }
 
     private boolean worldReady(ServerLevel server) {
+        if (turbineWork()) {
+            return TurbineHallLifts.ready(this, server, move);
+        }
         if (site != null && site.reactorPos != null && !server.isLoaded(site.reactorPos)) {
             return false;
         }
@@ -1811,6 +1924,10 @@ public class BuildingCraneBlockEntity extends BlockEntity {
 
     /** A console broken under a hanging load: a dryer or separator assembly goes back in its vessel, a hanging head is laid down on the floor. */
     public void dropCarried(ServerLevel server) {
+        if (!carriedTurbine.isEmpty()) {
+            // a hood or a blade section goes back where it was taken from, or drops as its item: never lost
+            TurbineHallLifts.release(this, server, move);
+        }
         if (plugEntity != null) {
             // a section on the hook goes back where it was taken from, or its blocks drop as items: never lost
             if (server.getEntity(plugEntity) instanceof PlugSectionEntity e) {
@@ -1846,6 +1963,12 @@ public class BuildingCraneBlockEntity extends BlockEntity {
     // ---------------------------------------------------------------
 
     public String carriedSummary() {
+        if (!carriedTurbine.isEmpty()) {
+            return dev.bwr.mod.power.TurbineLoadItem.isHood(carriedTurbine)
+                    ? String.format(Locale.ROOT, "an LP turbine hood (%.0f t)", dev.bwr.mod.power.TurbineLoadItem.massT(carriedTurbine))
+                    : String.format(Locale.ROOT, "%s LP blade section (%.0f t, %.0f%% worn)", dev.bwr.mod.power.TurbineLoadItem.isGoodSection(carriedTurbine) ? "a" : "a damaged",
+                    dev.bwr.mod.power.TurbineLoadItem.massT(carriedTurbine), 100 * dev.bwr.mod.power.TurbineLoadItem.condition(carriedTurbine));
+        }
         if (plugEntity != null && plan != null) {
             return String.format(Locale.ROOT, "a shield plug section (%d blocks, %.1f t)", plan.blocks(), plan.massT());
         }
@@ -1918,6 +2041,9 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         if (carriedInternal != null) {
             tag.putString("CarriedInternal", carriedInternal.id);
         }
+        if (!carriedTurbine.isEmpty()) {
+            tag.put("CarriedTurbine", carriedTurbine.save(registries));
+        }
         if (holding()) {
             tag.putIntArray("CarriedVessel", carriedVessel);
         }
@@ -1982,6 +2108,8 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         raisingForMove = tag.getBoolean("RaisingForMove");
         carriedHead = tag.getBoolean("CarriedHead");
         carriedInternal = tag.contains("CarriedInternal") ? VesselInternal.byId(tag.getString("CarriedInternal")) : null;
+        carriedTurbine = tag.contains("CarriedTurbine", Tag.TAG_COMPOUND)
+                ? net.minecraft.world.item.ItemStack.parseOptional(registries, tag.getCompound("CarriedTurbine")) : net.minecraft.world.item.ItemStack.EMPTY;
         carriedVessel = holding() ? tag.getIntArray("CarriedVessel") : new int[0];
         plan = tag.contains("Plug", Tag.TAG_COMPOUND) ? PlugPlan.load(tag.getCompound("Plug")) : null;
         plugEntity = plan != null && tag.contains("PlugEntity", Tag.TAG_INT_ARRAY) ? NbtUtils.loadUUID(tag.get("PlugEntity")) : null;
