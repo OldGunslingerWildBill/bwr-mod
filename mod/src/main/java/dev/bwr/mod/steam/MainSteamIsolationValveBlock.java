@@ -90,21 +90,33 @@ public class MainSteamIsolationValveBlock extends BaseEntityBlock implements Ste
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx) {
         var s=placementState().setValue(FACING,ctx.getHorizontalDirection().getOpposite());
-        for(int i=0;i<3;i++) {
-            var p=ctx.getClickedPos().above(i);
-            if(!ctx.getLevel().isLoaded(p) || ctx.getLevel().isOutsideBuildHeight(p) || !ctx.getLevel().getWorldBorder().isWithinBounds(p)
-                    || !ctx.getLevel().getBlockState(p).canBeReplaced()
-                    || !ctx.getLevel().isUnobstructed(s.setValue(PART,i),p,CollisionContext.empty())) return null;
+        return fits(ctx.getLevel(),ctx.getClickedPos(),s,false) ? s : null;
+    }
+    /** Whether the three cells of {@code s} stacked from {@code root} are free to build; {@code ownRoot}: the root cell is already ours. */
+    private static boolean fits(Level level,BlockPos root,BlockState s,boolean ownRoot) {
+        for(int i=ownRoot?1:0;i<3;i++) {
+            var p=root.above(i);
+            if(!level.isLoaded(p) || level.isOutsideBuildHeight(p) || !level.getWorldBorder().isWithinBounds(p)
+                    || !level.getBlockState(p).canBeReplaced()
+                    || !level.isUnobstructed(s.setValue(PART,i),p,CollisionContext.empty())) return false;
         }
-        return s;
+        return true;
     }
     @Override public void setPlacedBy(Level l, BlockPos p, BlockState s, LivingEntity who, ItemStack stack) {
+        if(!s.getValue(ASSEMBLED) && !l.isClientSide() && s.getValue(PART)==0) {
+            // A placer that sets the default state, the single block old saves keep, without asking getStateForPlacement: build the
+            // full valve facing it, or give the item back. Single blocks in old saves never pass through here and stay as they were.
+            BlockState full=placementState().setValue(FACING,who!=null?who.getDirection().getOpposite():s.getValue(FACING));
+            if(!fits(l,p,full,true)) { dev.bwr.mod.world.AssemblyAccess.refusePlacement(l,p,who,stack); return; }
+            l.setBlock(p,full,3);
+            s=full;
+        }
         if(!s.getValue(ASSEMBLED) || s.getValue(PART)!=0) return;
         for(int i=1;i<3;i++) if(!l.isLoaded(p.above(i)) || !l.getBlockState(p.above(i)).canBeReplaced()) {
-            l.removeBlock(p,false); return;
+            dev.bwr.mod.world.AssemblyAccess.refusePlacement(l,p,who,stack); return;
         }
         for(int i=1;i<3;i++) if(!l.setBlock(p.above(i),s.setValue(PART,i),Block.UPDATE_ALL)) {
-            l.removeBlock(p,false); return;
+            dev.bwr.mod.world.AssemblyAccess.refusePlacement(l,p,who,stack); return;
         }
         neighborChanged(s,l,p,this,p,false);
     }

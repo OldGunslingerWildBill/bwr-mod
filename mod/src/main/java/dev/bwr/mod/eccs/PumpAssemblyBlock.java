@@ -237,15 +237,7 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
      * setPlacedBy). Not through popResource, which the doTileDrops rule silences; into a player's inventory, since a building
      * mod reaches far. Nothing for a creative player, who was not charged.
      */
-    private void refuse(Level level,BlockPos root,LivingEntity placer,ItemStack stack) {
-        level.removeBlock(root,false);
-        if(level.isClientSide()) return;
-        if(placer instanceof Player p) p.displayClientMessage(dev.bwr.mod.text.BwrText.tr("status.bwr.pump_assembly.no_room_for_the_full_assembly","Not enough room for the full assembly here"),true);
-        if(stack.isEmpty() || placer instanceof Player p && p.getAbilities().instabuild) return;
-        ItemStack back=stack.copyWithCount(1);
-        if(placer instanceof Player p) p.getInventory().placeItemBackInInventory(back);
-        else level.addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(level,root.getX()+.5,root.getY()+.5,root.getZ()+.5,back));
-    }
+    private void refuse(Level level,BlockPos root,LivingEntity placer,ItemStack stack) { dev.bwr.mod.world.AssemblyAccess.refusePlacement(level,root,placer,stack); }
     @Override protected void onPlace(BlockState s,Level level,BlockPos pos,BlockState old,boolean moving) {
         super.onPlace(s,level,pos,old,moving);
         if(!level.isClientSide() && isFull(s)) level.scheduleTick(pos,this,20);

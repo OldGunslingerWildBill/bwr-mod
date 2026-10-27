@@ -148,20 +148,26 @@ public final class TurbineAssemblyBlock extends EccsPumpBlock implements SteamLi
         return state;
     }
     @Override public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+        // MODERN=false is the legacy CAD-grid box that old saves keep. It is a whole assembly, not a miniature, so a placer that hands
+        // over the default state gets that box, as before; only a refusal needs handling here: the item comes back.
         if (state.getValue(CELL) != 0) return;
         for (int i = 1; i < cellCount(state); i++) {
             BlockPos p = pos.offset(turn(cellOffset(state,i), state.getValue(FACING)));
             if (!dev.bwr.mod.world.AssemblyAccess.permitted(level,placer,p) || !level.isLoaded(p) || !level.getBlockState(p).canBeReplaced()) {
-                level.removeBlock(pos, false);
+                refuse(level, pos, placer, stack);
                 return;
             }
         }
         for (int i = 1; i < cellCount(state); i++) {
             BlockPos p = pos.offset(turn(cellOffset(state,i), state.getValue(FACING)));
-            if (!level.setBlock(p, state.setValue(CELL, i), 3)) { level.removeBlock(pos, false); return; }
+            if (!level.setBlock(p, state.setValue(CELL, i), 3)) { refuse(level, pos, placer, stack); return; }
         }
         super.setPlacedBy(level, pos, state, placer, stack);
         for(int i=0;i<cellCount(state);i++) level.invalidateCapabilities(pos.offset(turn(cellOffset(state,i),state.getValue(FACING))));
+    }
+    /** The placement did not fit: the block goes and a placer gets the item back. With no placer nothing is dropped (TurbineAssemblyRuntimeCheck pins that). */
+    private static void refuse(Level level, BlockPos root, LivingEntity placer, ItemStack stack) {
+        dev.bwr.mod.world.AssemblyAccess.refusePlacement(level, root, placer, placer == null ? ItemStack.EMPTY : stack);
     }
     @Override protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState old, boolean moving) {
         super.onPlace(state, level, pos, old, moving);

@@ -75,10 +75,10 @@ public class CondenserBlock extends BaseEntityBlock implements SteamLinePort {
         var layout=CondenserLayout.INSTANCE;
         // Recheck before any writes; a failed placement never removes another block.
         for(var cell:layout.cells){var p=layout.world(root,state.getValue(FACING),cell);
-            if(!dev.bwr.mod.world.AssemblyAccess.permitted(l,who,p)||!p.equals(root)&&(!l.isLoaded(p)||!l.getBlockState(p).canBeReplaced())){l.removeBlock(root,false);return;}}
+            if(!dev.bwr.mod.world.AssemblyAccess.permitted(l,who,p)||!p.equals(root)&&(!l.isLoaded(p)||!l.getBlockState(p).canBeReplaced())){dev.bwr.mod.world.AssemblyAccess.refusePlacement(l,root,who,stack);return;}}
         owner.forming=true;
         for(var cell:layout.cells){var p=layout.world(root,state.getValue(FACING),cell);if(p.equals(root))continue;
-            if(!l.setBlock(p,cellState(state,cell),Block.UPDATE_CLIENTS)||!(l.getBlockEntity(p) instanceof CondenserBlockEntity part)){l.removeBlock(root,false);return;}
+            if(!l.setBlock(p,cellState(state,cell),Block.UPDATE_CLIENTS)||!(l.getBlockEntity(p) instanceof CondenserBlockEntity part)){dev.bwr.mod.world.AssemblyAccess.refusePlacement(l,root,who,stack);return;}
             part.bind(owner,cell.index());l.sendBlockUpdated(p,l.getBlockState(p),l.getBlockState(p),Block.UPDATE_CLIENTS);
         }
         owner.forming=false;owner.structureDirty=true;owner.setChanged();

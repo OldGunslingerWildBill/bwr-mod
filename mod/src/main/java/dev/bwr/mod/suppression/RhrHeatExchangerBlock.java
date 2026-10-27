@@ -157,24 +157,37 @@ public class RhrHeatExchangerBlock extends BaseEntityBlock implements ProcessAss
 
     @Override public BlockState getStateForPlacement(BlockPlaceContext c){
         BlockState s=placementState().setValue(FACING,c.getHorizontalDirection().getOpposite());
-        Level level=c.getLevel();
+        return fits(c.getLevel(),c.getPlayer(),c.getClickedPos(),s,false)?s:null;
+    }
+    /** Whether the full footprint of {@code s} rooted at {@code root} is free to build; {@code ownRoot}: the root cell is already ours. */
+    private static boolean fits(Level level,LivingEntity actor,BlockPos root,BlockState s,boolean ownRoot){
         for(int i=0;i<LAYOUT.count();i++){
-            BlockPos p=cellPos(c.getClickedPos(),s,i);
-            if(!dev.bwr.mod.world.AssemblyAccess.permitted(level,c.getPlayer(),p)||!level.isLoaded(p)||level.isOutsideBuildHeight(p)
+            if(ownRoot&&i==LAYOUT.controller)continue;
+            BlockPos p=cellPos(root,s,i);
+            if(!dev.bwr.mod.world.AssemblyAccess.permitted(level,actor,p)||!level.isLoaded(p)||level.isOutsideBuildHeight(p)
                     ||!level.getWorldBorder().isWithinBounds(p)||!level.getBlockState(p).canBeReplaced()
-                    ||!level.isUnobstructed(s.setValue(CELL,i),p,CollisionContext.empty()))return null;
+                    ||!level.isUnobstructed(s.setValue(CELL,i),p,CollisionContext.empty()))return false;
         }
-        return s;
+        return true;
     }
     @Override public void setPlacedBy(Level level,BlockPos root,BlockState s,LivingEntity placer,ItemStack stack){
         super.setPlacedBy(level,root,s,placer,stack);
-        if(level.isClientSide()||!isAssembled(s)||s.getValue(CELL)!=LAYOUT.controller)return;
+        if(level.isClientSide())return;
+        if(!isAssembled(s)){
+            // A placer that sets the default state, the single block old saves keep, without asking getStateForPlacement: build the
+            // full unit facing it, or give the item back. Single blocks in old saves never pass through here and stay as they were.
+            BlockState full=placementState().setValue(FACING,placer!=null?placer.getDirection().getOpposite():s.getValue(FACING));
+            if(!fits(level,placer,root,full,true)){dev.bwr.mod.world.AssemblyAccess.refusePlacement(level,root,placer,stack);return;}
+            level.setBlock(root,full,3);
+            s=full;
+        }
+        if(s.getValue(CELL)!=LAYOUT.controller)return;
         for(int i=0;i<LAYOUT.count();i++)if(i!=LAYOUT.controller){
             BlockPos p=cellPos(root,s,i);
-            if(!dev.bwr.mod.world.AssemblyAccess.permitted(level,placer,p)||!level.isLoaded(p)||!level.getBlockState(p).canBeReplaced()){level.removeBlock(root,false);return;}
+            if(!dev.bwr.mod.world.AssemblyAccess.permitted(level,placer,p)||!level.isLoaded(p)||!level.getBlockState(p).canBeReplaced()){dev.bwr.mod.world.AssemblyAccess.refusePlacement(level,root,placer,stack);return;}
         }
         for(int i=0;i<LAYOUT.count();i++)if(i!=LAYOUT.controller){
-            if(!level.setBlock(cellPos(root,s,i),s.setValue(CELL,i),3)){level.removeBlock(root,false);return;}
+            if(!level.setBlock(cellPos(root,s,i),s.setValue(CELL,i),3)){dev.bwr.mod.world.AssemblyAccess.refusePlacement(level,root,placer,stack);return;}
         }
         for(int i=0;i<LAYOUT.count();i++)level.invalidateCapabilities(cellPos(root,s,i));
     }

@@ -88,7 +88,7 @@ public final class ContainmentVaultDoorBlock extends BaseEntityBlock {
         for(int i=1;i<size*size;i++) {
             BlockPos pos=cell(root,state.getValue(FACING),i);
             if(!level.isLoaded(pos)||!dev.bwr.mod.world.AssemblyAccess.permitted(level,placer,pos)
-                    ||!level.getBlockState(pos).canBeReplaced()) {level.removeBlock(root,false);return;}
+                    ||!level.getBlockState(pos).canBeReplaced()) {dev.bwr.mod.world.AssemblyAccess.refusePlacement(level,root,placer,stack);return;}
         }
         for(int i=1;i<size*size;i++)level.setBlock(cell(root,state.getValue(FACING),i),state.setValue(CELL,i),Block.UPDATE_ALL);
         ContainmentControllerRegistry.changed(level,root);
