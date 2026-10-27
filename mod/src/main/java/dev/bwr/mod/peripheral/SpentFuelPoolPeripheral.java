@@ -99,10 +99,10 @@ public class SpentFuelPoolPeripheral implements IPeripheral {
 
     /** Racks {@code first} to {@code first + count - 1} as 0-based indices into the pool's racks, clamped; all of them when no range is given. */
     private int[] range(Optional<Integer> first, Optional<Integer> count) {
-        int n = be.rackCount();
-        int from = Math.max(0, first.orElse(1) - 1);
-        long to = count.isPresent() ? Math.min(n, (long) from + Math.max(0, count.get())) : n;
-        return new int[] {Math.min(from, n), (int) Math.max(from, to)};
+        long n = be.rackCount();
+        long from = Math.min(n, Math.max(0L, (long) first.orElse(1) - 1L));
+        long to = count.isPresent() ? Math.min(n, from + Math.max(0L, (long) count.get())) : n;
+        return new int[] {(int) from, (int) Math.max(from, to)};
     }
 
     /**

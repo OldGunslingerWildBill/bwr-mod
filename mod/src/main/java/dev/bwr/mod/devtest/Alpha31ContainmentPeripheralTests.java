@@ -59,4 +59,46 @@ public final class Alpha31ContainmentPeripheralTests {
                 "unlinked containment CC invented reactor flow");
         helper.succeed();
     }
+
+    /**
+     * Power is needed to open a spring-return penetration valve, never to close it: with the power gone a program's close is
+     * recorded, so the valve does not reopen when the power comes back.
+     */
+    @GameTest(template = "empty", timeoutTicks = 240)
+    public static void aProgramCanCloseAnUnpoweredValveAndItStaysClosedWhenPowerReturns(GameTestHelper helper) throws Exception {
+        if (!net.neoforged.fml.ModList.get().isLoaded("computercraft")) {
+            System.out.println("CC-ABSENT SKIP: aProgramCanCloseAnUnpoweredValveAndItStaysClosedWhenPowerReturns");
+            helper.succeed(); return;
+        }
+        var level = helper.getLevel();
+        BlockPos origin = new BlockPos(46212, 190, 46012);
+        for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++)
+            for (int y = -4; y <= 4; y++) {
+                boolean wall = Math.abs(x) == 4 || Math.abs(z) == 4 || Math.abs(y) == 4;
+                level.setBlock(origin.offset(x, y, z), (wall ? Blocks.STONE : Blocks.AIR).defaultBlockState(), 2);
+            }
+        BlockPos sleeve = origin.offset(4, 0, 0);
+        level.setBlock(sleeve, BwrBlocks.CONTAINMENT_STEAM_PENETRATION.get().defaultBlockState()
+                .setValue(ContainmentPenetrationBlock.FACING, Direction.EAST), 3);
+        level.setBlock(origin, BwrBlocks.CONTAINMENT_CONTROLLER.get().defaultBlockState(), 3);
+        var room = (ContainmentControllerBlockEntity) level.getBlockEntity(origin);
+        room.markDirty();
+        for (int i = 0; i < 32; i++) {
+            ContainmentControllerBlockEntity.serverTick(level, origin, room.getBlockState(), room);
+            if (!room.isScanning() && room.strengthReady()) break;
+        }
+        var cc = new ContainmentPeripheral(room);
+        var valve = (ContainmentPenetrationBlockEntity) level.getBlockEntity(sleeve);
+        helper.assertTrue(!valve.hasPowerToOpen() && valve.demandOpen(), "the valve starts unpowered with the open demand it has by default");
+        helper.assertTrue(cc.setIsolation(sleeve.getX(), sleeve.getY(), sleeve.getZ(), true),
+                "closing an unpowered valve from a program was refused");
+        helper.assertTrue(!valve.demandOpen() && valve.isComputerControlled(), "the close demand was not recorded");
+        helper.assertTrue(!cc.setIsolation(sleeve.getX(), sleeve.getY(), sleeve.getZ(), false) && !valve.demandOpen(),
+                "opening without power is still refused and changes nothing");
+        valve.energy().receiveEnergy(8_000, false);
+        helper.assertTrue(valve.hasPowerToOpen() && !valve.demandOpen() && cc.isIsolated(),
+                "the power came back and the valve is still held closed by the demand");
+        helper.assertTrue(cc.setIsolation(sleeve.getX(), sleeve.getY(), sleeve.getZ(), false) && valve.demandOpen(), "with power it opens on request");
+        helper.succeed();
+    }
 }

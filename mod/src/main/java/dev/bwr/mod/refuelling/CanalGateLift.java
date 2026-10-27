@@ -138,7 +138,10 @@ public final class CanalGateLift {
     }
 
     /** A survey: the gate, or why there is none. */
-    public record Survey(@Nullable Gate gate, @Nullable Component problem) {
+    public record Survey(@Nullable Gate gate, @Nullable Component problem, boolean unloaded) {
+        public Survey(@Nullable Gate gate, @Nullable Component problem) {
+            this(gate, problem, false);
+        }
     }
 
     @Nullable
@@ -206,7 +209,7 @@ public final class CanalGateLift {
     /** The whole gate through any of its blocks. Reads only loaded blocks. */
     public static Survey survey(Level level, BlockPos any) {
         if (!level.isLoaded(any)) {
-            return new Survey(null, unloaded());
+            return new Survey(null, unloaded(), true);
         }
         if (!isGate(level.getBlockState(any))) {
             return new Survey(null, BwrText.tr("status.bwr.canal_gate_lift.not_gate", "There is no canal gate plug at %s.", any.toShortString()));
@@ -215,7 +218,7 @@ public final class CanalGateLift {
         for (int n = 0; n < MAX_HEIGHT; n++) {
             BlockPos b = bottom.below();
             if (!level.isLoaded(b)) {
-                return new Survey(null, unloaded());
+                return new Survey(null, unloaded(), true);
             }
             if (!isGate(level.getBlockState(b))) {
                 break;
@@ -227,7 +230,7 @@ public final class CanalGateLift {
         while (height < MAX_HEIGHT) {
             BlockPos u = bottom.above(height);
             if (!level.isLoaded(u)) {
-                return new Survey(null, unloaded());
+                return new Survey(null, unloaded(), true);
             }
             BlockState s = level.getBlockState(u);
             if (!isGate(s)) {
@@ -561,7 +564,7 @@ public final class CanalGateLift {
         }
         Laid rec = laid.get(laid.size() - 1);
         Survey sv = survey(level, rec.lay());
-        if (sv.gate() == null && !level.isLoaded(rec.lay())) {
+        if (sv.gate() == null && sv.unloaded()) {
             return sv.problem();
         }
         if (sv.gate() == null || !sv.gate().bottom().equals(rec.lay())) {

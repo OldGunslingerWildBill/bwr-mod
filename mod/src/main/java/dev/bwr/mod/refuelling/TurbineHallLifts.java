@@ -518,8 +518,12 @@ final class TurbineHallLifts {
     private static PowerModuleBlockEntity pick(BuildingCraneBlockEntity c, @Nullable BlockPos given, java.util.function.Predicate<PowerModuleBlockEntity> want) {
         if (given != null) {
             BlockPos root = given;
-            if (c.getLevel().getBlockState(given).getBlock() instanceof dev.bwr.mod.power.PowerModuleBlock b) {
-                root = b.origin(given, c.getLevel().getBlockState(given));
+            net.minecraft.world.level.block.state.BlockState at = dev.bwr.mod.world.LoadedWorld.state(c.getLevel(), given);
+            if (at == null) {
+                return null; // not loaded: the crane does not load chunks
+            }
+            if (at.getBlock() instanceof dev.bwr.mod.power.PowerModuleBlock b) {
+                root = b.origin(given, at);
             }
             PowerModuleBlockEntity m = lp(c.getLevel(), root);
             return m != null && want.test(m) ? m : null;
@@ -538,6 +542,9 @@ final class TurbineHallLifts {
         Component why = siteProblem(c);
         if (why != null) {
             return why;
+        }
+        if (lpAt != null && dev.bwr.mod.world.LoadedWorld.state(c.getLevel(), lpAt) == null) {
+            return unloadedAt(lpAt);
         }
         ItemStack carried = c.carriedTurbine();
         if (!carried.isEmpty() && c.currentMove() == null) {
@@ -597,6 +604,10 @@ final class TurbineHallLifts {
         return tr("no_casing_stand_free", "No free Casing Laydown Stand under the crane: place one on clear floor beside the turbines, with 7 x 7 of room round it.");
     }
 
+    private static Component unloadedAt(BlockPos at) {
+        return tr("unloaded", "The position %s is in a chunk that is not loaded; the crane does not load chunks.", at.toShortString());
+    }
+
     private static Component noOpenLp() {
         return tr("no_open_lp", "No LP turbine section under the crane has its cover off (with all its blade sections in, for COVER ON).");
     }
@@ -607,6 +618,9 @@ final class TurbineHallLifts {
         Component why = siteProblem(c);
         if (why != null) {
             return why;
+        }
+        if (lpAt != null && dev.bwr.mod.world.LoadedWorld.state(c.getLevel(), lpAt) == null) {
+            return unloadedAt(lpAt);
         }
         ItemStack carried = c.carriedTurbine();
         if (!carried.isEmpty() && c.currentMove() == null) {

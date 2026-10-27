@@ -150,7 +150,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
         if(coverOff&&level!=null&&!level.isClientSide())PowerModuleBlock.setOpen(level,worldPosition,getBlockState(),true);
         delivered.restore(t.getLong("DeliveredFE"),t.getBoolean("CounterSaturated"));setChanged();
     }
-    public boolean failed() { return damage>=1; }
+    public boolean failed() { return damage()>=1; }
     // ---- auxiliaries
     public TurbineAuxTrain.Readout aux(){return aux;}
     void setAux(TurbineAuxTrain.Readout r){aux=r;}

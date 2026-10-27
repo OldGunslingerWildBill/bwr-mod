@@ -88,6 +88,42 @@ final class SpentFuelPoolCcChecks {
         h.assertTrue(BwrBlocks.SPENT_FUEL_POOL_CONTROLLER.get() != null, "block");
     }
 
+    /**
+     * The rack range arguments of {@code getRacks} and {@code getAssemblies} with values at the ends of the int range. One call used to
+     * walk about two billion racks on the server thread ({@code getAssemblies(2147483647)}), and {@code first - 1} overflowed for the
+     * smallest int. Each answer here comes back at once, clamped to the racks there are.
+     */
+    static void runRanges(GameTestHelper h, BlockPos at) throws Exception {
+        SpentFuelPoolFixture f = SpentFuelPoolFixture.build(h.getLevel(), at, 9, 9, 8, 4);
+        try {
+            var face = f.level.getCapability(PeripheralCapability.get(), f.controller, Direction.EAST);
+            h.assertTrue(face != null && face.getType().equals("bwr_spent_fuel_pool"), "no bwr_spent_fuel_pool face: " + face);
+            f.fill(5, 45000.0, 7200, T0);
+            long start = System.nanoTime();
+            for (String fn : new String[] {"getRacks", "getAssemblies"}) {
+                int all = fn.equals("getRacks") ? 4 : 5;
+                h.assertTrue(size(face, fn) == all, fn + "() gives everything: " + size(face, fn));
+                h.assertTrue(size(face, fn, Integer.MAX_VALUE) == 0, fn + "(2147483647) is past the last rack");
+                h.assertTrue(size(face, fn, Integer.MAX_VALUE, Integer.MAX_VALUE) == 0, fn + "(2147483647, 2147483647)");
+                h.assertTrue(size(face, fn, 5) == 0 && size(face, fn, 5, 3) == 0, fn + " past the 4th rack is empty");
+                h.assertTrue(size(face, fn, Integer.MIN_VALUE) == all, fn + "(-2147483648) starts at the first rack");
+                h.assertTrue(size(face, fn, Integer.MIN_VALUE, 2) == (fn.equals("getRacks") ? 2 : size(face, fn, 1, 2)), fn + "(-2147483648, 2)");
+                h.assertTrue(size(face, fn, 1, Integer.MAX_VALUE) == all && size(face, fn, 3, Integer.MAX_VALUE) == (fn.equals("getRacks") ? 2 : size(face, fn, 3, 2)),
+                        fn + " with the largest count is clamped to the racks");
+                h.assertTrue(size(face, fn, 1, -5) == 0 && size(face, fn, 1, 0) == 0, fn + " with no count is empty");
+            }
+            List<?> racks = (List<?>) PeripheralTestCalls.call(face, "getRacks", 3, 2)[0];
+            h.assertTrue(racks.size() == 2 && num((Map<?, ?>) racks.get(0), "index") == 3 && num((Map<?, ?>) racks.get(1), "index") == 4, "getRacks(3, 2): " + racks);
+            h.assertTrue((System.nanoTime() - start) < 5_000_000_000L, "the calls came back at once");
+        } finally {
+            f.dispose();
+        }
+    }
+
+    private static int size(Object face, String fn, Object... args) throws Exception {
+        return ((List<?>) PeripheralTestCalls.call(face, fn, args)[0]).size();
+    }
+
     private static double num(Map<?, ?> map, String key) {
         Object value = map.get(key);
         if (!(value instanceof Number n)) {
