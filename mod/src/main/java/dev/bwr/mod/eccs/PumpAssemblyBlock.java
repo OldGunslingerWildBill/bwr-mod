@@ -210,29 +210,41 @@ public class PumpAssemblyBlock extends BaseEntityBlock implements SteamLinePort,
     }
     @Override public void setPlacedBy(Level level,BlockPos root,BlockState s,LivingEntity placer,ItemStack stack) {
         if(!isFull(s) && !level.isClientSide()) {
-            // Building mods (Effortless and the like) can place the block's default state, the one-cell compact form old saves
-            // keep, without asking getStateForPlacement. They still call this: build the full assembly, or give the item back.
+            // A mod that places the block's default state, the one-cell compact form old saves keep, without asking
+            // getStateForPlacement, and still calls this: build the full assembly, or give the item back. (Effortless 3.4.0
+            // does ask, through BlockItem.getPlacementState; this is for any placer that does not.)
             BlockState full=placementState().setValue(FACING,placer!=null?placer.getDirection().getOpposite():s.getValue(FACING));
-            if(!fits(level,placer,root,full,true)) {
-                level.removeBlock(root,false);
-                if(!(placer instanceof Player p && p.getAbilities().instabuild)) Block.popResource(level,root,stack.copyWithCount(1));
-                if(placer instanceof Player p) p.displayClientMessage(dev.bwr.mod.text.BwrText.tr("status.bwr.pump_assembly.no_room_for_the_full_assembly","Not enough room for the full assembly here"),true);
-                return;
-            }
+            if(!fits(level,placer,root,full,true)) { refuse(level,root,placer,stack); return; }
             level.setBlock(root,full,3);
             s=full;
         }
         if(!isFull(s) || s.getValue(CELL)!=controllerCell(s)) return;
+        // Effortless's Array, Mirror and Radial patterns place a copy of the full state at a position whose footprint
+        // getStateForPlacement never saw, and take the item once the block is down; so a refusal here gives it back too.
         for(int i=0;i<cellCount(s);i++) if(i!=controllerCell(s)) {
             BlockPos p=root.offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING)));
-            if(!dev.bwr.mod.world.AssemblyAccess.permitted(level,placer,p) || !level.isLoaded(p) || !level.getBlockState(p).canBeReplaced()) { level.removeBlock(root,false); return; }
+            if(!dev.bwr.mod.world.AssemblyAccess.permitted(level,placer,p) || !level.isLoaded(p) || !level.getBlockState(p).canBeReplaced()) { refuse(level,root,placer,stack); return; }
         }
         for(int i=0;i<cellCount(s);i++) if(i!=controllerCell(s)) {
             BlockPos p=root.offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING)));
-            if(!level.setBlock(p,s.setValue(CELL,i),3)) { level.removeBlock(root,false); return; }
+            if(!level.setBlock(p,s.setValue(CELL,i),3)) { refuse(level,root,placer,stack); return; }
         }
         for(int i=0;i<cellCount(s);i++) level.invalidateCapabilities(root.offset(TurbineAssemblyBlock.turn(cellOffset(s,i),s.getValue(FACING))));
         neighborChanged(s,level,root,this,root,false);
+    }
+    /**
+     * The placement did not fit: the block goes and the placer gets the item back (vanilla and Effortless both take it after
+     * setPlacedBy). Not through popResource, which the doTileDrops rule silences; into a player's inventory, since a building
+     * mod reaches far. Nothing for a creative player, who was not charged.
+     */
+    private void refuse(Level level,BlockPos root,LivingEntity placer,ItemStack stack) {
+        level.removeBlock(root,false);
+        if(level.isClientSide()) return;
+        if(placer instanceof Player p) p.displayClientMessage(dev.bwr.mod.text.BwrText.tr("status.bwr.pump_assembly.no_room_for_the_full_assembly","Not enough room for the full assembly here"),true);
+        if(stack.isEmpty() || placer instanceof Player p && p.getAbilities().instabuild) return;
+        ItemStack back=stack.copyWithCount(1);
+        if(placer instanceof Player p) p.getInventory().placeItemBackInInventory(back);
+        else level.addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(level,root.getX()+.5,root.getY()+.5,root.getZ()+.5,back));
     }
     @Override protected void onPlace(BlockState s,Level level,BlockPos pos,BlockState old,boolean moving) {
         super.onPlace(s,level,pos,old,moving);
