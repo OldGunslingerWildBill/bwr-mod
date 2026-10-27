@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased (alpha.59): wrecked turbines, the shaft excursion and turbine fires
+
+What a turbine failure leaves behind, how bad it can get, and how it is put right (TURBINE-MAINTENANCE.md).
+
+- **Wrecked casings.** A turbine section has a wreck level the screens and computers read: **holed** (a thrown blade tore out through
+  the casing, drawn as a ragged hole with its plate petalled out where it left; the LP still runs), **burst** (an LP's disc burst, or the
+  train came apart: the hood or an HP's upper half torn open, the rotor stripped and bent; **the casing holds no steam and does no work** until
+  it is rebuilt) and **shaft out** (below). The parts are Blender models (`art/models/power_turbines/build_wreck.py`, headless;
+  `tools-export-turbine-wreck.py`); a burst HP's upper cells now open like an LP's hood cells.
+- **The shaft excursion, the worst case.** A rotor whose disc burst carries the lost third's unbalance (68 MN at rated, 153 MN at 150 %).
+  Driven on to **180 % (2,700 rpm, 220 MN)** its coupling shears and one flow's 62 t rotor half breaks out of the casing and rolls across the
+  floor perpendicular to its axis (6 MJ, about 16 m of open floor), breaking blocks through the accident blasts' protected path, stopped by
+  unbreakable or protected blocks, other casings and unloaded chunks (never loaded), hurting what it meets. It comes to rest as a **Turbine
+  Shaft Wreck** block (the crane lifts it with BLADES OUT, a pickaxe breaks it for a Damaged LP Blade Section). The LP is coupled to
+  nothing; the rest of the train is wrecked and grinds to a stop. `TurbineEvents.Excursion`. A close out of phase tops out at 5.7 pu, so a
+  close alone cannot go far past the 5.5 pu burst; an overspeed past the burst is what drives a rotor loose.
+- **Turbine fires.** A bearing run dry at speed passes 300 C in about a minute and lights the oil in its housing (200 L out of the tanks);
+  a disc fragment, a blade thrown down through the lower casing or the rotor half cuts an oil line (1,000 L); an excursion lets the
+  generator's hydrogen out to burn at its seals. The pool burns 2 L/s, running oil pumps spray 6 L/s more into it, a burning section loses
+  0.4 % a second; real fire is kept lit beside the bearings (a place event per block) with smoke; water puts it out. A train with no oil
+  has nothing to burn. `TurbineEvents.Fire`. Core `TurbineFire`.
+- **Repair.** COVER OFF of a holed or burst LP gives a **Wrecked LP Turbine Hood** (scrap: 3 iron blocks) that never goes back on; COVER ON
+  takes only a whole hood and patches a holed casing. A burst casing takes no blade section and no hood until rebuilt with a **Turbine
+  Rebuild Kit** (4 iron blocks, 2 copper ingots, 2 iron ingots, an anvil) used on the stopped, cold section, an LP with its hood off and
+  both sections out. The kit also renews a worn shaft (wiped bearings, a bad close). An HP or generator is rebuilt by hand.
+- **Readouts.** BLADES tab rows Casing and Fire; CC `getStatus` `wreck`, `wrecked`, `fire`, `fireKind`, `fireFuel`; signals `fire`,
+  `fire_fuel`, `wrecked`, `wreck`; `queueBladesOut` lifts a shaft wreck.
+- **Saves.** New keys only when set (`Wreck`, `DiscBurst`, `Holes`, `BrokenFlow`, `Fire`, `FireFuel`; the wreck block's `Source`,
+  `Flow`). Old worlds load with every section sound and nothing burning.
+- **Tests.** Core `TurbineWreckTest` (3); GameTests `TurbineWreckTests` (`bwrturbine`, 9) and `TurbineBearingFireTests` (`bwraux`, 2);
+  `-PbwrTurbineHallCheck` adds pictures of a burst LP, the rotor half on the floor, the fires, the wrecked LP's screen and the train rebuilt
+  (`art/turbine-hall/`).
+
 ## Unreleased: held panel controls are let go when they are removed, and a relaunched player's controls work
 
 Two bugs in the control-room panels, both found by review.

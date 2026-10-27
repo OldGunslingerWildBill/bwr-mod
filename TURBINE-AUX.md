@@ -46,7 +46,9 @@ delivered flow over the need, 0 to 1.
   constant 90 s. A missing film multiplies the rise by up to 61 and replaces the oil by room air. **No oil pressure while the shaft is
   rolling above about 15 % speed: bearing metal passes 115 C within about 15 s and the shaft takes bearing damage, 1.2 % a second per
   60 K above 115 C.** That damage is the turbine's existing shaft damage (the counter overspeed and wet-steam wear add to); there is no
-  second model. Alarm at 100 C.
+  second model. Alarm at 100 C. **Past 300 C (about a minute at rated speed) the oil left in the bearing's housing catches fire** (200 L
+  out of the tanks), and running pumps then feed the fire: see Turbine fires in [TURBINE-MAINTENANCE.md](TURBINE-MAINTENANCE.md). A train
+  whose tanks hold no oil has nothing to burn.
 - **Hot oil.** Oil temperature is bearing heat (3 MW at rated speed) minus the cooler and 15 kW/K to the hall, over the oil's thermal
   mass. The cooler is a 150 kW/K exchanger on 20 kg/s of cooling water: with 13 C water the oil settles near 50 C, with no water it
   keeps climbing (about 0.17 K/s at 10,000 L). Hot oil lifts the bearing temperature one for one, so a failed cooler takes minutes
@@ -147,4 +149,5 @@ Core `TurbineAuxTest` (12 tests). GameTests `bwraux` (18 tests) (`TurbineAuxTest
 speed; start-up needs the AC pump; no oil while rolling wrecks the bearings, and oil does not; the DC pump holds the oil on loss of
 AC power; the cooler and the oil's leak and the drums; a hot shaft bows without the gear and the gear recovers it; a bowed
 roll-up shakes and damages; the gear switch engages only at low speed (screen, signal, CC); an unpowered cooling skid lets the
-winding rise with load; hydrogen; the readouts and signals; the old-train rule; saves; nothing ticks while idle.
+winding rise with load; hydrogen; the readouts and signals; the old-train rule; saves; nothing ticks while idle. Since alpha.59
+`TurbineBearingFireTests` (2 more): a bearing run dry lights its oil and a running pump feeds the fire; a train with no oil burns nothing.

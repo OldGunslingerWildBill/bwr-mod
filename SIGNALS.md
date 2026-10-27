@@ -666,6 +666,10 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `coolant_temp` | Generator coolant temperature | degC | 0 to 150 | NUMBER |
 | `oil_pressure_alarm`, `oil_level_alarm`, `oil_temp_alarm`, `bearing_alarm` | Oil system alarms |  | 0 to 1 | BOOLEAN |
 | `vibration_alarm`, `winding_alarm`, `h2_alarm` | Vibration, winding and hydrogen alarms |  | 0 to 1 | BOOLEAN |
+| `fire` | Turbine fire (TURBINE-MAINTENANCE.md) |  | 0 to 1 | BOOLEAN |
+| `fire_fuel` | Fire fuel left (oil L, hydrogen kg) |  | 0 to 20000 | NUMBER |
+| `wrecked` | Casing wrecked (burst or shaft out) |  | 0 to 1 | BOOLEAN |
+| `wreck` | Wreck: 0 sound, 1 holed, 2 burst, 3 shaft out |  | 0 to 3 | NUMBER |
 
 | Command key | Label | Kind | Range |
 | --- | --- | --- | --- |

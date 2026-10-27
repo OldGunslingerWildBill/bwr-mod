@@ -369,6 +369,8 @@ public final class BwrItems {
             () -> new dev.bwr.mod.power.TurbineRebuildKitItem(new Item.Properties().stacksTo(4)));
     public static final DeferredItem<BlockItem> LP_BLADE_STAND = ITEMS.registerSimpleBlockItem(BwrBlocks.LP_BLADE_STAND);
     public static final DeferredItem<BlockItem> CASING_LAYDOWN_STAND = ITEMS.registerSimpleBlockItem(BwrBlocks.CASING_LAYDOWN_STAND);
+    /** Made by a shaft excursion, not crafted; the item exists so a map maker can stage a wreck (it is in no creative tab). */
+    public static final DeferredItem<BlockItem> TURBINE_SHAFT_WRECK = ITEMS.registerSimpleBlockItem(BwrBlocks.TURBINE_SHAFT_WRECK);
     public static final DeferredItem<BlockItem> CAVITY_DRAIN_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.CAVITY_DRAIN_PORT);
     public static final DeferredItem<BlockItem> CAVITY_FILL_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.CAVITY_FILL_PORT);
     public static final DeferredItem<BlockItem> ARABELLE_CONDENSER = ITEMS.register("arabelle_condenser",

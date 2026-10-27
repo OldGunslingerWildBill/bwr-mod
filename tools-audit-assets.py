@@ -371,7 +371,9 @@ RETIRED_BLOCKS = {"rcic_turbine_pump", "hpci_turbine_pump", "suppression_pool_qu
 # The two uranium ores are placed by world generation and mined (silk touch gives the block back); the raw uranium and
 # ingot recipes are what a player crafts with them.
 # The thorium ores and the monazite sand are the same (THORIUM.md).
-WORLD_MADE_BLOCKS = {"corium", "uranium_ore", "deepslate_uranium_ore", "thorium_ore", "deepslate_thorium_ore", "monazite_sand"}
+# A Turbine Shaft Wreck is the rotor half a shaft excursion leaves on the floor (TURBINE-MAINTENANCE.md); breaking it gives a Damaged LP
+# Blade Section, and a recipe for it would make a wreck out of nothing.
+WORLD_MADE_BLOCKS = {"corium", "uranium_ore", "deepslate_uranium_ore", "thorium_ore", "deepslate_thorium_ore", "monazite_sand", "turbine_shaft_wreck"}
 
 # What each per-block gap actually costs in game. These strings go into the
 # bad() message so the report says why it matters and not just that a file is

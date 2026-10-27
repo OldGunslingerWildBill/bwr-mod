@@ -188,6 +188,7 @@ def main():
             "random_sequence": f"bwr:blocks/{block}"})
     # The rotor half a shaft excursion leaves on the floor: drawn by its block entity; broken up, it is a damaged section.
     put_json(os.path.join(A, "models/block/turbine_shaft_wreck.json"), {"textures": {"particle": "minecraft:block/iron_block"}})
+    put_json(os.path.join(A, "models/item/turbine_shaft_wreck.json"), {"parent": "minecraft:item/generated", "textures": {"layer0": "bwr:item/damaged_lp_blade_section"}})
     put_json(os.path.join(A, "blockstates/turbine_shaft_wreck.json"),
              {"variants": {f"axis={a}": {"model": "bwr:block/turbine_shaft_wreck"} for a in ("x", "z")}})
     put_json(os.path.join(D, "loot_table/blocks/turbine_shaft_wreck.json"), {

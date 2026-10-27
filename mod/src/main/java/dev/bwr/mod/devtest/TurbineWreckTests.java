@@ -1,6 +1,5 @@
 package dev.bwr.mod.devtest;
 
-import dev.bwr.core.refuelling.BridgeMotion.Phase;
 import dev.bwr.core.turbine.ShaftDynamics;
 import dev.bwr.core.turbine.TurbineBlades;
 import dev.bwr.core.turbine.TurbineFire;
