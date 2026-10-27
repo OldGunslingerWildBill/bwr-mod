@@ -120,6 +120,7 @@ public final class AcceptanceTests {
             dev.bwr.core.refuelling.PlugLiftTest.class,
             dev.bwr.core.turbine.TurbineAuxTest.class,
             dev.bwr.core.turbine.TurbineBladesTest.class,
+            dev.bwr.core.turbine.TurbineWreckTest.class,
             BoundaryStressTest.class,
             dev.bwr.core.boundary.PortLocaTest.class,
             SevereAccidentEscalationTest.class,

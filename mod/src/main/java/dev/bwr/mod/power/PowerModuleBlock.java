@@ -22,8 +22,8 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
             .apply(i,(p,k)->new PowerModuleBlock(p,Kind.valueOf(k))));
     /**
      * An LP turbine's upper casing half is off (the turbine hall crane lifted the hood): its upper cells draw nothing and are walked
-     * through, and the open casing's blades are drawn by the section's renderer. Default false, so saved states are unchanged; only LP
-     * cells are ever set open.
+     * through, and the open casing's blades are drawn by the section's renderer. A wrecked (burst) LP or HP casing is open the same way,
+     * its torn remains drawn by the renderer. Default false, so saved states are unchanged; generator cells are never set open.
      */
     public static final net.minecraft.world.level.block.state.properties.BooleanProperty OPEN=net.minecraft.world.level.block.state.properties.BooleanProperty.create("open");
     /** Cells at or above this height over an LP's floor are the hood. */
@@ -32,9 +32,11 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
     @Override protected void createBlockStateDefinition(net.minecraft.world.level.block.state.StateDefinition.Builder<net.minecraft.world.level.block.Block,BlockState> b) { super.createBlockStateDefinition(b); b.add(OPEN); }
     /** True for an LP cell that is part of the hood. */
     public boolean hoodCell(BlockState s){return kind()==Kind.LP_TURBINE&&isFull(s)&&cellOffset(s,s.getValue(CELL)).getY()>=HOOD_FROM_Y;}
-    /** Marks every cell of the LP at {@code root} open or closed (the hood off or on). Loaded cells only; flags 2, no neighbour updates. */
+    /** True for an LP hood cell, or an HP cell at the same height (the part of the casing a burst tears away). */
+    public boolean upperCell(BlockState s){return (kind()==Kind.LP_TURBINE||kind()==Kind.HP_TURBINE)&&isFull(s)&&cellOffset(s,s.getValue(CELL)).getY()>=HOOD_FROM_Y;}
+    /** Marks every cell of the LP or HP at {@code root} open or closed (the hood off or on, a burst casing). Loaded cells only; flags 2, no neighbour updates. */
     public static void setOpen(Level level,BlockPos root,BlockState s,boolean open){
-        if(!(s.getBlock() instanceof PowerModuleBlock b)||b.kind()!=Kind.LP_TURBINE||!b.isFull(s))return;
+        if(!(s.getBlock() instanceof PowerModuleBlock b)||b.generator()||!b.isFull(s))return;
         for(int i=0;i<b.cellCount(s);i++){
             BlockPos p=root.offset(TurbineAssemblyBlock.turn(b.cellOffset(s,i),s.getValue(FACING)));
             if(!level.isLoaded(p))continue;
@@ -43,7 +45,7 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
         }
     }
     @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState s,net.minecraft.world.level.BlockGetter level,BlockPos pos,net.minecraft.world.phys.shapes.CollisionContext c) {
-        return s.getValue(OPEN)&&hoodCell(s)?net.minecraft.world.phys.shapes.Shapes.empty():super.getShape(s,level,pos,c);
+        return s.getValue(OPEN)&&upperCell(s)?net.minecraft.world.phys.shapes.Shapes.empty():super.getShape(s,level,pos,c);
     }
     @Override protected MapCodec<PowerModuleBlock> codec() { return CODEC; }
     public boolean generator() { return kind()==Kind.GENERATOR; }
@@ -66,6 +68,11 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
     }
     @Override protected net.minecraft.world.ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack,
             BlockState state,Level level,BlockPos pos,Player player,net.minecraft.world.InteractionHand hand,BlockHitResult hit){
+        if(stack.getItem() instanceof TurbineRebuildKitItem){
+            // A rebuild kit on any cell works on the section (TURBINE-MAINTENANCE.md); it never opens the screen.
+            if(!level.isClientSide()&&controller(level,pos,state) instanceof PowerModuleBlockEntity module)TurbineRebuildKitItem.use(module,player,stack);
+            return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide());
+        }
         if(kind()==Kind.LP_TURBINE && hit.getDirection()==Direction.DOWN
                 && (stack.getItem() instanceof dev.bwr.mod.condenser.CondenserItem
                     ||hand==net.minecraft.world.InteractionHand.MAIN_HAND&&stack.isEmpty()

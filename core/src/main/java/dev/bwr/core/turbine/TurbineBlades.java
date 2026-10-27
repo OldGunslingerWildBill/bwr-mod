@@ -33,6 +33,13 @@ import dev.bwr.core.grid.Synchronizer;
  * A failed section with the shaft above {@link #MISSILE_MIN_RPM} throws a last-stage blade ({@link #BLADE_MASS_KG} at
  * {@link #BLADE_CENTROID_M} from the axis); a disc burst throws a disc fragment ({@link #DISC_FRAGMENT_KG} at
  * {@link #DISC_CENTROID_M}). The energy is the translational energy of the piece released at its centroid's speed.
+ *
+ * <h2>The shaft excursion</h2>
+ * A burst disc leaves its rotor a third of a disc short: an unbalance of {@code m r w^2}, 68 MN at rated speed and 153 MN at the
+ * 150 % the disc burst at, which the train carries on as long as the speed does not climb. If it does (the steam still admitted, the
+ * breaker open), at {@link #EXCURSION_RPM} (180 %) the unbalance reaches {@link #COUPLING_SHEAR_N}: the coupling shears and one flow's
+ * rotor half breaks out through the end of its casing and rolls across the floor, perpendicular to its axis, a 62 t piece at
+ * {@link #EXCURSION_SPEED_MPS} m/s ploughing to rest within about 16 m of open floor.
  */
 public final class TurbineBlades {
     private TurbineBlades() {}
@@ -89,6 +96,21 @@ public final class TurbineBlades {
     public static final double HOOD_MASS_T = 110, BLADE_SECTION_MASS_T = 62;
     /** A section's condition from which it comes out of a casing as a damaged section, not a spare. */
     public static final double DAMAGED_SECTION = 0.05;
+
+    // ---- the shaft excursion (the worst case)
+    /**
+     * Radial force an LP coupling and its bearings take before the rotor breaks loose, N. A burst disc leaves its rotor carrying the
+     * unbalance of the lost third ({@link #unbalanceForceN}); this is that force at 180 % of rated speed.
+     */
+    public static final double COUPLING_SHEAR_N = 2.2e8;
+    /** Speed at which a rotor whose disc has burst breaks loose, rpm (where its unbalance reaches {@link #COUPLING_SHEAR_N}): 180 % of rated. */
+    public static final double EXCURSION_RPM = Math.sqrt(COUPLING_SHEAR_N / (DISC_FRAGMENT_KG * DISC_CENTROID_M)) * 30 / Math.PI;
+    /** The piece that breaks loose: one flow's rotor half (its bladed section with its shaft end), kg; the speed it leaves its seat at, m/s. */
+    public static final double EXCURSION_MASS_KG = BLADE_SECTION_MASS_T * 1000, EXCURSION_SPEED_MPS = 15;
+    /** Energy the casing's end wall takes out of the rotor half on its way out, J. */
+    public static final double EXCURSION_CASING_J = 1.0e6;
+    /** Sliding friction of a rotor half ploughing along a floor (steel on concrete, its blade stubs digging in). */
+    public static final double EXCURSION_FRICTION = 0.6;
 
     public enum Missile { BLADE, DISC }
 
@@ -178,6 +200,32 @@ public final class TurbineBlades {
     /** What one block of this rating costs a missile to go through, J. */
     public static double perforationJ(double ratingPsi) {
         return Math.max(MIN_BLOCK_J, PERFORATION_FACTOR * HeadMissile.crushJ(ratingPsi));
+    }
+
+    // ------------------------------------------------------------------------------------------------ the shaft excursion
+
+    /** The radial force of a rotor carrying a burst disc's lost third ({@link #DISC_FRAGMENT_KG} at {@link #DISC_CENTROID_M}) at this speed, N. */
+    public static double unbalanceForceN(double rpm) {
+        double w = Math.max(0, finite(rpm)) * Math.PI / 30;
+        return DISC_FRAGMENT_KG * DISC_CENTROID_M * w * w;
+    }
+
+    /**
+     * Whether an LP rotor breaks loose: its disc has burst ({@code burst}) and the unbalance at this speed reaches what its coupling and
+     * bearings hold. A rotor that has not burst never does: an intact rotor is balanced.
+     */
+    public static boolean excursion(boolean burst, double rpm) {
+        return burst && unbalanceForceN(rpm) >= COUPLING_SHEAR_N;
+    }
+
+    /** The rotor half's energy along the floor once it is through its casing's end wall, J. */
+    public static double excursionEnergyJ() {
+        return Math.max(0, 0.5 * EXCURSION_MASS_KG * EXCURSION_SPEED_MPS * EXCURSION_SPEED_MPS - EXCURSION_CASING_J);
+    }
+
+    /** What sliding one metre along a floor costs the rotor half, J. */
+    public static double excursionFrictionJPerM() {
+        return EXCURSION_FRICTION * EXCURSION_MASS_KG * 9.81;
     }
 
     /** Shaft vibration from blades thrown, mm/s: {@link #IMBALANCE_MM_S} per thrown blade at rated speed, with the square of speed. */

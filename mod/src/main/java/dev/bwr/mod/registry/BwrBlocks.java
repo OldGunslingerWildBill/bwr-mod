@@ -606,6 +606,9 @@ public final class BwrBlocks {
             BLOCKS.register("lp_blade_stand", () -> new dev.bwr.mod.power.TurbineStandBlock(machine().noOcclusion(), dev.bwr.mod.power.TurbineStandBlock.Kind.BLADES));
     public static final DeferredBlock<dev.bwr.mod.power.TurbineStandBlock> CASING_LAYDOWN_STAND =
             BLOCKS.register("casing_laydown_stand", () -> new dev.bwr.mod.power.TurbineStandBlock(machine().noOcclusion(), dev.bwr.mod.power.TurbineStandBlock.Kind.CASING));
+    /** The rotor half a shaft excursion left on the floor (TURBINE-MAINTENANCE.md): no item, placed only by the excursion, slow to cut up. */
+    public static final DeferredBlock<dev.bwr.mod.power.TurbineWreckBlock> TURBINE_SHAFT_WRECK =
+            BLOCKS.register("turbine_shaft_wreck", () -> new dev.bwr.mod.power.TurbineWreckBlock(machine().strength(12.0F, 60.0F).noOcclusion()));
     public static final DeferredBlock<CondenserBlock> ARABELLE_CONDENSER =
             BLOCKS.register("arabelle_condenser", () -> new CondenserBlock(machine()));
 

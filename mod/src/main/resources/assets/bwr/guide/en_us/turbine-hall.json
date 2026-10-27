@@ -77,6 +77,54 @@
         "bwr:damaged_lp_blade_section",
         "bwr:lp_blade_stand"
       ]
+    },
+    {
+      "title": "Wrecked casings",
+      "text": [
+        "A thrown blade tears a hole in the casing where it leaves; the LP still runs. A burst disc bursts the casing open: it holds no steam, whatever the valves admit vents into the hall, until it is rebuilt.",
+        "",
+        "The BLADES tab shows the Casing: sound, holed, BURST or SHAFT OUT."
+      ],
+      "icons": [
+        "bwr:wrecked_lp_turbine_hood",
+        "bwr:lp_turbine"
+      ]
+    },
+    {
+      "title": "The shaft excursion",
+      "text": [
+        "The worst case. A rotor whose disc burst is a third of a disc out of balance. Drive it on to 180 % speed and the coupling shears: one rotor half, 62 t, breaks out of the casing and rolls across the floor, breaking what is in its way.",
+        "",
+        "It comes to rest as a Turbine Shaft Wreck. The rest of the train is wrecked and grinds to a stop."
+      ],
+      "icons": [
+        "bwr:damaged_lp_blade_section",
+        "bwr:nuclear_generator"
+      ]
+    },
+    {
+      "title": "Turbine fires",
+      "text": [
+        "A bearing run without oil at speed passes 300 C in about a minute and lights the oil in its housing. A disc fragment, a blade thrown down through the oil lines or the rotor half cuts a line: 1,000 L catches. An excursion lets the generator's hydrogen out to burn.",
+        "",
+        "Running oil pumps feed an oil fire. Water on the fire puts it out. A burning section loses 0.4 % a second."
+      ],
+      "icons": [
+        "bwr:main_oil_tank",
+        "bwr:generator_cooling_skid"
+      ]
+    },
+    {
+      "title": "Rebuilding a wreck",
+      "text": [
+        "Stop the shaft, put out the fire, COVER OFF (a wrecked hood comes off) and lift both blade sections out. Use a Turbine Rebuild Kit on the empty casing: new bearings, couplings and glands. Then two spares in and a new hood on.",
+        "",
+        "An HP or generator takes a kit by hand. The crane lifts a shaft wreck with BLADES OUT, or break it with a pickaxe."
+      ],
+      "icons": [
+        "bwr:turbine_rebuild_kit",
+        "bwr:lp_turbine_hood"
+      ]
     }
   ]
 }

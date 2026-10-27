@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:wrecked_lp_turbine_hood"
+    }
+  ],
+  "result": {
+    "id": "minecraft:iron_block",
+    "count": 3
+  }
+}

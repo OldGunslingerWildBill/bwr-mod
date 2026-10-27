@@ -361,8 +361,16 @@ public final class BwrItems {
             () -> new dev.bwr.mod.power.TurbineLoadItem(new Item.Properties(), dev.bwr.mod.power.TurbineLoadItem.Kind.DAMAGED_BLADE_SECTION));
     public static final DeferredItem<dev.bwr.mod.power.TurbineLoadItem> LP_TURBINE_HOOD = ITEMS.register("lp_turbine_hood",
             () -> new dev.bwr.mod.power.TurbineLoadItem(new Item.Properties(), dev.bwr.mod.power.TurbineLoadItem.Kind.HOOD));
+    /** A hood that comes off a holed or burst LP (TURBINE-MAINTENANCE.md): it cannot go back on; craft it alone to scrap it. */
+    public static final DeferredItem<dev.bwr.mod.power.TurbineLoadItem> WRECKED_LP_TURBINE_HOOD = ITEMS.register("wrecked_lp_turbine_hood",
+            () -> new dev.bwr.mod.power.TurbineLoadItem(new Item.Properties(), dev.bwr.mod.power.TurbineLoadItem.Kind.WRECKED_HOOD));
+    /** Rebuilds a wrecked or worn turbine section's casing, bearings, couplings and glands (TURBINE-MAINTENANCE.md). */
+    public static final DeferredItem<dev.bwr.mod.power.TurbineRebuildKitItem> TURBINE_REBUILD_KIT = ITEMS.register("turbine_rebuild_kit",
+            () -> new dev.bwr.mod.power.TurbineRebuildKitItem(new Item.Properties().stacksTo(4)));
     public static final DeferredItem<BlockItem> LP_BLADE_STAND = ITEMS.registerSimpleBlockItem(BwrBlocks.LP_BLADE_STAND);
     public static final DeferredItem<BlockItem> CASING_LAYDOWN_STAND = ITEMS.registerSimpleBlockItem(BwrBlocks.CASING_LAYDOWN_STAND);
+    /** Made by a shaft excursion, not crafted; the item exists so a map maker can stage a wreck (it is in no creative tab). */
+    public static final DeferredItem<BlockItem> TURBINE_SHAFT_WRECK = ITEMS.registerSimpleBlockItem(BwrBlocks.TURBINE_SHAFT_WRECK);
     public static final DeferredItem<BlockItem> CAVITY_DRAIN_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.CAVITY_DRAIN_PORT);
     public static final DeferredItem<BlockItem> CAVITY_FILL_PORT = ITEMS.registerSimpleBlockItem(BwrBlocks.CAVITY_FILL_PORT);
     public static final DeferredItem<BlockItem> ARABELLE_CONDENSER = ITEMS.register("arabelle_condenser",
@@ -625,6 +633,8 @@ public final class BwrItems {
                         output.accept(LP_BLADE_SECTION.get());
                         output.accept(DAMAGED_LP_BLADE_SECTION.get());
                         output.accept(LP_TURBINE_HOOD.get());
+                        output.accept(WRECKED_LP_TURBINE_HOOD.get());
+                        output.accept(TURBINE_REBUILD_KIT.get());
                         output.accept(LP_BLADE_STAND.get());
                         output.accept(CASING_LAYDOWN_STAND.get());
                         output.accept(ARABELLE_CONDENSER.get());

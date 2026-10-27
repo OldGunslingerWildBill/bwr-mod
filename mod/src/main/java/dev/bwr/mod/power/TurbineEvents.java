@@ -92,6 +92,72 @@ public final class TurbineEvents {
         public int sections() { return sections; }
     }
 
+    /**
+     * A shaft excursion (TURBINE-MAINTENANCE.md): a burst LP rotor broke loose and one flow's rotor half left the casing. Posted once,
+     * after its path was worked out and the blocks in it were removed, with where it came to rest (the Turbine Shaft Wreck block, or
+     * null if it was left as an item).
+     */
+    public static final class Excursion extends Event {
+        private final ServerLevel level;
+        private final BlockPos turbine;
+        private final Vec3 origin, direction, end;
+        private final double energyJ, rpm;
+        private final int blocksBroken;
+        private final BlockPos wreck;
+
+        public Excursion(ServerLevel level, BlockPos turbine, Vec3 origin, Vec3 direction, Vec3 end, double energyJ, double rpm, int blocksBroken,
+                         BlockPos wreck) {
+            this.level = level;
+            this.turbine = turbine.immutable();
+            this.origin = origin;
+            this.direction = direction;
+            this.end = end;
+            this.energyJ = energyJ;
+            this.rpm = rpm;
+            this.blocksBroken = blocksBroken;
+            this.wreck = wreck == null ? null : wreck.immutable();
+        }
+
+        public ServerLevel level() { return level; }
+        /** The LP section's controller block. */
+        public BlockPos turbine() { return turbine; }
+        /** Where the rotor half started (its seat in the casing), world coordinates. */
+        public Vec3 origin() { return origin; }
+        /** Its unit direction along the floor. */
+        public Vec3 direction() { return direction; }
+        /** Where it came to rest. */
+        public Vec3 end() { return end; }
+        /** Its energy along the floor once it was through its casing's end wall, J. */
+        public double energyJ() { return energyJ; }
+        /** Shaft speed when it broke loose, rpm. */
+        public double rpm() { return rpm; }
+        public int blocksBroken() { return blocksBroken; }
+        /** The Turbine Shaft Wreck block it lies as, or null if it was left as an item. */
+        public BlockPos wreck() { return wreck; }
+    }
+
+    /** A turbine fire started (TURBINE-MAINTENANCE.md): lube oil (a dry bearing, a cut line) or a generator's hydrogen. Posted once, when it lights. */
+    public static final class Fire extends Event {
+        private final ServerLevel level;
+        private final BlockPos at;
+        private final dev.bwr.core.turbine.TurbineFire.Kind kind;
+        private final double fuel;
+
+        public Fire(ServerLevel level, BlockPos at, dev.bwr.core.turbine.TurbineFire.Kind kind, double fuel) {
+            this.level = level;
+            this.at = at.immutable();
+            this.kind = kind;
+            this.fuel = fuel;
+        }
+
+        public ServerLevel level() { return level; }
+        /** The burning section's controller block. */
+        public BlockPos at() { return at; }
+        public dev.bwr.core.turbine.TurbineFire.Kind kind() { return kind; }
+        /** What caught: oil, L, or hydrogen, kg. */
+        public double fuel() { return fuel; }
+    }
+
     static void post(Event e) {
         NeoForge.EVENT_BUS.post(e);
     }

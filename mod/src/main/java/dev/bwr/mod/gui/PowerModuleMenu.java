@@ -24,6 +24,9 @@ public class PowerModuleMenu extends BwrMenu {
     public boolean lp,coverOff,motoring,hasClose;
     public int sectionsIn,thrown;
     public double bladeA,bladeB,hoodC,reverseMW,closeAngle,closePu,shaftDamage,damage;
+    /** A wrecked casing and a fire (TURBINE-MAINTENANCE.md): the wreck level (PowerModuleBlockEntity.WRECK_*), the fire's kind (0 none, 1 oil, 2 hydrogen) and fuel. */
+    public int wreck,fire;
+    public double fireFuel;
     public String status="Waiting for server";
     public PowerModuleMenu(int id,Inventory inv,RegistryFriendlyByteBuf b){this(id,inv,b.readBlockPos(),b.readBlockPos());}
     public PowerModuleMenu(int id,Inventory inv,BlockPos root,BlockPos anchor){super(BwrMenus.POWER_MODULE.get(),id,inv,root,inv.player.level().getBlockState(root).getBlock());this.anchor=anchor.immutable();expected=inv.player.level().getBlockState(root).getBlock();}
@@ -52,6 +55,7 @@ public class PowerModuleMenu extends BwrMenu {
         sectionsIn=(m.bladeIn(0)?1:0)|(m.bladeIn(1)?2:0);thrown=(m.bladeThrown(0)?1:0)|(m.bladeThrown(1)?2:0);
         bladeA=m.blade(0);bladeB=m.blade(1);hoodC=m.hoodC;reverseMW=m.reverseMW;closeAngle=m.closeAngle();closePu=m.closeTorquePu();
         shaftDamage=m.shaftDamage();damage=m.damage();
+        wreck=m.wreck();fire=m.fire().ordinal();fireFuel=m.fireFuel();
     }
     @Override protected void writeSnapshot(FriendlyByteBuf b){
         sample();b.writeBoolean(present);if(!present)return;
@@ -64,6 +68,7 @@ public class PowerModuleMenu extends BwrMenu {
         for(boolean v:new boolean[]{lp,coverOff,motoring,hasClose})b.writeBoolean(v);
         b.writeByte(sectionsIn);b.writeByte(thrown);
         for(double v:new double[]{bladeA,bladeB,hoodC,reverseMW,closeAngle,closePu,shaftDamage,damage})b.writeDouble(v);
+        b.writeByte(wreck);b.writeByte(fire);b.writeDouble(fireFuel);
     }
     @Override protected void readSnapshot(FriendlyByteBuf b){
         present=b.readBoolean();if(!present)return;running=b.readBoolean();generator=b.readBoolean();hp=b.readBoolean();
@@ -77,6 +82,7 @@ public class PowerModuleMenu extends BwrMenu {
         sectionsIn=b.readByte();thrown=b.readByte();
         bladeA=b.readDouble();bladeB=b.readDouble();hoodC=b.readDouble();reverseMW=b.readDouble();closeAngle=b.readDouble();closePu=b.readDouble();
         shaftDamage=b.readDouble();damage=b.readDouble();
+        wreck=b.readByte();fire=b.readByte();fireFuel=b.readDouble();
     }
     @Override public void handleCommand(ServerPlayer sender,int command,int a,int unused){
         // Turbine sections have no local steam actuator; use the upstream steam valve. The generator's turning gear is the one switch here.

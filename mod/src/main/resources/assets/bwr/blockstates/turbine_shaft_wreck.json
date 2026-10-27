@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "bwr:block/turbine_shaft_wreck"
+    },
+    "axis=z": {
+      "model": "bwr:block/turbine_shaft_wreck"
+    }
+  }
+}

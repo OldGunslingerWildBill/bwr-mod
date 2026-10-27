@@ -126,6 +126,10 @@ public final class BwrBlockEntities {
             BLOCK_ENTITIES.register("turbine_stand", () -> BlockEntityType.Builder.of(dev.bwr.mod.power.TurbineStandBlockEntity::new,
                     BwrBlocks.LP_BLADE_STAND.get(), BwrBlocks.CASING_LAYDOWN_STAND.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.power.TurbineWreckBlockEntity>> TURBINE_SHAFT_WRECK =
+            BLOCK_ENTITIES.register("turbine_shaft_wreck", () -> BlockEntityType.Builder.of(dev.bwr.mod.power.TurbineWreckBlockEntity::new,
+                    BwrBlocks.TURBINE_SHAFT_WRECK.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.power.TurbineAuxBlockEntity>> TURBINE_AUX =
             BLOCK_ENTITIES.register("turbine_aux", () -> BlockEntityType.Builder.of(dev.bwr.mod.power.TurbineAuxBlockEntity::new,
                     BwrBlocks.MAIN_OIL_TANK.get(), BwrBlocks.SHAFT_OIL_PUMP.get(), BwrBlocks.GENERATOR_COOLING_SKID.get()).build(null));

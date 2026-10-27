@@ -156,6 +156,11 @@ final class PlantSignals {
             .boolOrNone("vibration_alarm", "Vibration alarm", be -> be.aux().bowGoverned ? (be.aux().vibrationAlarm ? 1 : 0) : Double.NaN)
             .boolOrNone("winding_alarm", "Winding temperature alarm", be -> be.block().generator() && be.aux().genGoverned ? (be.aux().windingAlarm ? 1 : 0) : Double.NaN)
             .boolOrNone("h2_alarm", "Hydrogen pressure alarm", be -> be.block().generator() && be.aux().genGoverned ? (be.aux().h2Alarm ? 1 : 0) : Double.NaN)
+            // A wrecked casing and a fire (TURBINE-MAINTENANCE.md): readings for a panel or a program; nothing acts on them.
+            .bool("fire", "Turbine fire", PowerModuleBlockEntity::burning)
+            .number("fire_fuel", "Fire fuel left (oil L, hydrogen kg)", "", 0, 20_000, PowerModuleBlockEntity::fireFuel)
+            .bool("wrecked", "Casing wrecked (burst or shaft out)", PowerModuleBlockEntity::wrecked)
+            .number("wreck", "Wreck: 0 sound, 1 holed, 2 burst, 3 shaft out", "", 0, 3, PowerModuleBlockEntity::wreck)
             .toggle("turning_gear", "Turning gear on / off", (be, v) -> be.setTurningGear(v >= 0.5));
 
     /** The Main Oil Tank. Its pumps are the player's switches. */

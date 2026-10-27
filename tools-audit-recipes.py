@@ -55,6 +55,8 @@ NO_RECIPE = {
     # Their drops (raw uranium, with Fortune and Silk Touch) are in data/bwr/loot_table/blocks.
     "uranium_ore": "natural ore, placed by world generation; mined for raw uranium (silk touch gives the block)",
     "damaged_lp_blade_section": "comes out of an LP turbine on the crane's hook (BLADES OUT); scrapped by its own recipe",
+    "wrecked_lp_turbine_hood": "comes off a holed or burst LP turbine on the crane's hook (COVER OFF); scrapped by its own recipe",
+    "turbine_shaft_wreck": "the rotor half a shaft excursion leaves on the floor; a recipe for it would make a wreck out of nothing",
     "deepslate_uranium_ore": "natural ore in deepslate, placed by world generation; mined for raw uranium (silk touch gives the block)",
     # Found in the ground, as the uranium ores are: thorium ore (monazite and thorite in rock) and monazite sand (a beach and river placer).
     # Their drops are in data/bwr/loot_table/blocks (raw thorium, with Fortune and Silk Touch, and the byproducts); see THORIUM.md.
