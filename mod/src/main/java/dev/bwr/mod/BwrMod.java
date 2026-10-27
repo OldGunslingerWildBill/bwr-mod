@@ -122,6 +122,7 @@ public final class BwrMod {
         dev.bwr.mod.rwcu.SpentResinItem.register();
         dev.bwr.mod.radiation.RadiumItem.register();
         dev.bwr.mod.isotope.CarriedIsotopes.register();
+        dev.bwr.mod.fuel.CarriedFuel.register();
         dev.bwr.mod.rwcu.CoolantCrudRadiation.register();
         dev.bwr.mod.refuelling.EquipmentPadBlockEntity.registerRadiation();
         computerCraftPresent = ModList.get().isLoaded(CC_MOD_ID);

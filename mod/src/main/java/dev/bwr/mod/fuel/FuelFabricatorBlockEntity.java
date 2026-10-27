@@ -162,6 +162,12 @@ public class FuelFabricatorBlockEntity extends BlockEntity {
             // Nothing may be inserted: this slot is where bundles appear.
             return false;
         }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            // One assembly at a time: the machine makes the next only once this one has been taken.
+            return 1;
+        }
     };
 
     /**

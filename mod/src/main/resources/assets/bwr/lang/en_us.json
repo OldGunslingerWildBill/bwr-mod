@@ -783,6 +783,8 @@
   "status.bwr.spent_fuel_pool.cooling": "Cooling pump %s, %s MW removed, %s FE stored.",
   "status.bwr.fuel_assembly_item.decay_heat": "Decay heat %s kW, out of a core for %s",
   "status.bwr.fuel_assembly_item.decay_heat_unrecorded": "No discharge time recorded: long-cooled, %s kW decay heat",
+  "status.bwr.fuel_assembly_item.stack_decay_heat": "Stack of %s: %s kW of decay heat in all",
+  "status.bwr.fuel_assembly_item.lethal_to_carry": "Lethal to carry in the open; a stack gives off the dose and heat of every assembly in it.",
   "status.bwr.reprocessing_plant.backed_up": "A product is piling up: take the outputs and the plant will go on.",
   "status.bwr.isotope_separator.empty": "No waste in the separator",
   "status.bwr.isotope_separator.input": "%s waste, %s%% of the work done",

@@ -7,6 +7,31 @@ rod cassettes, empty irradiation rods, target charges and samples, and the three
 are small PNGs rendered from the Blender studio in `art/models/fuel_icons/`.
 Items still represent one logical core position, not a placeable fuel block.
 
+### Assemblies as items: stacks
+
+Fuel assemblies and specialty rods stack to 64 in ordinary item storage and
+transport (a pocket, a chest, a hopper, a pipe, a logistical transporter, a
+dropped stack), for bulk moving. Only identical items merge: vanilla merges
+stacks whose data components are equal, so two assemblies with different burnup,
+enrichment or discharge time stay apart. In practice that is fresh fuel of one
+grade, and spent fuel that was unloaded together with the same exposure. Every
+place that holds one physical assembly takes exactly one from a stack and leaves
+the rest where it was: a core position (the refuelling map's load, batch load and
+unload), a rack cell (right-click, the pool's item handler, the bridge, the
+elevator), the bridge grapple, the elevator's hatch and trip, and the
+reprocessing plant's input slot (its `getSlotLimit` is 1, as is the fabricator's
+output slot, so a pipe or a shift-click of a stack leaves one in the slot).
+
+A stack is as hot and as radioactive as all the assemblies in it.
+`SpentFuelHeat.decayWatts(stack)` is the decay power of every assembly in the
+stack, and the assemblies a player carries are a radiation source at the player
+(`fuel/CarriedFuel.java`, `bwr:carried_fuel`, the gamma share of that decay
+heat), as is a dropped stack where it lies. Sixty-four fresh discharges in a
+pocket are sixty-four times the source of one; that, not a stack limit, is what
+makes carrying spent fuel by hand a bad idea. Fresh fuel reads nothing. A spent
+assembly above 100 W of decay heat says so on its tooltip, and a stack shows its
+total decay heat beside the per-assembly figure.
+
 ## Fuel catalogue
 
 | Family | Available grades | Meaning |

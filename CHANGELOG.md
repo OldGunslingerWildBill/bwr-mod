@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased: fuel assemblies stack for bulk moving
+
+Fuel assemblies and specialty rods stack to 64 wherever items are ordinarily kept and moved: a pocket, a chest, a hopper,
+a pipe or a logistical transporter, a dropped stack. Only identical ones merge (vanilla merges stacks whose components are
+equal), so two assemblies with different burnup, enrichment or discharge time stay apart as they always did; what stacks
+is fresh fuel of one grade, and spent fuel that left the core together with the same exposure. Nothing about the physics
+changed: burnup still lives on the item.
+
+- **One assembly per position, from any stack.** A core position (the refuelling map's load, its batch load and its
+  unload), a rack cell (right-click, the pool's item handler, the bridge, the elevator), the grapple, the elevator's hatch
+  and trip, and the reprocessing plant's input slot each take exactly one assembly from a stack and leave the rest where it
+  was. The reprocessing input and the fabricator output say they hold one (`getSlotLimit` 1), so a pipe or a shift-click
+  of a stack leaves one in the slot; before, the plant's input would have taken a whole stack and `commit` emptied the
+  slot after splitting one assembly, which would have deleted the others. It now extracts the one it split.
+- **Dose and heat count every assembly in a stack.** `SpentFuelHeat.decayWatts(stack)` is the power of all the assemblies
+  in the stack (`decayWattsEach` is one of them; a rack cell, the grapple and the plant's slot hold one, so their numbers
+  are unchanged). New radiation source `bwr:carried_fuel` (`fuel/CarriedFuel.java`): the assemblies a player carries are a
+  point source at the player and a dropped stack is one where it lies, with the gamma share of the decay heat of every
+  assembly in the stack. A stack of 64 fresh discharges in a pocket is 64 times the source of one, which is the point:
+  the deterrent to carrying spent fuel by hand is the dosimeter, not a stack limit. Fresh fuel reads nothing. Chests and
+  other inventories still read nothing (there was no stored-item source before either).
+- **Tooltip.** A stack of spent assemblies shows its total decay heat beside the per-assembly figure, and any spent
+  assembly above 100 W of decay heat carries a red line that it is lethal to carry in the open and that a stack gives off
+  the dose of every assembly in it.
+- Saves: an assembly saved as a stack of one loads as before; nothing is rewritten.
+- Tests (`FuelStackTests`, `bwrpool`): fresh assemblies merge in a player inventory and a chest and a hopper moves the
+  stack chest to chest; two identical hot spent assemblies merge and the carried and dropped dose of the stack is twice
+  that of one, as is the decay heat; every one-assembly position fed a stack of several takes exactly one with the total
+  count unchanged (core map load, shift-click and batch load, rack cell by handler and by right-click, elevator hatch by
+  handler and right-click and its trip, bridge grapple, reprocessing by pipe and by shift-click, fabricator output); and
+  an unload into a full inventory drops the assembly rather than losing it.
+
 ## Unreleased: flaky GameTests round 3 (the level clock, and a release angle)
 
 Test-only; no game behaviour changed. Two tests failed now and then.

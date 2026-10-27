@@ -381,16 +381,22 @@ public final class BwrItems {
     /**
      * One fuel bundle. Not a block: assemblies live in inventories and get
      * shuffled between core positions, and everything that has happened to one
-     * rides along in its {@code bwr:fuel_assembly} data component. Stack size 1
-     * because two bundles with different exposure are not interchangeable — that
-     * is the entire mechanic (SPEC 2.3).
+     * rides along in its {@code bwr:fuel_assembly} data component. Stacks to 64 for
+     * bulk moving (chests, hoppers, pipes, a pocket), and only identical bundles
+     * merge: vanilla merges stacks with equal components, so two bundles with
+     * different exposure or discharge time stay apart — that is the entire
+     * mechanic (SPEC 2.3). Every place that holds one physical assembly (a core
+     * position, a rack cell, the grapple, the elevator, a machine slot) takes
+     * exactly one from a stack. A stack gives off the dose and heat of all its
+     * bundles ({@link dev.bwr.mod.fuel.CarriedFuel}).
      */
     public static final DeferredItem<FuelAssemblyItem> FUEL_ASSEMBLY =
             ITEMS.register("fuel_assembly",
-                    () -> new FuelAssemblyItem(new Item.Properties().stacksTo(1)));
+                    () -> new FuelAssemblyItem(new Item.Properties()));
 
+    /** A non-fuel cassette; stacks to 64 like the assemblies, and only cassettes with the same kind and progress merge. */
     public static final DeferredItem<dev.bwr.mod.fuel.SpecialtyRodItem> SPECIALTY_ROD =
-            ITEMS.register("specialty_rod", () -> new dev.bwr.mod.fuel.SpecialtyRodItem(new Item.Properties().stacksTo(1)));
+            ITEMS.register("specialty_rod", () -> new dev.bwr.mod.fuel.SpecialtyRodItem(new Item.Properties()));
     public static final DeferredItem<Item> IRRADIATION_CASING = ITEMS.registerSimpleItem("irradiation_casing");
     public static final DeferredItem<Item> COBALT_CHARGE = ITEMS.registerSimpleItem("cobalt_charge");
     public static final DeferredItem<Item> LITHIUM_CHARGE = ITEMS.registerSimpleItem("lithium_charge");

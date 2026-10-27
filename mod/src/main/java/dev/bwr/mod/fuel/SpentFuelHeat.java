@@ -43,8 +43,18 @@ public final class SpentFuelHeat {
         return Math.max(0L, gameTime - stamp) / (double) TICKS_PER_SECOND;
     }
 
-    /** Decay power of the assembly in this stack at {@code gameTime}, W; zero for anything that is not an assembly. */
+    /**
+     * Decay power of the assemblies in this stack at {@code gameTime}, W: the power of one times the count, since
+     * assemblies stack as items and every bundle in a stack is a whole bundle. Zero for anything that is not an
+     * assembly. The one-assembly positions (a rack cell, the grapple, the elevator, the reprocessing slot) hold stacks
+     * of one, so for them this is the power of the assembly.
+     */
     public static double decayWatts(ItemStack stack, long gameTime) {
+        return decayWattsEach(stack, gameTime) * stack.getCount();
+    }
+
+    /** Decay power of one assembly of this stack at {@code gameTime}, W, whatever the count; zero for anything that is not an assembly. */
+    public static double decayWattsEach(ItemStack stack, long gameTime) {
         if (stack.isEmpty() || !stack.is(BwrItems.FUEL_ASSEMBLY.get())) {
             return 0.0;
         }
@@ -62,6 +72,8 @@ public final class SpentFuelHeat {
         private final AssemblyDecayHeat.Curve curve;
         private final long stamp;
         private final boolean assembly;
+        /** How many assemblies the stack held (a rack cell holds one): {@link #watts} is the power of them all. */
+        private final int count;
         /** The assembly's burnup, MWd/t. */
         public final double burnupMwdPerTonne;
         /** Heavy metal, kg. */
@@ -71,6 +83,7 @@ public final class SpentFuelHeat {
 
         public Curve(ItemStack stack) {
             assembly = !stack.isEmpty() && stack.is(BwrItems.FUEL_ASSEMBLY.get());
+            count = assembly ? stack.getCount() : 0;
             stamp = dischargeTime(stack);
             FuelAssemblyData data = assembly ? FuelAssemblies.dataOf(stack) : null;
             burnupMwdPerTonne = data == null ? 0.0 : data.burnupMwdPerTonne();
@@ -86,9 +99,9 @@ public final class SpentFuelHeat {
             return Math.max(0L, gameTime - stamp) / (double) TICKS_PER_SECOND;
         }
 
-        /** Decay power at {@code gameTime}, W: what {@link SpentFuelHeat#decayWatts} gives for the stack. */
+        /** Decay power at {@code gameTime}, W: what {@link SpentFuelHeat#decayWatts} gives for the stack (all its assemblies). */
         public double watts(long gameTime) {
-            return assembly ? curve.powerWatts(coolingSeconds(gameTime)) : 0.0;
+            return assembly ? curve.powerWatts(coolingSeconds(gameTime)) * count : 0.0;
         }
 
         /** Whether the stack carried a discharge stamp. */

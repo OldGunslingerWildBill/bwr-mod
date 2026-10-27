@@ -30,7 +30,9 @@
         "0.71 % (natural): 4     2.70 %: 22     3.50 %: 29",
         "4.95 %: 41     8.00 %: 68     20 %: 172",
         "",
-        "Every assembly also takes 4 steel. Raw uranium counts as one ingot. The fabricator needs power, and hoppers and pipes can feed it. A Mekanism chemical route is still there."
+        "Every assembly also takes 4 steel. Raw uranium counts as one ingot. The fabricator needs power, and hoppers and pipes can feed it. A Mekanism chemical route is still there.",
+        "",
+        "Assemblies stack to 64; only identical ones merge. A stack of spent fuel gives off the dose of every assembly in it: keep spent fuel under water."
       ],
       "icons": [
         "bwr:fuel_fabricator",
