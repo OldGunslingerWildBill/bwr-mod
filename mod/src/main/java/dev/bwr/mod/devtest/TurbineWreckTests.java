@@ -323,7 +323,9 @@ public final class TurbineWreckTests {
             f.tick(1);
             h.assertTrue(f.lp.wrecked(), "the disc burst");
             f.rpm(0);
-            var player = FakePlayerFactory.getMinecraft(f.l);
+            // a fake player of this test's own, in survival: the shared Minecraft fake player is left in creative by other tests
+            var player = FakePlayerFactory.get(f.l, new com.mojang.authlib.GameProfile(java.util.UUID.nameUUIDFromBytes("bwr-turbine-rebuild".getBytes()), "bwr_turbine_rebuild"));
+            player.getAbilities().instabuild = false;
             var kit = new ItemStack(BwrItems.TURBINE_REBUILD_KIT.get(), 2);
             h.assertTrue(english(f.lp.rebuildProblem()).contains("hood off"), "an LP is rebuilt open: " + english(f.lp.rebuildProblem()));
             h.assertTrue(f.crane.queueCover(true, null) == null, "COVER OFF of the wrecked LP queued");

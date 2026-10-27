@@ -558,7 +558,9 @@ public final class FuelFabricatorItemRouteTests {
                 // reactor-bred (BREEDING-TARGETS.md): made by irradiating a target; bismuth is a byproduct of mining uranium ore
                 "uranium_233_ingot", "neptunium_237_ingot", "bismuth_nugget",
                 // the turbine hall (TURBINE-MAINTENANCE.md): a damaged blade section only comes out of a turbine
-                "damaged_lp_blade_section"));
+                "damaged_lp_blade_section",
+                // a wrecked hood only comes off a holed or burst LP; a shaft wreck only comes out of a shaft excursion
+                "wrecked_lp_turbine_hood", "turbine_shaft_wreck"));
         for (var id : BuiltInRegistries.ITEM.keySet()) {
             if (!id.getNamespace().equals("bwr")) {
                 continue;

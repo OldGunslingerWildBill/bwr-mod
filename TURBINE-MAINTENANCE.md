@@ -237,7 +237,8 @@ section. Or cut it up where it lies: broken with a pickaxe (iron or better) it d
   `motoring`, `lastCloseAngleDegrees` and `lastCloseTorquePu` (after a close), and on an LP `coverOff`, `hoodTempC`, `bladeDamageA`,
   `bladeDamageB` and `bladeSections` (a list of `{flow, installed, damage, bladeThrown}`). `damage` and `failed` keep their meaning (on an LP
   the worse of the shaft and the blades). Every section adds `wreck` (`none`, `holed`, `burst`, `shaft_out`), `wrecked` and `fire`, and
-  while it burns `fireKind` (`oil` or `hydrogen`) and `fireFuel` (L or kg).
+  while it burns `fireKind` (`oil` or `hydrogen`) and `fireFuel` (L or kg). A Turbine Shaft Wreck is `bwr_turbine_shaft_wreck`
+  (`getStatus()`: `axis`, `massT`, and the `turbine` and `flow` it came from).
 - **Crane peripheral** (`bwr_building_crane`): `queueCoverOff([x, y, z])`, `queueCoverOn([x, y, z])`, `queueBladesOut([x, y, z])`,
   `queueBladesIn([x, y, z])` (no arguments: the nearest LP that wants it; with any block of an LP: that one; `queueBladesOut` with a
   Turbine Shaft Wreck's block lifts that wreck, and with no arguments the nearest wreck when no open LP has a section), each `{ok, message}`;
