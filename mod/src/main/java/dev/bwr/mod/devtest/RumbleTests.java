@@ -418,8 +418,11 @@ public final class RumbleTests {
     public static void aBowedRotorMakesItsTrainRumbleAndAStraightOneOnlyHums(GameTestHelper h) {
         var root = new BlockPos(88000 + SHIFT, 245, 88000);
         var l = h.getLevel();
-        long time = l.getGameTime();
         EntityLookupProbe.runWhenLive(h, TurbineAuxTests.Fx.bounds(root), () -> {
+            // The clock is restored to what it is now, when the body starts: the wait for the chunks has gone by on the real clock,
+            // and putting back the time from before it would turn the level clock back by that many ticks for every other GameTest
+            // of the batch (their delays and waits run on it, and items they dropped keep falling on the real ticks).
+            long time = l.getGameTime();
             TurbineAuxTests.Fx f = null;
             RumbleServer.clearAll();
             try {

@@ -150,6 +150,26 @@ public final class TurbineMaintenanceTests {
             }
         }
 
+        /**
+         * The burst picks its release angle from the position and the game time ({@link TurbineMissile#pickAngle}), and the game
+         * time a test starts at is whatever the server has reached. The shell is one cell grid 1.5 blocks thick, so a piece flying
+         * along a diagonal of it can thread just one cell of it (about one angle in six does), where a piece flying along an axis of
+         * the wheel meets two. This moves the clock on, never back, to the first tick at which the next {@link #tick} picks an angle
+         * within 0.12 rad of an axis, so the test meets the same geometry every run.
+         */
+        void timeForAngleAlongAnAxisOfTheWheel() {
+            for (long next = t + 1; next < t + 10_000; next++) {
+                ((net.minecraft.world.level.storage.ServerLevelData) l.getLevelData()).setGameTime(next);
+                double a = TurbineMissile.pickAngle(l, lp.getBlockPos());
+                double fromAxis = Math.abs(a - Math.rint(a / (Math.PI / 2)) * (Math.PI / 2));
+                if (fromAxis < 0.12) {
+                    t = next - 1;
+                    return;
+                }
+            }
+            throw new IllegalStateException("no game time within 10000 ticks gives an angle along an axis of the wheel");
+        }
+
         void edit(BlockEntity be, Consumer<CompoundTag> change) {
             var tag = be.saveWithoutMetadata(l.registryAccess());
             change.accept(tag);
@@ -211,8 +231,11 @@ public final class TurbineMaintenanceTests {
 
     private static void run(GameTestHelper h, BlockPos root, AABB bounds, Body body) {
         var l = h.getLevel();
-        long time = l.getGameTime();
         EntityLookupProbe.runWhenLive(h, bounds, () -> {
+            // The clock is restored to what it is now, when the body starts: the wait for the chunks has gone by on the real clock,
+            // and putting back the time from before it would turn the level clock back by that many ticks for every other GameTest
+            // of the batch (their delays and waits run on it, and items they dropped keep falling on the real ticks).
+            long time = l.getGameTime();
             Hall f = null;
             try {
                 f = new Hall(l, root);
@@ -485,6 +508,7 @@ public final class TurbineMaintenanceTests {
         run(h, at(7), f -> {
             List<BlockPos> stone = shell(f);
             f.rpm(TurbineBlades.BURST_RPM + 10);
+            f.timeForAngleAlongAnAxisOfTheWheel();
             f.tick(1);
             h.assertTrue(f.lp.bladesThrownCount() == 2 && f.lp.shaftDamage() == 1, "a disc burst wrecks the section");
             int broken = stone.size() - standing(f, stone);
