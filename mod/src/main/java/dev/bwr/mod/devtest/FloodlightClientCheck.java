@@ -36,7 +36,9 @@ import java.util.List;
  * turbine-hall-like space with a pool, machinery and a gallery) lit only by four xenon floodlights on the walls, four xenon
  * high-bays and four HPS flat panels under the ceiling. Pictures of every lamp on from three places, then each type alone
  * from the same place, then all off, saved at 1920 x 1080 to {@code run/turbineModelCheck/floodlight-check/<vanilla|shaders>/}
- * (the folder says whether a shader pack was in use). Not shipped: the devtest package is excluded from the release jar.
+ * (the folder says whether a shader pack was in use). A second, big hall (80 x 24 x 56, a high-bay and wall-mounted HPS panel
+ * hall) is lit by the high-bays alone, the HPS panels alone and both, to show how far the two lamps throw their light. Not
+ * shipped: the devtest package is excluded from the release jar.
  */
 @EventBusSubscriber(modid = "bwr", value = Dist.CLIENT)
 public final class FloodlightClientCheck {
@@ -44,8 +46,17 @@ public final class FloodlightClientCheck {
     private static final int Y = 120;
     private static final int IN = 40;
 
-    private record Stage(String name, boolean flood, boolean bay, boolean hps, Vec3 camera, Vec3 target) {
+    private record Stage(String name, boolean flood, boolean bay, boolean hps, Vec3 camera, Vec3 target, boolean big) {
+        Stage(String name, boolean flood, boolean bay, boolean hps, Vec3 camera, Vec3 target) {
+            this(name, flood, bay, hps, camera, target, false);
+        }
     }
+
+    /** The big hall: its inside is x BX to BX + 79, z 1 to 56, y Y to Y + 23; the ceiling is Y + 24. */
+    private static final int BX = 200, BW = 80, BD = 56, BH = 24;
+    private static final Vec3 BIG_CORNER = new Vec3(BX + 3.5, Y + 18.0, 3.5), BIG_CORNER_TARGET = new Vec3(BX + 52.5, Y, 40.5);
+    private static final Vec3 BIG_END = new Vec3(BX + 2.5, Y + 1.6, 28.5), BIG_END_TARGET = new Vec3(BX + 79.0, Y + 3.0, 28.5);
+    private static final Vec3 BIG_HIGH = new Vec3(BX + 40.5, Y + 21.0, 28.5), BIG_HIGH_TARGET = new Vec3(BX + 40.5, Y, 28.0);
 
     private static final Vec3 CORNER = new Vec3(3.5, Y + 9.0, 3.5), CORNER_TARGET = new Vec3(27.5, Y, 27.5);
     private static final Vec3 FLOOR = new Vec3(18.5, Y + 0.2, 2.5), FLOOR_TARGET = new Vec3(12.5, Y + 1.5, 30.5);
@@ -62,6 +73,13 @@ public final class FloodlightClientCheck {
             new Stage("room-xenon-high-bays-only", false, true, false, CORNER, CORNER_TARGET),
             new Stage("room-hps-flat-panels-only", false, false, true, CORNER, CORNER_TARGET),
             new Stage("room-all-off", false, false, false, CORNER, CORNER_TARGET),
+            new Stage("bighall-high-bays-corner", false, true, false, BIG_CORNER, BIG_CORNER_TARGET, true),
+            new Stage("bighall-hps-panels-corner", false, false, true, BIG_CORNER, BIG_CORNER_TARGET, true),
+            new Stage("bighall-both-corner", false, true, true, BIG_CORNER, BIG_CORNER_TARGET, true),
+            new Stage("bighall-high-bays-along-the-floor", false, true, false, BIG_END, BIG_END_TARGET, true),
+            new Stage("bighall-hps-panels-along-the-floor", false, false, true, BIG_END, BIG_END_TARGET, true),
+            new Stage("bighall-high-bays-from-above", false, true, false, BIG_HIGH, BIG_HIGH_TARGET, true),
+            new Stage("bighall-all-off", false, false, false, BIG_CORNER, BIG_CORNER_TARGET, true),
     };
 
     private static boolean started, requested, built;
@@ -74,6 +92,7 @@ public final class FloodlightClientCheck {
     }
 
     private static final List<Fixture> FLOODS = new ArrayList<>(), BAYS = new ArrayList<>(), PANELS = new ArrayList<>();
+    private static final List<Fixture> BIG_BAYS = new ArrayList<>(), BIG_PANELS = new ArrayList<>();
 
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post event) throws Exception {
@@ -112,10 +131,13 @@ public final class FloodlightClientCheck {
                 if (!built) {
                     built = true;
                     buildHall(level);
+                    buildBigHall(level);
                 }
-                switchAll(level, FLOODS, st.flood());
-                switchAll(level, BAYS, st.bay());
-                switchAll(level, PANELS, st.hps());
+                switchAll(level, FLOODS, !st.big() && st.flood());
+                switchAll(level, BAYS, !st.big() && st.bay());
+                switchAll(level, PANELS, !st.big() && st.hps());
+                switchAll(level, BIG_BAYS, st.big() && st.bay());
+                switchAll(level, BIG_PANELS, st.big() && st.hps());
                 Vec3 delta = st.target().subtract(st.camera().add(0, player.getEyeHeight(), 0));
                 float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90);
                 float pitch = (float) -Math.toDegrees(Math.atan2(delta.y, Math.hypot(delta.x, delta.z)));
@@ -132,9 +154,10 @@ public final class FloodlightClientCheck {
         mc.player.setXRot((float) -Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z))));
         mc.player.yRotO = mc.player.getYRot();
         mc.player.xRotO = mc.player.getXRot();
+        BlockPos probe = st.big() ? BIG_BAYS.get(0).lamp() : FLOODS.isEmpty() ? BlockPos.ZERO : FLOODS.get(0).lamp();
         boolean ready = mc.screen == null && Math.abs(mc.player.getY() - st.camera().y) < 0.5
-                && mc.level.getBlockEntity(FLOODS.isEmpty() ? BlockPos.ZERO : FLOODS.get(0).lamp()) instanceof BeamLampBlockEntity lamp
-                && lamp.lit() == st.flood();
+                && mc.level.getBlockEntity(probe) instanceof BeamLampBlockEntity lamp
+                && lamp.lit() == (st.big() ? st.bay() : st.flood());
         if (ready && ++shown > 120) {
             String kind = RenderEnvironment.shaderPackInUse() ? "shaders" : "vanilla";
             var dir = mc.gameDirectory.toPath().resolve("floodlight-check").resolve(kind);
@@ -238,6 +261,76 @@ public final class FloodlightClientCheck {
         for (int[] p : new int[][] {{20, 6}, {21, 35}, {6, 21}, {35, 20}}) {
             fixed(level, PANELS, BwrBlocks.HPS_FLAT_PANEL.get(), p[0], p[1]);
         }
+    }
+
+    /**
+     * The big hall: a concrete shell with a chequered floor, a column line, two long machine casings, eight xenon high-bays
+     * 23 up under the ceiling and four HPS flat panels 14 up on the two long walls, aimed out over the floor.
+     */
+    private static void buildBigHall(ServerLevel level) {
+        BlockState wall = Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState();
+        for (int x = BX - 1; x <= BX + BW; x++) {
+            for (int z = 0; z <= BD + 1; z++) {
+                for (int y = Y - 1; y <= Y + BH; y++) {
+                    boolean shell = x == BX - 1 || x == BX + BW || z == 0 || z == BD + 1 || y == Y - 1 || y == Y + BH;
+                    BlockState s;
+                    if (!shell) {
+                        s = Blocks.AIR.defaultBlockState();
+                    } else if (y == Y - 1) {
+                        s = ((x - BX) / 4 + z / 4) % 2 == 0 ? Blocks.POLISHED_ANDESITE.defaultBlockState() : Blocks.SMOOTH_STONE.defaultBlockState();
+                    } else if (y == Y + BH) {
+                        s = ((x - BX) % 10 == 0 || z % 10 == 0) ? Blocks.GRAY_CONCRETE.defaultBlockState() : Blocks.SMOOTH_STONE.defaultBlockState();
+                    } else {
+                        s = wall;
+                    }
+                    set(level, x, y, z, s);
+                }
+            }
+        }
+        for (int x = BX + 5; x < BX + BW; x += 10) {
+            for (int y = Y; y < Y + BH; y++) {
+                set(level, x, y, BD / 2, Blocks.GRAY_CONCRETE.defaultBlockState());
+            }
+        }
+        for (int row = 0; row < 2; row++) {
+            int z0 = row == 0 ? 9 : 40;
+            for (int x = BX + 8; x <= BX + BW - 9; x++) {
+                for (int z = z0; z <= z0 + 5; z++) {
+                    for (int y = Y; y <= Y + 4; y++) {
+                        if (y == Y + 4 || z == z0 || z == z0 + 5 || x == BX + 8 || x == BX + BW - 9) {
+                            set(level, x, y, z, (x % 7 == 0) ? Blocks.CYAN_TERRACOTTA.defaultBlockState() : Blocks.LIGHT_BLUE_TERRACOTTA.defaultBlockState());
+                        }
+                    }
+                }
+            }
+        }
+        for (int gx = 0; gx < 4; gx++) {
+            for (int gz = 0; gz < 2; gz++) {
+                bigFixed(level, BwrBlocks.XENON_HIGH_BAY.get(), BX + 10 + gx * 20, Y + BH - 1, 14 + gz * 28);
+            }
+        }
+        // HPS panels on the long walls (z = 1 and z = BD), 14 up, facing in; the power block is the wall block behind.
+        for (int x : new int[] {BX + 20, BX + 60}) {
+            bigWallPanel(level, new BlockPos(x, Y + 14, 1), Direction.SOUTH);
+            bigWallPanel(level, new BlockPos(x, Y + 14, BD), Direction.NORTH);
+        }
+    }
+
+    private static void bigFixed(ServerLevel level, Block block, int x, int y, int z) {
+        BlockPos lamp = new BlockPos(x, y, z);
+        level.setBlock(lamp, block.defaultBlockState().setValue(FacingBeamLampBlock.FACING, Direction.DOWN), 3);
+        BlockPos ceilingBlock = lamp.above();
+        BIG_BAYS.add(new Fixture(lamp, ceilingBlock, ceilingBlock.above(), Blocks.LEVER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.FLOOR)));
+    }
+
+    private static void bigWallPanel(ServerLevel level, BlockPos lamp, Direction facing) {
+        level.setBlock(lamp, BwrBlocks.HPS_FLAT_PANEL.get().defaultBlockState().setValue(FacingBeamLampBlock.FACING, facing), 3);
+        BlockPos behind = lamp.relative(facing.getOpposite());
+        Direction out = facing.getOpposite();
+        BIG_PANELS.add(new Fixture(lamp, behind, behind.relative(out), Blocks.LEVER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.WALL)
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACING, out)));
     }
 
     /** A floodlight on a bracket; {@code power} is the wall block behind it. */

@@ -17,11 +17,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * The high-pressure sodium flat panel: a flat rectangular industrial fixture for a ceiling or a wall, golden white (the HPS
- * colour, #FFCE80). Its 120-degree, 24-block beam floods the area in front of it (see {@link XenonBeam}).
+ * colour, #FFCE80). Its 130-degree main beam floods the area in front of it at full light; a spill zone out to 160 degrees
+ * lights what lies past the beam at four fifths of that, and the whole reaches 40 blocks (see {@link XenonBeam}).
  *
  * <p>An HPS arc warms up for minutes. Scaled like the HPS lamps (20 s), the panel strikes at light 4 and steps to 8, 12 and
  * 15 on three scheduled ticks about 6.7 s apart. The projected light follows the same steps (the lights are re-levelled
- * in place, never moved), so the room brightens in four steps. There is no hot-restrike wait: switched off, it strikes
+ * in place, never moved; the spill lights follow at four fifths of the beam's level), so the room brightens in four steps. There is no hot-restrike wait: switched off, it strikes
  * again at once.
  */
 public class HpsFlatPanelBlock extends FacingBeamLampBlock {
@@ -72,12 +73,17 @@ public class HpsFlatPanelBlock extends FacingBeamLampBlock {
 
     @Override
     public double range() {
-        return 24;
+        return 40;
     }
 
     @Override
     public double halfAngleDegrees() {
-        return 60;
+        return 65;
+    }
+
+    @Override
+    public double spillAngleDegrees() {
+        return 80;
     }
 
     @Override

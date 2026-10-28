@@ -134,24 +134,52 @@ six pictures and logs the light at each lamp.
 # Beam lamps (xenon floodlight, xenon high-bay, HPS flat panel)
 
 Three redstone lamps that throw light where their beam lands, by placing invisible vanilla `minecraft:light` blocks. Code
-is in `dev.bwr.mod.floodlight`, the tests are `FloodlightTests` (namespace `bwrfloodlight`, run with
-`-PbwrGameTestNamespaces=bwrfloodlight`), the pictures `FloodlightClientCheck` (`-PbwrFloodlightClientCheck`).
+is in `dev.bwr.mod.floodlight`, the tests are `FloodlightTests` and `FloodlightReachTests` (namespace `bwrfloodlight`,
+run with `-PbwrGameTestNamespaces=bwrfloodlight`), the pictures `FloodlightClientCheck` (`-PbwrFloodlightClientCheck`).
 
-| Block | Mount | Range | Cone (full angle) | Light |
-|---|---|---|---|---|
-| `bwr:xenon_floodlight` | stands on any block; aimable (45-degree yaw, pitch -75 to +30 in 15-degree steps) | 32 | 30 degrees | cold white, at once |
-| `bwr:xenon_high_bay` | ceiling | 24 | 110 degrees | cold white, at once |
-| `bwr:hps_flat_panel` | ceiling or wall | 24 | 120 degrees | golden `#FFCE80`, warms 4/8/12/15 over about 20 s |
+| Block | Mount | Range | Main beam (full angle) | Spill zone (full angle) | Light |
+|---|---|---|---|---|---|
+| `bwr:xenon_floodlight` | stands on any block; aimable (45-degree yaw, pitch -75 to +30 in 15-degree steps) | 32 | 30 degrees | none | cold white, at once |
+| `bwr:xenon_high_bay` | ceiling | 48 | 110 degrees | out to 160 degrees | cold white, at once |
+| `bwr:hps_flat_panel` | ceiling or wall | 40 | 130 degrees | out to 160 degrees | golden `#FFCE80`, warms 4/8/12/15 over about 20 s |
 
-- **Projection.** A fan of rays (at most 2048) over the cone walks the grid to the first opaque block; the last free cell
-  in front of it (within 2.5 blocks) gets a light. Cells are thinned to one per 2-block lattice box, widening up to 6, so
-  a lamp places at most **256** lights.
+- **Projection.** A fan of rays over the cone walks the grid to the first opaque block; the last free cell in front of it
+  (within 2.5 blocks) gets a light. A lamp with no spill zone (the floodlight) casts up to 2048 rays, thins the landing
+  cells to one per 2-block lattice box and widens the box up to 6 until the plan fits. A lamp places at most **256**
+  lights.
+- **Reach and spill (high-bay, HPS panel).** These two hang tens of blocks up over a big floor, so they reach 48 and 40
+  blocks (the floor of a hall 30 up is lit out to 37 blocks from under the high-bay) and cast 1024 rays over 160 degrees,
+  thicker towards the edge of the cone. The cells the rays outside the main beam land on are the **spill zone**: their
+  lights are four fifths of the beam's level (15 becomes 12; the HPS warm-up 4, 8, 12, 15 gives spill 3, 6, 10, 12), so the
+  beam stays the bright centre and the pool has no hard dark edge. Past the cone, light only falls off at one level a
+  block, so a hard edge of light 15 would leave a dark ring. The lattice box grows with the distance from the lens, from 2
+  up to 6, as coarse as the cap needs and no coarser (dense under the lamp, sparse far off). Block light over the floor
+  of a flat hall, lowest and mean over 4 blocks of horizontal distance, high-bay 12 up (before: 24 blocks of range, no
+  spill):
+
+  | Distance | 0 | 8 | 12 | 16 | 20 | 24 | 28 | 32 | 36 | 40 | 44 | 48 |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | before | 13/14.2 | 13/14.1 | 13/14.1 | 9/12.1 | 4/7.6 | 0/3.0 | 0/0.2 | 0/0.0 | 0/0.0 | 0/0.0 | 0/0.0 | 0/0.0 |
+  | now | 11/13.3 | 11/13.3 | 9/12.8 | 7/10.3 | 6/9.1 | 6/9.1 | 6/9.0 | 6/9.0 | 5/8.9 | 4/8.7 | 2/7.9 | 0/4.2 |
+
+  Beyond about 25 blocks from the lamp the floor reads 5 to 9 (the 256 lights are about 6 blocks apart there, and a spill
+  light spreads 12 levels); under the beam it reads 11 to 15. The cap limits it more than the planner does: an offline
+  model of the same floor with 512 lights read half a level to a level better on the far floor (not run in the game), so the
+  cap stays at 256.
+- **Cost.** A re-plan casts 1024 rays (it was 1029 for the high-bay and 1206 for the HPS panel), but twice as far: on a flat floor 1.1 ms against 0.4 to 0.7
+  (the planner alone, 12 up), and about 2 ms a lamp against 1.3 with the world behind it (a hall of 40 high-bays,
+  everything in place: one pass over all 40 took 79 ms against 53 ms). Cells next to the lens are read once for all the
+  rays; farther out, where the rays have parted, each is read as it is met; the chunk of the last cell read is remembered
+  for the length of one plan. `FloodlightReachTests` logs these (`FLOODLIGHT PLANGEOMETRY`, `FLOODLIGHT PLANCOST`).
 - **What may be replaced.** Plain air, cave air, or a still water source (the light is waterlogged). Nothing else, and
   never a light block the lamp did not place itself.
 - **Cleanup.** The block entity lists every cell it changed and what it held. Off, re-aimed, broken (any path, explosions
   included) or replaced: each listed cell is put back only while it still holds a light. A cell in an unloaded chunk goes
   to a level save queue (`PendingLights`) and is put back once, when its chunk is loaded again. Nothing loads a chunk;
   writes skip neighbour shape updates; nothing runs on a chunk unload, a save or a shutdown.
+- **Levels are not saved.** The save is still `Lights` and `LightKinds` (cell and what it held). Which lights are spill
+  is a property of the plan, so a lamp from an older save, whose lights were all level 15, is brought to the spill levels
+  at its next re-plan, in place, with no light added or taken away.
 - **Timing.** No ticker: redstone re-plans at once; a lit lamp re-plans on its own scheduled tick every 5 s.
 - **Lenses.** Separate lens parts, full bright in vanilla (NeoForge face light data; the floodlight's head lens through its
   renderer), with labPBR `_s` maps (alpha 254 on the lit lenses) for shader packs.

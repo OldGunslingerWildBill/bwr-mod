@@ -10,8 +10,10 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * The xenon high-bay: a ceiling fixture for a large room, cold white and instant on. Its 110-degree, 24-block beam lands on
- * the floor and the lower walls of the room under it (see {@link XenonBeam}).
+ * The xenon high-bay: a ceiling fixture for a large room, cold white and instant on. Its 110-degree main beam lands on the
+ * floor and the lower walls of the room under it at full light; a spill zone out to 160 degrees lights what lies past the
+ * beam at four fifths of that, and the whole reaches 48 blocks, for a hall whose ceiling is tens of blocks up (see
+ * {@link XenonBeam}).
  */
 public class XenonHighBayBlock extends FacingBeamLampBlock {
     public static final MapCodec<XenonHighBayBlock> CODEC = simpleCodec(XenonHighBayBlock::new);
@@ -48,12 +50,17 @@ public class XenonHighBayBlock extends FacingBeamLampBlock {
 
     @Override
     public double range() {
-        return 24;
+        return 48;
     }
 
     @Override
     public double halfAngleDegrees() {
         return 55;
+    }
+
+    @Override
+    public double spillAngleDegrees() {
+        return 80;
     }
 
     @Override

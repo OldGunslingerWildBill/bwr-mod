@@ -32,6 +32,21 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
 - **Tests.** Core `TurbineWreckTest` (3); GameTests `TurbineWreckTests` (`bwrturbine`, 9) and `TurbineBearingFireTests` (`bwraux`, 2);
   `-PbwrTurbineHallCheck` adds pictures of a burst LP, the rotor half on the floor, the fires, the wrecked LP's screen and the train rebuilt
   (`art/turbine-hall/`).
+- **The high-bay and the HPS flat panel reach far, and their light no longer stops short.** Both lamps lit only a pool on the floor
+  under them: a high-bay 12 up was dark past 28 blocks, 20 up past 24, and 30 up (a turbine hall) lit nothing at all, because the
+  range was 24 blocks and the cone ended hard (outside it only the vanilla falloff, one level a block, reached). The high-bay
+  now reaches **48 blocks** and the HPS panel **40** (a hall 30 up is lit to 37 blocks from under the high-bay), with a **spill zone**
+  out to 160 degrees (the HPS main beam is 130 degrees now, was 120): the main beam stays at 15 and the spill lights are four fifths of
+  it (12; the HPS warm-up 4, 8, 12, 15 gives spill 3, 6, 10, 12), so the beam still reads as the bright centre and there is no hard
+  dark edge. The planner gives the far floor its share of the 256 lights by growing the lattice box with the distance (2 up to 6)
+  and spreading the 1024 rays thicker towards the edge of the cone. High-bay 12 up, block light of the floor, lowest/mean: 20 blocks
+  out 4/7.6 before and 6/9.1 now, 28 blocks 0/0.2 and 6/9.0, 40 blocks 0/0.0 and 4/8.7. Cost of a re-plan: 1.1 ms against
+  0.4 to 0.7 on a flat floor, about 2 ms a lamp against 1.3 in a hall of 40 (79 ms against 53 ms for one pass over all 40). The
+  floodlight plans exactly as before; the cap (256), the cleanup, the chunk rules and the 5 s refresh are unchanged; the save is still
+  `Lights` and `LightKinds` (a lamp from an older save is re-levelled in place). LIGHTING.md has the numbers. New
+  `FloodlightReachTests` (6 tests, namespace `bwrfloodlight`): reach and spill levels over a 141 x 141 floor at 12 and 30 up for both
+  lamps and from a wall, the HPS warm-up of the spill, reload and an old save, a hall of 40, and the planner on its own across
+  an unloaded edge. The client check has a second hall, 80 x 24 x 56 (`art/floodlight-reach/`, before and after).
 
 ## Unreleased: held panel controls are let go when they are removed, and a relaunched player's controls work
 

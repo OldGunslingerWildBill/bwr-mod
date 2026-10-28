@@ -10,12 +10,14 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collections;
@@ -182,10 +184,12 @@ public final class BeamLampBlockEntity extends BlockEntity {
             server.setBlock(worldPosition, state, Block.UPDATE_CLIENTS);
         }
         int lightLevel = block.projectedLevel(state);
-        Map<Long, Byte> want = powered
+        XenonBeam.Plan plan = powered
                 ? XenonBeam.plan(world(server), worldPosition, block.beamOrigin(state, this), block.beamDirection(state, this),
-                        block.range(), block.halfAngleDegrees(), block.lightStep(), lights)
-                : Map.of();
+                        block.range(), block.halfAngleDegrees(), block.spillAngleDegrees(), block.lightStep(), lights)
+                : XenonBeam.Plan.NONE;
+        Map<Long, Byte> want = plan.cells();
+        int spillLevel = block.spillLevel(lightLevel);
 
         boolean changed = false;
         for (var it = lights.entrySet().iterator(); it.hasNext(); ) {
@@ -210,8 +214,9 @@ public final class BeamLampBlockEntity extends BlockEntity {
                 continue;
             }
             if (want.containsKey(key)) {
-                if (now.getValue(LightBlock.LEVEL) != lightLevel) {
-                    server.setBlock(p, now.setValue(LightBlock.LEVEL, lightLevel), WRITE_FLAGS);
+                int level = plan.isSpill(key) ? spillLevel : lightLevel;
+                if (now.getValue(LightBlock.LEVEL) != level) {
+                    server.setBlock(p, now.setValue(LightBlock.LEVEL, level), WRITE_FLAGS);
                 }
                 continue;
             }
@@ -223,7 +228,7 @@ public final class BeamLampBlockEntity extends BlockEntity {
             if (lights.containsKey(entry.getKey())) {
                 continue;
             }
-            int kind = placeCell(server, entry.getKey(), lightLevel);
+            int kind = placeCell(server, entry.getKey(), plan.isSpill(entry.getKey()) ? spillLevel : lightLevel);
             if (kind >= 0) {
                 lights.put(entry.getKey(), (byte) kind);
                 changed = true;
@@ -280,15 +285,41 @@ public final class BeamLampBlockEntity extends BlockEntity {
         return kind;
     }
 
+    /**
+     * What a plan reads. A ray reads cell after cell of one chunk, so the answer to "is this chunk loaded" and the chunk
+     * itself are remembered for the last chunk read (for the length of one plan): the same answers, one chunk lookup per
+     * chunk crossed instead of three per cell. A chunk that is not loaded is never remembered and never loaded.
+     */
     private static XenonBeam.World world(ServerLevel server) {
         return new XenonBeam.World() {
+            private long chunkKey = Long.MIN_VALUE;
+            private LevelChunk chunk;
+
             @Override
             public boolean loaded(BlockPos pos) {
-                return server.isLoaded(pos);
+                if (server.isOutsideBuildHeight(pos)) {
+                    return server.isLoaded(pos);
+                }
+                long key = ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
+                if (key == chunkKey) {
+                    return true;
+                }
+                if (!server.isLoaded(pos)) {
+                    return false;
+                }
+                chunkKey = key;
+                chunk = server.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4);
+                if (chunk == null) {
+                    chunkKey = Long.MIN_VALUE;
+                }
+                return true;
             }
 
             @Override
             public BlockState state(BlockPos pos) {
+                if (chunk != null && chunkKey == ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4) && !server.isOutsideBuildHeight(pos)) {
+                    return chunk.getBlockState(pos);
+                }
                 return server.getBlockState(pos);
             }
 

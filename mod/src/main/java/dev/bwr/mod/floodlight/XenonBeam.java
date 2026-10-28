@@ -1,5 +1,8 @@
 package dev.bwr.mod.floodlight;
 
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Blocks;
@@ -9,7 +12,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +36,14 @@ import java.util.Set;
  *   <li>the landing cells are thinned to one per lattice box of {@code step} blocks, the step growing from the lamp's own
  *       until at most {@link #MAX_LIGHTS} remain; past {@link #MAX_STEP} the cells of the centre rays win.</li>
  * </ul>
+ *
+ * <p>A lamp with a <b>spill zone</b> (the high-bay and the HPS flat panel) casts its rays over a wider cone than its bright
+ * main beam. The cells that the rays outside the main beam land on are the spill: the caller lights them at a lower level
+ * ({@link #spillLevel}), so the main beam reads as the bright centre and the pool has no hard dark edge. Such a lamp also
+ * reaches far (its light is wanted on a floor tens of blocks away), and a lattice of equal boxes would spend all of
+ * {@link #MAX_LIGHTS} on the near floor or leave the far floor bare. Its boxes grow with the distance from the lens instead,
+ * from the lamp's own step up to {@link #MAX_STEP}, as coarse as the budget needs and no coarser: dense under the lamp,
+ * sparse far off, like the light it casts. A lamp without a spill zone (the floodlight) plans exactly as it always did.
  */
 public final class XenonBeam {
     /** Most light blocks one lamp may hold. */
@@ -46,6 +56,28 @@ public final class XenonBeam {
     public static final double LANDING_REACH = 2.5;
     /** Ray density: one ray per this many square blocks of the cone's cross-section at full range. */
     private static final double BLOCKS_PER_RAY = 1.5;
+    /**
+     * Rays a lamp with a spill zone casts. They are spread thicker towards the edge of the cone (density proportional to one
+     * over the cosine of the angle off the axis), which keeps about one ray per few cells of a flat floor out to the far end
+     * of the reach, so half of {@link #MAX_RAYS} lands the far floor that an even spread would need all of it for.
+     */
+    public static final int SPILL_RAYS = 1024;
+    /**
+     * Blocks of distance from the lens per lattice step of a lamp with a spill zone, finest first: the planner takes the
+     * first that fits {@link #MAX_LIGHTS}. A cell at distance t gets boxes of {@code round(t / this)} blocks, kept between
+     * the lamp's own step and {@link #MAX_STEP}.
+     */
+    private static final double[] SPREAD = {1000, 48, 36, 28, 24, 20, 16, 14, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2.5, 2, 1};
+    /** A spill light's level is this share (4/5) of the main beam's: 15 becomes 12, the HPS warm-up level 12 becomes 10. */
+    private static final int SPILL_NUM = 4, SPILL_DEN = 5;
+    /** What the planner has not read yet. */
+    private static final int UNREAD = Integer.MIN_VALUE;
+    /**
+     * Rays share cells only near the lens: next to each other they are about a block apart 14 blocks out, and wider apart
+     * beyond. A cell read within this distance is remembered for the other rays; farther out it is read again if another ray
+     * comes by (one ray in a few), which costs less than remembering every cell of every ray.
+     */
+    private static final double SHARED_READS = 16;
 
     /** What a cell held before a light went into it. */
     public static final byte AIR = 0;
@@ -66,7 +98,7 @@ public final class XenonBeam {
         boolean opaque(BlockState state, BlockPos pos);
     }
 
-    /** What a free cell holds now ({@link #AIR}, {@link #CAVE_AIR} or {@link #WATER}), or -1 when no light may go there. */
+    /** What a cell held before a light went into it: {@link #AIR}, {@link #CAVE_AIR} or {@link #WATER}; -1 when no light may go there. */
     public static int kindOf(BlockState state) {
         if (state.is(Blocks.AIR)) {
             return AIR;
@@ -80,36 +112,77 @@ public final class XenonBeam {
         return -1;
     }
 
-    /** How many rays a cone of this size gets. */
+    /** How many rays a cone of this size gets (a lamp without a spill zone). */
     public static int rayCount(double range, double halfAngleDegrees) {
         double cap = 2 * Math.PI * (1 - Math.cos(Math.toRadians(halfAngleDegrees)));
         return Mth.clamp((int) Math.ceil(cap * range * range / BLOCKS_PER_RAY), 16, MAX_RAYS);
     }
 
+    /** What a plan lights: the cells (packed position to what it holds now) and which of them are spill (the lower level). */
+    public record Plan(Map<Long, Byte> cells, Set<Long> spill) {
+        public static final Plan NONE = new Plan(Map.of(), Set.of());
+
+        /** Whether the cell is in the spill zone, to be lit at {@link XenonBeam#spillLevel}. */
+        public boolean isSpill(long key) {
+            return spill.contains(key);
+        }
+    }
+
+    /** The level of a spill light when the main beam is at {@code level}. */
+    public static int spillLevel(int level) {
+        return (level * SPILL_NUM + SPILL_DEN / 2) / SPILL_DEN;
+    }
+
+    /** One landing cell: what it holds, how far the ray went to its last free cell, and whether it was a spill ray. */
+    private record Landing(byte kind, double distance, boolean spill) {
+    }
+
     /**
      * The cells to light: packed block position to what the cell holds now ({@link #kindOf}); for a cell the lamp already lit
-     * the value from {@code current} is kept.
+     * the value from {@code current} is kept. A lamp with no spill zone.
      */
     public static Map<Long, Byte> plan(World world, BlockPos lamp, Vec3 origin, Vec3 direction, double range,
                                        double halfAngleDegrees, int step, Map<Long, Byte> current) {
+        return plan(world, lamp, origin, direction, range, halfAngleDegrees, halfAngleDegrees, step, current).cells();
+    }
+
+    /**
+     * The plan of a lamp whose main beam has the half angle {@code halfAngleDegrees} and whose spill zone reaches out to
+     * {@code spillAngleDegrees} (there is no spill zone when that is not wider than the beam).
+     */
+    public static Plan plan(World world, BlockPos lamp, Vec3 origin, Vec3 direction, double range, double halfAngleDegrees,
+                            double spillAngleDegrees, int step, Map<Long, Byte> current) {
         Vec3 dir = direction.normalize();
         // An orthonormal frame around the axis.
         Vec3 helper = Math.abs(dir.y) < 0.9 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
         Vec3 u = dir.cross(helper).normalize();
         Vec3 v = dir.cross(u).normalize();
-        double cosMax = Math.cos(Math.toRadians(halfAngleDegrees));
-        int rays = rayCount(range, halfAngleDegrees);
+        boolean spilling = spillAngleDegrees > halfAngleDegrees;
+        double cosMain = Math.cos(Math.toRadians(halfAngleDegrees));
+        double cosMax = Math.cos(Math.toRadians(spilling ? spillAngleDegrees : halfAngleDegrees));
+        int rays = spilling ? SPILL_RAYS : rayCount(range, halfAngleDegrees);
         double golden = Math.PI * (3 - Math.sqrt(5));
         // Landing cells in ray order (centre first), each once.
-        LinkedHashMap<Long, Byte> landed = new LinkedHashMap<>();
-        Map<Long, CellRead> reads = new HashMap<>();
+        Long2ObjectLinkedOpenHashMap<Landing> landed = new Long2ObjectLinkedOpenHashMap<>();
+        Long2IntOpenHashMap reads = new Long2IntOpenHashMap(1 << 12);
+        reads.defaultReturnValue(UNREAD);
         for (int i = 0; i < rays; i++) {
-            double cos = 1 - (i + 0.5) / rays * (1 - cosMax);
+            double f = (i + 0.5) / rays;
+            // An even spread over the cone; with a spill zone, thicker towards its edge.
+            double cos = spilling ? Math.pow(cosMax, f) : 1 - f * (1 - cosMax);
             double sin = Math.sqrt(Math.max(0, 1 - cos * cos));
             double phi = i * golden;
             Vec3 d = dir.scale(cos).add(u.scale(Math.cos(phi) * sin)).add(v.scale(Math.sin(phi) * sin));
-            castRay(world, lamp, origin, d, range, current, reads, landed);
+            castRay(world, lamp, origin, d, range, current, reads, landed, spilling && cos < cosMain);
         }
+        if (!spilling) {
+            return new Plan(thinFixed(landed, step), Set.of());
+        }
+        return thinGraded(landed, Math.max(1, step));
+    }
+
+    /** The lattice of a lamp without a spill zone: one step, widened from the lamp's own until the plan fits. */
+    private static Map<Long, Byte> thinFixed(Long2ObjectLinkedOpenHashMap<Landing> landed, int step) {
         for (int s = Math.max(1, step); ; s++) {
             Map<Long, Byte> thinned = thin(landed, s);
             if (thinned.size() <= MAX_LIGHTS) {
@@ -128,15 +201,69 @@ public final class XenonBeam {
         }
     }
 
-    /** One cell as the planner read it: -2 unloaded, -3 opaque, -1 passable but not free, else the free kind. */
-    private record CellRead(int code) {
+    /**
+     * The lattice of a lamp with a spill zone: boxes that grow with the distance, the finest growth that fits (a binary
+     * search down {@link #SPREAD}: a coarser spread never keeps more cells). The cells of the first rays (the centre) win a
+     * box, and win the budget when even the coarsest lattice has too many.
+     */
+    private static Plan thinGraded(Long2ObjectLinkedOpenHashMap<Landing> landed, int base) {
+        int lo = 0, hi = SPREAD.length - 1;
+        List<Map.Entry<Long, Landing>> kept = null;
+        while (lo < hi) {
+            int mid = (lo + hi) >>> 1;
+            List<Map.Entry<Long, Landing>> at = thinGraded(landed, base, SPREAD[mid]);
+            if (at.size() <= MAX_LIGHTS) {
+                hi = mid;
+                kept = at;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        if (kept == null) {
+            kept = thinGraded(landed, base, SPREAD[lo]);
+        }
+        Map<Long, Byte> cells = new LinkedHashMap<>();
+        Set<Long> spill = new HashSet<>();
+        for (var e : kept) {
+            if (cells.size() == MAX_LIGHTS) {
+                break;
+            }
+            cells.put(e.getKey(), e.getValue().kind());
+            if (e.getValue().spill()) {
+                spill.add(e.getKey());
+            }
+        }
+        return new Plan(cells, spill);
     }
 
-    private static CellRead read(World world, BlockPos p, Map<Long, Byte> current, Map<Long, CellRead> reads) {
+    private static List<Map.Entry<Long, Landing>> thinGraded(Long2ObjectLinkedOpenHashMap<Landing> landed, int base, double spread) {
+        List<Map.Entry<Long, Landing>> out = new ArrayList<>();
+        LongOpenHashSet[] boxes = new LongOpenHashSet[MAX_STEP + 1];
+        int lowest = Math.min(base, MAX_STEP);
+        for (var e : landed.long2ObjectEntrySet()) {
+            Landing landing = e.getValue();
+            int s = Mth.clamp((int) Math.round(landing.distance() / spread), lowest, MAX_STEP);
+            long key = e.getLongKey();
+            if (boxes[s] == null) {
+                boxes[s] = new LongOpenHashSet();
+            }
+            long box = BlockPos.asLong(Math.floorDiv(BlockPos.getX(key), s), Math.floorDiv(BlockPos.getY(key), s),
+                    Math.floorDiv(BlockPos.getZ(key), s));
+            if (boxes[s].add(box)) {
+                out.add(Map.entry(key, landing));
+            }
+        }
+        return out;
+    }
+
+    /** One cell as the planner reads it: -2 unloaded, -3 opaque, -1 passable but not free, else the free kind. */
+    private static int read(World world, BlockPos p, Map<Long, Byte> current, Long2IntOpenHashMap reads, boolean remember) {
         long key = p.asLong();
-        CellRead r = reads.get(key);
-        if (r != null) {
-            return r;
+        if (remember) {
+            int r = reads.get(key);
+            if (r != UNREAD) {
+                return r;
+            }
         }
         int code;
         if (!world.loaded(p)) {
@@ -151,14 +278,15 @@ public final class XenonBeam {
                 code = kindOf(state);
             }
         }
-        r = new CellRead(code);
-        reads.put(key, r);
-        return r;
+        if (remember) {
+            reads.put(key, code);
+        }
+        return code;
     }
 
     /** Walks one ray through the grid (Amanatides and Woo) and records where it lands. */
     private static void castRay(World world, BlockPos lamp, Vec3 origin, Vec3 d, double range, Map<Long, Byte> current,
-                                Map<Long, CellRead> reads, Map<Long, Byte> landed) {
+                                Long2IntOpenHashMap reads, Long2ObjectLinkedOpenHashMap<Landing> landed, boolean spill) {
         int x = Mth.floor(origin.x), y = Mth.floor(origin.y), z = Mth.floor(origin.z);
         int sx = d.x > 0 ? 1 : -1, sy = d.y > 0 ? 1 : -1, sz = d.z > 0 ? 1 : -1;
         double tdx = d.x == 0 ? Double.MAX_VALUE : Math.abs(1 / d.x);
@@ -175,13 +303,13 @@ public final class XenonBeam {
         while (t <= range) {
             p.set(x, y, z);
             if (!(x == lamp.getX() && y == lamp.getY() && z == lamp.getZ())) {
-                int code = read(world, p, current, reads).code();
+                int code = read(world, p, current, reads, t <= SHARED_READS);
                 if (code == -2) {
                     return;
                 }
                 if (code == -3) {
-                    if (lastFree != Long.MIN_VALUE && t - lastFreeT <= LANDING_REACH) {
-                        landed.putIfAbsent(lastFree, lastKind);
+                    if (lastFree != Long.MIN_VALUE && t - lastFreeT <= LANDING_REACH && !landed.containsKey(lastFree)) {
+                        landed.put(lastFree, new Landing(lastKind, lastFreeT, spill));
                     }
                     return;
                 }
@@ -208,14 +336,15 @@ public final class XenonBeam {
     }
 
     /** Keeps the first landing cell of each lattice box of {@code step} blocks. */
-    private static Map<Long, Byte> thin(LinkedHashMap<Long, Byte> landed, int step) {
+    private static Map<Long, Byte> thin(Long2ObjectLinkedOpenHashMap<Landing> landed, int step) {
         Map<Long, Byte> out = new LinkedHashMap<>();
-        Set<Long> boxes = new HashSet<>();
-        for (var e : landed.entrySet()) {
-            BlockPos p = BlockPos.of(e.getKey());
-            long box = BlockPos.asLong(Math.floorDiv(p.getX(), step), Math.floorDiv(p.getY(), step), Math.floorDiv(p.getZ(), step));
+        LongOpenHashSet boxes = new LongOpenHashSet();
+        for (var e : landed.long2ObjectEntrySet()) {
+            long key = e.getLongKey();
+            long box = BlockPos.asLong(Math.floorDiv(BlockPos.getX(key), step), Math.floorDiv(BlockPos.getY(key), step),
+                    Math.floorDiv(BlockPos.getZ(key), step));
             if (boxes.add(box)) {
-                out.put(e.getKey(), e.getValue());
+                out.put(key, e.getValue().kind());
             }
         }
         return out;

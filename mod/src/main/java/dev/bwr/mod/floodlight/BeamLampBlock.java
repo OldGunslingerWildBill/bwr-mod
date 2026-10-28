@@ -55,8 +55,21 @@ public abstract class BeamLampBlock extends BaseEntityBlock {
     /** How far the light reaches, blocks. */
     public abstract double range();
 
-    /** Half the cone angle, degrees. */
+    /** Half the angle of the bright main beam, degrees. */
     public abstract double halfAngleDegrees();
+
+    /**
+     * Half the angle of the whole cone, degrees: past {@link #halfAngleDegrees()} out to this is the spill zone, lit at
+     * {@link #spillLevel}. A lamp with no spill zone says its main beam's angle.
+     */
+    public double spillAngleDegrees() {
+        return halfAngleDegrees();
+    }
+
+    /** The light level of a spill light when the main beam is at {@code level}. */
+    public int spillLevel(int level) {
+        return XenonBeam.spillLevel(level);
+    }
 
     /** Smallest spacing of the lights, blocks. */
     public abstract int lightStep();
