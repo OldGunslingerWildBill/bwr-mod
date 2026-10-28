@@ -2,6 +2,19 @@
 
 ## Unreleased (alpha.59): wrecked turbines, the shaft excursion and turbine fires
 
+- **Turbine oil filtration: the Oil Filter Housing and its cartridge** (TURBINE-AUX.md). A pumped Main Oil Tank lost about 0.9 L/s, so a
+  1,000 L Turbine Oil Drum lasted 18 minutes of running. Real lube oil is not used up, it is degraded, and a full-flow filter with a
+  conditioner keeps it in service for years. The new **Oil Filter Housing** (a duplex filter modelled in headless Blender, with an inlet
+  face and an outlet face) bolts straight against a Main Oil Tank and has **one slot for an Oil Filter Cartridge**. A clean cartridge
+  lets **a tenth** of the oil loss through: a drum lasts **3.1 hours** and a full tank **62 hours** at rated speed. The cartridge
+  lasts **6 hours** (faster with hot oil and pressure), its pressure drop climbs from 3 to 20 psid (a change is due at 12), and when it is
+  full, or the slot is empty, the **bypass opens** and the oil is lost at today's rate. Taking it out gives back a used cartridge that
+  remembers how full it is. Hoppers and pipes may fill an empty slot and take nothing out. Shown on the housing's screen, the oil tank's
+  screen and the turbine card; signals `oil_filter_life`, `oil_filter_dp`, `oil_filter_bypass`, `oil_filter_alarm` (and the housing's and
+  tank's own); CC `bwr_oil_filter` and `filterLife`, `filterDpPsi`, `filterBypass` on the oil tank. Recipes in both installs (iron, paper,
+  wool; with Mekanism steel, paper and an HDPE sheet). A tank with no housing behaves exactly as before, and a housing saves a key only
+  when it holds a cartridge. Core `TurbineAuxTest` 13 and 14; GameTests `OilFilterTests`.
+
 What a turbine failure leaves behind, how bad it can get, and how it is put right (TURBINE-MAINTENANCE.md).
 
 - **Wrecked casings.** A turbine section has a wreck level the screens and computers read: **holed** (a thrown blade tore out through

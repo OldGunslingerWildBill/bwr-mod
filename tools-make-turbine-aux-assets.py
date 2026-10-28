@@ -6,6 +6,7 @@ Standard library plus Pillow. Everything is drawn procedurally; no external art.
 
   turbine_oil_drum    an amber steel drum of lubricating oil (refills the Turbine Main Oil Tank)
   hydrogen_cylinder   a pale grey-blue gas cylinder with a valve cap (refills the Generator Cooling Skid)
+  oil_filter_cartridge a pleated filter element between two steel end caps (the element of the Oil Filter Housing)
   turbine_oil_can     a small amber oil can with a spout (250 L of synthetic oil from a Mekanism reaction chamber; four fill a drum
                       when Mekanism is installed; MEKANISM-RECIPES.md). It has no crafting recipe, so none is written for it here.
 
@@ -81,6 +82,24 @@ def cylinder():
     return img
 
 
+def cartridge():
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    cap, cap_dark, media, fold, core = (150, 150, 156), (96, 96, 102), (232, 222, 190), (186, 172, 128), (70, 70, 74)
+    rect(img, 4, 1, 11, 2, cap)             # top end cap
+    rect(img, 4, 2, 11, 2, cap_dark)
+    rect(img, 4, 13, 11, 14, cap)           # bottom end cap
+    rect(img, 4, 14, 11, 14, cap_dark)
+    rect(img, 4, 3, 11, 12, media)          # the pleated media
+    for x in (5, 7, 9, 11):
+        rect(img, x, 3, x, 12, fold)        # pleats
+    rect(img, 4, 3, 4, 12, (255, 248, 222))  # lit edge
+    rect(img, 7, 0, 8, 0, core)             # centre tube showing at the top
+    rect(img, 7, 15, 8, 15, core)
+    for x, y in ((4, 1), (11, 1), (4, 14), (11, 14)):
+        img.putpixel((x, y), (0, 0, 0, 0))
+    return img
+
+
 NOT_MEKANISM = [{"type": "neoforge:not", "value": {"type": "neoforge:mod_loaded", "modid": "mekanism"}}]
 
 
@@ -119,6 +138,7 @@ def item(id, image, recipe=None, gated=False):
 
 item("turbine_oil_drum", drum(), ([" C ", "CIC", " C "], {"C": "minecraft:coal", "I": "minecraft:iron_ingot"}), gated=True)
 item("turbine_oil_can", can())
+item("oil_filter_cartridge", cartridge(), (["IPI", "PWP", "IPI"], {"I": "minecraft:iron_ingot", "P": "minecraft:paper", "W": "minecraft:white_wool"}), gated=True)
 item("hydrogen_cylinder", cylinder(), ([" I ", "IWI", " I "], {"I": "minecraft:iron_ingot", "W": "minecraft:water_bucket"}), gated=True)
 
 for p, data in OUTPUTS.items():

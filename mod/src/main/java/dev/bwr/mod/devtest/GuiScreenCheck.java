@@ -620,6 +620,10 @@ public final class GuiScreenCheck {
         }, screen -> click(screen, "BLADES")));
         s.add(new Scenario("aux-oil-tank", i -> new TurbineAuxScreen(auxMenu(i, 0, false), i, t("Turbine Main Oil Tank"))));
         s.add(new Scenario("aux-oil-tank-unpowered", i -> new TurbineAuxScreen(auxMenu(i, 0, true), i, t("Turbine Main Oil Tank"))));
+        s.add(new Scenario("aux-oil-filter", i -> oilFilter(i, 0.38)));
+        s.add(new Scenario("aux-oil-filter-due", i -> oilFilter(i, 0.8)));
+        s.add(new Scenario("aux-oil-filter-spent", i -> oilFilter(i, 1.0)));
+        s.add(new Scenario("aux-oil-filter-empty", i -> oilFilter(i, -1)));
         s.add(new Scenario("aux-shaft-pump", i -> new TurbineAuxScreen(auxMenu(i, 1, false), i, t("Turbine Shaft-Driven Main Oil Pump"))));
         s.add(new Scenario("aux-cooling-skid", i -> new TurbineAuxScreen(auxMenu(i, 2, false), i, t("Generator Cooling Skid"))));
         s.add(new Scenario("aux-cooling-skid-unpowered", i -> new TurbineAuxScreen(auxMenu(i, 2, true), i, t("Generator Cooling Skid"))));
@@ -1277,6 +1281,28 @@ public final class GuiScreenCheck {
     }
 
     /** A turbine auxiliary skid screen: 0 the oil tank, 1 the shaft-driven pump, 2 the generator cooling skid. */
+    /** The Oil Filter Housing's screen with a cartridge that is {@code load} full in the slot (below 0: an empty slot). */
+    private static OilFilterScreen oilFilter(Inventory i, double load) {
+        var m = new OilFilterMenu(99, i, P);
+        m.present = true;
+        m.attached = true;
+        m.cartridge = load >= 0;
+        m.bypass = load >= 1 || load < 0;
+        m.changeDue = m.bypass || dev.bwr.core.turbine.TurbineAux.filterDpPsi(load) >= dev.bwr.core.turbine.TurbineAux.FILTER_DP_CHANGE_PSI;
+        m.life = load < 0 ? 0 : 1 - load;
+        m.dpPsi = load < 0 ? 0 : dev.bwr.core.turbine.TurbineAux.filterDpPsi(load);
+        m.hoursLeft = load < 0 ? -1 : dev.bwr.core.turbine.TurbineAux.filterSecondsLeft(load, 25, 49.6) / 3600;
+        m.factor = dev.bwr.core.turbine.TurbineAux.filterFactor(load >= 0, load);
+        m.oilC = 49.6;
+        m.psig = 25;
+        if (load >= 0) {
+            var stack = new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get());
+            dev.bwr.mod.power.OilFilterCartridgeItem.setLoad(stack, load);
+            m.getSlot(OilFilterMenu.SLOT_CARTRIDGE).set(stack);
+        }
+        return new OilFilterScreen(m, i, t("Oil Filter Housing"));
+    }
+
     private static TurbineAuxMenu auxMenu(Inventory i, int kind, boolean unpowered) {
         var m = new TurbineAuxMenu(99, i, P);
         m.present = true;
@@ -1287,6 +1313,11 @@ public final class GuiScreenCheck {
         m.film = unpowered ? 0.82 : 1;
         m.oilC = 49.6;
         m.oilFraction = 0.64;
+        // the oil filter housing on the tank (TURBINE-AUX.md): a cartridge two thirds full in service, or with the pumps down a full one
+        m.filterHousing = kind == 0;
+        m.filterBypass = unpowered;
+        m.filterLife = unpowered ? 0 : 0.62;
+        m.filterDp = unpowered ? 20 : dev.bwr.core.turbine.TurbineAux.filterDpPsi(0.38);
         m.coolerKw = kind == 0 ? 2850 : 21_400;
         m.coldKg = 4200;
         m.hotKg = 380;

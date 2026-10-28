@@ -40,13 +40,15 @@ import java.util.List;
  *   <li>{@link Kind#LUBE_OIL} the Main Oil Tank, against any section of the train: oil, an AC auxiliary pump (side and bottom faces), an
  *   emergency DC pump (top face) and the oil cooler (cooling water on its two flanges);</li>
  *   <li>{@link Kind#SHAFT_PUMP} the Shaft-Driven Main Oil Pump, bolted on the free shaft end of the generator;</li>
- *   <li>{@link Kind#GEN_COOLING} the Generator Cooling Skid, against the generator: stator water pumps, hydrogen, coolers.</li>
+ *   <li>{@link Kind#GEN_COOLING} the Generator Cooling Skid, against the generator: stator water pumps, hydrogen, coolers;</li>
+ *   <li>{@link Kind#OIL_FILTER} the Oil Filter Housing, against a Main Oil Tank (not against the train): one slot for an Oil Filter Cartridge.
+ *   It has no host and no water or FE faces; the tank it stands against steps it (TURBINE-AUX.md).</li>
  * </ul>
  * Facing: the flanges of the tank and the cooling skid are on the left (cold in) and right (hot out) as seen from the front; the shaft
  * pump's coupling is on its back.
  */
 public class TurbineAuxBlock extends BaseEntityBlock {
-    public enum Kind { LUBE_OIL, SHAFT_PUMP, GEN_COOLING }
+    public enum Kind { LUBE_OIL, SHAFT_PUMP, GEN_COOLING, OIL_FILTER }
 
     public static final MapCodec<TurbineAuxBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             propertiesCodec(), Codec.STRING.fieldOf("kind").forGetter(b -> b.kind.name()))
@@ -73,7 +75,7 @@ public class TurbineAuxBlock extends BaseEntityBlock {
 
     // ---- ports
 
-    public boolean hasWater() { return kind != Kind.SHAFT_PUMP; }
+    public boolean hasWater() { return kind == Kind.LUBE_OIL || kind == Kind.GEN_COOLING; }
     /** The flange cold cooling water comes in on: the left of the front. */
     public Direction coldInFace(BlockState s) { return s.getValue(FACING).getCounterClockWise(); }
     /** The flange the warmed water leaves on: the right of the front. */
@@ -83,9 +85,16 @@ public class TurbineAuxBlock extends BaseEntityBlock {
         return hasWater() && face != null && (face == coldInFace(s) || face == hotOutFace(s));
     }
 
+    /**
+     * The Oil Filter Housing's flow axis: oil comes in on the back (against the tank today, a Lube Oil Pipe later) and leaves on the front,
+     * toward the turbine train. The model has a flange on each of the two faces.
+     */
+    public Direction oilInFace(BlockState s) { return s.getValue(FACING).getOpposite(); }
+    public Direction oilOutFace(BlockState s) { return s.getValue(FACING); }
+
     /** The AC bus (tank pump, stator pumps): every face but the top and the two flanges. */
     public boolean acFace(BlockState s, Direction side) {
-        return kind != Kind.SHAFT_PUMP && side != null && side != Direction.UP && side != coldInFace(s) && side != hotOutFace(s);
+        return (kind == Kind.LUBE_OIL || kind == Kind.GEN_COOLING) && side != null && side != Direction.UP && side != coldInFace(s) && side != hotOutFace(s);
     }
 
     /** The DC bus of the tank's emergency pump: the top. */
@@ -102,7 +111,19 @@ public class TurbineAuxBlock extends BaseEntityBlock {
                 if (generatorEndAt(c.getLevel(), at, d) != null) { facing = d.getOpposite(); break; }
             }
         }
+        if (kind == Kind.OIL_FILTER) {
+            // Back to a Main Oil Tank it stands against (the way a housing is bolted on); otherwise facing the player.
+            for (Direction d : Direction.Plane.HORIZONTAL) {
+                if (tankAt(c.getLevel(), c.getClickedPos().relative(d))) { facing = d.getOpposite(); break; }
+            }
+        }
         return defaultBlockState().setValue(FACING, facing);
+    }
+
+    /** Whether {@code pos} holds a Main Oil Tank (never loads a chunk to look). */
+    static boolean tankAt(Level level, BlockPos pos) {
+        var s = dev.bwr.mod.world.LoadedWorld.state(level, pos);
+        return s != null && s.getBlock() instanceof TurbineAuxBlock b && b.kind == Kind.LUBE_OIL;
     }
 
     /** The generator whose free shaft end is {@code pos}, looking from {@code pos} towards {@code d}; or null. */
@@ -136,6 +157,7 @@ public class TurbineAuxBlock extends BaseEntityBlock {
     /** Attaches the skid at {@code pos} to the module it stands against, if it is not attached already. */
     public static void attach(Level level, BlockPos pos) {
         if (level.isClientSide() || !(level.getBlockEntity(pos) instanceof TurbineAuxBlockEntity be)) return;
+        if (be.kind() == Kind.OIL_FILTER) return; // a housing belongs to a tank, not to the train
         if (be.module() != null) return;
         var m = find(level, pos, be.kind());
         if (m != null) { m.attachAux(pos); be.setHost(m.getBlockPos()); }
@@ -155,7 +177,10 @@ public class TurbineAuxBlock extends BaseEntityBlock {
     }
 
     @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
-        if (!replacement.is(this) && level.getBlockEntity(pos) instanceof TurbineAuxBlockEntity be && be.module() != null) be.module().detachAux(pos);
+        if (!replacement.is(this) && level.getBlockEntity(pos) instanceof TurbineAuxBlockEntity be) {
+            if (be.module() != null) be.module().detachAux(pos);
+            if (kind == Kind.OIL_FILTER && !level.isClientSide()) be.dropCartridge();
+        }
         super.onRemove(state, level, pos, replacement, moving);
         if (!replacement.is(this) && hasWater()) dev.bwr.mod.piping.PipeTopology.changed(level, pos);
     }
@@ -169,12 +194,29 @@ public class TurbineAuxBlock extends BaseEntityBlock {
     // ---- use
 
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player instanceof ServerPlayer sp) dev.bwr.mod.gui.TurbineAuxMenu.open(sp, pos);
+        if (player instanceof ServerPlayer sp) {
+            if (kind == Kind.OIL_FILTER) dev.bwr.mod.gui.OilFilterMenu.open(sp, pos);
+            else dev.bwr.mod.gui.TurbineAuxMenu.open(sp, pos);
+        }
         return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                                          InteractionHand hand, BlockHitResult hit) {
+        if (kind == Kind.OIL_FILTER && stack.is(BwrItems.OIL_FILTER_CARTRIDGE.get())) {
+            // A cartridge in hand goes straight into an empty slot; with one in already the screen is how it is changed.
+            if (level.isClientSide()) return ItemInteractionResult.SUCCESS;
+            if (!(level.getBlockEntity(pos) instanceof TurbineAuxBlockEntity be)) return ItemInteractionResult.FAIL;
+            if (be.hasCartridge()) {
+                player.displayClientMessage(BwrText.tr("status.bwr.turbine_aux.filter_in", "There is a cartridge in the housing already. Open it to change it."), true);
+                return ItemInteractionResult.CONSUME;
+            }
+            var one = stack.copyWithCount(1);
+            be.cartridgeSlot().insertItem(0, one, false);
+            if (!player.getAbilities().instabuild) stack.shrink(1);
+            level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 0.8F, 0.8F);
+            return ItemInteractionResult.CONSUME;
+        }
         boolean oil = kind == Kind.LUBE_OIL && stack.is(BwrItems.TURBINE_OIL_DRUM.get());
         boolean h2 = kind == Kind.GEN_COOLING && stack.is(BwrItems.HYDROGEN_CYLINDER.get());
         if (!oil && !h2) return super.useItemOn(stack, state, level, pos, player, hand, hit);
@@ -199,6 +241,10 @@ public class TurbineAuxBlock extends BaseEntityBlock {
             case LUBE_OIL -> {
                 lines.add(BwrText.tr("tooltip.bwr.main_oil_tank.1", "Set against any section of the shaft train. Holds 20,000 L of turbine oil (right-click with Turbine Oil Drums)."));
                 lines.add(BwrText.tr("tooltip.bwr.main_oil_tank.2", "AC auxiliary pump on the side and bottom faces, emergency DC pump on the top face (wire a battery). Cooling water on the two flanges."));
+            }
+            case OIL_FILTER -> {
+                lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.1", "Bolts on a Main Oil Tank. A full-flow lube oil filter with a slot for one Oil Filter Cartridge."));
+                lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.2", "A clean cartridge makes the tank's oil last ten times as long. With the slot empty, or the cartridge full, the oil goes round it."));
             }
             case SHAFT_PUMP -> lines.add(BwrText.tr("tooltip.bwr.shaft_oil_pump", "Bolts on the free shaft end of the generator, coupling toward it. Pumps oil in proportion to shaft speed."));
             case GEN_COOLING -> {

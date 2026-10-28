@@ -80,6 +80,7 @@ advanced and elite circuit, a/r the infused and reinforced alloy.
 | Lamps | `lamp` (N), `hps_flat_panel`, `hps_high_bay`, `hps_wall_pack` (refined glowstone), `lps_*`, `mercury_*` (S), `xenon_floodlight`, `xenon_high_bay` (1) | S; refined glowstone for the sodium lamps; a basic circuit for the xenon ballast | a lamp is a steel nugget; a decoration never costs a circuit |
 | Panels and furniture | `control_panel_vertical` (4), `control_panel_console`, the desks, `operator_desk*`, `supervisor_desk`, `control_stand`, `wall_display*`, plinths, headers, corners, `relay_cabinet*` | the vertical panel: 5 S + 2 HDPE sheets + 1 basic circuit (+ the dye), so a panel is 1.25 steel, half a sheet and a quarter circuit; the rest S and N in place of iron | the body is a circuit card in a plastic housing; the furniture is steel trim on that |
 | Turbine oil | `turbine_oil_drum` | 4 Turbine Oil Cans around 1 S (below) | |
+| Oil filter | `oil_filter_housing` (1), `oil_filter_cartridge` | housing: S in place of iron and a basic circuit in place of the lever; cartridge: 4 S end caps, 4 paper and an HDPE sheet in place of the wool | the housing's changeover valve and gauge take a signal; the cartridge element is a pleated plastic medium between steel caps |
 
 The vanilla column is every recipe file without `_mekanism`: it is not repeated here.
 
@@ -103,7 +104,7 @@ with hydrogen (polyalphaolefin oils are oligomerised ethene). The chain, every s
 One drum is four runs of step 5: 4 substrate, 800 mB ethene and 400 mB hydrogen, and one steel ingot. The ethene is eight runs of
 step 3, which also make **8 substrate**, so the chain needs none from outside and leaves 4 spare (they go to plastic). Counted in raw
 feed that is **16 bio fuel and about 1.2 B of hydrogen per drum**, a few tens of crops. A pumped tank at 25 psig and 50 C burns 0.9 L/s
-(TURBINE-AUX.md), a drum every 18 minutes and a full 20,000 L tank six hours: a farm and two chambers keep a train supplied, and a
+(TURBINE-AUX.md), a drum every 18 minutes and a full 20,000 L tank six hours (ten times as long through an Oil Filter Housing): a farm and two chambers keep a train supplied, and a
 turbine that runs hot or leaks burns it faster. The plastic of the panels draws on the same substrate and ethene, so the oil and the
 control room compete for the same plant, as they would.
 

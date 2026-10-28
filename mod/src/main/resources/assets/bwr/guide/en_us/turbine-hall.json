@@ -103,6 +103,18 @@
       ]
     },
     {
+      "title": "Oil filter",
+      "text": [
+        "A pumped Main Oil Tank loses about 0.9 L/s of oil: a 1,000 L drum lasts 18 minutes. Bolt an Oil Filter Housing straight against the tank and put an Oil Filter Cartridge in its slot, and the tank loses a tenth of that: a drum lasts three hours.",
+        "",
+        "The cartridge loads up with use, faster with hot oil, and lasts about six hours. At 12 psid across it a change is due; when it is full, or the slot is empty, the oil goes round it and is lost at the old rate. Taking a cartridge out gives back a used one; nothing cleans it."
+      ],
+      "icons": [
+        "bwr:oil_filter_housing",
+        "bwr:oil_filter_cartridge"
+      ]
+    },
+    {
       "title": "Turbine fires",
       "text": [
         "A bearing run without oil at speed passes 300 C in about a minute and lights the oil in its housing. A disc fragment, a blade thrown down through the oil lines or the rotor half cuts a line: 1,000 L catches. An excursion lets the generator's hydrogen out to burn.",

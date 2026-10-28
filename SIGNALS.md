@@ -666,6 +666,9 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `coolant_temp` | Generator coolant temperature | degC | 0 to 150 | NUMBER |
 | `oil_pressure_alarm`, `oil_level_alarm`, `oil_temp_alarm`, `bearing_alarm` | Oil system alarms |  | 0 to 1 | BOOLEAN |
 | `vibration_alarm`, `winding_alarm`, `h2_alarm` | Vibration, winding and hydrogen alarms |  | 0 to 1 | BOOLEAN |
+| `oil_filter_life` | Oil filter cartridge life left (no signal without a housing on the tank) | fraction | 0 to 1 | NUMBER |
+| `oil_filter_dp` | Oil filter pressure drop (no signal without a housing) | psi | 0 to 25 | NUMBER |
+| `oil_filter_bypass`, `oil_filter_alarm` | Oil goes round the filter (slot empty or cartridge full); a cartridge change is due (no signal without a housing) |  | 0 to 1 | BOOLEAN |
 | `fire` | Turbine fire (TURBINE-MAINTENANCE.md) |  | 0 to 1 | BOOLEAN |
 | `fire_fuel` | Fire fuel left (oil L, hydrogen kg) |  | 0 to 20000 | NUMBER |
 | `wrecked` | Casing wrecked (burst or shaft out) |  | 0 to 1 | BOOLEAN |
@@ -700,8 +703,10 @@ Block entity `TurbineAuxBlockEntity`; CC peripherals `bwr_main_oil_tank`, `bwr_s
 has its own list. The train steps a skid; none has a ticker.
 
 Main Oil Tank: `attached`, `ac_pump`, `dc_pump` (switches), `ac_running`, `dc_running`, `oil_level` (fraction), `oil_litres` (L),
-`oil_temp` (degC), `oil_pressure` (psig), `oil_film`, `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `ac_fe`, `dc_fe` (FE);
-commands `ac_pump`, `dc_pump` (BOOLEAN). Shaft-Driven Main Oil Pump: `attached`, `delivery` (fraction); no commands. Generator
+`oil_temp` (degC), `oil_pressure` (psig), `oil_film`, `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `ac_fe`, `dc_fe` (FE),
+`filter_housing` (an Oil Filter Housing is bolted on it), `filter_life` (fraction), `filter_dp` (psi), `filter_bypass` (the last three "no signal" without a housing);
+commands `ac_pump`, `dc_pump` (BOOLEAN). Shaft-Driven Main Oil Pump: `attached`, `delivery` (fraction); no commands. Oil Filter Housing (CC `bwr_oil_filter`, read-only, no commands):
+`attached` (against a Main Oil Tank), `cartridge`, `filter_life` (fraction), `filter_dp` (psi), `filter_bypass`, `change_due`. Generator
 Cooling Skid: `attached`, `stator_pumps` (switch), `stator_running`, `stator_flow`, `h2_pressure` (psig), `h2_kg` (kg), `coolant_temp`,
 `winding_temp` (degC), `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `supply_fe` (FE); command `stator_pumps` (BOOLEAN).
 

@@ -43,6 +43,7 @@ public final class BwrScreens {
         event.register(BwrMenus.POWER_MODULE.get(), PowerModuleScreen::new);
         event.register(BwrMenus.TURBINE_VALVE.get(), TurbineValveScreen::new);
         event.register(BwrMenus.TURBINE_AUX.get(), TurbineAuxScreen::new);
+        event.register(BwrMenus.OIL_FILTER.get(), OilFilterScreen::new);
         event.register(BwrMenus.PUMP_CONTROL.get(), PumpControlScreen::new);
         event.register(BwrMenus.TERRY_TURBINE.get(), TerryTurbineScreen::new);
         event.register(BwrMenus.CONDENSATE_TANK.get(), CondensateTankScreen::new);

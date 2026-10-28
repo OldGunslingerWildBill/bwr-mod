@@ -20,6 +20,7 @@ public final class TurbineAuxPeripheral implements IPeripheral {
             case LUBE_OIL -> "bwr_main_oil_tank";
             case SHAFT_PUMP -> "bwr_shaft_oil_pump";
             case GEN_COOLING -> "bwr_generator_cooling_skid";
+            case OIL_FILTER -> "bwr_oil_filter";
         };
     }
     @Override public boolean equals(IPeripheral other) { return other instanceof TurbineAuxPeripheral p && p.skid == skid; }
@@ -42,6 +43,14 @@ public final class TurbineAuxPeripheral implements IPeripheral {
         skid.setStatorPumps(on);
     }
 
+    /** What the oil filter housing reads, the same names on the housing and on the tank it is against. */
+    private static void filterFields(Map<String, Object> m, TurbineAuxBlockEntity filter) {
+        m.put("filterCartridge", filter.hasCartridge());
+        m.put("filterLife", filter.filterLife());
+        m.put("filterDpPsi", filter.filterDpPsi());
+        m.put("filterBypass", filter.filterBypass());
+    }
+
     @LuaFunction(mainThread = true) public Map<String, Object> getStatus() {
         var m = new LinkedHashMap<String, Object>();
         var module = skid.module();
@@ -53,6 +62,18 @@ public final class TurbineAuxPeripheral implements IPeripheral {
                 m.put("oilLevel", skid.oilFraction()); m.put("oilLitres", skid.oilLitres()); m.put("oilTempC", skid.oilC());
                 m.put("pressurePsig", skid.psig()); m.put("oilFilm", skid.film()); m.put("coolerKW", skid.coolerKw());
                 m.put("coldWaterKg", skid.coldKg()); m.put("hotWaterKg", skid.hotKg()); m.put("acFE", skid.acFe()); m.put("dcFE", skid.dcFe());
+                // The oil filter housing against this tank (TURBINE-AUX.md); the other fields are present only with one.
+                var filter = skid.oilFilter();
+                m.put("filterHousing", filter != null);
+                if (filter != null) filterFields(m, filter);
+            }
+            case OIL_FILTER -> {
+                var tank = skid.tank();
+                m.put("attached", tank != null);
+                filterFields(m, skid);
+                m.put("filterChangeDue", skid.filterChangeDue());
+                double hours = skid.filterHoursLeft();
+                if (Double.isFinite(hours)) m.put("filterHoursLeft", hours); // absent when nothing flows through it
             }
             case SHAFT_PUMP -> m.put("delivery", module == null ? 0.0 : dev.bwr.core.turbine.TurbineAux.shaftPumpFlow(module.rpm));
             case GEN_COOLING -> {

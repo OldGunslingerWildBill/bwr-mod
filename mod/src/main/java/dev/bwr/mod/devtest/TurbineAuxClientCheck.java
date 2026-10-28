@@ -111,6 +111,12 @@ public final class TurbineAuxClientCheck {
                     tank = (TurbineAuxBlockEntity) l.getBlockEntity(tankAt);
                     skid = (TurbineAuxBlockEntity) l.getBlockEntity(skidAt);
                     tank.addOil(13_000);
+                    // the oil filter housing bolted on the back of the tank, with a cartridge half used
+                    var filterAt = tankAt.relative(Direction.SOUTH);
+                    l.setBlock(filterAt, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(dev.bwr.mod.power.TurbineAuxBlock.FACING, Direction.SOUTH), 3);
+                    var half = new net.minecraft.world.item.ItemStack(dev.bwr.mod.registry.BwrItems.OIL_FILTER_CARTRIDGE.get());
+                    dev.bwr.mod.power.OilFilterCartridgeItem.setLoad(half, 0.5);
+                    ((TurbineAuxBlockEntity) l.getBlockEntity(filterAt)).cartridgeSlot().setStackInSlot(0, half);
                     tank.setAcPump(true);
                     skid.addHydrogen(20);
                     skid.setStatorPumps(true);

@@ -34,6 +34,12 @@ public final class BwrDataComponents {
                     .persistent(com.mojang.serialization.Codec.doubleRange(0,5000))
                     .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.DOUBLE).build());
 
+    /** How full an Oil Filter Cartridge is, 0 (clean, and not stored) to 1 (spent): what a cartridge taken out of a filter housing carries. */
+    public static final DeferredHolder<DataComponentType<?>,DataComponentType<Double>> OIL_FILTER_LOAD=
+            DATA_COMPONENTS.register("oil_filter_load",()->DataComponentType.<Double>builder()
+                    .persistent(com.mojang.serialization.Codec.doubleRange(0,1))
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.DOUBLE).build());
+
     /** Which of a control panel component type's footprints an item stack places (index into the type's list). */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> COMPONENT_VARIANT =
             DATA_COMPONENTS.register("component_variant", () -> DataComponentType.<Integer>builder()

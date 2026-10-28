@@ -1,4 +1,4 @@
-"""Export the Blender turbine auxiliary meshes (main oil tank, generator cooling skid, shaft oil pump); --check verifies without writes.
+"""Export the Blender turbine auxiliary meshes (main oil tank, generator cooling skid, shaft oil pump, oil filter housing); --check verifies without writes.
 
 Blender side:  blender --background --python art/models/turbine_aux/build_models.py
 This tool turns the exported meshes into the OBJ models, blockstates, item models, loot tables and recipes.
@@ -46,6 +46,8 @@ block('main_oil_tank', dict(HORIZONTAL_VARIANTS),
       shaped(['ITI', 'PBP', 'III'], {'I': IRON, 'T': 'minecraft:cauldron', 'P': 'bwr:high_pressure_water_pipe', 'B': 'minecraft:bucket'}))
 block('generator_cooling_skid', dict(HORIZONTAL_VARIANTS),
       shaped(['ICI', 'PTP', 'III'], {'I': IRON, 'C': COPPER, 'P': 'bwr:high_pressure_water_pipe', 'T': 'minecraft:cauldron'}))
+block('oil_filter_housing', dict(HORIZONTAL_VARIANTS),
+      shaped(['ILI', 'BPB', 'III'], {'I': IRON, 'L': 'minecraft:lever', 'B': 'minecraft:bucket', 'P': 'bwr:high_pressure_water_pipe'}))
 block('shaft_oil_pump', dict(HORIZONTAL_VARIANTS),
       shaped(['ICI', 'RPR', 'III'], {'I': IRON, 'C': COPPER, 'R': 'minecraft:redstone', 'P': 'minecraft:piston'}))
 

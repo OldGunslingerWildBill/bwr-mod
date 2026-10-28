@@ -132,7 +132,7 @@ public final class BwrBlockEntities {
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.power.TurbineAuxBlockEntity>> TURBINE_AUX =
             BLOCK_ENTITIES.register("turbine_aux", () -> BlockEntityType.Builder.of(dev.bwr.mod.power.TurbineAuxBlockEntity::new,
-                    BwrBlocks.MAIN_OIL_TANK.get(), BwrBlocks.SHAFT_OIL_PUMP.get(), BwrBlocks.GENERATOR_COOLING_SKID.get()).build(null));
+                    BwrBlocks.MAIN_OIL_TANK.get(), BwrBlocks.SHAFT_OIL_PUMP.get(), BwrBlocks.GENERATOR_COOLING_SKID.get(), BwrBlocks.OIL_FILTER_HOUSING.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.reactor.CavityDrainPortBlockEntity>> CAVITY_DRAIN_PORT =
             BLOCK_ENTITIES.register("cavity_drain_port", () -> BlockEntityType.Builder.of(dev.bwr.mod.reactor.CavityDrainPortBlockEntity::new,

@@ -29,6 +29,8 @@ public final class TurbineAuxTrain {
     /** The readings that raise an alarm flag. They are facts for a panel or a program; nothing acts on them. */
     public static final double ALARM_BEARING_C = 100, ALARM_OIL_C = 65, ALARM_OIL_LEVEL = 0.30, ALARM_OIL_PSIG = 15, ALARM_VIBRATION_MM_S = 7.1,
             ALARM_WINDING_C = 120, ALARM_H2_PSIG = 20;
+    /** The filter's pressure drop at which a change is due, psi (an alarm reading, like the rest). */
+    public static final double ALARM_FILTER_DP_PSI = TurbineAux.FILTER_DP_CHANGE_PSI;
     public static final int GEAR_FE_PER_TICK = EccsPower.fePerTickFromWatts(TurbineAux.GEAR_MOTOR_W);
 
     /** What a section reports about the train's auxiliaries; written every tick by {@link #step}. All zero and ungoverned for a legacy train. */
@@ -41,11 +43,16 @@ public final class TurbineAuxTrain {
         public boolean coolingSkid, statorRunning;
         public double statorFlow, h2Psig = Double.NaN, coolantC = Double.NaN;
         public boolean oilPressureAlarm, oilLevelAlarm, oilTempAlarm, bearingAlarm, vibrationAlarm, windingAlarm, h2Alarm;
+        /** The oil filter housing on the train's tank (TURBINE-AUX.md): none, and these read "no signal", on a tank without one. */
+        public boolean filterHousing, filterBypass, filterAlarm;
+        public double filterLife = Double.NaN, filterDpPsi = Double.NaN;
         void clear() {
             lubeGoverned = bowGoverned = genGoverned = oilTank = shaftPump = acRunning = dcRunning = gearOn = gearRolling = gearFed = coolingSkid = statorRunning = false;
             oilPsig = oilFilm = pumpFlow = vibration = statorFlow = 0;
             oilC = oilLevel = h2Psig = coolantC = Double.NaN;
             oilPressureAlarm = oilLevelAlarm = oilTempAlarm = bearingAlarm = vibrationAlarm = windingAlarm = h2Alarm = false;
+            filterHousing = filterBypass = filterAlarm = false;
+            filterLife = filterDpPsi = Double.NaN;
         }
         public boolean anyAlarm() {
             return oilPressureAlarm || oilLevelAlarm || oilTempAlarm || bearingAlarm || vibrationAlarm || windingAlarm || h2Alarm;
@@ -147,6 +154,18 @@ public final class TurbineAuxTrain {
             r.oilPressureAlarm = rpm >= TurbineAux.STANDSTILL_RPM && psig < ALARM_OIL_PSIG;
             r.oilLevelAlarm = lube.isEmpty() || minLevel < ALARM_OIL_LEVEL;
             r.oilTempAlarm = r.oilC > ALARM_OIL_C;
+            // The oil filter housings against the tanks: the worst of them is what the train reports. A tank with none adds nothing.
+            double life = 1, dp = 0;
+            for (var t : lube) {
+                var f = t.oilFilter();
+                if (f == null) continue;
+                r.filterHousing = true;
+                life = Math.min(life, f.filterLife());
+                dp = Math.max(dp, f.filterDpPsi());
+                r.filterBypass |= f.filterBypass();
+                r.filterAlarm |= f.filterChangeDue();
+            }
+            if (r.filterHousing) { r.filterLife = life; r.filterDpPsi = dp; }
         }
 
         double maxVibration = 0;
@@ -223,5 +242,7 @@ public final class TurbineAuxTrain {
         b.vibration = a.vibration; b.gearOn = a.gearOn; b.gearRolling = a.gearRolling; b.gearFed = a.gearFed;
         b.oilPressureAlarm = a.oilPressureAlarm; b.oilLevelAlarm = a.oilLevelAlarm; b.oilTempAlarm = a.oilTempAlarm;
         b.bearingAlarm = a.bearingAlarm; b.vibrationAlarm = a.vibrationAlarm;
+        b.filterHousing = a.filterHousing; b.filterBypass = a.filterBypass; b.filterAlarm = a.filterAlarm;
+        b.filterLife = a.filterLife; b.filterDpPsi = a.filterDpPsi;
     }
 }

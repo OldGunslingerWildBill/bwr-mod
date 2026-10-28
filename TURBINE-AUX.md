@@ -17,6 +17,8 @@ annunciators and your computer. Skids have no ticker; the shaft train steps them
 | **Turbine Shaft-Driven Main Oil Pump** (`shaft_oil_pump`) | On the **free shaft end of the generator**, coupling (its back) toward the generator. It turns to face the right way when you place it there | Driven by the shaft: no oil at standstill, full delivery at 90 % of rated speed. It draws its oil from the Main Oil Tank of the same train |
 | **Generator Cooling Skid** (`generator_cooling_skid`) | Against the generator | **Stator water pumps** (FE on any face but the two flanges), a **hydrogen** charge for the casing, and the **coolers** (cooling water as on the oil tank) |
 | **Turning gear** | Built into the generator: a switch, no block | See below |
+| **Oil Filter Housing** (`oil_filter_housing`) | **Directly against a Main Oil Tank** (see Oil filtration below): its back on the tank, on any side of the tank | A duplex full-flow lube oil filter with **one slot for an Oil Filter Cartridge**. It filters the tank's oil. It is not on the shaft train and needs no power |
+| **Oil Filter Cartridge** (item) | The housing's slot: by hand, a hopper or a pipe, or in its screen | The filter element. Crafted from four iron ingots, four paper and white wool; **with Mekanism** four steel ingots, four paper and an HDPE sheet |
 | **Turbine Oil Drum** (item) | Right-click a Main Oil Tank | 1,000 L of oil. A drum that does not fit is not poured. Crafted from coal and an iron ingot; **with Mekanism** from four Turbine Oil Cans (made in a Pressurized Reaction Chamber) and a steel ingot, see [MEKANISM-RECIPES.md](MEKANISM-RECIPES.md) |
 | **Hydrogen Cylinder** (item) | Right-click a Generator Cooling Skid | 5 kg of hydrogen (the casing holds 20 kg, 30 psig). A cylinder that does not fit is not emptied |
 
@@ -54,7 +56,60 @@ delivered flow over the need, 0 to 1.
   keeps climbing (about 0.17 K/s at 10,000 L). Hot oil lifts the bearing temperature one for one, so a failed cooler takes minutes
   to hurt where no oil takes seconds. Alarm at 65 C.
 - **Oil is consumed.** A pumped tank loses `0.9 L/s x (pressure / 25 psig)`, doubling with every 15 K above 50 C (it oxidises and
-  thins). Refill it with Turbine Oil Drums (with Mekanism installed, keeping a train supplied is a production chain: MEKANISM-RECIPES.md). Alarm under 30 % level.
+  thins): a 1,000 L drum lasts about 18 minutes at rated speed, a full 20,000 L tank about six hours. **An Oil Filter Housing with a
+  cartridge in it makes that ten times longer** (Oil filtration, below). Refill it with Turbine Oil Drums (with Mekanism installed, keeping a train supplied is a production chain: MEKANISM-RECIPES.md). Alarm under 30 % level.
+
+## Oil filtration
+
+Real turbine lube oil is hardly ever "used up". It is **degraded**: water gets in, particles wear off the bearings and the oil's own
+oxidation products build up, and a charge that is not conditioned is drained and replaced in months. A **full-flow filter** in the
+pump discharge with a **side-stream conditioner** keeps the same charge in service for years. The game's "oil loss" is that degradation
+(plus the small leak), so the filter is modelled as what it does to the loss, and the player's cost is the cartridge.
+
+| Quantity | Value | Why |
+| --- | --- | --- |
+| Loss through a clean cartridge | **0.1 of the unfiltered loss** (`OIL_FILTER_FACTOR`) | "A lot longer", the owner's words: ten times. At rated pressure and 50 C a 1,000 L drum lasts **3.1 hours** instead of 18.5 minutes, and a full 20,000 L tank **62 hours** instead of 6.2 |
+| Cartridge life | **6 hours** at rated pressure and 50 C oil (`FILTER_LIFE_S`) | About two drums of filtered running (1,944 L), so one cartridge per two drums: a long session on one cartridge, a change at the same bench visit as a refill. The unfiltered loss over those six hours would have been 19,440 L |
+| What loads it | the header pressure (`pressure / 25 psig`) times `2^((oil C - 50) / 15)` for oil above 50 C | the same two terms as the oil's own loss: dirt comes with the flow, and hot oil oxidises faster. Oil at 65 C loads it twice as fast; a tank nobody pumps loads nothing |
+| Differential pressure | `3 + 17 x load^2` psid: 3 clean, 12 at 73 % full, **20 when full** | real elements are flat while clean and climb as they fill. A change is due at **12 psid** (a little over a quarter of the life left); the bypass valve opens at 20 |
+| Full, or the slot empty | the **bypass opens**: the factor is 1 | the oil goes round the element, so loss and degradation are **today's rate again**. A housing with no cartridge is the same as no housing |
+
+A cartridge is not cleaned. Taking it out gives back **the same item as a used cartridge** (a data component, `bwr:oil_filter_load`,
+0 clean to 1 full; a clean one carries none and stacks with new ones), which remembers exactly how full it is and goes back where it
+left off. A spent one is just a spent one (its bar and tooltip say so). There is no scrap return. Changing it is the only reset: take
+the old one out of the slot and put a new one in.
+
+**No extra harm.** The brief offered a small extra bearing wear for oil left unfiltered. It was left out on purpose: the bearing laws
+are made of film, temperature and speed, none of them of oil condition, so a "dirty oil" term would be a new law and not a use of the
+existing ones, and the bypass already costs what matters here (the oil). Unfiltered oil is today's behaviour.
+
+**What it does not do.** A loaded cartridge does **not** lower the header pressure (a real discharge has a relief and a regulator that
+hold it), and it does not change the oil film, the bearing temperature or the fires. The oil fire laws (`TurbineFire`) are unchanged.
+
+### The housing: how it attaches and how it is changed
+
+- **Mounting.** The housing is bolted **straight against a Main Oil Tank**; it needs no power, no water and no train. It faces away
+  from the tank (placing it turns its back to an adjacent tank). Its tank is the one on its **inlet face** (the back), else any tank it
+  stands against. A tank uses the first housing against it that has it as its tank, so a second housing on one tank does nothing, and a
+  housing next to no tank filters nothing (its screen says so). Nothing is stored for this: the tank finds its housing by looking at
+  its six neighbours in its oil step, never loading a chunk, so it survives any rebuilding.
+- **Flow axis, for the pipes to come.** The housing has an **inlet face** (the back, `TurbineAuxBlock.oilInFace`) and an **outlet face**
+  (the front, `oilOutFace`), with a round flange on each in the model. The rule that decides which tank a housing serves is in **one
+  place** (`TurbineAuxBlockEntity.tank()`, with `oilFilter()` the tank's side of it), so a Lube Oil Pipe run can later feed the inlet
+  and take the outlet to the train by changing those two methods and nothing else.
+- **The slot.** Right-click the housing with a cartridge to put one in an empty slot. Right-click with nothing, or with a cartridge when
+  one is in, to open its screen (a slot and the player's inventory; shift-click works). **Hoppers and pipes may put a cartridge into
+  an empty slot, on any face, and can take nothing out**: nothing is pulled out for you, so a hopper under the housing does not empty
+  a cartridge that is in service. Breaking the housing drops its cartridge with its load.
+- **No ticker.** The housing has none. The Main Oil Tank's own oil step, which the train calls once a tick, loads the cartridge by the
+  oil that flowed.
+
+### Old saves and what is unchanged
+
+A tank saved before the filter existed has no housing and **loses oil exactly as it always did** (`oilLossLitres(psig, oilC, dt)` is
+unchanged, and a test checks the tank against it tick by tick). The housing, cartridge and menu are new ids; the tank, the train and
+the power modules save no new key. A housing saves `Cartridge` (the item with its load) **only while it holds one**. Trains with no oil
+tank are unaffected, and the `-PbwrNoCC` and `-PbwrNoMekanism` runs play the same game.
 
 ## Turning gear and the rotor bow
 
@@ -95,7 +150,10 @@ Damage goes into the generator's shaft damage, so a destroyed winding fails the 
 
 ## Readouts, signals and computers
 
-- **Power module screen** (any section): a *Turbine auxiliaries* card with the oil pressure, temperature, level and film, bearing
+- **Oil Filter Housing screen**: the cartridge slot, the cartridge life (a meter), the pressure drop across it, the bypass state, the
+  share of the unfiltered oil loss that is getting through, the time left at today's pressure and oil temperature, and the tank's oil.
+  The **Main Oil Tank's screen** carries an *Oil filter* row (life and pressure drop, or "bypass open", or "none fitted").
+- **Power module screen** (any section): a *Turbine auxiliaries* card with the oil pressure, temperature, level, film and oil filter, bearing
   temperature, shaft vibration, rotor temperature and bow, turning gear state and its supply, winding temperature, stator flow and
   hydrogen pressure, and the **Turning gear** button on the generator.
 - **Skid screens** show their own pumps, buses, inventories and cooling water, with the pump switches.
@@ -103,13 +161,20 @@ Damage goes into the generator's shaft damage, so a destroyed winding fails the 
   `oil_pressure`, `oil_temp`, `oil_level`, `oil_film`, `bearing_temp`, `vibration`, `rotor_temp`, `rotor_bow`, `turning_gear`,
   `turning_gear_rolling`, `winding_temp`, `stator_flow`, `h2_pressure`, `coolant_temp` and the alarms
   `oil_pressure_alarm`, `oil_level_alarm`, `oil_temp_alarm`, `bearing_alarm`, `vibration_alarm`, `winding_alarm`, `h2_alarm`
-  (a system the train does not have reads "no signal"); the command `turning_gear`. On the skids their switches (`ac_pump`,
+  `oil_filter_life` (fraction left), `oil_filter_dp` (psi across the cartridge), `oil_filter_bypass` and `oil_filter_alarm` (a change is
+  due: the pressure drop is at 12 psid, or the oil is going round the filter), which read "no signal" on a train whose tank has no
+  housing (a system the train does not have reads "no signal"); the command `turning_gear`. On the skids their switches (`ac_pump`,
   `dc_pump`, `stator_pumps`) and readings. A new quantity, **VIBRATION** (mm/s), is appended for gauges; the rest use PRESSURE,
   TEMPERATURE, LEVEL, PERCENT and BOOLEAN.
 - **ComputerCraft:** `bwr_generator`, `bwr_hp_turbine` and `bwr_lp_turbine` `getStatus()` carry the same readings as `oilPressurePsig`,
   `bearingTempC`, `rotorBow`, `windingTempC`, `turningGearPowered` ... and `setTurningGear(bool)` / `getTurningGear()` (the generator; engaging above 10 rpm
   raises an error). The skids are `bwr_main_oil_tank` (`setAcPump`, `setDcPump`), `bwr_shaft_oil_pump` and
-  `bwr_generator_cooling_skid` (`setStatorPumps`), each with `getStatus()`.
+  `bwr_generator_cooling_skid` (`setStatorPumps`), each with `getStatus()`. The Main Oil Tank's carries `filterHousing` and, with a housing
+  against it, `filterCartridge`, `filterLife`, `filterDpPsi` and `filterBypass`; the power modules' `getStatus()` carries `oilFilterLife`,
+  `oilFilterDpPsi`, `oilFilterBypass` and `oilFilterAlarm` (with a housing on the train's tank). **`bwr_oil_filter`** is the housing's
+  own read-only face (on all six sides, `getStatus()` only): `attached`, `filterCartridge`, `filterLife` (1 new to 0 spent),
+  `filterDpPsi`, `filterBypass` (true with the slot empty or the cartridge full), `filterChangeDue` and, while oil is flowing,
+  `filterHoursLeft`.
 
 ## Trains that were there before
 
@@ -129,7 +194,8 @@ The rule is per system, and the simplest fair one: **a train runs as it always d
 
 Every new key is written only when it is not its default: `AuxLinks`, `AuxRequired`, `TurningGear`, `Bow`, `BearingC`,
 `RotorC`, `WindingC` on a power module; `Host`, `AcOn`, `DcOn`, `StatorOn`, `AcFe`, `DcFe`, `OilL`, `OilC`, `H2Kg`, `CoolantC`,
-`StatorFlow` and the two cooling-water tanks on a skid. A skid or link in an unloaded chunk is kept, never loaded to look at.
+`StatorFlow` and the two cooling-water tanks on a skid. An Oil Filter Housing saves `Cartridge` (the cartridge item, with its load)
+only while it holds one. A skid or link in an unloaded chunk is kept, never loaded to look at.
 
 ## Pictures
 
@@ -139,15 +205,21 @@ Every new key is written only when it is not its default: `AuxLinks`, `AuxRequir
 
 ## Models and sources
 
-Three Blender models (headless): the oil tank (3,892 triangles), the generator cooling skid (5,628) and the shaft-driven pump
-(2,056), in `art/models/turbine_aux/` (`build_models.py`, `turbine_aux.blend`, the previews). `python tools-export-turbine-aux.py`
-bakes them (`--check` verifies); `python tools-make-turbine-aux-assets.py` makes the two item textures.
+Four Blender models (headless): the oil tank (3,892 triangles), the generator cooling skid (5,628), the shaft-driven pump (2,056)
+and the oil filter housing (3,648: two canisters, a changeover valve, a pressure-drop gauge, and a flange with a brown band on each of
+its inlet and outlet faces), in `art/models/turbine_aux/` (`build_models.py`, `turbine_aux.blend`, the previews). `python tools-export-turbine-aux.py`
+bakes them (`--check` verifies); `python tools-make-turbine-aux-assets.py` makes the item textures (the cartridge's too).
 
 ## Tests
 
-Core `TurbineAuxTest` (12 tests). GameTests `bwraux` (18 tests) (`TurbineAuxTests`, `TurbineAuxCcChecks`): the shaft pump makes oil only with
+Core `TurbineAuxTest` (14 tests; 13 and 14 are the filter). GameTests `bwraux` (18 tests) (`TurbineAuxTests`, `TurbineAuxCcChecks`): the shaft pump makes oil only with
 speed; start-up needs the AC pump; no oil while rolling wrecks the bearings, and oil does not; the DC pump holds the oil on loss of
 AC power; the cooler and the oil's leak and the drums; a hot shaft bows without the gear and the gear recovers it; a bowed
 roll-up shakes and damages; the gear switch engages only at low speed (screen, signal, CC); an unpowered cooling skid lets the
 winding rise with load; hydrogen; the readouts and signals; the old-train rule; saves; nothing ticks while idle. Since alpha.59
 `TurbineBearingFireTests` (2 more): a bearing run dry lights its oil and a running pump feeds the fire; a train with no oil burns nothing.
+`OilFilterTests` (6 more in `bwraux`, 1 in `bwrmektier`): a filtered tank loses a tenth of the oil an unfiltered one does over the same
+run; the cartridge loads up, its pressure drop rises and a full one is bypassed (and hot oil loads it faster); changing it restores
+filtration, an empty slot is the same as no filter, a used cartridge keeps its load, hoppers insert only; a tank with no housing loses
+oil exactly as the old law says and saves no filter key; the housing saves its cartridge only when it has one and drops it when broken;
+the signals and the computer faces (`bwr_oil_filter`, the tank's summary); and the cartridge and the housing have a recipe in both installs.

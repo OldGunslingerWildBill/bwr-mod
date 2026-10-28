@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:mod_loaded",
+        "modid": "mekanism"
+      }
+    }
+  ],
+  "category": "misc",
+  "pattern": [
+    "ILI",
+    "BPB",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "L": {
+      "item": "minecraft:lever"
+    },
+    "B": {
+      "item": "minecraft:bucket"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    }
+  },
+  "result": {
+    "id": "bwr:oil_filter_housing",
+    "count": 1
+  }
+}

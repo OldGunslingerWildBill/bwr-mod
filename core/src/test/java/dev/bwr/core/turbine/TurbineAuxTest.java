@@ -177,4 +177,60 @@ public final class TurbineAuxTest {
         Check.exactly(1.0, TurbineAux.coolingFraction(1, 30), "full cooling is 1");
         Check.isTrue(TurbineAux.coolingFraction(0, 30) < 0.6 && TurbineAux.coolingFraction(0, 30) > 0.5, "hydrogen alone is 55 %");
     }
+
+    /** Seconds a litres-sized charge lasts at the given pressure and oil temperature through a filter leaving {@code factor} of the loss. */
+    private static double lastsS(double litres, double psig, double oilC, double factor) {
+        double left = litres, t = 0;
+        while (left > 0 && t < 4e6) {
+            left -= TurbineAux.oilLossLitres(psig, oilC, 1, factor);
+            t += 1;
+        }
+        return t;
+    }
+
+    public static void test13_aCleanCartridgeMakesADrumLastTenTimesAsLong() {
+        Check.exactly(1.0, TurbineAux.filterFactor(false, 0), "no cartridge, no filtering");
+        Check.exactly(TurbineAux.OIL_FILTER_FACTOR, TurbineAux.filterFactor(true, 0), "a clean cartridge cuts the loss to its factor");
+        Check.exactly(TurbineAux.OIL_FILTER_FACTOR, TurbineAux.filterFactor(true, 0.99), "and keeps it until it is full");
+        Check.exactly(1.0, TurbineAux.filterFactor(true, 1), "a full cartridge is bypassed: today's loss again");
+        Check.exactly(TurbineAux.oilLossLitres(25, 60, 7), TurbineAux.oilLossLitres(25, 60, 7, 1.0), "factor 1 is the old law, bit for bit");
+        double bare = lastsS(1000, 25, 50, 1), filtered = lastsS(1000, 25, 50, TurbineAux.filterFactor(true, 0));
+        Check.inRange(17 * 60, 19 * 60, bare, "an unfiltered drum at rated pressure and 50 C lasts about 18 minutes (s): " + bare);
+        Check.relative(10.0, filtered / bare, 0.01, "a filtered drum lasts ten times as long");
+        Check.inRange(3.0 * 3600, 3.2 * 3600, filtered, "about three hours (s): " + filtered);
+        Check.exactly(0.0, TurbineAux.oilLossLitres(0, 50, 3600, 0.1), "a tank nobody pumps still loses nothing");
+        double hotBare = TurbineAux.oilLossLitres(25, 80, 3600), hotFiltered = TurbineAux.oilLossLitres(25, 80, 3600, 0.1);
+        Check.relative(10.0, hotBare / hotFiltered, 1e-9, "the tenth holds when the oil is hot");
+        Check.note("1,000 L drum at 25 psig and 50 C: %.1f min unfiltered, %.2f h through a clean cartridge; a 20,000 L tank %.1f h and %.1f h",
+                bare / 60, filtered / 3600, bare * 20 / 3600, filtered * 20 / 3600);
+    }
+
+    public static void test14_theCartridgeLoadsUpRaisesItsPressureDropAndBypasses() {
+        Check.exactly(TurbineAux.FILTER_DP_CLEAN_PSI, TurbineAux.filterDpPsi(0), "a clean cartridge drops a few psi");
+        Check.exactly(TurbineAux.FILTER_DP_FULL_PSI, TurbineAux.filterDpPsi(1), "a full one drops what the bypass valve is set to");
+        double last = -1;
+        for (int i = 0; i <= 10; i++) {
+            double dp = TurbineAux.filterDpPsi(i / 10.0);
+            Check.greaterThan(last, dp + 1e-12, "the pressure drop only rises with the load, at " + i / 10.0);
+            last = dp;
+        }
+        Check.isTrue(TurbineAux.filterDpPsi(0.5) < TurbineAux.FILTER_DP_CHANGE_PSI, "half full is not yet time to change it");
+        Check.isTrue(TurbineAux.filterDpPsi(0.8) > TurbineAux.FILTER_DP_CHANGE_PSI, "four fifths full is");
+        Check.isFalse(TurbineAux.filterBypassOpen(0.999), "the bypass stays shut until the cartridge is full");
+        Check.isTrue(TurbineAux.filterBypassOpen(1), "and opens when it is");
+        // Its life: six hours at rated pressure and 50 C; hot oil and a header at pressure fill it faster, an idle header not at all.
+        double load = 0;
+        for (int i = 0; i < 21_600; i++) load = TurbineAux.filterLoadStep(load, 25, 50, 1);
+        Check.relative(1.0, load, 1e-9, "full after six hours at rated pressure and 50 C");
+        double hot = 0;
+        for (int i = 0; i < 10_800; i++) hot = TurbineAux.filterLoadStep(hot, 25, 65, 1);
+        Check.relative(1.0, hot, 1e-9, "oil at 65 C fills it in half the time");
+        Check.exactly(0.0, TurbineAux.filterLoadStep(0, 0, 80, 3600), "with no pressure on the header nothing flows through it");
+        Check.exactly(1.0, TurbineAux.filterLoadStep(0.99999, 30, 100, 3600), "and the load stops at full");
+        Check.exactly(0.3, TurbineAux.filterLoadStep(0.3, 25, 50, 0), "no time, no change");
+        Check.relative(21_600, TurbineAux.filterSecondsLeft(0, 25, 50), 1e-9, "a new cartridge has its six hours");
+        Check.relative(10_800, TurbineAux.filterSecondsLeft(0.5, 25, 50), 1e-9, "half used, half left");
+        Check.relative(5_400, TurbineAux.filterSecondsLeft(0.5, 25, 65), 1e-9, "and half that with oil 15 K hotter");
+        Check.isTrue(Double.isInfinite(TurbineAux.filterSecondsLeft(0.5, 0, 50)), "nothing flows with no pressure");
+    }
 }

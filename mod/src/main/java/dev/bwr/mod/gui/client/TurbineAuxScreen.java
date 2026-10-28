@@ -43,6 +43,9 @@ public class TurbineAuxScreen extends BwrScreen<TurbineAuxMenu> {
                 Layout.meter("Oil level", () -> menu.oilFraction, () -> menu.oilFraction < TurbineAuxTrain.ALARM_OIL_LEVEL ? Status.CAUTION : Status.NORMAL,
                         () -> grouped(menu.oilFraction * TurbineAux.OIL_TANK_L, 0) + " L"),
                 Layout.row("Oil temperature", () -> num(menu.oilC, 1), "C"),
+                Layout.row("Oil filter", () -> !menu.filterHousing ? "none fitted" : menu.filterBypass ? "bypass open" : pct(menu.filterLife) + " % left, " + num(menu.filterDp, 1) + " psid")
+                        .status(() -> menu.filterHousing && (menu.filterBypass || menu.filterDp >= TurbineAux.FILTER_DP_CHANGE_PSI) ? Status.CAUTION : Status.NONE)
+                        .tip("The Oil Filter Housing bolted on this tank. A clean cartridge cuts the oil's loss to a tenth; with the slot empty or the cartridge full the oil goes round it."),
                 Layout.row("AC pump", () -> pump(menu.acRun, menu.acOn, menu.acFe)),
                 Layout.row("DC pump", () -> pump(menu.dcRun, menu.dcOn, menu.dcFe)),
                 Layout.row("Cooler duty", () -> num(menu.coolerKw, 0), "kW")).showIf(this::tank);

@@ -350,6 +350,7 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> MAIN_OIL_TANK = ITEMS.registerSimpleBlockItem(BwrBlocks.MAIN_OIL_TANK);
     public static final DeferredItem<BlockItem> SHAFT_OIL_PUMP = ITEMS.registerSimpleBlockItem(BwrBlocks.SHAFT_OIL_PUMP);
     public static final DeferredItem<BlockItem> GENERATOR_COOLING_SKID = ITEMS.registerSimpleBlockItem(BwrBlocks.GENERATOR_COOLING_SKID);
+    public static final DeferredItem<BlockItem> OIL_FILTER_HOUSING = ITEMS.registerSimpleBlockItem(BwrBlocks.OIL_FILTER_HOUSING);
     /** Refills a Main Oil Tank: 1,000 L of turbine oil. */
     public static final DeferredItem<Item> TURBINE_OIL_DRUM = ITEMS.registerSimpleItem("turbine_oil_drum", new Item.Properties().stacksTo(16));
     /**
@@ -358,6 +359,9 @@ public final class BwrItems {
      * used by anything else: a tank takes drums only.
      */
     public static final DeferredItem<Item> TURBINE_OIL_CAN = ITEMS.registerSimpleItem("turbine_oil_can", new Item.Properties().stacksTo(16));
+    /** The element of an Oil Filter Housing: a clean one cuts a pumped tank's oil loss to a tenth until it is full (TURBINE-AUX.md). */
+    public static final DeferredItem<dev.bwr.mod.power.OilFilterCartridgeItem> OIL_FILTER_CARTRIDGE = ITEMS.register("oil_filter_cartridge",
+            () -> new dev.bwr.mod.power.OilFilterCartridgeItem(new Item.Properties().stacksTo(16)));
     /** Recharges a Generator Cooling Skid with 5 kg of hydrogen. */
     public static final DeferredItem<Item> HYDROGEN_CYLINDER = ITEMS.registerSimpleItem("hydrogen_cylinder", new Item.Properties().stacksTo(16));
     /** The turbine hall (TURBINE-MAINTENANCE.md): blade sections and the hood are crane loads; as items they sit on stands or the hook. */
@@ -634,8 +638,10 @@ public final class BwrItems {
                         output.accept(MAIN_OIL_TANK.get());
                         output.accept(SHAFT_OIL_PUMP.get());
                         output.accept(GENERATOR_COOLING_SKID.get());
+                        output.accept(OIL_FILTER_HOUSING.get());
                         output.accept(TURBINE_OIL_DRUM.get());
                         output.accept(TURBINE_OIL_CAN.get());
+                        output.accept(OIL_FILTER_CARTRIDGE.get());
                         output.accept(HYDROGEN_CYLINDER.get());
                         output.accept(LP_BLADE_SECTION.get());
                         output.accept(DAMAGED_LP_BLADE_SECTION.get());

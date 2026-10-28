@@ -97,6 +97,53 @@ public final class TurbineAux {
         return OIL_LEAK_L_PER_S * pressureFraction * heat * dt;
     }
 
+    // ------------------------------------------------ lube oil conditioning: the filter housing and its cartridge
+
+    /**
+     * What a clean cartridge in service leaves of the oil's loss: a tenth. Real lube oil is not consumed, it is degraded (water,
+     * particles, oxidation products) and then replaced; a full-flow filter with a side-stream conditioner holds it in service for
+     * years instead of months, and the game's "loss" is that degradation plus the small leak, so a tenth is the ten-fold life.
+     */
+    public static final double OIL_FILTER_FACTOR = 0.1;
+    /** Seconds a cartridge lasts at the rated header pressure and 50 C oil, then it is full. Hot oil and pressure load it faster. */
+    public static final double FILTER_LIFE_S = 21_600;
+    /** Differential pressure across the cartridge, psi: clean, full (the bypass valve opens there), and the reading at which a change is due. */
+    public static final double FILTER_DP_CLEAN_PSI = 3, FILTER_DP_FULL_PSI = 20, FILTER_DP_CHANGE_PSI = 12;
+
+    /** Differential pressure across a cartridge holding {@code load} (0 clean, 1 full) of its dirt: flat when clean, steeper as it fills. */
+    public static double filterDpPsi(double load) {
+        double l = Math.max(0, Math.min(1, load));
+        return FILTER_DP_CLEAN_PSI + (FILTER_DP_FULL_PSI - FILTER_DP_CLEAN_PSI) * l * l;
+    }
+
+    /** A full cartridge cannot pass the flow: the bypass valve opens and the oil goes round it. */
+    public static boolean filterBypassOpen(double load) {
+        return load >= 1;
+    }
+
+    /** The share of the unfiltered loss that remains: a tenth with a cartridge in service, all of it with none or with the bypass open. */
+    public static double filterFactor(boolean cartridge, double load) {
+        return cartridge && !filterBypassOpen(load) ? OIL_FILTER_FACTOR : 1;
+    }
+
+    /** The cartridge's new load after dt seconds: it fills with the pressure the pumps hold and faster with hot oil, as the oil's loss does. */
+    public static double filterLoadStep(double load, double psig, double oilC, double dt) {
+        double pressureFraction = Math.min(1.2, Math.max(0, psig) / OIL_PSIG_NOMINAL);
+        double heat = Math.pow(2, Math.max(0, Math.min(60, oilC - 50)) / 15);
+        return Math.min(1, Math.max(0, load) + pressureFraction * heat * dt / FILTER_LIFE_S);
+    }
+
+    /** Seconds until a cartridge holding {@code load} is full if the header pressure and oil temperature stay as they are; infinite with no flow. */
+    public static double filterSecondsLeft(double load, double psig, double oilC) {
+        double perSecond = filterLoadStep(0, psig, oilC, 1);
+        return perSecond > 0 ? (1 - Math.max(0, Math.min(1, load))) / perSecond : Double.POSITIVE_INFINITY;
+    }
+
+    /** Oil lost in dt seconds through a filter that leaves {@code factor} of the loss ({@link #filterFactor}). */
+    public static double oilLossLitres(double psig, double oilC, double dt, double factor) {
+        return oilLossLitres(psig, oilC, dt) * factor;
+    }
+
     // ----------------------------------------------------- shell-and-tube coolers
 
     public static final double WATER_KJ_PER_KG_K = 4.186;

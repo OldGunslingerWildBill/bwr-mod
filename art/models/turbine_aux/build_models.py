@@ -1,4 +1,4 @@
-"""Blender-authored turbine auxiliaries: main oil tank, generator cooling skid and shaft oil pump.
+"""Blender-authored turbine auxiliaries: main oil tank, generator cooling skid, shaft oil pump and oil filter housing.
 Run headless:
 
     blender.exe --background --python art/models/turbine_aux/build_models.py
@@ -50,6 +50,7 @@ YELLOW = material('guard yellow', (.80, .60, .05))
 GREY = material('frame grey', (.30, .33, .35), .5)
 STEAMBAND = material('steam band', (.10, .11, .12), .5)
 RED = material('valve red', (.55, .06, .04))
+BROWN = material('lube oil pipe brown', (.30, .16, .055))
 
 
 def mesh_object(scene, name, vs, fs, mat):
@@ -282,6 +283,51 @@ box(scene, 'junction lid', (.615, .845, .395), (.845, .865, .585), STEEL)
 sleeve(scene, 'cable conduit', (.73, .865, .49), (.73, .96, .49), .022, .01, DARK)
 export_scene(scene, 'shaft_oil_pump.json', {'size': [1, 1, 1], 'controller': [0, 0, 0], 'ports': []})
 
+# ---- oil filter housing: a duplex full-flow filter, two vertical canisters and a changeover valve between them. The oil flow runs
+# along Z through the middle: it comes in on the back (+Z) and leaves on the front (-Z), a round flange on each face at the pipe centre
+# (0.5, 0.5), so a lube oil pipe can later be run in-line. Today the back is bolted against a Main Oil Tank.
+def oil_flange(scene, name, z, out):
+    p, d = Vector((.5, .5, z)), Vector((0, 0, out))
+    _, u, v = basis(d)
+    sleeve(scene, name + ' flange', p - d * .10, p - d * .025, .15, .06, STEEL)
+    sleeve(scene, name + ' gasket', p - d * .025, p, .14, .06, DARK)
+    sleeve(scene, name + ' band', p - d * .085, p - d * .045, .157, .14, BROWN)
+    for i in range(6):
+        c = p + .112 * (math.cos(i * math.tau / 6) * u + math.sin(i * math.tau / 6) * v)
+        bolt(scene, name + ' stud ' + str(i), c - d * .12, c - d * .018, .014)
+
+
+scene = new_scene('BWR | oil filter housing')
+box(scene, 'base frame', (.05, 0, .06), (.95, .045, .94), GREY)
+for x in (.25, .75):
+    box(scene, 'canister saddle', (x - .17, .045, .32), (x + .17, .075, .68), GREY)
+    cyl(scene, 'filter canister', (x, .075, .5), (x, .70, .5), .15, BODY)
+    for y in (.16, .56):
+        sleeve(scene, 'canister band', (x, y, .5), (x, y + .025, .5), .158, .14, STEEL)
+    cyl(scene, 'canister drain plug', (x, .045, .5), (x, .075, .5), .03, STEEL)
+    cyl(scene, 'canister lid', (x, .70, .5), (x, .735, .5), .17, STEEL)
+    cyl(scene, 'canister lid dome', (x, .735, .5), (x, .765, .5), .11, STEEL)
+    for i in range(8):
+        a = i * math.tau / 8
+        bolt(scene, 'lid bolt', (x + .145 * math.cos(a), .735, .5 + .145 * math.sin(a)), (x + .145 * math.cos(a), .76, .5 + .145 * math.sin(a)), .016)
+    cyl(scene, 'vent plug', (x, .765, .5), (x, .81, .5), .022, STEEL)
+    box(scene, 'cartridge sight glass', (x - .05, .30, .345), (x + .05, .42, .355), GLASS)
+    box(scene, 'cartridge sight frame', (x - .065, .285, .35), (x + .065, .435, .36), STEEL)
+cyl(scene, 'inlet pipe', (.5, .5, .5), (.5, .5, .985), .06, BODY)
+cyl(scene, 'outlet pipe', (.5, .5, .015), (.5, .5, .5), .06, BODY)
+cyl(scene, 'cross connection', (.40, .5, .5), (.60, .5, .5), .04, STEEL)
+sleeve(scene, 'changeover valve body', (.5, .5, .5), (.5, .66, .5), .05, 0, RED)
+cyl(scene, 'valve stem', (.5, .66, .5), (.5, .76, .5), .018, STEEL)
+box(scene, 'valve handle', (.40, .76, .475), (.60, .79, .525), RED)
+cyl(scene, 'valve knob', (.5, .79, .5), (.5, .84, .5), .03, STEEL)
+box(scene, 'differential pressure gauge case', (.40, .60, .045), (.60, .80, .17), YELLOW)
+cyl(scene, 'gauge dial glass', (.5, .70, .045), (.5, .70, .02), .075, GLASS)
+cyl(scene, 'gauge impulse tube', (.5, .62, .17), (.5, .62, .46), .014, DARK)
+box(scene, 'name plate', (.44, .12, .045), (.56, .20, .052), YELLOW)
+oil_flange(scene, 'inlet', 1.0, 1)
+oil_flange(scene, 'outlet', 0.0, -1)
+export_scene(scene, 'oil_filter_housing.json', {'size': [1, 1, 1], 'controller': [0, 0, 0], 'ports': []})
+
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT / 'turbine_aux.blend'))
 print('Saved the editable Blender scenes and exported their meshes.')
 
@@ -330,10 +376,10 @@ def preview(scene_list, filename, offsets, size=(1280, 720), eye=(1.6, -2.1, 1.5
     bpy.ops.render.render(write_still=True, scene=pv.name)
 
 
-NAMES = ['main_oil_tank', 'generator_cooling_skid', 'shaft_oil_pump']
+NAMES = ['main_oil_tank', 'generator_cooling_skid', 'shaft_oil_pump', 'oil_filter_housing']
 if '--no-preview' not in __import__('sys').argv:
     # Blender coordinates: game x -> X, game z -> -Y, so "south" game offsets use xyz(). The camera looks from the front (north, -Z game = +Y blender).
     for sc, name in zip(SCENES, NAMES):
         preview([sc], name + '.png', [(0, 0, 0)], eye=(-1.5, 2.2, 1.4))
         preview([sc], name + '_back.png', [(0, 0, 0)], eye=(1.6, -2.2, 1.4))
-    preview(SCENES, 'turbine_aux_all.png', [(0, 0, 0), (-1.3, 0, 0), (-2.6, 0, 0)], size=(1500, 560), eye=(-0.4, 2.6, 1.3))
+    preview(SCENES, 'turbine_aux_all.png', [(0, 0, 0), (-1.3, 0, 0), (-2.6, 0, 0), (-3.9, 0, 0)], size=(1900, 560), eye=(-0.4, 2.6, 1.3))

@@ -3,12 +3,16 @@ package dev.bwr.mod.power;
 import dev.bwr.core.turbine.TurbineAux;
 import dev.bwr.mod.eccs.EccsPower;
 import dev.bwr.mod.registry.BwrBlockEntities;
+import dev.bwr.mod.registry.BwrItems;
+import dev.bwr.mod.world.LoadedWorld;
 import dev.bwr.mod.water.ThermalWater;
 import dev.bwr.mod.water.ThermalWaterTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.Containers;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
@@ -16,6 +20,8 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * The state of one turbine auxiliary skid: the Main Oil Tank (oil, AC and DC pumps, oil cooler), the Shaft-Driven Main Oil Pump
@@ -24,6 +30,9 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
  * <p>No ticker. A skid does nothing on its own: the shaft train it is attached to steps it once a tick, from the train's own ticker
  * ({@link TurbineAuxTrain}). A skid with no train ticking, or none attached, is not simulated and draws nothing. Its pumps run only
  * while the player has switched them on.
+ *
+ * <p>The fourth kind, the Oil Filter Housing, is not on the train at all: it stands against a Main Oil Tank, holds one Oil Filter
+ * Cartridge, and is stepped by that tank's own oil step, so it has no ticker either (see {@link #filterPass}).
  */
 public final class TurbineAuxBlockEntity extends BlockEntity {
     public static final int AC_CAPACITY_FE = 100_000, DC_CAPACITY_FE = 1_000_000, WATER_CAPACITY = 5_000;
@@ -43,7 +52,15 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     private double psig, film, coolerKw, pumpFlow;
     private boolean acRan, dcRan, statorRan;
 
-    public TurbineAuxBlockEntity(BlockPos pos, BlockState state) { super(BwrBlockEntities.TURBINE_AUX.get(), pos, state); }
+    /** The Oil Filter Housing's one slot (null on the other kinds) and how full its cartridge is, 0 to 1. */
+    private final CartridgeSlot slot;
+    private double filterLoad;
+    private int stampedMille = -1;
+
+    public TurbineAuxBlockEntity(BlockPos pos, BlockState state) {
+        super(BwrBlockEntities.TURBINE_AUX.get(), pos, state);
+        slot = state.getBlock() instanceof TurbineAuxBlock b && b.kind() == TurbineAuxBlock.Kind.OIL_FILTER ? new CartridgeSlot() : null;
+    }
 
     public TurbineAuxBlock.Kind kind() { return ((TurbineAuxBlock) getBlockState().getBlock()).kind(); }
 
@@ -127,6 +144,129 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         return Math.max(0, n);
     }
 
+    // ---- the Oil Filter Housing (TURBINE-AUX.md): one cartridge slot, stepped by the Main Oil Tank it stands against
+
+    private final class CartridgeSlot extends ItemStackHandler {
+        private boolean quiet;
+        CartridgeSlot() { super(1); }
+        @Override public boolean isItemValid(int index, ItemStack stack) { return stack.is(BwrItems.OIL_FILTER_CARTRIDGE.get()); }
+        @Override public int getSlotLimit(int index) { return 1; }
+        /** A cartridge leaves carrying exactly how full it is. */
+        @Override public ItemStack extractItem(int index, int amount, boolean simulate) {
+            var held = getStackInSlot(0);
+            if (!simulate && !held.isEmpty()) OilFilterCartridgeItem.setLoad(held, filterLoad);
+            return super.extractItem(index, amount, simulate);
+        }
+        @Override protected void onContentsChanged(int index) {
+            var held = getStackInSlot(0);
+            filterLoad = held.isEmpty() ? 0 : OilFilterCartridgeItem.load(held);
+            stampedMille = -1;
+            if (!quiet) setChanged();
+        }
+        void put(ItemStack stack) {
+            quiet = true;
+            try { stacks.set(0, stack); onContentsChanged(0); } finally { quiet = false; }
+        }
+    }
+
+    /** The housing's slot, for the screen and the player; null on the other kinds. */
+    public ItemStackHandler cartridgeSlot() { return slot; }
+
+    private IItemHandler automation;
+    /** What a hopper or a pipe sees: it may put a cartridge into an empty slot and can take nothing out, so nothing pulls a cartridge in service. */
+    public IItemHandler cartridgeAutomation() {
+        if (slot == null) return null;
+        if (automation == null) automation = new IItemHandler() {
+            public int getSlots() { return 1; }
+            public ItemStack getStackInSlot(int i) { return slot.getStackInSlot(0); }
+            public ItemStack insertItem(int i, ItemStack s, boolean simulate) { return slot.getStackInSlot(0).isEmpty() ? slot.insertItem(0, s, simulate) : s; }
+            public ItemStack extractItem(int i, int amount, boolean simulate) { return ItemStack.EMPTY; }
+            public int getSlotLimit(int i) { return 1; }
+            public boolean isItemValid(int i, ItemStack s) { return slot.isItemValid(0, s); }
+        };
+        return automation;
+    }
+
+    public boolean hasCartridge() { return slot != null && !slot.getStackInSlot(0).isEmpty(); }
+    /** How full the cartridge is, 0 to 1 (0 with none in). */
+    public double filterLoad() { return hasCartridge() ? filterLoad : 0; }
+    /** What is left in the cartridge, 1 new to 0 spent; 0 with none in. */
+    public double filterLife() { return hasCartridge() ? 1 - filterLoad : 0; }
+    /** The pressure drop across the cartridge, psi; none with no cartridge. */
+    public double filterDpPsi() { return hasCartridge() ? TurbineAux.filterDpPsi(filterLoad) : 0; }
+    /** Whether the oil goes round the cartridge: the slot is empty, or the cartridge is full. */
+    public boolean filterBypass() { return !hasCartridge() || TurbineAux.filterBypassOpen(filterLoad); }
+    /** Whether a change is due: a pressure drop at the change level, or oil going round. */
+    public boolean filterChangeDue() { return filterBypass() || filterDpPsi() >= TurbineAux.FILTER_DP_CHANGE_PSI; }
+    /** The share of the unfiltered oil loss that this housing lets through right now. */
+    public double filterFactor() { return TurbineAux.filterFactor(hasCartridge(), filterLoad); }
+
+    /** Hours the cartridge has left at the header pressure and oil temperature the tank holds now; infinite when nothing flows through it. */
+    public double filterHoursLeft() {
+        var t = tank();
+        if (!hasCartridge() || t == null) return Double.POSITIVE_INFINITY;
+        return TurbineAux.filterSecondsLeft(filterLoad, t.psig(), t.oilC()) / 3600;
+    }
+
+    /**
+     * <b>The one place that decides which Main Oil Tank a housing serves</b> (and {@link #oilFilter} is the one place a tank finds its
+     * housing; everything else asks one of these two). Today the housing is bolted straight on a tank: the tank on its
+     * {@link TurbineAuxBlock#oilInFace inlet face} (the back) if there is one, else the first tank against any face in the order of
+     * {@link Direction#values()}. A later Lube Oil Pipe run changes this method to follow the oil from the inlet face back to its tank,
+     * and the outlet face ({@link TurbineAuxBlock#oilOutFace}) is where the oil leaves to the turbine train; nothing else here changes.
+     * Never loads a chunk.
+     */
+    public TurbineAuxBlockEntity tank() {
+        if (slot == null || level == null) return null;
+        var inlet = worldPosition.relative(((TurbineAuxBlock) getBlockState().getBlock()).oilInFace(getBlockState()));
+        if (TurbineAuxBlock.tankAt(level, inlet) && LoadedWorld.blockEntity(level, inlet) instanceof TurbineAuxBlockEntity t && !t.isRemoved()) return t;
+        for (Direction d : Direction.values()) {
+            var p = worldPosition.relative(d);
+            if (TurbineAuxBlock.tankAt(level, p) && LoadedWorld.blockEntity(level, p) instanceof TurbineAuxBlockEntity t && !t.isRemoved()) return t;
+        }
+        return null;
+    }
+
+    /** The housing this tank is fitted with (the first of those against it that has this tank as theirs, in the order of {@link Direction#values()}), or null. */
+    public TurbineAuxBlockEntity oilFilter() {
+        if (kind() != TurbineAuxBlock.Kind.LUBE_OIL || level == null) return null;
+        for (Direction d : Direction.values()) {
+            var p = worldPosition.relative(d);
+            var s = LoadedWorld.state(level, p);
+            if (s == null || !(s.getBlock() instanceof TurbineAuxBlock b) || b.kind() != TurbineAuxBlock.Kind.OIL_FILTER) continue;
+            if (LoadedWorld.blockEntity(level, p) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && h.tank() == this) return h;
+        }
+        return null;
+    }
+
+    /**
+     * One tick of oil through the cartridge, called by the tank's oil step: returns the share of the unfiltered loss that gets through
+     * and loads the cartridge by what flowed. A full cartridge or an empty slot lets all of it through and loads nothing.
+     */
+    double filterPass(double headerPsig, double oilTempC, double dt) {
+        double factor = filterFactor();
+        if (factor < 1) {
+            filterLoad = TurbineAux.filterLoadStep(filterLoad, headerPsig, oilTempC, dt);
+            int mille = (int) Math.floor(filterLoad * 1000);
+            if (mille != stampedMille) {
+                // What the screen and a viewer show: the stack in the slot follows the load by a thousandth, not every tick.
+                OilFilterCartridgeItem.setLoad(slot.getStackInSlot(0), mille / 1000.0);
+                stampedMille = mille;
+            }
+            setChanged();
+        }
+        return factor;
+    }
+
+    /** The cartridge falls out when the housing is broken, carrying exactly how full it is. */
+    void dropCartridge() {
+        if (!hasCartridge() || level == null) return;
+        var out = slot.getStackInSlot(0).copy();
+        OilFilterCartridgeItem.setLoad(out, filterLoad);
+        slot.put(ItemStack.EMPTY);
+        Containers.dropItemStack(level, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5, out);
+    }
+
     // ---- the water ports (oil cooler, generator coolers): cold in on one flange, hot out on the other
 
     public IFluidHandler coldInlet() { return port(cold, true); }
@@ -206,7 +346,12 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         film = filmQuality;
         coolerKw = cool(oilC, TurbineAux.OIL_COOLER_UA_KW_PER_K, TurbineAux.OIL_COOLER_WATER_KG_PER_S);
         oilC = TurbineAux.oilStepC(oilC, oilL, heatKw, coolerKw, DT);
-        if (oilL > 0) oilL = Math.max(0, oilL - TurbineAux.oilLossLitres(headerPsig, oilC, DT));
+        if (oilL > 0) {
+            // A tank without a housing loses oil exactly as it always did; with one, the cartridge in it lets a tenth through.
+            var filter = oilFilter();
+            oilL = Math.max(0, oilL - (filter == null ? TurbineAux.oilLossLitres(headerPsig, oilC, DT)
+                    : TurbineAux.oilLossLitres(headerPsig, oilC, DT, filter.filterPass(headerPsig, oilC, DT))));
+        }
         pushHot();
         setChanged();
     }
@@ -273,6 +418,11 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         if (statorFlow != 0) t.putDouble("StatorFlow", statorFlow);
         saveWater(t, "Cold", cold);
         saveWater(t, "Hot", hot);
+        if (hasCartridge()) {
+            var held = slot.getStackInSlot(0).copy();
+            OilFilterCartridgeItem.setLoad(held, filterLoad);
+            t.put("Cartridge", held.save(r));
+        }
     }
 
     private static void saveWater(CompoundTag t, String key, ThermalWaterTank tank) {
@@ -302,6 +452,10 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         statorFlow = finite(t.getDouble("StatorFlow"), 0, 1, 0);
         loadWater(t, "Cold", cold);
         loadWater(t, "Hot", hot);
+        if (slot != null) {
+            var held = t.contains("Cartridge") ? ItemStack.parse(r, t.get("Cartridge")).orElse(ItemStack.EMPTY) : ItemStack.EMPTY;
+            slot.put(held.is(BwrItems.OIL_FILTER_CARTRIDGE.get()) ? held.copyWithCount(1) : ItemStack.EMPTY);
+        }
         stepTick = Long.MIN_VALUE;
         psig = film = coolerKw = pumpFlow = 0;
         acRan = dcRan = statorRan = false;

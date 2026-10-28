@@ -19,6 +19,9 @@ public class TurbineAuxMenu extends BwrMenu {
     public int kind;
     public double rpm, psig, film, oilC, oilFraction, coolerKw, coldKg, hotKg, coldC, hotC, acFe, dcFe;
     public double statorFlow, h2Psig, h2Kg, coolantC, windingC, bearingC, electricMW, shaftFlow;
+    /** The oil filter housing against the tank (TURBINE-AUX.md): fitted, its bypass open, the cartridge life left and the pressure drop across it. */
+    public boolean filterHousing, filterBypass;
+    public double filterLife, filterDp;
     public String status = "Waiting for server";
 
     public TurbineAuxMenu(int id, Inventory inv, RegistryFriendlyByteBuf b) { this(id, inv, b.readBlockPos()); }
@@ -51,6 +54,11 @@ public class TurbineAuxMenu extends BwrMenu {
                 be.acFe(), be.dcFe(), be.statorFlow(), be.h2Psig(), be.h2Kg(), be.coolantC(), m == null ? 0 : m.windingC, m == null ? 0 : m.bearingC,
                 m == null ? 0 : m.electricMW, aux != null && aux.shaftPump ? TurbineAux.shaftPumpFlow(rpm) : 0})
             b.writeDouble(v);
+        var filter = be.oilFilter();
+        b.writeBoolean(filter != null);
+        b.writeBoolean(filter != null && filter.filterBypass());
+        b.writeDouble(filter == null ? 0 : filter.filterLife());
+        b.writeDouble(filter == null ? 0 : filter.filterDpPsi());
         b.writeUtf(be.kind() == TurbineAuxBlock.Kind.SHAFT_PUMP ? (m == null ? "Not on a generator shaft end" : "On the generator shaft end")
                 : m == null ? (be.kind() == TurbineAuxBlock.Kind.GEN_COOLING ? "Not against a generator" : "Not against a turbine section") : "Attached");
     }
@@ -65,6 +73,7 @@ public class TurbineAuxMenu extends BwrMenu {
         coldKg = b.readDouble(); hotKg = b.readDouble(); coldC = b.readDouble(); hotC = b.readDouble(); acFe = b.readDouble(); dcFe = b.readDouble();
         statorFlow = b.readDouble(); h2Psig = b.readDouble(); h2Kg = b.readDouble(); coolantC = b.readDouble(); windingC = b.readDouble(); bearingC = b.readDouble();
         electricMW = b.readDouble(); shaftFlow = b.readDouble();
+        filterHousing = b.readBoolean(); filterBypass = b.readBoolean(); filterLife = b.readDouble(); filterDp = b.readDouble();
         status = b.readUtf();
     }
 

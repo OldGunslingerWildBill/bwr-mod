@@ -213,6 +213,10 @@ e("turbine_rebuild_kit")
 # --- the turbine oil: the drum is filled from cans a reaction chamber makes (written by hand, see the module doc)
 e("turbine_oil_drum", pattern=[" C ", "CSC", " C "], key={"C": CAN, "S": STEEL})
 
+# --- the oil filter: a housing of steel with a control circuit in place of the lever, and a cartridge of steel caps round a plastic element
+e("oil_filter_housing", sub={"minecraft:lever": C1})
+e("oil_filter_cartridge", sub={"minecraft:white_wool": HDPE_SHEET})
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Held back: the Mekanism variant is designed (its entry stays in TABLE's form, moved to HELD below) but writing it breaks an
 # existing test assertion, which this work must not edit without the owner's OK. `--include-blocked` writes them anyway.

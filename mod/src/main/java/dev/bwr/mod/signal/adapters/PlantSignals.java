@@ -156,6 +156,11 @@ final class PlantSignals {
             .boolOrNone("vibration_alarm", "Vibration alarm", be -> be.aux().bowGoverned ? (be.aux().vibrationAlarm ? 1 : 0) : Double.NaN)
             .boolOrNone("winding_alarm", "Winding temperature alarm", be -> be.block().generator() && be.aux().genGoverned ? (be.aux().windingAlarm ? 1 : 0) : Double.NaN)
             .boolOrNone("h2_alarm", "Hydrogen pressure alarm", be -> be.block().generator() && be.aux().genGoverned ? (be.aux().h2Alarm ? 1 : 0) : Double.NaN)
+            // The Oil Filter Housing on the train's Main Oil Tank (TURBINE-AUX.md): "no signal" on a train whose tank has none.
+            .number("oil_filter_life", "Oil filter cartridge life left", "fraction", 0, 1, be -> be.aux().lubeGoverned && be.aux().filterHousing ? be.aux().filterLife : Double.NaN)
+            .number("oil_filter_dp", "Oil filter pressure drop", "psi", 0, 25, be -> be.aux().lubeGoverned && be.aux().filterHousing ? be.aux().filterDpPsi : Double.NaN)
+            .boolOrNone("oil_filter_bypass", "Oil filter bypass open (slot empty or cartridge full)", be -> be.aux().lubeGoverned && be.aux().filterHousing ? (be.aux().filterBypass ? 1 : 0) : Double.NaN)
+            .boolOrNone("oil_filter_alarm", "Oil filter change due", be -> be.aux().lubeGoverned && be.aux().filterHousing ? (be.aux().filterAlarm ? 1 : 0) : Double.NaN)
             // A wrecked casing and a fire (TURBINE-MAINTENANCE.md): readings for a panel or a program; nothing acts on them.
             .bool("fire", "Turbine fire", PowerModuleBlockEntity::burning)
             .number("fire_fuel", "Fire fuel left (oil L, hydrogen kg)", "", 0, 20_000, PowerModuleBlockEntity::fireFuel)
@@ -180,8 +185,22 @@ final class PlantSignals {
             .number("hot_water", "Warmed cooling water", "kg", 0, TurbineAuxBlockEntity.WATER_CAPACITY, TurbineAuxBlockEntity::hotKg)
             .number("ac_fe", "AC bus stored", "FE", 0, TurbineAuxBlockEntity.AC_CAPACITY_FE, TurbineAuxBlockEntity::acFe)
             .number("dc_fe", "DC bus stored", "FE", 0, TurbineAuxBlockEntity.DC_CAPACITY_FE, TurbineAuxBlockEntity::dcFe)
+            // The housing against this tank, if it has one: "no signal" otherwise (TURBINE-AUX.md).
+            .bool("filter_housing", "Oil filter housing fitted", be -> be.oilFilter() != null)
+            .number("filter_life", "Oil filter cartridge life left", "fraction", 0, 1, be -> be.oilFilter() != null ? be.oilFilter().filterLife() : Double.NaN)
+            .number("filter_dp", "Oil filter pressure drop", "psi", 0, 25, be -> be.oilFilter() != null ? be.oilFilter().filterDpPsi() : Double.NaN)
+            .boolOrNone("filter_bypass", "Oil filter bypass open (slot empty or cartridge full)", be -> be.oilFilter() != null ? (be.oilFilter().filterBypass() ? 1 : 0) : Double.NaN)
             .toggle("ac_pump", "AC pump on / off", (be, v) -> { be.setAcPump(v >= 0.5); return true; })
             .toggle("dc_pump", "DC pump on / off", (be, v) -> { be.setDcPump(v >= 0.5); return true; });
+
+    /** The Oil Filter Housing: readings only; the cartridge is changed by hand. */
+    static final Schema<TurbineAuxBlockEntity> OIL_FILTER = new Schema<TurbineAuxBlockEntity>()
+            .bool("attached", "Against a Main Oil Tank", be -> be.tank() != null)
+            .bool("cartridge", "A cartridge is in the slot", TurbineAuxBlockEntity::hasCartridge)
+            .number("filter_life", "Cartridge life left", "fraction", 0, 1, TurbineAuxBlockEntity::filterLife)
+            .number("filter_dp", "Pressure drop across the cartridge", "psi", 0, 25, TurbineAuxBlockEntity::filterDpPsi)
+            .bool("filter_bypass", "Bypass open (slot empty or cartridge full)", TurbineAuxBlockEntity::filterBypass)
+            .bool("change_due", "Cartridge change due", TurbineAuxBlockEntity::filterChangeDue);
 
     /** The Shaft-Driven Main Oil Pump: no switch, it turns with the shaft. */
     static final Schema<TurbineAuxBlockEntity> SHAFT_PUMP = new Schema<TurbineAuxBlockEntity>()
@@ -209,6 +228,7 @@ final class PlantSignals {
             case LUBE_OIL -> OIL_TANK.bind(be);
             case SHAFT_PUMP -> SHAFT_PUMP.bind(be);
             case GEN_COOLING -> GEN_COOLING.bind(be);
+            case OIL_FILTER -> OIL_FILTER.bind(be);
         };
     }
 }

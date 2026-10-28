@@ -6,7 +6,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
-/** The skids' FE faces (AC bus, DC bus) and their two cooling-water flanges. */
+/** The skids' FE faces (AC bus, DC bus) and their two cooling-water flanges, and the filter housing's cartridge slot. */
 @EventBusSubscriber(modid = "bwr")
 public final class TurbineAuxCapabilities {
     private TurbineAuxCapabilities() {}
@@ -16,6 +16,8 @@ public final class TurbineAuxCapabilities {
         // The LP Blade Storage Stand stocks blade sections from hoppers and pipes on any face (TURBINE-MAINTENANCE.md); the casing cradle does not.
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, BwrBlockEntities.TURBINE_STAND.get(),
                 (be, side) -> be.kind() == TurbineStandBlock.Kind.BLADES ? be.items() : null);
+        // The Oil Filter Housing takes a cartridge into an empty slot from hoppers and pipes on any face and gives none back (TURBINE-AUX.md).
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, BwrBlockEntities.TURBINE_AUX.get(), (be, side) -> be.cartridgeAutomation());
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, BwrBlockEntities.TURBINE_AUX.get(), (be, side) -> {
             if (side == null) return null;
             var state = be.getBlockState();

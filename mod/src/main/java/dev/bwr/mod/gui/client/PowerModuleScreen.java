@@ -97,6 +97,9 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                         () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).showIf(() -> menu.lubeGov),
                 Layout.row("Oil level", () -> Double.isNaN(menu.oilLevel) ? "-" : pct(menu.oilLevel), "%").showIf(() -> menu.lubeGov),
                 Layout.row("Oil film", () -> pct(menu.oilFilm), "%").showIf(() -> menu.lubeGov),
+                Layout.row("Oil filter", () -> menu.filterBypass ? "bypass open" : pct(menu.filterLife) + " % left, " + num(menu.filterDp, 1) + " psid")
+                        .status(() -> (menu.alarms & 128) != 0 ? Status.CAUTION : Status.NONE).showIf(() -> menu.lubeGov && menu.filterHousing)
+                        .tip("The Oil Filter Housing on the Main Oil Tank: what is left in its cartridge and the pressure drop across it. With the slot empty or the cartridge full the oil goes round it and the tank loses oil at the unfiltered rate."),
                 Layout.row("Bearing temperature", () -> num(DisplayUnitReadouts.value(Quantity.TEMPERATURE, menu.bearingC), 1),
                         () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).showIf(() -> menu.lubeGov),
                 Layout.row("Shaft vibration", () -> num(menu.vibration, 1), "mm/s").showIf(() -> menu.bowGov),
