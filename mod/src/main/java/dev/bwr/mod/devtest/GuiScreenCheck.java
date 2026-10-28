@@ -97,7 +97,7 @@ public final class GuiScreenCheck {
     }
 
     /** Screens also photographed at the smallest GUI sizes (laid out for 320 x 240 or 427 x 240, drawn at scale 2 in the corner). */
-    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "reactor-info-steam", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray", "guide-contents", "guide-page-long", "guide-page-icons", "guide-page-image-last", "guide-page-book-end");
+    private static final Set<String> FLOOR_PICTURES = Set.of("reactor-flux", "reactor-info", "reactor-info-steam", "pump-rhr", "terry", "condenser", "refuelling-burnup", "fabricator", "fabricator-mox", "reprocessor", "pool-spray", "guide-contents", "guide-page-long", "guide-page-icons", "guide-page-image-last", "guide-page-book-end", "fabrication-desk-gauges", "fabrication-desk-panels");
 
     private static boolean started, built, finished;
     private static int age, joined, stage, scaleIndex, wait;
@@ -625,6 +625,16 @@ public final class GuiScreenCheck {
         s.add(new Scenario("aux-cooling-skid-unpowered", i -> new TurbineAuxScreen(auxMenu(i, 2, true), i, t("Generator Cooling Skid"))));
         s.add(new Scenario("rwcu-nanofilter", i -> new RwcuUnitScreen(nanofilterMenu(i, false), i, t("RWCU Stainless Steel Nanofilter"))));
         s.add(new Scenario("rwcu-nanofilter-spent", i -> new RwcuUnitScreen(nanofilterMenu(i, true), i, t("RWCU Stainless Steel Nanofilter"))));
+        // The fabrication desk (FABRICATION-DESK.md): a gauge with some of its materials, a switch with all of them and the answer to a
+        // craft, and the longest tab (a scrolled list, a long name, nothing held, "not enough materials").
+        s.add(new Scenario("fabrication-desk-gauges", i -> new FabricationDeskScreen(new FabricationDeskMenu(99, i, P), i, t("Fabrication Desk")),
+                screen -> deskState(screen, dev.bwr.mod.fabrication.FabricationCategory.GAUGES, "dial_gauge", 0.5, null, 0)));
+        s.add(new Scenario("fabrication-desk-ready", i -> new FabricationDeskScreen(new FabricationDeskMenu(99, i, P), i, t("Fabrication Desk")),
+                screen -> deskState(screen, dev.bwr.mod.fabrication.FabricationCategory.SWITCHES, "toggle_switch", 1.5,
+                        dev.bwr.mod.fabrication.FabricationCrafting.Outcome.CRAFTED, 2)));
+        s.add(new Scenario("fabrication-desk-panels", i -> new FabricationDeskScreen(new FabricationDeskMenu(99, i, P), i, t("Fabrication Desk")),
+                screen -> deskState(screen, dev.bwr.mod.fabrication.FabricationCategory.PANELS, "control_panel_plinth_apron", 0.0,
+                        dev.bwr.mod.fabrication.FabricationCrafting.Outcome.SHORT, 0)));
         s.add(new Scenario("valve-control", i -> new TurbineValveScreen(valve(i, false), i, t("Turbine Control Valve"))));
         s.add(new Scenario("valve-stop", i -> new TurbineValveScreen(valve(i, true), i, t("Turbine Stop Valve"))));
         s.add(new Scenario("fabricator", i -> {
@@ -1359,6 +1369,32 @@ public final class GuiScreenCheck {
             case 3 -> "Safety/Relief Valve";
             default -> "Water Discharge Port";
         }));
+    }
+
+    /**
+     * Opens a fabrication desk screen on a tab and a part and fills the menu with {@code fraction} of each material (alternate
+     * materials get half of that, so a picture shows green and red together) and, if given, the answer to a craft.
+     */
+    private static void deskState(Screen screen, dev.bwr.mod.fabrication.FabricationCategory tab, String part, double fraction,
+                                  dev.bwr.mod.fabrication.FabricationCrafting.Outcome answer, int crafts) {
+        var desk = (FabricationDeskScreen) screen;
+        desk.select(tab, 0);
+        desk.select(tab, Math.max(0, desk.indexOf(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("bwr", part))));
+        List<ItemStack> held = new ArrayList<>();
+        var recipe = desk.selectedPart().recipe();
+        for (int n = 0; n < recipe.inputs().size(); n++) {
+            double share = fraction >= 1.0 || n % 2 == 0 ? fraction : fraction / 2.0;
+            int have = (int) Math.floor(recipe.inputs().get(n).count() * share);
+            if (have > 0) {
+                held.add(recipe.inputs().get(n).ingredient().getItems()[0].copyWithCount(have));
+            }
+        }
+        desk.getMenu().held = held;
+        if (answer != null) {
+            desk.getMenu().answered = true;
+            desk.getMenu().lastOutcome = answer;
+            desk.getMenu().lastCrafts = crafts;
+        }
     }
 
     private static void click(Screen screen, String label) {

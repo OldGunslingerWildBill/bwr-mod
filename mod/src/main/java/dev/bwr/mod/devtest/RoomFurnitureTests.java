@@ -178,8 +178,13 @@ public final class RoomFurnitureTests {
             check(h, BuiltInRegistries.ITEM.containsKey(id) && BuiltInRegistries.ITEM.get(id) == block.asItem(),
                     piece.name() + " item is not registered");
             check(h, !((AssemblyBlock) block).defaultBlockState().hasBlockEntity(), piece.name() + " must not have a block entity");
-            check(h, level.getRecipeManager().byKey(id).isPresent(), piece.name() + " has no recipe");
-            var result = level.getRecipeManager().byKey(id).get().value().getResultItem(level.registryAccess());
+            // a grid recipe of its own name, or (the desks, cabinets, stand and displays) the fabrication desk's recipe that makes it
+            var grid = level.getRecipeManager().byKey(id);
+            var desk = dev.bwr.mod.fabrication.FabricationCrafting.making(level.getRecipeManager(), level.registryAccess(), block.asItem())
+                    .stream().findFirst();
+            check(h, grid.isPresent() || desk.isPresent(), piece.name() + " has no recipe");
+            var result = grid.isPresent() ? grid.get().value().getResultItem(level.registryAccess())
+                    : desk.get().value().getResultItem(level.registryAccess());
             check(h, result.is(block.asItem()) && result.getCount() >= 1, piece.name() + " recipe yields the wrong item");
             ResourceKey<LootTable> table = ResourceKey.create(Registries.LOOT_TABLE,
                     ResourceLocation.fromNamespaceAndPath("bwr", "blocks/" + piece.name()));

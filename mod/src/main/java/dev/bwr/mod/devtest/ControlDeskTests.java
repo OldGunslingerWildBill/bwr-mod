@@ -510,7 +510,9 @@ public final class ControlDeskTests {
         var server = h.getLevel().getServer();
         for (String name : new String[] {"control_panel_desk", "control_panel_desk_wide"}) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath("bwr", name);
-            check(h, server.getRecipeManager().byKey(id).isPresent(), name + " has no recipe");
+            check(h, server.getRecipeManager().byKey(id).isPresent()
+                    || !dev.bwr.mod.fabrication.FabricationCrafting.making(server.getRecipeManager(), h.getLevel().registryAccess(),
+                            net.minecraft.core.registries.BuiltInRegistries.ITEM.get(id)).isEmpty(), name + " has no recipe");
             check(h, net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(id) && net.minecraft.core.registries.BuiltInRegistries.BLOCK.containsKey(id),
                     name + " is not registered as a block with an item");
         }
