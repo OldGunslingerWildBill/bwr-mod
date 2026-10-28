@@ -74,10 +74,6 @@ public final class MekanismRecipeTierTests {
             "annunciator", "bar_gauge", "bar_graph", "control_switch", "dial_gauge", "edgewise_gauge_horizontal",
             "edgewise_gauge_vertical", "key_switch", "lamp", "push_turn_switch", "pushbutton", "rotary_selector", "rps_trip",
             "setpoint_knob", "seven_segment_display", "sixteen_segment_display", "thumbwheel", "toggle_switch",
-            // HELD BACK, an existing test pins the vanilla recipe: RadiationToolsTests.theRecipesExist loads bwr:area_radiation_monitor by id, with Mekanism too
-            "area_radiation_monitor",
-            // HELD BACK, an existing test pins the vanilla recipe: LargeRtgTests.ingotAndBlockRecipesConserveMassAndTheDataAgrees loads bwr:cobalt_sample_detector b
-            "cobalt_sample_detector",
             // made only of parts that carry the Mekanism price (panel bodies, vessels, pool walls, pipes) plus dye, glass or a hopper; a price of its own would coun
             "control_panel_back", "control_panel_benchboard", "control_panel_corner_bench_inside",
             "control_panel_corner_vertical_inside", "control_panel_end_cap_bench", "control_panel_end_cap_console",
@@ -99,22 +95,6 @@ public final class MekanismRecipeTierTests {
             "shield_plug_concrete", "ultra_reinforced_shield_plug_concrete",
             // a book and a nameplate; the nameplate carries the steel
             "guide_book",
-            // HELD BACK, an existing test pins the vanilla recipe: RtgTests.recipesCraftTheBlocksAndTheAmBeRodFromACapsule loads bwr:isotope_separator by id, with M
-            "isotope_separator",
-            // HELD BACK, an existing test pins the vanilla recipe: LargeRtgTests.ingotAndBlockRecipesConserveMassAndTheDataAgrees crafts bwr:large_rtg by id from ir
-            "large_rtg",
-            // HELD BACK, an existing test pins the vanilla recipe: MimicTapeTests.tapeIsRegisteredWithItsRecipeComponentsAndDefaults loads bwr:mimic_tape by id, wit
-            "mimic_tape",
-            // HELD BACK, an existing test pins the vanilla recipe: PanelRecipeTests.panelKeyRecipeMakesOneUnstackableKey loads bwr:panel_key by id, with Mekanism to
-            "panel_key",
-            // HELD BACK, an existing test pins the vanilla recipe: PaperlessRecorderTests.theRecorderHasAnItemARecipeAndNamesForEveryPort loads bwr:paperless_record
-            "paperless_recorder",
-            // HELD BACK, an existing test pins the vanilla recipe: ReprocessingTests asserts bwr:reprocessing_plant 'must not depend on a mod' and crafts it from ob
-            "reprocessing_plant",
-            // HELD BACK, an existing test pins the vanilla recipe: RtgTests.recipesCraftTheBlocksAndTheAmBeRodFromACapsule loads bwr:rtg by id, with Mekanism too
-            "rtg",
-            // HELD BACK, an existing test pins the vanilla recipe: RadiationToolsTests.theRecipesExist loads bwr:survey_meter by id, with Mekanism too
-            "survey_meter",
             // a Mekanism chemical recipe, not a crafting recipe
             "tritium_sample_oxidizing");
     // END GENERATED EXEMPT LIST

@@ -16,7 +16,7 @@ public final class PanelRecipeTests {
     @GameTest(template = "empty")
     public static void panelKeyRecipeMakesOneUnstackableKey(GameTestHelper helper) {
         var recipe = helper.getLevel().getRecipeManager().byKey(
-                ResourceLocation.fromNamespaceAndPath("bwr", "panel_key"));
+                ResourceLocation.fromNamespaceAndPath("bwr", "panel_key" + (net.neoforged.fml.ModList.get().isLoaded("mekanism") ? "_mekanism" : "")));
         helper.assertTrue(recipe.isPresent(), "panel key recipe is missing");
         var result = recipe.get().value().getResultItem(helper.getLevel().registryAccess());
         helper.assertTrue(result.is(BwrItems.PANEL_KEY.get()), "panel key recipe yields the wrong item");

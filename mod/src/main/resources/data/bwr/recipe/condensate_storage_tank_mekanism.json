@@ -8,20 +8,20 @@
   ],
   "category": "building",
   "key": {
-    "I": {
-      "tag": "c:ingots/steel"
+    "B": {
+      "tag": "c:storage_blocks/steel"
     },
     "G": {
       "item": "minecraft:glass"
     },
-    "B": {
+    "W": {
       "item": "minecraft:water_bucket"
     }
   },
   "pattern": [
-    "IGI",
-    "GBG",
-    "IGI"
+    "BGB",
+    "GWG",
+    "BGB"
   ],
   "result": {
     "count": 1,

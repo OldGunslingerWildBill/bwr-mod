@@ -8,8 +8,8 @@
   ],
   "category": "building",
   "key": {
-    "T": {
-      "item": "bwr:pressurised_tube"
+    "B": {
+      "tag": "c:storage_blocks/steel"
     },
     "C": {
       "tag": "c:storage_blocks/bronze"
@@ -20,14 +20,14 @@
     "P": {
       "item": "minecraft:piston"
     },
-    "I": {
-      "tag": "c:storage_blocks/steel"
+    "T": {
+      "item": "bwr:pressurised_tube"
     }
   },
   "pattern": [
-    "TCT",
+    "BCB",
     "VPV",
-    "TIT"
+    "TBT"
   ],
   "result": {
     "count": 1,

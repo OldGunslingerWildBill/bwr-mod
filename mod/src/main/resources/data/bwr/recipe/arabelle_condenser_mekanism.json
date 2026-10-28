@@ -7,11 +7,8 @@
     }
   ],
   "key": {
-    "I": {
+    "B": {
       "tag": "c:storage_blocks/steel"
-    },
-    "P": {
-      "item": "bwr:pressurised_tube"
     },
     "T": {
       "item": "bwr:high_pressure_water_pipe"
@@ -21,9 +18,9 @@
     }
   },
   "pattern": [
-    "IPI",
+    "BBB",
     "TCT",
-    "III"
+    "BBB"
   ],
   "result": {
     "count": 1,

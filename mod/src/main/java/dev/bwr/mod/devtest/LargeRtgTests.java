@@ -644,19 +644,22 @@ public final class LargeRtgTests {
         RtgFuel co = RtgFuels.of(new ItemStack(BwrItems.COBALT_SAMPLE.get()));
         h.assertTrue(co.gramsPerItem() == 474.0 && co.halfLifeYears() == 5.2714 && co.specificPowerWPerG() == 18.9, "cobalt " + co);
         // the cobalt sample's existing use still works: a comparator from a sample, redstone and quartz
-        var comparator = manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", "cobalt_sample_detector"));
+        var comparator = manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", "cobalt_sample_detector" + (net.neoforged.fml.ModList.get().isLoaded("mekanism") ? "_mekanism" : "")));
         h.assertTrue(comparator.isPresent(), "the cobalt sample's own recipe is gone");
         var cr = (CraftingRecipe) comparator.get().value();
         h.assertTrue(cr.getIngredients().stream().anyMatch(i -> i.test(new ItemStack(BwrItems.COBALT_SAMPLE.get()))), "the cobalt sample is no longer an ingredient of its recipe");
         // the large RTG recipe
-        var lr = (CraftingRecipe) manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", "large_rtg")).orElseThrow().value();
+        var lr = (CraftingRecipe) manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", "large_rtg" + (net.neoforged.fml.ModList.get().isLoaded("mekanism") ? "_mekanism" : ""))).orElseThrow().value();
         var lg = NonNullList.withSize(9, ItemStack.EMPTY);
         for (int i : new int[] {0, 1, 2, 3, 5}) {
             lg.set(i, new ItemStack(BwrItems.LEAD_INGOT.get()));
         }
         lg.set(4, new ItemStack(BwrItems.RTG.get()));
-        lg.set(6, new ItemStack(net.minecraft.world.item.Items.IRON_BLOCK));
-        lg.set(8, new ItemStack(net.minecraft.world.item.Items.IRON_BLOCK));
+        // the structural blocks: iron blocks, and with Mekanism steel blocks (the Mekanism recipe)
+        net.minecraft.world.item.Item frame = net.neoforged.fml.ModList.get().isLoaded("mekanism") ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(ResourceLocation.parse("mekanism:block_steel"))
+                : net.minecraft.world.item.Items.IRON_BLOCK;
+        lg.set(6, new ItemStack(frame));
+        lg.set(8, new ItemStack(frame));
         lg.set(7, new ItemStack(net.minecraft.world.item.Items.HOPPER));
         h.assertTrue(lr.matches(CraftingInput.of(3, 3, lg), h.getLevel()) && lr.assemble(CraftingInput.of(3, 3, lg), h.getLevel().registryAccess()).is(BwrItems.LARGE_RTG.get()), "the Large RTG recipe does not craft");
         h.succeed();

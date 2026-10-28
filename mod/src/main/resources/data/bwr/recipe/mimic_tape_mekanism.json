@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:paper"
+    },
+    {
+      "item": "minecraft:blue_dye"
+    },
+    {
+      "tag": "c:nuggets/steel"
+    }
+  ],
+  "result": {
+    "count": 16,
+    "id": "bwr:mimic_tape"
+  }
+}

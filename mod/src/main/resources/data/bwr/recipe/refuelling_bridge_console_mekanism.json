@@ -8,20 +8,23 @@
   ],
   "category": "building",
   "key": {
-    "I": {
-      "tag": "c:ingots/steel"
-    },
     "P": {
       "item": "minecraft:glass_pane"
     },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
     "C": {
       "tag": "c:circuits/advanced"
+    },
+    "B": {
+      "tag": "c:storage_blocks/steel"
     }
   },
   "pattern": [
     "PPP",
     "ICI",
-    "III"
+    "BBB"
   ],
   "result": {
     "count": 1,

@@ -580,7 +580,7 @@ public final class RadiationToolsTests {
     public static void theRecipesExist(GameTestHelper helper) {
         var manager = helper.getLevel().getRecipeManager();
         for (String id : new String[] {"survey_meter", "area_radiation_monitor"}) {
-            var recipe = manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", id));
+            var recipe = manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", id + (net.neoforged.fml.ModList.get().isLoaded("mekanism") ? "_mekanism" : "")));
             helper.assertTrue(recipe.isPresent(), "recipe " + id + " is loaded");
             var result = recipe.get().value().getResultItem(helper.getLevel().registryAccess());
             helper.assertTrue(result.getItem() == (id.equals("survey_meter") ? BwrItems.SURVEY_METER.get()

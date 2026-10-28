@@ -14,7 +14,7 @@ for id in ('steam_stop_valve','turbine_control_valve'):
     m.put(m.RES/f'assets/bwr/blockstates/{id}.json',{'variants':{f'facing={d}':{'model':f'bwr:block/steam_valves/{id}/body','y':a} for d,a in zip(('north','east','south','west'),(0,90,180,270))}})
     m.put(m.RES/f'assets/bwr/models/item/{id}.json',{'parent':f'bwr:block/steam_valves/{id}/body','display':{'gui':{'rotation':[25,225,0],'scale':[.85,.85,.85]}}})
     m.put(m.RES/f'data/bwr/loot_table/blocks/{id}.json',{'type':'minecraft:block','pools':[{'rolls':1,'entries':[{'type':'minecraft:item','name':'bwr:'+id}],'conditions':[{'condition':'minecraft:survives_explosion'}]}]})
-    m.put(m.RES/f'data/bwr/recipe/{id}.json',{'type':'minecraft:crafting_shaped','pattern':[' R ','IPI',' I '],'key':{'R':{'item':'minecraft:redstone' if id=='steam_stop_valve' else 'minecraft:comparator'},'I':{'item':'minecraft:iron_ingot'},'P':{'item':'bwr:pressurised_tube'}},'result':{'id':'bwr:'+id,'count':1}})
+    m.put(m.RES/f'data/bwr/recipe/{id}.json',{'type':'minecraft:crafting_shaped','pattern':[' R ','IPI',' I '],'key':{'R':{'item':'minecraft:redstone' if id=='steam_stop_valve' else 'minecraft:repeater'},'I':{'item':'minecraft:iron_ingot'},'P':{'item':'bwr:pressurised_tube'}},'result':{'id':'bwr:'+id,'count':1}})
 for p,content in m.OUTPUTS.items():
     if '--check' in sys.argv:assert p.exists() and p.read_bytes()==content,'Stale valve asset: '+str(p)
     else:p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(content)

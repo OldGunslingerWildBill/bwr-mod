@@ -371,7 +371,8 @@ for name, r in recipes.items():
         bad(f"{name}: a Mekanism-tier recipe must be loaded with Mekanism and without it never")
     if live(recipes[twin], {"mekanism"}, twin) or not live(recipes[twin], set(), twin):
         bad(f"{twin}: the vanilla twin of {name} must be loaded without Mekanism and with it never")
-    if r.get("result") != recipes[twin].get("result") and name != "turbine_oil_drum_mekanism.json":
+    # the same item; the count may differ (a heavier Mekanism vessel makes two blocks where the vanilla one makes four)
+    if r.get("result", {}).get("id") != recipes[twin].get("result", {}).get("id"):
         bad(f"{name}: makes {r.get('result')} but its vanilla twin makes {recipes[twin].get('result')}")
     named = [ref for ing in (list((r.get("key") or {}).values()) + list(r.get("ingredients") or [])) for ref in ingredient_ids(ing)]
     if not any(ref.startswith("mekanism:") or ref in MEKANISM_TAGS

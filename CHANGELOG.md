@@ -47,11 +47,11 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   `FloodlightReachTests` (6 tests, namespace `bwrfloodlight`): reach and spill levels over a 141 x 141 floor at 12 and 30 up for both
   lamps and from a wall, the HPS warm-up of the spill, reload and an old save, a hall of 40, and the planner on its own across
   an unloaded edge. The client check has a second hall, 80 x 24 x 56 (`art/floodlight-reach/`, before and after).
-- **Mekanism recipe tier (MEKANISM-RECIPES.md).** With Mekanism installed, **120 crafting recipes** ask for Mekanism's materials instead
+- **Mekanism recipe tier (MEKANISM-RECIPES.md).** With Mekanism installed, **130 crafting recipes** ask for Mekanism's materials instead
   of iron, copper and redstone; without it every recipe is the one it was, under the same id, and Mekanism is still never bundled or
   required (it is all data and conditions). Each such item has two files: `<name>.json`, the vanilla recipe, now loaded only without
   Mekanism, and `<name>_mekanism.json`, loaded only with it, so exactly one recipe makes it in each install. The ladder: **steel** for
-  every plate, frame and pressure part (the reactor vessel is 8 steel around a **steel casing**), **bronze** for impellers, windings
+  every plate, frame and pressure part (the reactor vessel is 8 steel around a **steel casing** and makes two blocks, not four), **bronze** for impellers, windings
   and tube bundles, a **basic control circuit** where a part had a redstone, an **advanced** one where it had a comparator, an
   **elite** one and a **reinforced alloy** where it had a redstone block (the turbine train, the big pumps, the reactor controller,
   the MSIV, the containment controller), **HDPE pellets** in the high-pressure pipe and the resin, **refined obsidian** in the vault
@@ -65,11 +65,32 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   the reaction chamber make substrate and ethene, a rotary condensentrator liquefies the ethene, an electrolytic separator makes the
   hydrogen. One drum is 16 bio fuel and about 1.2 B of hydrogen and leaves 4 spare substrate (the ethene run makes 8, the cans use 4);
   a pumped tank burns a drum in about 18 minutes. Without Mekanism the drum is four coal around an iron ingot, as before.
-- **Held back: 52 recipes stay vanilla in both installs.** Their Mekanism variants are designed (they are in the tool) but writing them
-  fails existing assertions that load the recipe by its id or pin its iron ingredients with Mekanism loaded: the control-room set
-  (`ControlRoomRecipeTests`, `ControlDeskTests`, `RoomFurnitureTests`), the 18 panel components of `RealScaleTests`, `mimic_tape`,
-  `panel_key`, `paperless_recorder`, `survey_meter`, `area_radiation_monitor`, `rtg`, `isotope_separator`, `cobalt_sample_detector`,
-  `reprocessing_plant`, `large_rtg`. Those assertions are the owner's to change; MEKANISM-RECIPES.md lists each and the two ways out.
+- **Heavier steel for the big machines.** Steel blocks where the vanilla recipe had ingots, or fewer pieces per craft, for the vessel and
+  its ports, the turbine train and generator, the big pumps, the MSIV, condenser, heat exchanger and condensate tank, the containment
+  penetrations, the pool walls, the towers, the crane and refuelling bridge parts and the reprocessing plant; switches, small valves
+  and the control rod drive are untouched. A vessel block is 6 steel and half an osmium (first Mekanism tier 3 steel, vanilla 2 iron), an LP turbine
+  58 steel (38, vanilla 39 iron) plus its elite circuit and reinforced alloy, a recirculation pump 42 steel (12, vanilla 8 iron and 9 copper); a minimal
+  plant (7 x 7 x 10 shell of 290 vessel blocks, one train, pumps, valves, a tower, containment, pool and crane parts, estimated) is about 4,100 steel and
+  180 osmium (first tier 2,100 steel, vanilla 1,750 iron). New `python tools-cost-recipe.py [--vanilla] <item> | --plant` prices any item in either
+  install. `tools-audit-recipes.py` now compares a variant's result item with its twin's, not its count.
+- **Released: the eight tools, the reprocessing plant and the large RTG have Mekanism recipes** (`mimic_tape`, `panel_key`, `paperless_recorder`,
+  `survey_meter`, `area_radiation_monitor`, `rtg`, `isotope_separator`, `cobalt_sample_detector`, `reprocessing_plant`, `large_rtg`), with
+  the owner's OK to change the tests that pinned them, only as far as: with Mekanism loaded they look up `bwr:<name>_mekanism`; without
+  Mekanism every check is unchanged. Edited assertions (old, then new):
+  `MimicTapeTests.tapeIsRegisteredWithItsRecipeComponentsAndDefaults` `byKey(...("bwr", "mimic_tape"))` -> `byKey(...("bwr", "mimic_tape" + (ModList.get().isLoaded("mekanism") ? "_mekanism" : "")))`;
+  `PanelRecipeTests.panelKeyRecipeMakesOneUnstackableKey` `("bwr", "panel_key")` -> `("bwr", "panel_key" + (...isLoaded("mekanism") ? "_mekanism" : ""))`;
+  `PaperlessRecorderTests.theRecorderHasAnItemARecipeAndNamesForEveryPort` `BwrMod.id("paperless_recorder")` -> `BwrMod.id("paperless_recorder" + (...))`;
+  `RadiationToolsTests.theRecipesExist` `byKey(("bwr", id))` -> `byKey(("bwr", id + (...)))` for `survey_meter` and `area_radiation_monitor`;
+  `RtgTests.recipesCraftTheBlocksAndTheAmBeRodFromACapsule` `byKey(("bwr", id))` -> the `_mekanism` id for `rtg` and `isotope_separator` only;
+  `LargeRtgTests.ingotAndBlockRecipesConserveMassAndTheDataAgrees` `byKey("cobalt_sample_detector")` -> `"cobalt_sample_detector" + (...)`, `byKey("large_rtg")` ->
+  `"large_rtg" + (...)`, and the two structural blocks of the Large RTG grid `new ItemStack(Items.IRON_BLOCK)` -> `new ItemStack(frame)` where `frame` is `mekanism:block_steel` with Mekanism and `Items.IRON_BLOCK` without;
+  `ReprocessingTests.theItemsAndTheRecipesAreRegisteredAndNeedNoOtherMod` with Mekanism: `byKey("reprocessing_plant")` -> `reprocessing_plant_mekanism`, message
+  "no recipe bwr:reprocessing_plant (it must not depend on a mod)" -> "no recipe bwr:reprocessing_plant_mekanism", the grid obsidian/iron ingots -> `mekanism:ingot_refined_obsidian`,
+  `mekanism:block_steel` and an `mekanism:advanced_control_circuit` in the middle of the bottom row, "obsidian, a vessel, two hoppers, a blast furnace and iron did not craft it" ->
+  "refined obsidian, a vessel, two hoppers, a blast furnace, steel blocks and an advanced circuit did not craft it", "two iron ingots crafted it" -> "a steel block and a circuit crafted it";
+  without Mekanism that test is the same as before.
+- **Held back: 42 recipes stay vanilla in both installs**, the 24 control-room recipes and the 18 panel components (`ControlRoomRecipeTests`,
+  `ControlDeskTests`, `RoomFurnitureTests`, `RealScaleTests`); the owner leaves them to the fabrication desk work. Their designs are in the tool.
 - **Checks.** New `MekanismRecipeTierTests` (4 tests, namespace `bwrmektier`, run with and without Mekanism, `MekanismOilRouteCheck` behind the
   `isLoaded("mekanism")` guard; its own namespace because added to `bwr` it made `LprmSpatialIntegrationTests.reloadReconcilesOldDetectorGeometryWithCurrentVessel` fail three runs in three ("fixture chunks never started ticking"); it passes without the new tests and with them in their own namespace, so the shared FCD fixture chunks look timing-sensitive): exactly one live recipe per tiered item and the right one live in each install, every live recipe of
   a bwr item names a Mekanism item or tag (a list of exemptions, written by the tool), every variant crafts from its own ingredients
@@ -77,7 +98,7 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   four-can output, the drum, the old recipe gone, Mekanism's substrate, ethene, rotary and electrolysis recipes loaded, substrate
   balanced). `tools-audit-recipes.py` now compares collisions inside each install's live recipes and against Mekanism's own recipes in
   its pinned jar, and checks every variant has its vanilla twin; `tools-audit-assets.py` confirms the new `mekanism:` ids, every tag
-  and the oil recipe's fluid and chemical against the jar. `tools-export-modern.py` (and with it the condenser, power-turbine, RWCU,
+  and the oil recipe's fluid and chemical against the jar. `tools-export-steam-valves.py` writes the repeater of the turbine control valve (its `--check` was stale since 3ce1dfef); `tools-export-modern.py` (and with it the condenser, power-turbine, RWCU,
   valve, turbine-aux and water-valve exporters) and `tools-make-turbine-aux-assets.py` write the condition on a vanilla recipe that
   has a variant, so their `--check` stays green. `turbine_oil_can` is in the "not crafted" lists of
   `FuelFabricatorItemRouteTests` and `tools-audit-recipes.py`. Guide: three sentences say the recipes use Mekanism's materials when it is

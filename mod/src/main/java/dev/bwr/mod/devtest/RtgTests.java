@@ -465,7 +465,8 @@ public final class RtgTests {
     public static void recipesCraftTheBlocksAndTheAmBeRodFromACapsule(GameTestHelper h) {
         var manager = h.getLevel().getServer().getRecipeManager();
         for (String id : new String[] {"rtg", "isotope_separator", "americium_beryllium_source_from_capsule", "americium_beryllium_source"}) {
-            h.assertTrue(manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", id)).isPresent(), "no recipe bwr:" + id);
+            boolean tiered = net.neoforged.fml.ModList.get().isLoaded("mekanism") && (id.equals("rtg") || id.equals("isotope_separator"));
+            h.assertTrue(manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", tiered ? id + "_mekanism" : id)).isPresent(), "no recipe bwr:" + id);
         }
         var amBe = (net.minecraft.world.item.crafting.CraftingRecipe) manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", "americium_beryllium_source_from_capsule")).get().value();
         var grid = net.minecraft.core.NonNullList.withSize(9, ItemStack.EMPTY);

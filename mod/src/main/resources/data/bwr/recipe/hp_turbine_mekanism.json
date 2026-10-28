@@ -13,9 +13,6 @@
     "r": {
       "tag": "c:alloys/elite"
     },
-    "S": {
-      "tag": "c:ingots/steel"
-    },
     "P": {
       "item": "minecraft:piston"
     },
@@ -25,7 +22,7 @@
   },
   "pattern": [
     "BrB",
-    "SPS",
+    "BPB",
     "B3B"
   ],
   "result": {
