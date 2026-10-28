@@ -141,7 +141,7 @@ run with `-PbwrGameTestNamespaces=bwrfloodlight`), the pictures `FloodlightClien
 |---|---|---|---|---|---|
 | `bwr:xenon_floodlight` | stands on any block; aimable (45-degree yaw, pitch -75 to +30 in 15-degree steps) | 32 | 30 degrees | none | cold white, at once |
 | `bwr:xenon_high_bay` | ceiling | 48 | 110 degrees | out to 160 degrees | cold white, at once |
-| `bwr:hps_flat_panel` | ceiling or wall | 40 | 130 degrees | out to 160 degrees | golden `#FFCE80`, warms 4/8/12/15 over about 20 s |
+| `bwr:hps_flat_panel` | ceiling or wall | 40 | 120 degrees | out to 160 degrees | golden `#FFCE80`, warms 4/8/12/15 over about 20 s |
 
 - **Projection.** A fan of rays over the cone walks the grid to the first opaque block; the last free cell in front of it
   (within 2.5 blocks) gets a light. A lamp with no spill zone (the floodlight) casts up to 2048 rays, thins the landing

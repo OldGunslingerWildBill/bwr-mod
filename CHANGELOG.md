@@ -36,7 +36,7 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   under them: a high-bay 12 up was dark past 28 blocks, 20 up past 24, and 30 up (a turbine hall) lit nothing at all, because the
   range was 24 blocks and the cone ended hard (outside it only the vanilla falloff, one level a block, reached). The high-bay
   now reaches **48 blocks** and the HPS panel **40** (a hall 30 up is lit to 37 blocks from under the high-bay), with a **spill zone**
-  out to 160 degrees (the HPS main beam is 130 degrees now, was 120): the main beam stays at 15 and the spill lights are four fifths of
+  out to 160 degrees: the main beam stays at 15 and the spill lights are four fifths of
   it (12; the HPS warm-up 4, 8, 12, 15 gives spill 3, 6, 10, 12), so the beam still reads as the bright centre and there is no hard
   dark edge. The planner gives the far floor its share of the 256 lights by growing the lattice box with the distance (2 up to 6)
   and spreading the 1024 rays thicker towards the edge of the cone. High-bay 12 up, block light of the floor, lowest/mean: 20 blocks

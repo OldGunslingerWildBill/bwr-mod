@@ -363,7 +363,7 @@ public final class FloodlightReachTests {
                 int beam = 0;
                 int outer = 0;
                 for (double[] l : lights(level, lamp.be)) {
-                    if (l[0] <= 20) {
+                    if (l[0] <= 15) { // well inside the 60-degree edge (19 blocks out on a floor 11 below the lens)
                         helper.assertTrue(l[1] == main[stage], "a light inside the main beam is at " + main[stage] + " at stage " + stage + ": " + l[1]);
                         beam++;
                     } else if (l[0] >= 30) {
@@ -643,7 +643,7 @@ public final class FloodlightReachTests {
                 () -> XenonBeam.plan(world, lamp, o, down, 48, 80, 2, Map.of()),
         };
         String[] names = {"high-bay as it was (24 blocks, 110 degrees, no spill)", "high-bay now (48 blocks, 110/160 degrees)",
-                "HPS panel on a wall now (40 blocks, 130/160 degrees)", "xenon floodlight (32 blocks, 30 degrees)",
+                "HPS panel on a wall now (40 blocks, 120/160 degrees)", "xenon floodlight (32 blocks, 30 degrees)",
                 "for comparison: 48 blocks, 160 degrees through the planner without a spill zone (2048 rays)"};
         for (int k = 0; k < cases.length; k++) {
             for (int i = 0; i < 150; i++) {

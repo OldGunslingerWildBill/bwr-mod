@@ -908,10 +908,25 @@ public final class FloodlightTests {
                 BlockState state = level.getBlockState(panel);
                 helper.assertTrue(state.getValue(HpsFlatPanelBlock.WARMUP) == stage, "warm-up stage " + stage + ": " + state);
                 helper.assertTrue(state.getLightEmission() == expected[stage], "the panel glows at " + expected[stage]);
+                // The main beam's lights follow the warm-up; the spill zone's follow at four fifths. A light more than 5 degrees
+                // inside the main beam's edge is certainly a beam light (a ray lands in the free cell before the block it hit).
+                int spill = block.spillLevel(expected[stage]);
+                double beamCos = Math.cos(Math.toRadians(block.halfAngleDegrees() - 5));
+                int beamLights = 0;
                 for (long key : be.placed().keySet()) {
-                    helper.assertTrue(level.getBlockState(BlockPos.of(key)).getValue(LightBlock.LEVEL) == expected[stage],
-                            "a projected light is at level " + expected[stage] + " at stage " + stage);
+                    int at = level.getBlockState(BlockPos.of(key)).getValue(LightBlock.LEVEL);
+                    double cos = Vec3.atCenterOf(BlockPos.of(key)).subtract(be.beamOrigin()).normalize().dot(be.beamDirection().normalize());
+                    if (cos >= beamCos) {
+                        helper.assertTrue(at == expected[stage], "a main-beam light is at level " + expected[stage] + " at stage " + stage + ": " + at);
+                    } else {
+                        helper.assertTrue(at == expected[stage] || at == spill,
+                                "a projected light is at the beam's " + expected[stage] + " or the spill's " + spill + " at stage " + stage + ": " + at);
+                    }
+                    if (at == expected[stage]) {
+                        beamLights++;
+                    }
                 }
+                helper.assertTrue(beamLights >= 40, "the main beam holds lights at stage " + stage + ": " + beamLights);
                 helper.assertTrue(be.placed().keySet().equals(cells), "the warm-up re-levels the same cells");
                 block.tick(state, level, panel, RandomSource.create(1)); // the scheduled warm-up tick
             }
