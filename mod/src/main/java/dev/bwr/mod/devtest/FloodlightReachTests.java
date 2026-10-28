@@ -139,6 +139,12 @@ public final class FloodlightReachTests {
             for (int dx = -HALF; dx <= HALF; dx++) {
                 for (int dz = -HALF; dz <= HALF; dz++) {
                     level.setBlock(at(dx, 0, dz), Blocks.STONE.defaultBlockState(), 2);
+                    // Whatever a test that failed halfway left standing over the floor (its lamp, its lights) goes.
+                    for (int dy = 1; dy <= 34; dy++) {
+                        if (!level.getBlockState(at(dx, dy, dz)).isAir()) {
+                            level.setBlock(at(dx, dy, dz), Blocks.AIR.defaultBlockState(), 2);
+                        }
+                    }
                 }
             }
             settle(helper, level, () -> body.accept(() -> settle(helper, level, () -> {
