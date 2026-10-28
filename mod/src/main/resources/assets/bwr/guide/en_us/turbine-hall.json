@@ -68,7 +68,7 @@
     {
       "title": "Blade sections and stands",
       "text": [
-        "Craft an LP Turbine Blade Section from four iron blocks, four iron ingots and a diamond. A section over 5 % worn comes out of a turbine as a Damaged LP Blade Section; craft that alone to scrap it for iron.",
+        "Craft an LP Turbine Blade Section from four iron blocks, four iron ingots and a diamond (steel with Mekanism). A section over 5 % worn comes out of a turbine as a Damaged LP Blade Section; craft that alone to scrap it for iron.",
         "",
         "The blade stand holds two sections. Hoppers and pipes can stock or empty it, and you can right-click one on or sneak-click one off. Breaking a stand drops what it holds."
       ],

@@ -32,7 +32,7 @@ my written OK first. If you share it, credit **OldGunslingerWildBill**. Details 
 | Minecraft | 1.21.1 | |
 | NeoForge | 21.1.248 or newer | |
 | Java | 21 | |
-| Mekanism | 10.7 or newer, optional | Pipes that hook into the plant's water and steam ports, uranium and steel items, the fabricator's chemical route, the fuel assembly recipe, and tritium processing with Mekanism Generators |
+| Mekanism | 10.7 or newer, optional | Pipes that hook into the plant's water and steam ports, uranium and steel items, the fabricator's chemical route, the fuel assembly recipe, the Mekanism tier of the crafting recipes, the turbine oil route, and tritium processing with Mekanism Generators |
 | CC:Tweaked | 1.111 or newer, optional | Lua control of almost every machine, plus CC bindings on panels |
 | Immersive Engineering | optional | IE concrete counts as concrete for blast and radiation shielding |
 | Cold Sweat | 2.4.3 or newer, optional | RTGs warm you up |
@@ -210,7 +210,9 @@ xenon high-bays and HPS flat panels that light up a whole hall. They look good w
 There's a short version of this in game: the **Operator's Guide** book. You get one the first time you
 join, or craft one from a book and a nameplate. See [GUIDE.md](GUIDE.md).
 
-Everything in the plant has a crafting recipe. If a vessel doesn't form, it tells you why in chat.
+Everything in the plant has a crafting recipe. If a vessel doesn't form, it tells you why in chat. With Mekanism installed the recipes
+ask for Mekanism's steel, alloys, circuits, plastic and bronze instead of iron and redstone, and turbine oil comes out of a Mekanism machine;
+without it nothing changes. The materials and every recipe are in [MEKANISM-RECIPES.md](MEKANISM-RECIPES.md).
 
 1. **Vessel.** Build a closed shell of Reactor Vessel blocks, 5 to 21 blocks wide and deep inside and at
    least 8 tall, with one Reactor Controller in it. Add an RPV Steam Outlet, an RPV Water Injection Port
@@ -302,6 +304,8 @@ Found a bug? Put it on the [issue tracker](https://github.com/OldGunslingerWildB
 
 **Refuelling:** [BUILDING-CRANE.md](BUILDING-CRANE.md), [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md),
 [SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md)
+
+**Recipes:** [MEKANISM-RECIPES.md](MEKANISM-RECIPES.md)
 
 **Water and steam:** [WATER-PLUMBING.md](WATER-PLUMBING.md), [PUMP-MODELS.md](PUMP-MODELS.md),
 [MODERN-PUMPS-AND-PIPES.md](MODERN-PUMPS-AND-PIPES.md), [TERRY-TURBINES.md](TERRY-TURBINES.md),

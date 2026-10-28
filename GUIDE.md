@@ -10,7 +10,8 @@ It adds no dependency (no Patchouli or similar): the screen draws its own open b
 ## Getting it
 
 - **Craft it:** a book and a nameplate, shapeless (`data/bwr/recipe/guide_book.json`). A nameplate is an iron ingot and a black dye
-  (it makes four), so a book costs a quarter of an iron ingot and a quarter of a dye more than a bare book.
+  (it makes four), so a book costs a quarter of an iron ingot and a quarter of a dye more than a bare book. With Mekanism installed the
+  nameplate is a steel ingot and a black dye instead ([MEKANISM-RECIPES.md](MEKANISM-RECIPES.md)).
 - **First join:** with the server option `giveGuideOnFirstJoin` (`bwr-gameplay.toml`, default **true**) every player is given one book the
   first time they join a world, **once only**. The mark is a player attachment (`bwr:guide_given`), written only when set and kept
   through death, so a relog, a death or a lost book never gives a second one. With the option off nothing is given and nothing is

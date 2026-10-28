@@ -17,7 +17,7 @@ annunciators and your computer. Skids have no ticker; the shaft train steps them
 | **Turbine Shaft-Driven Main Oil Pump** (`shaft_oil_pump`) | On the **free shaft end of the generator**, coupling (its back) toward the generator. It turns to face the right way when you place it there | Driven by the shaft: no oil at standstill, full delivery at 90 % of rated speed. It draws its oil from the Main Oil Tank of the same train |
 | **Generator Cooling Skid** (`generator_cooling_skid`) | Against the generator | **Stator water pumps** (FE on any face but the two flanges), a **hydrogen** charge for the casing, and the **coolers** (cooling water as on the oil tank) |
 | **Turning gear** | Built into the generator: a switch, no block | See below |
-| **Turbine Oil Drum** (item) | Right-click a Main Oil Tank | 1,000 L of oil. A drum that does not fit is not poured |
+| **Turbine Oil Drum** (item) | Right-click a Main Oil Tank | 1,000 L of oil. A drum that does not fit is not poured. Crafted from coal and an iron ingot; **with Mekanism** from four Turbine Oil Cans (made in a Pressurized Reaction Chamber) and a steel ingot, see [MEKANISM-RECIPES.md](MEKANISM-RECIPES.md) |
 | **Hydrogen Cylinder** (item) | Right-click a Generator Cooling Skid | 5 kg of hydrogen (the casing holds 20 kg, 30 psig). A cylinder that does not fit is not emptied |
 
 A skid joins the train the moment it stands against it (or the section is set down against it); the module keeps the link in its save.
@@ -54,7 +54,7 @@ delivered flow over the need, 0 to 1.
   keeps climbing (about 0.17 K/s at 10,000 L). Hot oil lifts the bearing temperature one for one, so a failed cooler takes minutes
   to hurt where no oil takes seconds. Alarm at 65 C.
 - **Oil is consumed.** A pumped tank loses `0.9 L/s x (pressure / 25 psig)`, doubling with every 15 K above 50 C (it oxidises and
-  thins). Refill it with Turbine Oil Drums. Alarm under 30 % level.
+  thins). Refill it with Turbine Oil Drums (with Mekanism installed, keeping a train supplied is a production chain: MEKANISM-RECIPES.md). Alarm under 30 % level.
 
 ## Turning gear and the rotor bow
 

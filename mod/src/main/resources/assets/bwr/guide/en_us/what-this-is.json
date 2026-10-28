@@ -30,7 +30,7 @@
     {
       "title": "What you need, and where to start",
       "text": [
-        "Minecraft 1.21.1 with NeoForge. Mekanism and CC:Tweaked are optional and installed separately. Mekanism supplies steel, uranium and pipes that connect to the plant's ports; CC:Tweaked gives Lua control of nearly every machine.",
+        "Minecraft 1.21.1 with NeoForge. Mekanism and CC:Tweaked are optional and installed separately. Mekanism supplies steel, uranium and pipes that connect to the plant's ports, and with it installed the recipes use its materials; CC:Tweaked gives Lua control of nearly every machine.",
         "",
         "This is an early alpha: expect rough edges, and back up your worlds before updating.",
         "",
