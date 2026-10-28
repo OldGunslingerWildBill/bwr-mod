@@ -108,7 +108,7 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   when short, from too far, for a spectator and at no desk, tags across stacks, a full inventory (survival and creative), a burst of
   requests and the rate limit, the menu snapshot, the block and its assets. The tests that pinned the grid recipes now check the same
   through the desk recipe (`RealScaleTests.craftedStacksStartAtRealSize`, `ControlRoomRecipeTests`, `ControlDeskTests`,
-  `RoomFurnitureTests`; `everyCraftableItemHasARecipeAndTheRestDoNot` counts a desk recipe as the item's route in both modes).
+  `RoomFurnitureTests`, `PanelTrimTests`; `everyCraftableItemHasARecipeAndTheRestDoNot` counts a desk recipe as the item's route in both modes).
   `tools-audit-recipes.py` and `tools-audit-assets.py` read `bwr:fabrication` (shape, categories, counts, one maker per item and
   install, no Mekanism ingredient in a vanilla recipe, every `mekanism:` id and tag against the jar); `tools-generate-mekanism-recipes.py`
   writes the Mekanism side and prints and verifies the cost table in FABRICATION-DESK.md. The GUI screen check has three pictures of it.

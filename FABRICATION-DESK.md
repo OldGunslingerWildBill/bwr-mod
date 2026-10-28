@@ -209,6 +209,6 @@ at no desk, each changing nothing; a tag counted across stacks, kinds and the of
 the menu snapshot; and the block's registration, assets and shape.
 
 The tests that pinned the grid recipes of these parts now check the same thing through the desk recipe: `RealScaleTests`
-(`craftedStacksStartAtRealSize`), `ControlRoomRecipeTests`, `ControlDeskTests`, `RoomFurnitureTests`, and the route test
+(`craftedStacksStartAtRealSize`), `ControlRoomRecipeTests`, `ControlDeskTests`, `RoomFurnitureTests`, `PanelTrimTests`, and the route test
 `everyCraftableItemHasARecipeAndTheRestDoNot` in `FuelFabricatorItemRouteTests` counts a desk recipe as an item's route.
 `MekanismRecipeTierTests` leaves the desk recipes to `FabricationDeskTests` (they come in the same pairs but are not grid recipes).
