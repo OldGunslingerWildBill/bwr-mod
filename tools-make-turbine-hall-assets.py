@@ -32,6 +32,17 @@ def put(path, data):
 
 
 def put_json(path, data):
+    # A vanilla recipe that has a Mekanism variant (<name>_mekanism.json beside it) carries the condition that keeps it out of a
+    # Mekanism install (MEKANISM-RECIPES.md, tools-generate-mekanism-recipes.py); it goes right after the type.
+    p = os.path.normpath(path)
+    if os.path.basename(os.path.dirname(p)) == "recipe" and "neoforge:conditions" not in data \
+            and os.path.exists(p[:-len(".json")] + "_mekanism.json"):
+        gated = {}
+        for key, value in data.items():
+            gated[key] = value
+            if key == "type":
+                gated["neoforge:conditions"] = [{"type": "neoforge:not", "value": {"type": "neoforge:mod_loaded", "modid": "mekanism"}}]
+        data = gated
     put(path, (json.dumps(data, indent=2) + "\n").encode())
 
 

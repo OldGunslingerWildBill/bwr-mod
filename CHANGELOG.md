@@ -47,6 +47,41 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   `FloodlightReachTests` (6 tests, namespace `bwrfloodlight`): reach and spill levels over a 141 x 141 floor at 12 and 30 up for both
   lamps and from a wall, the HPS warm-up of the spill, reload and an old save, a hall of 40, and the planner on its own across
   an unloaded edge. The client check has a second hall, 80 x 24 x 56 (`art/floodlight-reach/`, before and after).
+- **Mekanism recipe tier (MEKANISM-RECIPES.md).** With Mekanism installed, **120 crafting recipes** ask for Mekanism's materials instead
+  of iron, copper and redstone; without it every recipe is the one it was, under the same id, and Mekanism is still never bundled or
+  required (it is all data and conditions). Each such item has two files: `<name>.json`, the vanilla recipe, now loaded only without
+  Mekanism, and `<name>_mekanism.json`, loaded only with it, so exactly one recipe makes it in each install. The ladder: **steel** for
+  every plate, frame and pressure part (the reactor vessel is 8 steel around a **steel casing**), **bronze** for impellers, windings
+  and tube bundles, a **basic control circuit** where a part had a redstone, an **advanced** one where it had a comparator, an
+  **elite** one and a **reinforced alloy** where it had a redstone block (the turbine train, the big pumps, the reactor controller,
+  the MSIV, the containment controller), **HDPE pellets** in the high-pressure pipe and the resin, **refined obsidian** in the vault
+  doors, **refined glowstone** in the sodium lamps. Cheap parts stay cheap (a lamp is a steel nugget; a nameplate one ingot for
+  four); nothing needs Mekanism Generators or a Mekanism machine in the grid. The variants are written by
+  `python tools-generate-mekanism-recipes.py` from one table (`--check`, `--table`); it adds the condition to the vanilla file by a
+  one-line text insertion. The fuel fabricator keeps its older pair (`fuel_fabricator` is the Mekanism recipe).
+- **Turbine oil is a Mekanism production chain.** New item **Turbine Oil Can** (250 L, not crafted, made by a Pressurized Reaction
+  Chamber; the recipe `turbine_oil_can_from_ethene` is type `mekanism:reaction`): 1 substrate + 200 mB liquid ethene + 100 mB hydrogen
+  make 4 cans; **4 cans around a steel ingot craft a Turbine Oil Drum** (1,000 L). Upstream is Mekanism's own: bio fuel and water in
+  the reaction chamber make substrate and ethene, a rotary condensentrator liquefies the ethene, an electrolytic separator makes the
+  hydrogen. One drum is 16 bio fuel and about 1.2 B of hydrogen and leaves 4 spare substrate (the ethene run makes 8, the cans use 4);
+  a pumped tank burns a drum in about 18 minutes. Without Mekanism the drum is four coal around an iron ingot, as before.
+- **Held back: 52 recipes stay vanilla in both installs.** Their Mekanism variants are designed (they are in the tool) but writing them
+  fails existing assertions that load the recipe by its id or pin its iron ingredients with Mekanism loaded: the control-room set
+  (`ControlRoomRecipeTests`, `ControlDeskTests`, `RoomFurnitureTests`), the 18 panel components of `RealScaleTests`, `mimic_tape`,
+  `panel_key`, `paperless_recorder`, `survey_meter`, `area_radiation_monitor`, `rtg`, `isotope_separator`, `cobalt_sample_detector`,
+  `reprocessing_plant`, `large_rtg`. Those assertions are the owner's to change; MEKANISM-RECIPES.md lists each and the two ways out.
+- **Checks.** New `MekanismRecipeTierTests` (4 tests, namespace `bwrmektier`, run with and without Mekanism, `MekanismOilRouteCheck` behind the
+  `isLoaded("mekanism")` guard; its own namespace because added to `bwr` it made `LprmSpatialIntegrationTests.reloadReconcilesOldDetectorGeometryWithCurrentVessel` fail three runs in three ("fixture chunks never started ticking"); it passes without the new tests and with them in their own namespace, so the shared FCD fixture chunks look timing-sensitive): exactly one live recipe per tiered item and the right one live in each install, every live recipe of
+  a bwr item names a Mekanism item or tag (a list of exemptions, written by the tool), every variant crafts from its own ingredients
+  mirrored and unshadowed by vanilla's, Mekanism's or ours, and the oil route end to end (the chamber recipe's inputs, amounts and
+  four-can output, the drum, the old recipe gone, Mekanism's substrate, ethene, rotary and electrolysis recipes loaded, substrate
+  balanced). `tools-audit-recipes.py` now compares collisions inside each install's live recipes and against Mekanism's own recipes in
+  its pinned jar, and checks every variant has its vanilla twin; `tools-audit-assets.py` confirms the new `mekanism:` ids, every tag
+  and the oil recipe's fluid and chemical against the jar. `tools-export-modern.py` (and with it the condenser, power-turbine, RWCU,
+  valve, turbine-aux and water-valve exporters) and `tools-make-turbine-aux-assets.py` write the condition on a vanilla recipe that
+  has a variant, so their `--check` stays green. `turbine_oil_can` is in the "not crafted" lists of
+  `FuelFabricatorItemRouteTests` and `tools-audit-recipes.py`. Guide: three sentences say the recipes use Mekanism's materials when it is
+  installed.
 
 ## Unreleased: held panel controls are let go when they are removed, and a relaunched player's controls work
 

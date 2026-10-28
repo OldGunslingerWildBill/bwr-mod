@@ -19,6 +19,10 @@ Checks:
      item whose only recipe is gated on Mekanism is reported (it would be
      uncraftable without it), and so is a recipe with a condition this script
      cannot evaluate. The fuel fabricator has two recipes, one for each case.
+  5. the Mekanism tier (MEKANISM-RECIPES.md): collisions are compared inside each install's live recipes (a Mekanism variant
+     and its vanilla twin are never live together, so they never collide), and with Mekanism loaded also against Mekanism's
+     own crafting recipes in its pinned jar; every `*_mekanism.json` has a vanilla twin that is live without Mekanism only,
+     and a Mekanism recipe that names no Mekanism item or tag is reported; the reaction-chamber recipe is checked for its fields.
 
 The complement of tools-audit-assets.py, which checks recipes block by block:
 this one also covers the plain items and says, for each item with no recipe,
@@ -78,7 +82,15 @@ NO_RECIPE = {
     "neptunium_237_ingot": "product of irradiating a depleted uranium target at low yield; the target of the plutonium-238 route",
     "bismuth_nugget": "byproduct of mining uranium ore (the Bi-Co-Ni-Ag-U veins); made by the mining, a recipe for it would make bismuth out of nothing",
     "stripped_waste": "what the isotope separator leaves of waste; it cannot be separated again, and a recipe for it would make waste out of nothing",
+    # Made by a Mekanism machine, not at a bench.
+    "turbine_oil_can": "made by Mekanism's Pressurized Reaction Chamber (turbine_oil_can_from_ethene.json); four around a steel ingot fill a turbine oil drum",
 }
+
+# Item tags only Mekanism fills (the c: ones a plain install leaves empty); a tier recipe must name one of these, a circuit or alloy
+# tier tag, or a mekanism: item. Kept here because this script reads no registry. ingredient_ids() gives tags without the #.
+MEKANISM_TAGS = {"c:ingots/steel", "c:ingots/bronze", "c:ingots/osmium", "c:ingots/tin", "c:ingots/refined_obsidian",
+                 "c:ingots/refined_glowstone", "c:nuggets/steel", "c:nuggets/bronze", "c:storage_blocks/steel",
+                 "c:storage_blocks/bronze", "c:rods/plastic"}
 
 # The installs the audit evaluates recipe conditions for. Every craftable item needs a live recipe in each.
 INSTALLS = {"with Mekanism": {"mekanism"}, "without Mekanism": set()}
@@ -172,6 +184,20 @@ for name, r in recipes.items():
         continue
     if kind == "mekanism:oxidizing":
         continue  # a chemical recipe: no item result
+    if kind == "mekanism:reaction":
+        # a reaction-chamber recipe: its item output is made by the machine, not at a bench, so it is not counted as a crafting recipe
+        out = r.get("item_output")
+        if not (isinstance(out, dict) and str(out.get("id", "")).startswith("bwr:") and out["id"][4:] in registered):
+            bad(f"{name}: item_output must name a registered bwr item")
+        if not live(r, {"mekanism"}, name) or live(r, set(), name):
+            bad(f"{name}: a Mekanism machine recipe must be loaded with Mekanism and without it never")
+        for field in ("item_input", "fluid_input", "chemical_input"):
+            if not isinstance(r.get(field), dict):
+                bad(f"{name}: no {field}")
+        for field in ("duration", "energy_required"):
+            if not isinstance(r.get(field), int) or r[field] <= 0:
+                bad(f"{name}: {field} must be a positive integer")
+        continue
     res = r.get("result")
     if not isinstance(res, dict) or "id" not in res:
         bad(f"{name}: result must be an object with an id")
@@ -264,23 +290,93 @@ def pattern_key(r):
     return None
 
 
+MEK_OWN = {}   # pattern key -> names of Mekanism's own crafting recipes (filled below when the pinned jar is in the Gradle cache)
+
+
+def mekanism_own_recipes():
+    """Mekanism's shaped and shapeless crafting recipes from the jar the build pins, or {} when it is not in the Gradle cache."""
+    import zipfile
+    version = None
+    with open(os.path.join(ROOT, "gradle.properties"), encoding="utf-8") as f:
+        for raw in f:
+            if raw.startswith("mekanismVersion="):
+                version = raw.split("=", 1)[1].strip()
+    home = os.environ.get("GRADLE_USER_HOME") or os.path.join(os.path.expanduser("~"), ".gradle")
+    base = os.path.join(home, "caches", "modules-2", "files-2.1", "mekanism", "Mekanism", version or "-")
+    jar = None
+    for d, _, fs in os.walk(base):
+        for f in fs:
+            if f == f"Mekanism-{version}.jar":
+                jar = os.path.join(d, f)
+    if not jar:
+        print("note: the pinned Mekanism jar is not in the Gradle cache; its own recipes are not compared for collisions")
+        return {}
+    own = {}
+    with zipfile.ZipFile(jar) as z:
+        for entry in z.namelist():
+            if not (entry.startswith("data/mekanism/recipe/") and entry.endswith(".json")):
+                continue
+            r = json.loads(z.read(entry).decode("utf-8"))
+            if r.get("type") in ("mekanism:mek_data",):
+                r = dict(r, type="minecraft:crafting_shaped")
+            keys = pattern_key(r)
+            for k in keys or ():
+                own.setdefault(k, []).append("mekanism:" + entry[len("data/mekanism/recipe/"):-5])
+    return own
+
+
 by_pattern = {}
+mek_compared = 0
+for mode, loaded in INSTALLS.items():
+    live_now = {n: r for n, r in recipes.items() if live(r, loaded, n)}
+    by_mode = {}
+    for name, r in live_now.items():
+        keys = pattern_key(r)
+        if keys:
+            for k in keys:
+                by_mode.setdefault(k, []).append(name)
+                by_pattern.setdefault(k, set()).add(name)
+    reported = set()
+    for k, names in sorted(by_mode.items(), key=lambda kv: str(kv[0])):
+        for i, a in enumerate(names):
+            for b in names[i + 1:]:
+                if (a, b) in reported:
+                    continue
+                # Two shaped recipes with the same ingredients in different arrangements do not collide.
+                if k[0] == "set" and all(recipes[n].get("type") == "minecraft:crafting_shaped" for n in (a, b)):
+                    continue
+                reported.add((a, b))
+                bad(f"recipe collision ({mode}): {a} and {b} have the same ingredient pattern ({k[0]})")
+    if "mekanism" in loaded:
+        if not MEK_OWN:
+            MEK_OWN = mekanism_own_recipes() or {None: []}
+        for k, names in by_mode.items():
+            for other in MEK_OWN.get(k, []):
+                if k[0] == "set" and all(recipes[n].get("type") == "minecraft:crafting_shaped" for n in names):
+                    continue
+                bad(f"recipe collision ({mode}): {', '.join(names)} has the same ingredient pattern as Mekanism's own {other}")
+        mek_compared = sum(len(v) for v in MEK_OWN.values())
+
+# ---- 4b. the Mekanism tier ------------------------------------------------------------------------------------------
+tier_pairs = 0
 for name, r in recipes.items():
-    keys = pattern_key(r)
-    if keys:
-        for k in keys:
-            by_pattern.setdefault(k, []).append(name)
-reported = set()
-for k, names in sorted(by_pattern.items(), key=lambda kv: str(kv[0])):
-    for i, a in enumerate(names):
-        for b in names[i + 1:]:
-            if (a, b) in reported or exclusive(recipes[a], recipes[b]):
-                continue
-            # Two shaped recipes with the same ingredients in different arrangements do not collide.
-            if k[0] == "set" and all(recipes[n].get("type") == "minecraft:crafting_shaped" for n in (a, b)):
-                continue
-            reported.add((a, b))
-            bad(f"recipe collision: {a} and {b} have the same ingredient pattern ({k[0]})")
+    if not name.endswith("_mekanism.json") or name.endswith("_no_mekanism.json"):
+        continue   # fuel_fabricator_no_mekanism is the vanilla recipe of an older pair that is named the other way round
+    twin = name[:-len("_mekanism.json")] + ".json"
+    tier_pairs += 1
+    if twin not in recipes:
+        bad(f"{name}: no vanilla twin {twin}")
+        continue
+    if not live(r, {"mekanism"}, name) or live(r, set(), name):
+        bad(f"{name}: a Mekanism-tier recipe must be loaded with Mekanism and without it never")
+    if live(recipes[twin], {"mekanism"}, twin) or not live(recipes[twin], set(), twin):
+        bad(f"{twin}: the vanilla twin of {name} must be loaded without Mekanism and with it never")
+    if r.get("result") != recipes[twin].get("result") and name != "turbine_oil_drum_mekanism.json":
+        bad(f"{name}: makes {r.get('result')} but its vanilla twin makes {recipes[twin].get('result')}")
+    named = [ref for ing in (list((r.get("key") or {}).values()) + list(r.get("ingredients") or [])) for ref in ingredient_ids(ing)]
+    if not any(ref.startswith("mekanism:") or ref in MEKANISM_TAGS
+               or ref.startswith("c:circuits/") or ref.startswith("c:alloys/") for ref in named):
+        bad(f"{name}: names no Mekanism item or tag")
 
 # ---- 5. circular dependencies among bwr items ----------------------------------------------------------------
 deps = {}
@@ -345,7 +441,8 @@ for name, why in NO_RECIPE.items():
         bad(f"NO_RECIPE lists '{name}' ({why}) but a recipe produces it")
 
 craftable = len(registered) - len(NO_RECIPE)
-print(f"Recipe audit: {len(by_pattern)} ingredient patterns compared for collisions, {len(deps)} crafted bwr items checked for cycles")
+print(f"Recipe audit: {len(by_pattern)} ingredient patterns compared for collisions in both installs ({tier_pairs} Mekanism-tier pairs, "
+      f"{mek_compared} of Mekanism's own patterns), {len(deps)} crafted bwr items checked for cycles")
 print(f"Recipe audit: {len(recipes)} recipes parsed, {len(registered)} registered items, "
       f"{craftable} craftable, {len(NO_RECIPE)} deliberately without a recipe")
 for name, why in sorted(NO_RECIPE.items()):

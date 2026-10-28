@@ -560,7 +560,9 @@ public final class FuelFabricatorItemRouteTests {
                 // the turbine hall (TURBINE-MAINTENANCE.md): a damaged blade section only comes out of a turbine
                 "damaged_lp_blade_section",
                 // a wrecked hood only comes off a holed or burst LP; a shaft wreck only comes out of a shaft excursion
-                "wrecked_lp_turbine_hood", "turbine_shaft_wreck"));
+                "wrecked_lp_turbine_hood", "turbine_shaft_wreck",
+                // made by a Mekanism Pressurized Reaction Chamber, never at a bench (MEKANISM-RECIPES.md); four of them around a steel ingot craft a drum
+                "turbine_oil_can"));
         for (var id : BuiltInRegistries.ITEM.keySet()) {
             if (!id.getNamespace().equals("bwr")) {
                 continue;

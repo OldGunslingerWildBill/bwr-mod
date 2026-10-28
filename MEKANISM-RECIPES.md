@@ -23,9 +23,10 @@ The variants are **written by a tool**, `python tools-generate-mekanism-recipes.
 write). Its table is the single list of what each recipe becomes: it starts from the vanilla recipe (same pattern and counts), turns
 iron into steel and copper into bronze, and applies the entry's own substitutions. It also adds the condition to the vanilla file by
 inserting one line of text, so the file keeps its layout. Every recipe in the folder must be classified in the tool: a Mekanism
-variant, held back (below) or exempt with a reason, and `--check` fails on one that is not. **The other `tools-export-*` and
-`tools-make-*` scripts write some vanilla recipes without the condition; after running one, run this tool again** (it only adds
-what is missing). `MekanismRecipeTierTests` fails if a vanilla recipe is left live with Mekanism.
+variant, held back (below) or exempt with a reason, and `--check` fails on one that is not. **The `tools-export-*` scripts that go through
+`tools-export-modern.py`, `tools-make-turbine-aux-assets.py` and `tools-make-turbine-hall-assets.py` write the condition themselves
+(their `--check` stays green); the other `tools-make-*` / `tools-export-*` scripts that write a recipe (crane, refuelling bridge, shield
+plug, spent fuel pool, breeding, nanofilter, lamps) do not: after running one, run this tool again** (it only adds what is missing). `MekanismRecipeTierTests` fails if a vanilla recipe is left live with Mekanism.
 
 ## The materials ladder
 

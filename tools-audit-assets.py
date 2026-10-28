@@ -554,11 +554,25 @@ FOREIGN_ITEM_IDS = {
     "mekanism:advanced_control_circuit": "item.mekanism.advanced_control_circuit",
     "mekanism:alloy_infused": "item.mekanism.alloy_infused",
     "mekanism:steel_casing": "block.mekanism.steel_casing",
+    # The plastic and the oil route (MEKANISM-RECIPES.md): substrate and HDPE pellets come out of the reaction chamber
+    # (mekanism:reaction, reaction/substrate), the sheet out of the enrichment chamber (mekanism:enriching, hdpe_sheet).
+    "mekanism:substrate": "item.mekanism.substrate",
+    "mekanism:hdpe_pellet": "item.mekanism.hdpe_pellet",
+    "mekanism:hdpe_sheet": "item.mekanism.hdpe_sheet",
 }
+
+# Item tags a recipe may name that this repository does not define and the Mekanism jar does not either: vanilla and NeoForge
+# supply them. A tag in neither place, in no bwr tag file and not here fails check 6 (an unknown tag matches nothing, and a recipe
+# built on one is uncraftable without a word).
+OTHER_ITEM_TAGS = {
+    "minecraft:coals", "c:ingots/iron", "c:dusts/redstone", "c:ingots/netherite", "c:storage_blocks/netherite",
+}
+tags_used = {}  # tag -> recipes that name it
 
 valid_ids = {"bwr:" + n for n in blocks} | {"bwr:" + n for n in extra_items}
 recipes = {k: v for k, v in jsons.items() if k.startswith("data/bwr/recipe")}
 foreign_ids_used = set()
+reaction_inputs = []
 creative_source = open(os.path.join(ROOT, "mod/src/main/java/dev/bwr/mod/registry/BwrItems.java"), encoding="utf-8").read()
 for retired in RETIRED_BLOCKS:
     if re.search(r"output\.accept\(" + retired.upper() + r"\.get\(\)\)", creative_source):
@@ -579,6 +593,22 @@ for rel, r in recipes.items():
             bad("RECIPE", f"{rel}: invalid chemical-processing input")
         if output.get("id") != "mekanismgenerators:tritium" or not isinstance(output.get("amount"), int) or not 0 < output["amount"] <= 10000:
             bad("RECIPE", f"{rel}: unknown chemical or output exceeds pinned oxidizer capacity")
+        continue
+    if r.get("type") == "mekanism:reaction":
+        # a Pressurized Reaction Chamber recipe: loaded only with Mekanism, makes one of our items, uses an item tag-free input,
+        # a fluid by tag and a chemical by id (the last two are confirmed against the jar below)
+        conditions = r.get("neoforge:conditions", [])
+        if not any(c.get("type") == "neoforge:mod_loaded" and c.get("modid") == "mekanism" for c in conditions):
+            bad("RECIPE", f"{rel}: a Mekanism machine recipe is not mod-gated")
+        out = r.get("item_output", {})
+        if out.get("id") not in valid_ids or not isinstance(out.get("count"), int) or not 0 < out["count"] <= 64:
+            bad("RECIPE", f"{rel}: invalid item_output {out}")
+        ing = r.get("item_input", {})
+        if ing.get("item") not in FOREIGN_ITEM_IDS or not isinstance(ing.get("count"), int) or ing["count"] < 1:
+            bad("RECIPE", f"{rel}: item_input must name a verified Mekanism item")
+        else:
+            foreign_ids_used.add(ing["item"])
+        reaction_inputs.append((rel, r))
         continue
     res = r.get("result")
     if res is None:
@@ -606,6 +636,14 @@ for rel, r in recipes.items():
         elif isinstance(v, str):
             if v.startswith("bwr:") and v not in valid_ids:
                 bad("RECIPE", f"{rel}: {where} '{v}' not registered")
+    def collect_tags(v):
+        if isinstance(v, dict) and isinstance(v.get("tag"), str):
+            tags_used.setdefault(v["tag"], set()).add(rel)
+        elif isinstance(v, list):
+            for x in v:
+                collect_tags(x)
+    for v in list((r.get("key") or {}).values()) + list(r.get("ingredients") or []):
+        collect_tags(v)
     for k, v in (r.get("key") or {}).items():
         check_ing(v, f"key '{k}'")
     for v in (r.get("ingredients") or []):
@@ -815,6 +853,33 @@ for rel, tg in jsons.items():
             bad("TAG", f"{rel}: references block '{s}' which is not registered")
 
 # ---------- report ----------
+
+# ---------- 5b. tags, chemicals and fluids the recipes name, against the jar ----------
+if mek_jar:
+    with zipfile.ZipFile(mek_jar) as z:
+        names = set(z.namelist())
+    for tag, users in sorted(tags_used.items()):
+        ns, _, path = tag.partition(":")
+        known = f"data/{ns}/tags/item/{path}.json" in names \
+            or os.path.isfile(os.path.join(RES, "data", ns, "tags", "item", path + ".json")) \
+            or tag in OTHER_ITEM_TAGS
+        if not known:
+            bad("MEKANISM", f"tag #{tag} (used by {sorted(users)[:3]}) is in no tag file of Mekanism {mek_version}, "
+                            f"of this repository, or in OTHER_ITEM_TAGS: it would match nothing")
+    for rel, r in reaction_inputs:
+        fluid, chem = r.get("fluid_input", {}), r.get("chemical_input", {})
+        ftag = fluid.get("tag", "")
+        fns, _, fpath = ftag.partition(":")
+        if not ftag or f"data/{fns}/tags/fluid/{fpath}.json" not in names:
+            bad("MEKANISM", f"{rel}: fluid_input tag '{ftag}' is not a fluid tag of Mekanism {mek_version}")
+        cid = chem.get("chemical", "")
+        cns, _, cpath = cid.partition(":")
+        if cns != "mekanism" or ("chemical.mekanism." + cpath) not in mek_lang:
+            bad("MEKANISM", f"{rel}: chemical_input '{cid}' is not a chemical of Mekanism {mek_version}")
+        for field in ("fluid_input", "chemical_input"):
+            if not isinstance(r[field].get("amount"), int) or r[field]["amount"] <= 0:
+                bad("MEKANISM", f"{rel}: {field} amount must be a positive integer")
+
 print("=" * 72)
 print("BWR ASSET AUDIT")
 print("=" * 72)
