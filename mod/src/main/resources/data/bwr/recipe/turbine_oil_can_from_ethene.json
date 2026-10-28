@@ -1,0 +1,27 @@
+{
+  "type": "mekanism:reaction",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "item_input": {
+    "count": 1,
+    "item": "mekanism:substrate"
+  },
+  "fluid_input": {
+    "amount": 200,
+    "tag": "c:ethene"
+  },
+  "chemical_input": {
+    "amount": 100,
+    "chemical": "mekanism:hydrogen"
+  },
+  "item_output": {
+    "count": 4,
+    "id": "bwr:turbine_oil_can"
+  },
+  "duration": 200,
+  "energy_required": 1000
+}

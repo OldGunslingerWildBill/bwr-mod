@@ -352,6 +352,12 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> GENERATOR_COOLING_SKID = ITEMS.registerSimpleBlockItem(BwrBlocks.GENERATOR_COOLING_SKID);
     /** Refills a Main Oil Tank: 1,000 L of turbine oil. */
     public static final DeferredItem<Item> TURBINE_OIL_DRUM = ITEMS.registerSimpleItem("turbine_oil_drum", new Item.Properties().stacksTo(16));
+    /**
+     * 250 L of synthetic turbine oil, made by a Mekanism Pressurized Reaction Chamber (data/bwr/recipe/turbine_oil_can_from_ethene.json);
+     * four cans around a steel ingot fill a Turbine Oil Drum when Mekanism is installed (MEKANISM-RECIPES.md). Not crafted, and not
+     * used by anything else: a tank takes drums only.
+     */
+    public static final DeferredItem<Item> TURBINE_OIL_CAN = ITEMS.registerSimpleItem("turbine_oil_can", new Item.Properties().stacksTo(16));
     /** Recharges a Generator Cooling Skid with 5 kg of hydrogen. */
     public static final DeferredItem<Item> HYDROGEN_CYLINDER = ITEMS.registerSimpleItem("hydrogen_cylinder", new Item.Properties().stacksTo(16));
     /** The turbine hall (TURBINE-MAINTENANCE.md): blade sections and the hood are crane loads; as items they sit on stands or the hook. */
@@ -629,6 +635,7 @@ public final class BwrItems {
                         output.accept(SHAFT_OIL_PUMP.get());
                         output.accept(GENERATOR_COOLING_SKID.get());
                         output.accept(TURBINE_OIL_DRUM.get());
+                        output.accept(TURBINE_OIL_CAN.get());
                         output.accept(HYDROGEN_CYLINDER.get());
                         output.accept(LP_BLADE_SECTION.get());
                         output.accept(DAMAGED_LP_BLADE_SECTION.get());

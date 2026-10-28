@@ -1603,6 +1603,7 @@
   "block.bwr.shaft_oil_pump": "Turbine Shaft-Driven Main Oil Pump",
   "block.bwr.generator_cooling_skid": "Generator Cooling Skid",
   "item.bwr.turbine_oil_drum": "Turbine Oil Drum",
+  "item.bwr.turbine_oil_can": "Turbine Oil Can",
   "item.bwr.hydrogen_cylinder": "Hydrogen Cylinder",
   "tooltip.bwr.main_oil_tank.1": "Set against any section of the shaft train. Holds 20,000 L of turbine oil (right-click with Turbine Oil Drums).",
   "tooltip.bwr.main_oil_tank.2": "AC auxiliary pump on the side and bottom faces, emergency DC pump on the top face (wire a battery). Cooling water on the two flanges.",
