@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "S": {
+      "item": "bwr:strip_chart"
+    },
+    "R": {
+      "item": "minecraft:red_dye"
+    },
+    "G": {
+      "item": "minecraft:green_dye"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    }
+  },
+  "pattern": [
+    "RSG",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:two_pen_recorder"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "P": {
+      "item": "minecraft:glass_pane"
+    },
+    "C": {
+      "tag": "c:circuits/advanced"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "ICI",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:refuelling_bridge_console"
+  }
+}

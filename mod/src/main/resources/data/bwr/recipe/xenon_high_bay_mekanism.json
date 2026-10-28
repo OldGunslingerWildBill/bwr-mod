@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "L": {
+      "item": "minecraft:redstone_lamp"
+    },
+    "R": {
+      "tag": "c:circuits/basic"
+    }
+  },
+  "pattern": [
+    "III",
+    "GLG",
+    " R "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:xenon_high_bay"
+  }
+}

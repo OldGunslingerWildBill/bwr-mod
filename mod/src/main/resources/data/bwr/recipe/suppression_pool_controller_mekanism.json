@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "W": {
+      "item": "bwr:suppression_pool_wall"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "D": {
+      "tag": "c:circuits/advanced"
+    },
+    "R": {
+      "tag": "c:alloys/advanced"
+    }
+  },
+  "pattern": [
+    "WGW",
+    "CDC",
+    "WRW"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:suppression_pool_controller"
+  }
+}

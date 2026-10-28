@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "P": {
+      "item": "bwr:spent_fuel_pool_wall"
+    },
+    "R": {
+      "tag": "c:circuits/basic"
+    }
+  },
+  "pattern": [
+    "IHI",
+    "IPI",
+    "IRI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:new_fuel_elevator"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "equipment",
+  "key": {
+    "R": {
+      "tag": "c:circuits/advanced"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "W": {
+      "item": "bwr:panel_wrench"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    " R ",
+    "CWC",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:networking_wrench"
+  }
+}

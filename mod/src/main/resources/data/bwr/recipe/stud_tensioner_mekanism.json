@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "R": {
+      "tag": "c:circuits/basic"
+    }
+  },
+  "pattern": [
+    "III",
+    "IPI",
+    "IRI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:stud_tensioner"
+  }
+}

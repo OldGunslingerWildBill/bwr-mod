@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "T": {
+      "item": "bwr:pressurised_tube"
+    },
+    "C": {
+      "tag": "c:storage_blocks/bronze"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "I": {
+      "tag": "c:storage_blocks/steel"
+    }
+  },
+  "pattern": [
+    "TCT",
+    "VPV",
+    "TIT"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:turbine_feed_pump"
+  }
+}

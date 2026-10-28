@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "B": {
+      "tag": "c:storage_blocks/bronze"
+    }
+  },
+  "pattern": [
+    "VPV",
+    "PBP",
+    "VPV"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:recirculation_pump"
+  }
+}

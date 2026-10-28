@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "key": {
+    "I": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "C": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "pattern": [
+    "IPI",
+    "ICI",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:screened_water_intake"
+  }
+}

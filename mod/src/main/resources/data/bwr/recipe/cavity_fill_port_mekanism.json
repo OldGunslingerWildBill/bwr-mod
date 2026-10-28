@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "S": {
+      "item": "minecraft:iron_bars"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "B": {
+      "item": "minecraft:bucket"
+    }
+  },
+  "pattern": [
+    "IPI",
+    "SBS",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:cavity_fill_port"
+  }
+}

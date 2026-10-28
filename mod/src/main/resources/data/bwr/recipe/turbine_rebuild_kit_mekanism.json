@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "B": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "A": {
+      "item": "minecraft:anvil"
+    }
+  },
+  "pattern": [
+    "BCB",
+    "IAI",
+    "BCB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:turbine_rebuild_kit"
+  }
+}

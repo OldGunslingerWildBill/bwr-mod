@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "K": {
+      "item": "minecraft:dried_kelp"
+    },
+    "C": {
+      "item": "bwr:transfer_canal"
+    }
+  },
+  "pattern": [
+    "IKI",
+    "ICI",
+    "IKI"
+  ],
+  "result": {
+    "count": 2,
+    "id": "bwr:canal_gate_plug"
+  }
+}

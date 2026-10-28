@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "L": {
+      "item": "minecraft:lever"
+    },
+    "B": {
+      "item": "minecraft:stone_button"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "R": {
+      "tag": "c:circuits/basic"
+    }
+  },
+  "pattern": [
+    " L ",
+    "BIB",
+    " R "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:joystick_switch"
+  }
+}

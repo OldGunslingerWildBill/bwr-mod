@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "equipment",
+  "key": {
+    "R": {
+      "tag": "c:circuits/basic"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "W": {
+      "item": "bwr:panel_wrench"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    " R ",
+    "IWI",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:panel_linker"
+  }
+}

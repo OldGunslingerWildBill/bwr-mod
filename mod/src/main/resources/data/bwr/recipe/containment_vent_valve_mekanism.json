@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "R": {
+      "tag": "c:circuits/basic"
+    },
+    "P": {
+      "item": "bwr:pressurised_tube"
+    },
+    "V": {
+      "item": "minecraft:piston"
+    }
+  },
+  "pattern": [
+    "IRI",
+    "PVP",
+    "IRI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:containment_vent_valve"
+  }
+}

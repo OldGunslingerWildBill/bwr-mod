@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "P": {
+      "item": "bwr:pressurised_tube"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "C": {
+      "item": "minecraft:piston"
+    },
+    "W": {
+      "item": "bwr:high_pressure_water_pipe"
+    }
+  },
+  "pattern": [
+    "IPI",
+    "VCV",
+    "IWI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:rcic_twl"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "B": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "S": {
+      "item": "minecraft:smooth_stone"
+    }
+  },
+  "pattern": [
+    "B B",
+    "SSS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:casing_laydown_stand"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "G": {
+      "item": "minecraft:glass_bottle"
+    },
+    "B": {
+      "item": "minecraft:blue_ice"
+    }
+  },
+  "pattern": [
+    " I ",
+    "IGI",
+    " B "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:nitrogen_canister"
+  }
+}

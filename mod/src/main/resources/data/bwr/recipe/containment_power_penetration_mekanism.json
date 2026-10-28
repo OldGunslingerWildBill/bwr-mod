@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "S": {
+      "item": "minecraft:smooth_stone"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "R": {
+      "tag": "c:alloys/elite"
+    }
+  },
+  "pattern": [
+    "SCS",
+    "CRC",
+    "SCS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:containment_power_penetration"
+  }
+}

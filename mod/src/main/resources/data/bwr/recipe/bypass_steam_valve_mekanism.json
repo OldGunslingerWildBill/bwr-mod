@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "C": {
+      "tag": "c:circuits/advanced"
+    },
+    "P": {
+      "item": "bwr:pressurised_tube"
+    }
+  },
+  "pattern": [
+    " C ",
+    "IPI",
+    " I "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:bypass_steam_valve"
+  }
+}

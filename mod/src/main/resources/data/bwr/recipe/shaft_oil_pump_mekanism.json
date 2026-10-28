@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "R": {
+      "tag": "c:circuits/basic"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    }
+  },
+  "pattern": [
+    "ICI",
+    "RPR",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:shaft_oil_pump"
+  }
+}

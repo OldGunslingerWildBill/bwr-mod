@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "L": {
+      "item": "minecraft:redstone_lamp"
+    },
+    "1": {
+      "tag": "c:circuits/basic"
+    }
+  },
+  "pattern": [
+    "IGI",
+    "1LR",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:xenon_floodlight"
+  }
+}

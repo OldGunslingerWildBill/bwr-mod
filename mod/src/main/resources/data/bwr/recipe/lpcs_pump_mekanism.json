@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "S": {
+      "item": "bwr:core_spray_sparger"
+    },
+    "I": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "R": {
+      "tag": "c:circuits/advanced"
+    }
+  },
+  "pattern": [
+    "SIS",
+    "VRV",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:lpcs_pump"
+  }
+}

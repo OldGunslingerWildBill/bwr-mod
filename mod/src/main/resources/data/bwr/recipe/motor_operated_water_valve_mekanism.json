@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "R": {
+      "tag": "c:circuits/basic"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    }
+  },
+  "pattern": [
+    " R ",
+    "IPI",
+    "CIC"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:motor_operated_water_valve"
+  }
+}

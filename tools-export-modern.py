@@ -12,7 +12,20 @@ DIRS=('down','up','north','south','west','east')
 OUTPUTS={}
 EPS=1e-7
 
+def gate_recipe(path,data):
+    """A vanilla recipe that has a Mekanism variant (<name>_mekanism.json beside it) is written with the condition that variant needs:
+    loaded only without Mekanism (MEKANISM-RECIPES.md, tools-generate-mekanism-recipes.py). Anything else is returned unchanged."""
+    p=Path(path)
+    if isinstance(data,dict) and p.parent.name=='recipe' and p.parent.parent.name=='bwr' and 'neoforge:conditions' not in data             and (p.parent/(p.stem+'_mekanism.json')).exists():
+        out={}
+        for k,v in data.items():
+            out[k]=v
+            if k=='type':out['neoforge:conditions']=[{'type':'neoforge:not','value':{'type':'neoforge:mod_loaded','modid':'mekanism'}}]
+        return out
+    return data
+
 def put(path,data):
+    data=gate_recipe(path,data)
     OUTPUTS[path]=(json.dumps(data,indent=2)+'\n').encode() if isinstance(data,dict) else data.encode() if isinstance(data,str) else data
 
 def cross(a,b): return (a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])

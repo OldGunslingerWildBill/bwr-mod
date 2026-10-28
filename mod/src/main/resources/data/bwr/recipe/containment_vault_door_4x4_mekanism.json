@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "V": {
+      "item": "bwr:containment_vault_door"
+    },
+    "I": {
+      "tag": "c:storage_blocks/steel"
+    }
+  },
+  "pattern": [
+    "VVV",
+    "VIV",
+    "VVV"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:containment_vault_door_4x4"
+  }
+}

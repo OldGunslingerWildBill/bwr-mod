@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "L": {
+      "item": "bwr:lamp"
+    },
+    "R": {
+      "tag": "c:circuits/basic"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    }
+  },
+  "pattern": [
+    "LLL",
+    "LRL",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:led_rod_display"
+  }
+}

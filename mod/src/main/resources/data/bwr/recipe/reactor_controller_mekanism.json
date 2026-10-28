@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "C": {
+      "tag": "c:circuits/advanced"
+    },
+    "O": {
+      "item": "minecraft:observer"
+    },
+    "R": {
+      "tag": "c:circuits/elite"
+    }
+  },
+  "pattern": [
+    "VGV",
+    "COC",
+    "VRV"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:reactor_controller"
+  }
+}

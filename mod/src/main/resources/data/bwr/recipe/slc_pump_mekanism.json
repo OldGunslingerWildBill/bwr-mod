@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "I": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "B": {
+      "tag": "c:circuits/advanced"
+    }
+  },
+  "pattern": [
+    " P ",
+    "IBI",
+    "IVI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:slc_pump"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "B": {
+      "item": "minecraft:light_blue_stained_glass"
+    }
+  },
+  "pattern": [
+    "III",
+    "GBG",
+    " R "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:mercury_high_bay"
+  }
+}

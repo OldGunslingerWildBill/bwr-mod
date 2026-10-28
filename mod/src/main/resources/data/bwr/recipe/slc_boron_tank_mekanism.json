@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    }
+  },
+  "pattern": [
+    "IPI",
+    "I I",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:slc_boron_tank"
+  }
+}

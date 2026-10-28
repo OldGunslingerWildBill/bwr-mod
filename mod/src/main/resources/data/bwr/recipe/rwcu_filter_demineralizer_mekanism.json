@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "B": {
+      "item": "minecraft:iron_bars"
+    },
+    "R": {
+      "item": "bwr:demineralizer_resin"
+    }
+  },
+  "pattern": [
+    "IBI",
+    "PRP",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:rwcu_filter_demineralizer"
+  }
+}

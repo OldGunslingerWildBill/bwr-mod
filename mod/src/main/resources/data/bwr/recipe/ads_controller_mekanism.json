@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "K": {
+      "item": "minecraft:piston"
+    },
+    "R": {
+      "tag": "c:alloys/advanced"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "C": {
+      "tag": "c:circuits/advanced"
+    }
+  },
+  "pattern": [
+    "KCK",
+    "IRI",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:ads_controller"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "T": {
+      "item": "minecraft:cauldron"
+    }
+  },
+  "pattern": [
+    "ICI",
+    "PTP",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:generator_cooling_skid"
+  }
+}

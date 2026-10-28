@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "T": {
+      "item": "minecraft:cauldron"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "B": {
+      "item": "minecraft:bucket"
+    }
+  },
+  "pattern": [
+    "ITI",
+    "PBP",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:main_oil_tank"
+  }
+}

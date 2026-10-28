@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "R": {
+      "tag": "c:circuits/elite"
+    }
+  },
+  "pattern": [
+    "VPV",
+    "IRI",
+    "VPV"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:msiv"
+  }
+}

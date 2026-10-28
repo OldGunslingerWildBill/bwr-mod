@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "L": {
+      "tag": "c:ingots/refined_glowstone"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "IGI",
+    "GLG",
+    "IRI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:hps_flat_panel"
+  }
+}

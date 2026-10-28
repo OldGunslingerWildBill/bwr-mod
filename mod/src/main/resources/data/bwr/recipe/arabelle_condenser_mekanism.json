@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "key": {
+    "I": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "P": {
+      "item": "bwr:pressurised_tube"
+    },
+    "T": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "C": {
+      "item": "bwr:condensate_storage_tank"
+    }
+  },
+  "pattern": [
+    "IPI",
+    "TCT",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:arabelle_condenser"
+  }
+}

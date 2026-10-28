@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "R": {
+      "tag": "c:circuits/basic"
+    },
+    "P": {
+      "item": "bwr:pressurised_tube"
+    },
+    "K": {
+      "item": "minecraft:piston"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    }
+  },
+  "pattern": [
+    " R ",
+    "PKP",
+    " V "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:ads_relief_valve"
+  }
+}

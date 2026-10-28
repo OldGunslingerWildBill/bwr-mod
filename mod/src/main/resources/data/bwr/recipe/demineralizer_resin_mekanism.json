@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "S": {
+      "tag": "c:ingots/steel"
+    },
+    "p": {
+      "item": "mekanism:hdpe_pellet"
+    },
+    "B": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "pattern": [
+    "SpS",
+    "pBp",
+    "SpS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:demineralizer_resin"
+  }
+}

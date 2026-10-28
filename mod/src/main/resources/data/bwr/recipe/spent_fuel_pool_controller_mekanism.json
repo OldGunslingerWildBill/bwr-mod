@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "W": {
+      "item": "bwr:spent_fuel_pool_wall"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "C": {
+      "tag": "c:circuits/advanced"
+    },
+    "R": {
+      "tag": "c:alloys/advanced"
+    }
+  },
+  "pattern": [
+    "WIW",
+    "ICI",
+    "WRW"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:spent_fuel_pool_controller"
+  }
+}

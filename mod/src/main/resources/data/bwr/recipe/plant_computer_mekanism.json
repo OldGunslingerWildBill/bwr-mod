@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "D": {
+      "item": "bwr:graphic_display"
+    },
+    "C": {
+      "tag": "c:circuits/elite"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    }
+  },
+  "pattern": [
+    "GGG",
+    "DCD",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:plant_computer"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    }
+  },
+  "pattern": [
+    "III",
+    "VPV",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:rpv_water_injection_port"
+  }
+}

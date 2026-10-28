@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "P": {
+      "item": "bwr:high_pressure_water_pipe"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    }
+  },
+  "pattern": [
+    "PCP",
+    "CIC",
+    "PCP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:rwcu_regenerative_heat_exchanger"
+  }
+}
