@@ -183,18 +183,19 @@ public final class ControlRoomRecipeTests {
             // with Mekanism the steel is what the iron was, ingot for ingot (the desk asks for more of it: MEKANISM-RECIPES.md)
             return id.getPath().equals("ingot_steel") ? 9 : id.getPath().equals("nugget_steel") ? 1 : 0;
         }
-        Optional<RecipeHolder<?>> holder = manager.byKey(id);
-        if (holder.isEmpty()) {
-            // not a grid recipe: the fabrication desk's recipe for it, which names how many of each material
-            var desk = dev.bwr.mod.fabrication.FabricationCrafting.making(manager, access, item);
-            if (desk.isEmpty()) {
-                return 0;
-            }
+        // a part the fabrication desk makes: the desk's recipe, which names how many of each material (without Mekanism it has the id
+        // of the old grid recipe, so it is looked up by what it makes, not by id)
+        var desk = dev.bwr.mod.fabrication.FabricationCrafting.making(manager, access, item);
+        if (!desk.isEmpty()) {
             double deskTotal = 0;
             for (var input : desk.get(0).value().inputs()) {
                 deskTotal += input.count() * ninths(manager, access, first(input.ingredient()).getItem(), depth + 1);
             }
             return deskTotal / Math.max(1, desk.get(0).value().getResultItem(access).getCount());
+        }
+        Optional<RecipeHolder<?>> holder = manager.byKey(id);
+        if (holder.isEmpty()) {
+            return 0;
         }
         Recipe<?> recipe = holder.get().value();
         double total = 0;
