@@ -33,13 +33,12 @@ As with other pump replacement, check its controls and supplies after placing it
 
 ## Round steam and water piping
 
-Both existing pipe items now use Blender-built steel fittings: round barrels,
-swept elbows, cast junctions and bolted coupling rings. The model follows all 64
-possible directional connection patterns. Existing pipe networks update their
-appearance without replacement.
+The pipes were remodelled again in alpha.59: see **[PIPES.md](PIPES.md)**. The water pipe is now painted carbon steel with
+welded joints, the steam pipe a lagged line in aluminium cladding with amber service bands, and both get a bolted flange where
+they meet a machine. Existing pipe networks update their appearance without replacement.
 
-The default identification bands are **blue for water** and **amber for steam**.
-Right-click a placed pipe with any of the **16 vanilla dyes** to recolor its bands.
+The default service colours are **plant light blue for water** (the whole pipe's paint) and **amber for steam** (the bands).
+Right-click a placed pipe with any of the **16 vanilla dyes** to repaint it.
 
 - Recoloring one segment uses one dye in survival. Creative uses none.
 - Applying its existing color uses no dye.
@@ -48,13 +47,12 @@ Right-click a placed pipe with any of the **16 vanilla dyes** to recolor its ban
   differently colored segments of the same pipe type still connect.
 - Breaking and replacing a segment restores its default service color.
 
-The steel remains unpainted, so colored bands stay easy to identify. There is no
-automatic repainting of connected networks.
+There is no automatic repainting of connected networks.
 
 ## Authoring and export
 
 Editable source: [`modern_pumps_and_pipes.blend`](art/models/modern/modern_pumps_and_pipes.blend).
-The file contains individual pump scenes, all pipe connection patterns, packed
+The file contains individual pump scenes, the old (pre-alpha.59) pipe connection patterns, packed
 textures and studio previews. No Blender installation is needed to play.
 
 `art/models/modern/build_models.py` runs inside Blender with the original
@@ -78,4 +76,4 @@ The LPCS, HPCS, RHR/LPCI and motor feedwater bodies (and the SLC pump and tank) 
 
 The exporter reads Blender mesh/UV snapshots, clips pumps into block cells and
 checks surface-area conservation. It retains the old layouts for saved worlds.
-Pipe material tint index 0 marks the dye bands; the remaining metal is untinted.
+The pipes are no longer built or exported here (art/models/pipes, tools-export-pipes.py; see PIPES.md).

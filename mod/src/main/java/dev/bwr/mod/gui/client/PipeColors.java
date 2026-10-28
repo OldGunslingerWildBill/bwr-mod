@@ -8,10 +8,12 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 
-/** Only the Blender material marked tint-index 0 receives dye; steel stays metallic. */
+/** Only the material marked tint-index 0 takes the colour: the water pipe's paint and the steam pipe's bands (PIPES.md);
+ * welds, flanges and cladding keep their metal. */
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class PipeColors {
-    private static final int WATER = 0x269FDE;
+    /** Plant light blue: the water pipe's paint (PIPES.md); a little greyer than the old bright band blue. */
+    private static final int WATER = 0x5A9FCC;
     private static final int STEAM = 0xE8A43B;
     private PipeColors() {}
 

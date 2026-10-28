@@ -111,7 +111,7 @@
   "tooltip.bwr.dvss.drive": "High-pressure water pipes; FE power. Right-click for speed control.",
   "tooltip.bwr.jet_pair.mount": "1 x 6 x 1; base 1 or 2 blocks above the vessel bottom shell.",
   "tooltip.bwr.jet_pair.match": "Align at the same height across opposite walls, facing each other.",
-  "tooltip.bwr.pipe.dye": "Right-click with dye to color the identification bands. Color does not change fluid service.",
+  "tooltip.bwr.pipe.dye": "Right-click with dye to repaint its service color (a water pipe's paint, a steam pipe's band). Color does not change fluid service.",
   "item.bwr.hp_turbine": "TX-10 Style HP Turbine",
   "item.bwr.lp_turbine": "TX-10 Style LP Turbine",
   "item.bwr.nuclear_generator": "TX-NLCH Style Nuclear Generator",
