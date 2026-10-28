@@ -60,8 +60,8 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
                 Layout.row("Bypass", () -> menu.bypass ? "open" : "shut")
                         .status(() -> menu.bypass ? Status.CAUTION : Status.NONE)
                         .tip("Open when the slot is empty or the cartridge is full: the oil goes round the element."),
-                Layout.row("Oil loss", () -> pct(menu.factor) + " % of unfiltered")
-                        .tip("The share of the tank's unfiltered oil loss that gets through: 10 % with a cartridge in service, 100 % without one."),
+                Layout.row("Oil loss", () -> pct(menu.factor), "%")
+                        .tip("The share of the tank's unfiltered oil loss that gets through: 10 % with a cartridge in service, 100 % (the old rate) with the slot empty or the cartridge full."),
                 Layout.row("Time left", this::hours)
                         .tip("At today's header pressure and oil temperature. Hot oil loads the cartridge faster."),
                 Layout.row("Oil", () -> menu.attached ? num(menu.oilC, 1) + " C, " + num(menu.psig, 1) + " psig" : "-")).compact();
