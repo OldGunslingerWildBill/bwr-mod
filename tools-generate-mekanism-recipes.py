@@ -22,6 +22,12 @@ pins the vanilla recipe; see the reason), or in EXEMPT (none, and why). --check 
 The other tools-export-* / tools-make-* scripts write some of the vanilla recipes. They write the vanilla form without the
 condition: after running one, run this tool again (it only adds what is missing).
 
+The 42 control-room parts (panels, trim, desks, displays, relay cabinets, the control stand, gauges, switches, lamps, annunciators,
+segment displays) are not crafted in the grid: they are made at the fabrication desk (FABRICATION-DESK.md). Their recipes are
+`bwr:fabrication` files (a list of ingredients with counts), still written as a pair, <name>.json (vanilla, hand-written, this tool
+only adds the condition) and <name>_mekanism.json (written here from FAB_NAMES: the same list with DEFAULT_SUB and the entry's own
+changes, and every steel count multiplied by STEEL_FACTOR, because the owner wants steel to cost more).
+
 The oil route is not generated here: turbine_oil_can_from_ethene.json (the reaction chamber recipe) and
 turbine_oil_drum_mekanism.json are written by hand beside it, and the drum recipe is listed in TABLE as a pair like any other.
 """
@@ -213,27 +219,46 @@ e("turbine_rebuild_kit")
 # --- the turbine oil: the drum is filled from cans a reaction chamber makes (written by hand, see the module doc)
 e("turbine_oil_drum", pattern=[" C ", "CSC", " C "], key={"C": CAN, "S": STEEL})
 
+# --- the fabrication desk itself is crafted in the grid: a bench of steel with a crafting table, a circuit in each side of it
+e("fabrication_desk", pattern=["SSS", "ETE", "S S"],
+  key={"S": STEEL, "E": C1, "T": "minecraft:crafting_table"})
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Made at the fabrication desk (FABRICATION-DESK.md), not in the grid: the 42 control-room parts that tests used to pin by their grid
+# recipe. Their entries above (sub / one / pattern / key) are the Mekanism design; the recipe is a `bwr:fabrication` file, so
+# build_fab() reads the vanilla desk recipe instead of a pattern. `ingredients` (spec -> count, before STEEL_FACTOR) replaces the
+# list when a design is not a substitution of the vanilla one.
+# ---------------------------------------------------------------------------------------------------------------------
+STEEL_FACTOR = 2   # every steel count of a desk recipe is multiplied by this: the owner wants steel to cost more
+FAB_NAMES = (
+    # Panels and trim
+    "control_panel_vertical", "control_panel_console", "control_panel_corner_bench_chamfer", "control_panel_corner_bench_outside",
+    "control_panel_corner_vertical_chamfer", "control_panel_corner_vertical_outside", "control_panel_duplex",
+    "control_panel_end_cap_round", "control_panel_header_canopy", "control_panel_header_vent", "control_panel_plinth_apron",
+    "control_panel_plinth_base", "control_panel_plinth_kick",
+    # Desks and furniture
+    "control_panel_desk", "control_panel_desk_wide", "control_stand", "operator_desk", "operator_desk_corner", "operator_desk_round",
+    "supervisor_desk", "relay_cabinet", "relay_cabinet_plain",
+    # Switches
+    "control_switch", "key_switch", "rotary_selector", "setpoint_knob", "toggle_switch", "thumbwheel", "pushbutton", "rps_trip",
+    "push_turn_switch",
+    # Gauges and meters
+    "dial_gauge", "edgewise_gauge_horizontal", "edgewise_gauge_vertical", "bar_gauge",
+    # Lamps and annunciators
+    "lamp", "annunciator",
+    # Displays
+    "seven_segment_display", "sixteen_segment_display", "bar_graph", "wall_display", "wall_display_wide")
+FAB = {n: TABLE.pop(n) for n in FAB_NAMES}
+# the vertical panel's design is a different list of materials, not a substitution: 5 steel, 2 sheets of plastic, a circuit and the dye
+FAB["control_panel_vertical"]["ingredients"] = {STEEL: 5, "minecraft:lime_dye": 1, HDPE_SHEET: 2, C1: 1}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Held back: the Mekanism variant is designed (its entry stays in TABLE's form, moved to HELD below) but writing it breaks an
 # existing test assertion, which this work must not edit without the owner's OK. `--include-blocked` writes them anyway.
 # Each reason names the test and the assertion. The first full GameTest run with every variant written (15 required tests
 # failed; one was the new oil can, the rest are these) is where the list comes from.
 # ---------------------------------------------------------------------------------------------------------------------
-_CR = ("ControlRoomRecipeTests (also ControlDeskTests and RoomFurnitureTests) loads bwr:<name> by id, asserts every ingredient is "
-       "vanilla or bwr ('the recipe would differ with Mekanism'), and prices desks in iron through the panel chain")
-_RS = "RealScaleTests.craftedStacksStartAtRealSize loads the recipe of every panel component type by its own id, with Mekanism too"
 BLOCKED = {}
-for _n in ("control_panel_vertical", "control_panel_console", "control_panel_corner_bench_chamfer", "control_panel_corner_bench_outside",
-           "control_panel_corner_vertical_chamfer", "control_panel_corner_vertical_outside", "control_panel_desk",
-           "control_panel_desk_wide", "control_panel_duplex", "control_panel_end_cap_round", "control_panel_header_canopy",
-           "control_panel_header_vent", "control_panel_plinth_apron", "control_panel_plinth_base", "control_panel_plinth_kick",
-           "control_stand", "operator_desk", "operator_desk_corner", "operator_desk_round", "supervisor_desk", "wall_display",
-           "wall_display_wide", "relay_cabinet", "relay_cabinet_plain"):
-    BLOCKED[_n] = _CR
-for _n in ("dial_gauge", "edgewise_gauge_horizontal", "edgewise_gauge_vertical", "control_switch", "key_switch", "rotary_selector",
-           "setpoint_knob", "toggle_switch", "thumbwheel", "lamp", "pushbutton", "rps_trip", "push_turn_switch", "annunciator",
-           "seven_segment_display", "sixteen_segment_display", "bar_graph", "bar_gauge"):
-    BLOCKED[_n] = _RS
 BLOCKED["mimic_tape"] = "MimicTapeTests.tapeIsRegisteredWithItsRecipeComponentsAndDefaults loads bwr:mimic_tape by id, with Mekanism too"
 BLOCKED["panel_key"] = "PanelRecipeTests.panelKeyRecipeMakesOneUnstackableKey loads bwr:panel_key by id, with Mekanism too"
 BLOCKED["paperless_recorder"] = ("PaperlessRecorderTests.theRecorderHasAnItemARecipeAndNamesForEveryPort loads bwr:paperless_recorder "
@@ -316,7 +341,7 @@ def exempt_groups():
     groups = {}
     for f in sorted(os.listdir(RECIPES)):
         n = f[:-5]
-        if not f.endswith(".json") or n.endswith("_mekanism") or n in TABLE:
+        if not f.endswith(".json") or n.endswith("_mekanism") or n in TABLE or n in FAB:
             continue
         if n in BLOCKED:
             reason = "HELD BACK, an existing test pins the vanilla recipe: " + BLOCKED[n]
@@ -416,6 +441,48 @@ def build(name, entry):
     return out
 
 
+def build_fab(name, entry):
+    """The Mekanism variant of a desk recipe: the vanilla recipe's list, substituted, with every steel count multiplied."""
+    v, _ = load(name)
+    if v["type"] != "bwr:fabrication":
+        raise SystemExit(f"{name}: expected a bwr:fabrication vanilla recipe, not {v['type']}")
+    sub = dict(DEFAULT_SUB)
+    sub.update(entry["sub"])
+    if entry.get("ingredients") is not None:
+        rows = [[spec, count] for spec, count in entry["ingredients"].items()]
+    else:
+        rows = [[spec_of(i), i.get("count", 1)] for i in v["ingredients"]]
+        for src, new in entry["one"].items():
+            for i, row in enumerate(rows):
+                if row[0] == src:
+                    row[1] -= 1
+                    at = i + 1
+                    if row[1] == 0:
+                        del rows[i]
+                        at = i
+                    rows.insert(at, [new, 1])
+                    break
+            else:
+                raise SystemExit(f"{name}: no {src} in the desk recipe for 'one'")
+        rows = [[sub.get(spec, spec), count] for spec, count in rows]
+    merged = []
+    for spec, count in rows:
+        if spec in (STEEL, STEEL_NUGGET, STEEL_BLOCK):
+            count *= STEEL_FACTOR
+        for row in merged:
+            if row[0] == spec:
+                row[1] += count
+                break
+        else:
+            merged.append([spec, count])
+    # steel first, then the rest in the vanilla order
+    merged.sort(key=lambda row: 0 if row[0] in (STEEL, STEEL_NUGGET, STEEL_BLOCK) else 1)
+    out = {"type": v["type"], "neoforge:conditions": [MOD_LOADED], "category": v["category"],
+           "ingredients": [dict(ing_of(spec), count=count) for spec, count in merged],
+           "result": {"count": v["result"].get("count", 1), "id": v["result"]["id"]}}
+    return out
+
+
 def render(obj):
     return json.dumps(obj, indent=2) + "\n"
 
@@ -452,6 +519,8 @@ def classified():
             continue
         if n in TABLE:
             result[n] = "table"
+        elif n in FAB:
+            result[n] = "fab"
         elif n in BLOCKED:
             result[n] = "blocked"
         elif n in EXEMPT or storage_reason(n):
@@ -477,10 +546,10 @@ def main(argv):
     cls, unknown = classified()
     for n in unknown:
         problems.append(f"{n}.json is not classified: add it to TABLE (a Mekanism variant), BLOCKED or EXEMPT with a reason")
-    for n in list(TABLE) + list(HELD):
+    for n in list(TABLE) + list(HELD) + list(FAB):
         if not os.path.isfile(os.path.join(RECIPES, n + ".json")):
             problems.append(f"{n}: listed in TABLE/BLOCKED but there is no vanilla recipe {n}.json")
-    both = set(TABLE) & set(BLOCKED)
+    both = (set(TABLE) | set(FAB)) & set(BLOCKED) | (set(TABLE) & set(FAB))
     for n in sorted(both):
         problems.append(f"{n}: in both TABLE and BLOCKED")
     for n in EXEMPT:
@@ -488,11 +557,20 @@ def main(argv):
             problems.append(f"{n}: exempt and also given a variant")
     writes = {}
     if "--table" in argv:
+        for n, entry in sorted(FAB.items()):
+            v = build_fab(n, entry)
+            print(n, "x%d" % v["result"]["count"], json.dumps([((i.get("item") or "#" + i["tag"]), i["count"]) for i in v["ingredients"]]))
         for n, entry in sorted(selected(True).items()):
             v = build(n, entry)
             print(n, json.dumps(v.get("pattern")), json.dumps({k: (i.get("item") or "#" + i["tag"]) for k, i in v.get("key", {}).items()})
                   if "key" in v else json.dumps([(i.get("item") or "#" + i["tag"]) for i in v["ingredients"]]))
         return 0
+    for n, entry in sorted(FAB.items()):
+        if problems:
+            break
+        writes[os.path.join(RECIPES, n + "_mekanism.json")] = render(build_fab(n, entry))
+        with open(os.path.join(RECIPES, n + ".json"), encoding="utf-8", newline="") as f:
+            writes[os.path.join(RECIPES, n + ".json")] = gate_vanilla(f.read())
     for n, entry in sorted(selected(include_blocked).items()):
         if problems:
             break
@@ -524,7 +602,7 @@ def main(argv):
     for p in problems:
         print("PROBLEM:", p)
     if not problems:
-        print(f"{len(selected(include_blocked))} Mekanism variants {'verified' if check else 'written'}; "
+        print(f"{len(selected(include_blocked)) + len(FAB)} Mekanism variants ({len(FAB)} of them desk recipes) {'verified' if check else 'written'}; "
               f"{len(BLOCKED)} blocked, {sum(1 for v in cls.values() if v == 'exempt')} exempt")
     return 1 if problems else 0
 

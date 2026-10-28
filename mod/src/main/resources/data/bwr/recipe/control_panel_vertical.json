@@ -1,1 +1,1 @@
-{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["III", "ILI", "III"], "key": {"I": {"item": "minecraft:iron_ingot"}, "L": {"item": "minecraft:lime_dye"}}, "result": {"id": "bwr:control_panel_vertical", "count": 4}}
+{"type": "bwr:fabrication", "neoforge:conditions": [{"type": "neoforge:not", "value": {"type": "neoforge:mod_loaded", "modid": "mekanism"}}], "category": "panels", "ingredients": [{"item": "minecraft:iron_ingot", "count": 8}, {"item": "minecraft:lime_dye", "count": 1}], "result": {"id": "bwr:control_panel_vertical", "count": 4}}

@@ -1,1 +1,1 @@
-{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["DD", "II"], "key": {"D": {"item": "bwr:operator_desk"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:supervisor_desk", "count": 1}}
+{"type": "bwr:fabrication", "neoforge:conditions": [{"type": "neoforge:not", "value": {"type": "neoforge:mod_loaded", "modid": "mekanism"}}], "category": "furniture", "ingredients": [{"item": "minecraft:iron_ingot", "count": 2}, {"item": "bwr:operator_desk", "count": 2}], "result": {"id": "bwr:supervisor_desk", "count": 1}}

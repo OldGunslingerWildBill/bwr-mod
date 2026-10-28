@@ -1,0 +1,24 @@
+{
+  "type": "bwr:fabrication",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "furniture",
+  "ingredients": [
+    {
+      "tag": "c:ingots/steel",
+      "count": 16
+    },
+    {
+      "tag": "c:circuits/basic",
+      "count": 1
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:relay_cabinet_plain"
+  }
+}

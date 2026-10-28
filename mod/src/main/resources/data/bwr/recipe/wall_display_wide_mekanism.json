@@ -1,0 +1,28 @@
+{
+  "type": "bwr:fabrication",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "displays",
+  "ingredients": [
+    {
+      "tag": "c:ingots/steel",
+      "count": 6
+    },
+    {
+      "item": "minecraft:black_stained_glass_pane",
+      "count": 2
+    },
+    {
+      "item": "bwr:wall_display",
+      "count": 1
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:wall_display_wide"
+  }
+}
