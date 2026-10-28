@@ -735,6 +735,11 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.furniture.ControlStandBlock> CONTROL_STAND =
             BLOCKS.register("control_stand",
                     () -> new dev.bwr.mod.furniture.ControlStandBlock(furniture()));
+    /** The bench where the control-room parts are made out of materials (FABRICATION-DESK.md). */
+    public static final DeferredBlock<dev.bwr.mod.fabrication.FabricationDeskBlock> FABRICATION_DESK =
+            BLOCKS.register("fabrication_desk",
+                    () -> new dev.bwr.mod.fabrication.FabricationDeskBlock(BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_GRAY).strength(2.0F, 6.0F).sound(SoundType.METAL).noOcclusion()));
 
     // --- Industrial lamps (LIGHTING.md): redstone-controlled HID lamps, warm-up and restrike on scheduled ticks ---
     /** Lamp housing: painted steel that does not take the panel finish. The light is the lens. */

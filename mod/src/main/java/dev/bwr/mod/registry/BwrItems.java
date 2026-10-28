@@ -539,6 +539,8 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.WALL_DISPLAY_WIDE);
     public static final DeferredItem<BlockItem> CONTROL_STAND =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_STAND);
+    public static final DeferredItem<BlockItem> FABRICATION_DESK =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.FABRICATION_DESK);
     // Industrial lamps (LIGHTING.md).
     public static final DeferredItem<BlockItem> LPS_HIGH_BAY =
             ITEMS.registerSimpleBlockItem(BwrBlocks.LPS_HIGH_BAY);
@@ -785,6 +787,7 @@ public final class BwrItems {
                         output.accept(WALL_DISPLAY.get());
                         output.accept(WALL_DISPLAY_WIDE.get());
                         output.accept(CONTROL_STAND.get());
+                        output.accept(FABRICATION_DESK.get());
                         output.accept(LPS_HIGH_BAY.get());
                         output.accept(LPS_WALL_PACK.get());
                         output.accept(HPS_HIGH_BAY.get());

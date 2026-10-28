@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bwr:block/fabrication_desk/fabrication_desk"
+    },
+    "facing=east": {
+      "model": "bwr:block/fabrication_desk/fabrication_desk",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bwr:block/fabrication_desk/fabrication_desk",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bwr:block/fabrication_desk/fabrication_desk",
+      "y": 270
+    }
+  }
+}

@@ -50,5 +50,6 @@ public final class BwrScreens {
         event.register(BwrMenus.COOLING.get(), CoolingScreen::new);
         event.register(BwrMenus.RHR_HEAT_EXCHANGER.get(), RhrHeatExchangerScreen::new);
         event.register(BwrMenus.RWCU_UNIT.get(), RwcuUnitScreen::new);
+        event.register(BwrMenus.FABRICATION_DESK.get(), FabricationDeskScreen::new);
     }
 }
