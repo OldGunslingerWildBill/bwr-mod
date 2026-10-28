@@ -15,12 +15,15 @@
     },
     "C": {
       "tag": "c:circuits/advanced"
+    },
+    "B": {
+      "tag": "c:storage_blocks/steel"
     }
   },
   "pattern": [
     "IPI",
     "ICI",
-    "III"
+    "BBB"
   ],
   "result": {
     "count": 1,

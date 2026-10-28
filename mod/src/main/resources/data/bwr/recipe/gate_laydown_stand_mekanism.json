@@ -11,14 +11,17 @@
     "I": {
       "tag": "c:ingots/steel"
     },
-    "B": {
+    "s": {
       "item": "minecraft:iron_bars"
+    },
+    "B": {
+      "tag": "c:storage_blocks/steel"
     }
   },
   "pattern": [
     "I I",
-    "BBB",
-    "III"
+    "sss",
+    "BBB"
   ],
   "result": {
     "count": 1,

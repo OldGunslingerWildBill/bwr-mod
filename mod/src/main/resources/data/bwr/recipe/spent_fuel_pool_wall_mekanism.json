@@ -11,13 +11,16 @@
     "G": {
       "item": "minecraft:gray_concrete"
     },
+    "B": {
+      "tag": "c:storage_blocks/steel"
+    },
     "I": {
       "tag": "c:ingots/steel"
     }
   },
   "pattern": [
     "GGG",
-    "III",
+    "BIB",
     "GGG"
   ],
   "result": {

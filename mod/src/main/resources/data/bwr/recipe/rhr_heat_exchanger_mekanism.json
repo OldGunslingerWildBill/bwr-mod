@@ -8,20 +8,20 @@
   ],
   "category": "misc",
   "key": {
-    "I": {
-      "tag": "c:ingots/steel"
-    },
-    "C": {
-      "tag": "c:ingots/bronze"
+    "B": {
+      "tag": "c:storage_blocks/steel"
     },
     "P": {
       "item": "bwr:high_pressure_water_pipe"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
     }
   },
   "pattern": [
-    "IPI",
+    "BPB",
     "PCP",
-    "IPI"
+    "BPB"
   ],
   "result": {
     "count": 1,

@@ -1044,7 +1044,7 @@ public final class PaperlessRecorderTests {
     public static void theRecorderHasAnItemARecipeAndNamesForEveryPort(GameTestHelper helper) {
         var level = helper.getLevel();
         check(helper, BwrItems.PAPERLESS_RECORDER.get().type() == ComponentTypes.PAPERLESS_RECORDER, "the item places the recorder type");
-        var recipe = level.getRecipeManager().byKey(dev.bwr.mod.BwrMod.id("paperless_recorder"));
+        var recipe = level.getRecipeManager().byKey(dev.bwr.mod.BwrMod.id("paperless_recorder" + (net.neoforged.fml.ModList.get().isLoaded("mekanism") ? "_mekanism" : "")));
         check(helper, recipe.isPresent() && recipe.get().value().getResultItem(level.registryAccess()).is(BwrItems.PAPERLESS_RECORDER.get()),
                 "the recorder can be crafted");
         PaperlessRecorderData dx2000 = new PaperlessRecorderData(RecorderStyle.DX2000);

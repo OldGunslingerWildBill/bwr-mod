@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "L": {
+      "item": "bwr:lead_ingot"
+    },
+    "R": {
+      "item": "bwr:rtg"
+    },
+    "S": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    }
+  },
+  "pattern": [
+    "LLL",
+    "LRL",
+    "SHS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:large_rtg"
+  }
+}

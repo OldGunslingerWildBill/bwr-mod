@@ -11,17 +11,20 @@
     "V": {
       "item": "bwr:reactor_vessel"
     },
+    "B": {
+      "tag": "c:storage_blocks/steel"
+    },
     "P": {
       "item": "minecraft:piston"
     },
-    "B": {
+    "Y": {
       "tag": "c:storage_blocks/bronze"
     }
   },
   "pattern": [
-    "VPV",
-    "PBP",
-    "VPV"
+    "VBV",
+    "PYP",
+    "VBV"
   ],
   "result": {
     "count": 1,

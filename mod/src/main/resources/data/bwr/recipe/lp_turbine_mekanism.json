@@ -13,11 +13,8 @@
     "r": {
       "tag": "c:alloys/elite"
     },
-    "S": {
-      "tag": "c:ingots/steel"
-    },
-    "P": {
-      "item": "minecraft:cauldron"
+    "K": {
+      "item": "mekanism:steel_casing"
     },
     "3": {
       "tag": "c:circuits/elite"
@@ -25,7 +22,7 @@
   },
   "pattern": [
     "BrB",
-    "SPS",
+    "BKB",
     "B3B"
   ],
   "result": {

@@ -1,0 +1,39 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "R": {
+      "tag": "c:ingots/refined_obsidian"
+    },
+    "V": {
+      "item": "bwr:reactor_vessel"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "F": {
+      "item": "minecraft:blast_furnace"
+    },
+    "B": {
+      "tag": "c:storage_blocks/steel"
+    },
+    "2": {
+      "tag": "c:circuits/advanced"
+    }
+  },
+  "pattern": [
+    "RVR",
+    "HFH",
+    "B2B"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:reprocessing_plant"
+  }
+}

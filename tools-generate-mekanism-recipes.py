@@ -218,6 +218,50 @@ e("lp_blade_stand")
 e("lp_turbine_hood")
 e("turbine_rebuild_kit")
 
+# --- heavier steel (owner, 2026-10-28): the big machines cost noticeably more steel than the iron they replace. A steel block is 9 ingots;
+# these entries put blocks where the vanilla recipe had ingots, or make fewer pieces per craft. Cheap parts (switches, small valves, the
+# control rod drive, the sparger, the rack) are not touched. tools-cost-recipe.py prices any item in both installs.
+e("reactor_vessel", pattern=["SSS", "SKS", "SSS"], key={"S": STEEL, "K": CASING}, count=2)
+e("rpv_bottom_drain_port", pattern=["BIB", "PsP", "BIB"],
+  key={"B": STEEL_BLOCK, "I": STEEL, "P": "bwr:high_pressure_water_pipe", "s": "minecraft:iron_bars"})
+e("rpv_water_injection_port", pattern=["BIB", "VPV", "BIB"],
+  key={"B": STEEL_BLOCK, "I": STEEL, "V": "bwr:reactor_vessel", "P": "bwr:high_pressure_water_pipe"})
+e("hp_turbine", pattern=["BrB", "BPB", "B3B"], key={"B": STEEL_BLOCK, "r": A2, "P": "minecraft:piston", "3": C3})
+e("lp_turbine", pattern=["BrB", "BKB", "B3B"], key={"B": STEEL_BLOCK, "r": A2, "K": CASING, "3": C3})
+e("nuclear_generator", pattern=["BrB", "BPB", "B3B"], key={"B": STEEL_BLOCK, "r": A2, "P": "minecraft:gold_block", "3": C3})
+e("recirculation_pump", pattern=["VBV", "PYP", "VBV"],
+  key={"V": "bwr:reactor_vessel", "B": STEEL_BLOCK, "P": "minecraft:piston", "Y": BRONZE_BLOCK})
+e("turbine_feed_pump", pattern=["BCB", "VPV", "TBT"],
+  key={"B": STEEL_BLOCK, "C": BRONZE_BLOCK, "V": "bwr:reactor_vessel", "P": "minecraft:piston", "T": "bwr:pressurised_tube"})
+e("msiv", pattern=["VPV", "BRB", "VPV"], key={"V": "bwr:reactor_vessel", "P": "minecraft:piston", "B": STEEL_BLOCK, "R": C3})
+e("arabelle_condenser", pattern=["BBB", "TCT", "BBB"],
+  key={"B": STEEL_BLOCK, "T": "bwr:high_pressure_water_pipe", "C": "bwr:condensate_storage_tank"})
+e("condensate_storage_tank", pattern=["BGB", "GWG", "BGB"],
+  key={"B": STEEL_BLOCK, "G": "minecraft:glass", "W": "minecraft:water_bucket"})
+e("rhr_heat_exchanger", pattern=["BPB", "PCP", "BPB"],
+  key={"B": STEEL_BLOCK, "P": "bwr:high_pressure_water_pipe", "C": BRONZE})
+e("containment_pass_through", pattern=["SBS", "BCB", "SBS"], key={"S": "minecraft:smooth_stone", "B": STEEL_BLOCK, "C": "minecraft:chest"})
+e("containment_steam_penetration", pattern=["SBS", "BTB", "SBS"],
+  key={"S": "minecraft:smooth_stone", "B": STEEL_BLOCK, "T": "bwr:pressurised_tube"})
+e("containment_water_penetration", pattern=["SBS", "BWB", "SBS"],
+  key={"S": "minecraft:smooth_stone", "B": STEEL_BLOCK, "W": "bwr:high_pressure_water_pipe"})
+e("suppression_pool_wall", pattern=["SBS", "ISI", "SBS"], key={"S": "minecraft:smooth_stone", "B": STEEL_BLOCK, "I": STEEL}, count=8)
+e("spent_fuel_pool_wall", pattern=["GGG", "BIB", "GGG"], key={"G": "minecraft:gray_concrete", "B": STEEL_BLOCK, "I": STEEL}, count=8)
+e("mechanical_draft_tower", pattern=["IPI", "ICI", "BBB"],
+  key={"I": "minecraft:smooth_stone", "P": "bwr:high_pressure_water_pipe", "C": C2, "B": STEEL_BLOCK})
+e("natural_draft_tower", pattern=["IPI", "ICI", "BBB"],
+  key={"I": "minecraft:white_concrete", "P": "bwr:high_pressure_water_pipe", "C": C2, "B": STEEL_BLOCK})
+e("crane_runway_rail", pattern=["BBB", " G ", "III"], key={"B": STEEL_BLOCK, "G": "minecraft:gray_concrete", "I": STEEL}, count=4)
+e("equipment_pad", pattern=["BBB", "GGG"], key={"B": STEEL_BLOCK, "G": "minecraft:gray_concrete"})
+e("head_stand", pattern=["GGG", "I I", "BBB"], key={"G": "minecraft:gray_concrete", "I": STEEL, "B": STEEL_BLOCK})
+e("gate_laydown_stand", pattern=["I I", "sss", "BBB"], key={"I": STEEL, "s": "minecraft:iron_bars", "B": STEEL_BLOCK})
+e("refuelling_rail", pattern=["B B", "GGG", "I I"], key={"B": STEEL_BLOCK, "G": "minecraft:gray_concrete", "I": STEEL}, count=4)
+e("refuelling_bridge_console", pattern=["PPP", "ICI", "BBB"],
+  key={"P": "minecraft:glass_pane", "I": STEEL, "C": C2, "B": STEEL_BLOCK})
+e("stud_tensioner", pattern=["BBB", "IPI", "IRI"], key={"B": STEEL_BLOCK, "I": STEEL, "P": "minecraft:piston", "R": C1})
+e("reprocessing_plant", pattern=["RVR", "HFH", "B2B"],
+  key={"R": REF_OBSIDIAN, "V": "bwr:reactor_vessel", "H": "minecraft:hopper", "F": "minecraft:blast_furnace", "B": STEEL_BLOCK, "2": C2})
+
 # --- the turbine oil: the drum is filled from cans a reaction chamber makes (written by hand, see the module doc)
 e("turbine_oil_drum", pattern=[" C ", "CSC", " C "], key={"C": CAN, "S": STEEL})
 
@@ -255,27 +299,13 @@ FAB = {n: TABLE.pop(n) for n in FAB_NAMES}
 FAB["control_panel_vertical"]["ingredients"] = {STEEL: 5, "minecraft:lime_dye": 1, HDPE_SHEET: 2, C1: 1}
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Held back: the Mekanism variant is designed (its entry stays in TABLE's form, moved to HELD below) but writing it breaks an
-# existing test assertion, which this work must not edit without the owner's OK. `--include-blocked` writes them anyway.
-# Each reason names the test and the assertion. The first full GameTest run with every variant written (15 required tests
-# failed; one was the new oil can, the rest are these) is where the list comes from.
+# Held back: the Mekanism variant is designed (its entry stays in TABLE's form, moved to HELD below) but is not written, because an
+# existing test loads the recipe by id or pins its iron. `--include-blocked` writes them anyway. Each reason names the test and the
+# assertion. Nothing is held back now: the eight tools, the reprocessing plant and the large RTG were released on 2026-10-28 (the tests
+# that pinned them look up the `_mekanism` recipe with Mekanism loaded, and only that), and the 42 control-room parts that the other
+# tests pinned moved to the fabrication desk (FAB_NAMES above, FABRICATION-DESK.md).
 # ---------------------------------------------------------------------------------------------------------------------
 BLOCKED = {}
-BLOCKED["mimic_tape"] = "MimicTapeTests.tapeIsRegisteredWithItsRecipeComponentsAndDefaults loads bwr:mimic_tape by id, with Mekanism too"
-BLOCKED["panel_key"] = "PanelRecipeTests.panelKeyRecipeMakesOneUnstackableKey loads bwr:panel_key by id, with Mekanism too"
-BLOCKED["paperless_recorder"] = ("PaperlessRecorderTests.theRecorderHasAnItemARecipeAndNamesForEveryPort loads bwr:paperless_recorder "
-                                 "by id, with Mekanism too")
-BLOCKED["survey_meter"] = "RadiationToolsTests.theRecipesExist loads bwr:survey_meter by id, with Mekanism too"
-BLOCKED["area_radiation_monitor"] = "RadiationToolsTests.theRecipesExist loads bwr:area_radiation_monitor by id, with Mekanism too"
-BLOCKED["reprocessing_plant"] = ("ReprocessingTests asserts bwr:reprocessing_plant 'must not depend on a mod' and crafts it from "
-                                 "obsidian, hoppers, a blast furnace and iron")
-BLOCKED["large_rtg"] = ("LargeRtgTests.ingotAndBlockRecipesConserveMassAndTheDataAgrees crafts bwr:large_rtg by id from iron blocks "
-                        "and lead")
-BLOCKED["cobalt_sample_detector"] = ("LargeRtgTests.ingotAndBlockRecipesConserveMassAndTheDataAgrees loads "
-                                     "bwr:cobalt_sample_detector by id, with Mekanism too")
-BLOCKED["rtg"] = "RtgTests.recipesCraftTheBlocksAndTheAmBeRodFromACapsule loads bwr:rtg by id, with Mekanism too"
-BLOCKED["isotope_separator"] = ("RtgTests.recipesCraftTheBlocksAndTheAmBeRodFromACapsule loads bwr:isotope_separator by id, "
-                                "with Mekanism too")
 
 # the designs of the held-back recipes: they stay in TABLE's form until the owner decides, then they are written like the rest
 HELD = {n: TABLE.pop(n) for n in BLOCKED}

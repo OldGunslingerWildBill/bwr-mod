@@ -11,14 +11,17 @@
     "S": {
       "item": "minecraft:smooth_stone"
     },
+    "B": {
+      "tag": "c:storage_blocks/steel"
+    },
     "I": {
       "tag": "c:ingots/steel"
     }
   },
   "pattern": [
-    "SIS",
+    "SBS",
     "ISI",
-    "SIS"
+    "SBS"
   ],
   "result": {
     "count": 8,

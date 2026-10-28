@@ -60,21 +60,50 @@ already the one place that wants Generators and is untouched.
 Ingredients are `c:` tags wherever one exists (any steel works), hard `mekanism:` ids only where there is none (the casing, the
 plastic). Lead stays `bwr:lead_ingot` where a recipe names lead (it is tagged `c:ingots/lead` and a mod that adds lead fits too).
 
+## Heavier steel for the big machines
+
+The owner's rule: a big machine costs noticeably more steel than the iron it replaces, and a cheap part does not. The recipes put
+steel **blocks** (`c:storage_blocks/steel`, 9 ingots) where the vanilla recipe had ingots, or make fewer pieces per craft:
+
+| Part | Change from the first Mekanism tier |
+| --- | --- |
+| `reactor_vessel` | 8 steel around a casing makes **2** vessels, not 4 (every machine built of vessels follows) |
+| `hp_turbine`, `lp_turbine`, `nuclear_generator` | the four side ingots are blocks too: 7 blocks, a reinforced alloy, an elite circuit; the LP's centre is a steel casing |
+| `recirculation_pump` | 2 steel blocks beside the 4 vessels, a bronze block and 2 pistons |
+| `turbine_feed_pump`, `msiv`, `rhr_heat_exchanger`, `arabelle_condenser`, `condensate_storage_tank` | blocks in place of ingots in the frame (the MSIV 2 blocks between 4 vessels; the condenser 6 blocks) |
+| `rpv_bottom_drain_port`, `rpv_water_injection_port` | four corner blocks |
+| `containment_pass_through`, `_steam_penetration`, `_water_penetration` | four steel blocks around the centre |
+| `suppression_pool_wall`, `spent_fuel_pool_wall` | blocks in two of the plate positions: 2.5 and 2.4 steel a wall, a few hundred walls for a pool |
+| `mechanical_draft_tower`, `natural_draft_tower` | a bottom row of 3 blocks |
+| `crane_runway_rail`, `refuelling_rail`, `equipment_pad`, `head_stand`, `gate_laydown_stand`, `refuelling_bridge_console`, `stud_tensioner` | blocks for the load-bearing row |
+| `reprocessing_plant` | steel blocks along the bottom |
+
+Left as they were: switches, small valves, `control_rod_drive`, `core_spray_sparger`, `spent_fuel_rack`, `transfer_canal`, the
+pumps that were already blocks (`circulating_water_pump`, `makeup_water_pump`), the lamps and everything on the instrument side.
+`python tools-cost-recipe.py [--vanilla] <item>` prices an item in either install and `--plant` a rough minimal plant:
+
+| Cost (steel or iron ingots) | Without Mekanism | First Mekanism tier | Now |
+| --- | --- | --- | --- |
+| one `reactor_vessel` | 2 iron | 3 steel, 0.25 osmium | **6 steel, 0.5 osmium** |
+| one `lp_turbine` (without its blade sections) | 39 iron, redstone block, cauldron | 38 steel, elite circuit, reinforced alloy, cauldron | **58 steel**, elite circuit, reinforced alloy, 1 osmium |
+| one `recirculation_pump` | 8 iron, 9 copper, 4 pistons | 12 steel, 9 bronze, 4 pistons, 1 osmium | **42 steel**, 9 bronze, 2 pistons, 2 osmium |
+| minimal plant (655 pieces: a 7 x 7 x 10 vessel shell of 290 blocks, 24 drives, one train, condenser, feedwater and ECCS pumps, valves, one tower, containment bits, pool walls, crane and bridge, estimate) | 1,746 iron, 39 copper | 2,106 steel, 90 osmium | **4,103 steel, 180 osmium**, 12 basic, 9 advanced and 7 elite circuits, 3 reinforced alloys |
+
 ## What each group becomes
 
-**The rows give the design of every recipe, the 10 held back ones included (see Held back: those are still vanilla in both installs until the owner decides). The 42 parts of the panel and furniture, instrument, display, switch and lamp rows that the fabrication desk makes are written, with every steel count doubled (FABRICATION-DESK.md has their costs).** Counts are those of the vanilla recipe unless stated; S is a steel ingot, B a steel block, N a steel nugget, Z bronze, 1/2/3 the basic,
+**The rows give the design of every recipe. The 42 parts of the panel and furniture, instrument, display, switch and lamp rows that the fabrication desk makes are written as desk recipes with every steel count doubled (FABRICATION-DESK.md has their costs).** Counts are those of the vanilla recipe unless stated; S is a steel ingot, B a steel block, N a steel nugget, Z bronze, 1/2/3 the basic,
 advanced and elite circuit, a/r the infused and reinforced alloy.
 
 | Group | Recipes | Mekanism ingredients | Why |
 | --- | --- | --- | --- |
-| Vessel | `reactor_vessel` (4) | 8 S around a steel casing | heavy steel forgings with a machined core; every vessel block costs about 3 steel and a quarter osmium |
+| Vessel | `reactor_vessel` (2 for the 4 of vanilla) | 8 S around a steel casing | heavy steel forgings with a machined core; every vessel block costs 6 steel and half an osmium |
 | Steam and water line | `pressurised_tube` (8), `high_pressure_water_pipe` (8) | tube: 6 S + 1 Z; pipe: 6 S + 2 HDPE pellets + dye | a bronze seat in the steam line, a polymer lining in the water pipe |
 | Ports and plumbing | `rpv_bottom_drain_port`, `rpv_water_injection_port`, `cavity_drain_port`, `cavity_fill_port`, `water_discharge_port`, `water_outlet_chute`, `screened_water_intake`, `core_spray_sparger`, `main_oil_tank`, `condensate_storage_tank`, `slc_boron_tank`, `hydrogen_cylinder`, `nitrogen_canister` | S (B for the intake and the SLC tank, N for the sparger) in place of iron | tanks, nozzles and flanges are plate and forging; nothing in them thinks |
 | Resin | `demineralizer_resin` | 4 S, 4 HDPE pellets, iron bars | the bed is polymer beads in a steel cage |
 | Valves | `steam_stop_valve` (1), `turbine_control_valve` (a), `bypass_steam_valve` (2), `msiv` (3), `motor_operated_water_valve` (1 + Z), `ads_relief_valve` (1), `containment_vent_valve` (1), `containment_spray_header` (1) | S and the circuit or alloy named: a stop valve takes a signal, a control valve a servo, a bypass a decision, an MSIV a protection-grade circuit | the circuit tier is the intelligence of the valve |
 | Pumps | `recirculation_pump`, `rip_pump` (Z blocks), `circulating_water_pump` (2), `makeup_water_pump`, `motor_feed_pump` (3), `turbine_feed_pump` (Z block), `hpcs_pump` (3), `lpcs_pump` (2), `rhr_pump` (2), `rwcu_pump` (1 + Z), `slc_pump` (2), `shaft_oil_pump` (1 + Z) | steel blocks for the casing, a bronze impeller seat, the motor's control circuit | pump = casing + impeller + drive; the big feed pumps are the ones with an elite circuit |
 | Heat exchange | `rhr_heat_exchanger`, `rwcu_filter_demineralizer`, `rwcu_nonregenerative_heat_exchanger`, `rwcu_regenerative_heat_exchanger`, `arabelle_condenser` (B), `generator_cooling_skid`, `mechanical_draft_tower` (2), `natural_draft_tower` (2) | S and Z tubes; the towers a circuit | bronze tube bundles; the towers have a control |
-| Turbine train | `hp_turbine`, `lp_turbine`, `nuclear_generator` | 4 B, 4 S, 1 r, 1 elite circuit, and the piston / cauldron / gold block it had | the shaft line is reinforced alloy and the governor an elite circuit; this is the most expensive thing in the plant |
+| Turbine train | `hp_turbine`, `lp_turbine`, `nuclear_generator` | 7 B, 1 r, 1 elite circuit, and the piston / steel casing / gold block in the centre | the shaft line is reinforced alloy and the governor an elite circuit; this is the most expensive thing in the plant |
 | Turbine hall | `hpci_turbine`, `rcic_twl`, `lp_blade_section`, `lp_blade_stand`, `lp_turbine_hood`, `turbine_rebuild_kit` | B and S (and Z in the kit) in place of iron and copper | forgings |
 | Reactor controls | `reactor_controller` (2 + 3), `control_rod_drive` (1 for four drives) | circuits in place of comparator and redstone block | the controller is the brain of the plant |
 | Containment | `containment_airlock` (1), `containment_controller` (3), `containment_data_penetration` (2), `containment_nitrogen_supply` (2), `containment_pass_through`, `containment_power_penetration` (r), `containment_steam_penetration`, `containment_water_penetration`, `containment_vault_door` (B and a refined obsidian ingot), `containment_vault_door_4x4`, `ads_controller` (2 + a) | steel blocks for doors, circuits and alloys for the control, bronze for the power conductor | blast armour for the door, a conductor for the power penetration, logic for the controller |
@@ -124,30 +153,17 @@ Without Mekanism the drum is four coal around an iron ingot, as before, and the 
 
 ## Held back
 
-**10 recipes have a designed Mekanism variant that is not written**, because writing it fails an existing test assertion, and those
-assertions are not this work's to change. (There were 52: the 24 control-room recipes and 18 panel components that the first run
-below lists are no longer held back, because the owner moved them from the grid to the fabrication desk and the tests that pinned
-them were changed to check the desk recipe; see FABRICATION-DESK.md.) Their designs are in `HELD` in `tools-generate-mekanism-recipes.py` (the patterns in the
-table above include them); until the owner decides, they stay vanilla in both installs, and the generator and
-`MekanismRecipeTierTests` list them as held back with the test that pins each.
+**Nothing is held back now.** The 42 recipes that were (the 24 control-room recipes and the 18 panel components) moved from the crafting
+grid to the fabrication desk, whose recipes are written in pairs like the rest (FABRICATION-DESK.md): the tests that pinned them
+(`ControlRoomRecipeTests`, `ControlDeskTests`, `RoomFurnitureTests`, `RealScaleTests.craftedStacksStartAtRealSize`, `PanelTrimTests`) now look
+the desk recipe up by what it makes. Their designs are in `FAB` in `tools-generate-mekanism-recipes.py` and in the table above. `BLOCKED`
+and `HELD` in the tool stay for the next recipe an existing test pins.
 
-The list comes from the first full GameTest run with all 172 variants written: 15 required tests failed, one the new oil can's own
-entry in the "not crafted" list (added: it genuinely is not crafted), the other 14 these (the first two rows are the ones that moved to the desk). Each loads a recipe by its **id** with
-Mekanism loaded, or checks its **ingredients**, and with a variant the vanilla recipe at that id is not loaded:
-
-| Held back | Test and assertion |
-| --- | --- |
-| ~~24 control-room recipes and 18 panel components~~ | done: made at the fabrication desk, and `ControlRoomRecipeTests`, `ControlDeskTests`, `RoomFurnitureTests` and `RealScaleTests.craftedStacksStartAtRealSize` look the desk recipe up by what it makes |
-| `mimic_tape`, `panel_key`, `paperless_recorder`, `survey_meter`, `area_radiation_monitor`, `rtg`, `isotope_separator`, `cobalt_sample_detector` | `MimicTapeTests`, `PanelRecipeTests`, `PaperlessRecorderTests`, `RadiationToolsTests.theRecipesExist`, `RtgTests.recipesCraftTheBlocksAndTheAmBeRodFromACapsule`, `LargeRtgTests.ingotAndBlockRecipesConserveMassAndTheDataAgrees`: each loads `bwr:<name>` by id |
-| `reprocessing_plant`, `large_rtg` | `ReprocessingTests` ("it must not depend on a mod", crafted from obsidian, hoppers, a blast furnace and iron) and `LargeRtgTests` (crafted from iron blocks and lead): both pin the vanilla ingredients |
-
-Two ways out, for the owner. **(a)** Change those tests to look the recipe up by what it makes (the manager's recipe for the item) instead of
-by id, and let the control-room test count Mekanism steel as it counts iron; then remove the entries from `BLOCKED` and run the tool.
-**(b)** Ship the Mekanism recipes in a small built-in data pack that overrides the same paths and is added only when Mekanism is loaded
-(`AddPackFindersEvent`, a few lines of Java behind the `isLoaded("mekanism")` guard): `bwr:<name>` is then live in both installs, the
-by-id tests pass unchanged in both, and the vanilla files need no condition at all. The namespace and iron assertions of
-`ControlRoomRecipeTests`, the vanilla ingredients of `ReprocessingTests` and the iron blocks of `LargeRtgTests` need an edit either way.
-This work follows the brief's `_mekanism` and condition scheme, so (b) is not built.
+**Released 2026-10-28 and written:** the eight tools and the two plant items, `mimic_tape`, `panel_key`, `paperless_recorder`,
+`survey_meter`, `area_radiation_monitor`, `rtg`, `isotope_separator`, `cobalt_sample_detector`, `reprocessing_plant`, `large_rtg`. The
+tests that pinned them were changed only as far as this: **with Mekanism loaded** each looks up the live recipe, the `_mekanism`
+variant (`bwr:<name>_mekanism`), and checks what it checked before with Mekanism's ingredients; **without Mekanism every check is
+exactly what it was** (including "crafted from iron" and "must not depend on a mod"). The edits are listed in CHANGELOG.md.
 
 ## No Mekanism variant, and why
 

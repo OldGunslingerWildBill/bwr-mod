@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "S": {
+      "tag": "c:ingots/steel"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "Z": {
+      "tag": "c:ingots/bronze"
+    },
+    "B": {
+      "item": "minecraft:brewing_stand"
+    },
+    "3": {
+      "tag": "c:circuits/elite"
+    }
+  },
+  "pattern": [
+    "SHS",
+    "ZBZ",
+    "S3S"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:isotope_separator"
+  }
+}
