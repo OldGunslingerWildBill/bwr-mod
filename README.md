@@ -210,7 +210,8 @@ xenon high-bays and HPS flat panels that light up a whole hall. They look good w
 There's a short version of this in game: the **Operator's Guide** book. You get one the first time you
 join, or craft one from a book and a nameplate. See [GUIDE.md](GUIDE.md).
 
-Everything in the plant has a crafting recipe. If a vessel doesn't form, it tells you why in chat. With Mekanism installed the recipes
+Everything in the plant has a crafting recipe, except the control-room parts (panels, desks, gauges, switches, lamps, displays), which you
+make at a **Fabrication Desk** from materials in your inventory ([FABRICATION-DESK.md](FABRICATION-DESK.md)). If a vessel doesn't form, it tells you why in chat. With Mekanism installed the recipes
 ask for Mekanism's steel, alloys, circuits, plastic and bronze instead of iron and redstone, and turbine oil comes out of a Mekanism machine;
 without it nothing changes. The materials and every recipe are in [MEKANISM-RECIPES.md](MEKANISM-RECIPES.md).
 
@@ -305,7 +306,7 @@ Found a bug? Put it on the [issue tracker](https://github.com/OldGunslingerWildB
 **Refuelling:** [BUILDING-CRANE.md](BUILDING-CRANE.md), [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md),
 [SPENT-FUEL-POOL.md](SPENT-FUEL-POOL.md)
 
-**Recipes:** [MEKANISM-RECIPES.md](MEKANISM-RECIPES.md)
+**Recipes:** [MEKANISM-RECIPES.md](MEKANISM-RECIPES.md), [FABRICATION-DESK.md](FABRICATION-DESK.md)
 
 **Water and steam:** [WATER-PLUMBING.md](WATER-PLUMBING.md), [PUMP-MODELS.md](PUMP-MODELS.md),
 [MODERN-PUMPS-AND-PIPES.md](MODERN-PUMPS-AND-PIPES.md), [TERRY-TURBINES.md](TERRY-TURBINES.md),

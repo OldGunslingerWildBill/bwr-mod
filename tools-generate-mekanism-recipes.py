@@ -4,6 +4,8 @@
 Run from anywhere:  python tools-generate-mekanism-recipes.py            writes (idempotent)
                     python tools-generate-mekanism-recipes.py --check    changes nothing, exits non-zero if a file is stale
                     python tools-generate-mekanism-recipes.py --table    prints the recipe table of MEKANISM-RECIPES.md
+                    python tools-generate-mekanism-recipes.py --desk-table  prints the cost table of FABRICATION-DESK.md (--check also
+                                                                          verifies that the table in that file is this one)
 
 For every recipe in TABLE below this tool
   * writes data/bwr/recipe/<name>_mekanism.json: the same result, made from Mekanism materials, loaded only with
@@ -483,6 +485,45 @@ def build_fab(name, entry):
     return out
 
 
+DESK_DOC = os.path.join(ROOT, "FABRICATION-DESK.md")
+DESK_BEGIN = "<!-- BEGIN DESK TABLE (tools-generate-mekanism-recipes.py --desk-table writes this) -->"
+DESK_END = "<!-- END DESK TABLE -->"
+_TAG_LABELS = {"c:ingots/steel": "steel ingot", "c:nuggets/steel": "steel nugget", "c:storage_blocks/steel": "steel block",
+               "c:circuits/basic": "basic circuit", "c:circuits/advanced": "advanced circuit", "mekanism:hdpe_sheet": "HDPE sheet"}
+_TAB_LABELS = {"panels": "Panels and trim", "furniture": "Desks and furniture", "switches": "Switches",
+               "gauges": "Gauges and meters", "lamps": "Lamps and annunciators", "displays": "Displays"}
+
+
+def _label(ing):
+    spec = spec_of(ing)
+    if spec.lstrip("#") in _TAG_LABELS:
+        return _TAG_LABELS[spec.lstrip("#")]
+    return spec.split(":", 1)[1].replace("_", " ")
+
+
+def _cost(ings):
+    return ", ".join(f"{i.get('count', 1)} {_label(i)}" for i in ings)
+
+
+def desk_table():
+    """The cost table of FABRICATION-DESK.md: every desk part by tab, what it makes, and its materials in both installs."""
+    rows = {}
+    for name, entry in FAB.items():
+        v, _ = load(name)
+        m = build_fab(name, entry)
+        rows.setdefault(v["category"], []).append((name, v["result"].get("count", 1), _cost(v["ingredients"]), _cost(m["ingredients"])))
+    lines = []
+    for cat in _TAB_LABELS:
+        lines.append(f"**{_TAB_LABELS[cat]}**")
+        lines.append("")
+        lines.append("| Part | Makes | Without Mekanism | With Mekanism |")
+        lines.append("| --- | --- | --- | --- |")
+        for name, count, plain, mek in sorted(rows.get(cat, [])):
+            lines.append(f"| `{name}` | {count} | {plain} | {mek} |")
+        lines.append("")
+    return "\n".join(lines).rstrip("\n") + "\n"
+
+
 def render(obj):
     return json.dumps(obj, indent=2) + "\n"
 
@@ -556,6 +597,9 @@ def main(argv):
         if n in TABLE or n in BLOCKED:
             problems.append(f"{n}: exempt and also given a variant")
     writes = {}
+    if "--desk-table" in argv:
+        print(desk_table(), end="")
+        return 0
     if "--table" in argv:
         for n, entry in sorted(FAB.items()):
             v = build_fab(n, entry)
@@ -586,6 +630,13 @@ def main(argv):
             stale = os.path.join(RECIPES, n + "_mekanism.json")
             if os.path.exists(stale):
                 problems.append(f"{n}: blocked but {n}_mekanism.json exists")
+    if check and os.path.exists(DESK_DOC):
+        with open(DESK_DOC, encoding="utf-8", newline="") as f:
+            doc = f.read()
+        if DESK_BEGIN not in doc or DESK_END not in doc:
+            problems.append("FABRICATION-DESK.md has no desk table markers")
+        elif doc[doc.index(DESK_BEGIN) + len(DESK_BEGIN):doc.index(DESK_END)].strip("\n") != desk_table().strip("\n"):
+            problems.append("stale: the cost table in FABRICATION-DESK.md (run python tools-generate-mekanism-recipes.py --desk-table)")
     with open(TEST, encoding="utf-8", newline="") as f:
         java = f.read()
     start = java.index(BEGIN)

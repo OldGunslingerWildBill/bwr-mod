@@ -65,9 +65,9 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   the reaction chamber make substrate and ethene, a rotary condensentrator liquefies the ethene, an electrolytic separator makes the
   hydrogen. One drum is 16 bio fuel and about 1.2 B of hydrogen and leaves 4 spare substrate (the ethene run makes 8, the cans use 4);
   a pumped tank burns a drum in about 18 minutes. Without Mekanism the drum is four coal around an iron ingot, as before.
-- **Held back: 52 recipes stay vanilla in both installs.** Their Mekanism variants are designed (they are in the tool) but writing them
-  fails existing assertions that load the recipe by its id or pin its iron ingredients with Mekanism loaded: the control-room set
-  (`ControlRoomRecipeTests`, `ControlDeskTests`, `RoomFurnitureTests`), the 18 panel components of `RealScaleTests`, `mimic_tape`,
+- **Held back: 10 recipes stay vanilla in both installs** (52 when this was written; the control-room set and the 18 panel components
+  were then moved to the fabrication desk, below). Their Mekanism variants are designed (they are in the tool) but writing them
+  fails existing assertions that load the recipe by its id or pin its iron ingredients with Mekanism loaded: `mimic_tape`,
   `panel_key`, `paperless_recorder`, `survey_meter`, `area_radiation_monitor`, `rtg`, `isotope_separator`, `cobalt_sample_detector`,
   `reprocessing_plant`, `large_rtg`. Those assertions are the owner's to change; MEKANISM-RECIPES.md lists each and the two ways out.
 - **Checks.** New `MekanismRecipeTierTests` (4 tests, namespace `bwrmektier`, run with and without Mekanism, `MekanismOilRouteCheck` behind the
@@ -82,6 +82,36 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   has a variant, so their `--check` stays green. `turbine_oil_can` is in the "not crafted" lists of
   `FuelFabricatorItemRouteTests` and `tools-audit-recipes.py`. Guide: three sentences say the recipes use Mekanism's materials when it is
   installed.
+- **The fabrication desk (FABRICATION-DESK.md).** The control-room parts are no longer crafted in the grid: a new **Fabrication Desk**
+  (`bwr:fabrication_desk`, a workshop bench; crafted in the grid, vanilla and Mekanism recipes in a pair; no block entity, no ticker,
+  no computer face needed) makes them out of materials in your inventory. The screen follows TaCZ's gun smith table: tabs (Panels and
+  trim, Desks and furniture, Switches, Gauges and meters, Lamps and annunciators, Displays), a scrollable list, a preview of the part, its
+  materials with *have / need* (green with a circle, red with a diamond) and a Craft button that is off while a material is short.
+  **Shift-click makes as many crafts as the materials cover, up to 8 and one stack of the result.** **42 parts** moved: the panel
+  bodies and trim (vertical, console, corners, end cap, header canopy and vent, plinths, duplex), the desks, relay cabinets, control stand
+  and wall displays, the control and key switches, rotary selector, setpoint knob, toggle switch, thumbwheel, pushbutton, RPS trip,
+  push-to-turn switch, dial, edgewise and bar gauges, indicator lamp, annunciator window, bar graph and the two segment displays. Their
+  recipes keep their ids and are now type `bwr:fabrication` (a result with a count, a category, item or tag ingredients with counts),
+  in the pairs the Mekanism tier uses (`<name>.json` without Mekanism, `<name>_mekanism.json` with it), so exactly one recipe makes
+  each part in each install and no grid recipe does. **Without Mekanism each part costs what its grid recipe cost. With Mekanism the
+  held-back designs are written with every steel count doubled** (`STEEL_FACTOR`; a panel is 2.5 steel, a relay cabinet 14 to 16, a
+  wall display 16 and a lamp two nuggets for two). Recipes that use these parts as ingredients are unchanged. The server decides every
+  craft: not a spectator (adventure mode may craft, like pressing a panel button), a loaded desk, the player in reach (the container
+  screen's range), a loaded recipe, the materials counted from the server's own inventory (tags across stacks and kinds, the off hand
+  but never armour), then it takes them and gives the part in one go, **dropping what does not fit rather than deleting it** (a creative
+  player pays like anyone else and also gets the drop), behind a rate limit of 10 requests a second (burst 10). JEI and EMI are not
+  dependencies, so there is no viewer category. The model is built in headless Blender (`art/models/fabrication_desk/`,
+  `tools-export-fabrication-desk.py`). Guide: a new "The fabrication desk" page in chapter 3 and a line on the first page.
+- **Fabrication desk checks.** New `FabricationDeskTests` (12 tests, namespace `bwrfab`, run with and without Mekanism): the right
+  recipe set is live, every one of the 42 has exactly one live desk recipe in its tab and no grid recipe, the data of every recipe
+  (at most five ingredients, counts, tags that name items, no overlap, distinct wire keys), exact items taken and given, a refusal
+  when short, from too far, for a spectator and at no desk, tags across stacks, a full inventory (survival and creative), a burst of
+  requests and the rate limit, the menu snapshot, the block and its assets. The tests that pinned the grid recipes now check the same
+  through the desk recipe (`RealScaleTests.craftedStacksStartAtRealSize`, `ControlRoomRecipeTests`, `ControlDeskTests`,
+  `RoomFurnitureTests`; `everyCraftableItemHasARecipeAndTheRestDoNot` counts a desk recipe as the item's route in both modes).
+  `tools-audit-recipes.py` and `tools-audit-assets.py` read `bwr:fabrication` (shape, categories, counts, one maker per item and
+  install, no Mekanism ingredient in a vanilla recipe, every `mekanism:` id and tag against the jar); `tools-generate-mekanism-recipes.py`
+  writes the Mekanism side and prints and verifies the cost table in FABRICATION-DESK.md. The GUI screen check has three pictures of it.
 
 ## Unreleased: held panel controls are let go when they are removed, and a relaunched player's controls work
 

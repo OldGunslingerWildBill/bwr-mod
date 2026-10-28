@@ -572,6 +572,7 @@ tags_used = {}  # tag -> recipes that name it
 valid_ids = {"bwr:" + n for n in blocks} | {"bwr:" + n for n in extra_items}
 recipes = {k: v for k, v in jsons.items() if k.startswith("data/bwr/recipe")}
 foreign_ids_used = set()
+desk_recipes = []
 reaction_inputs = []
 creative_source = open(os.path.join(ROOT, "mod/src/main/java/dev/bwr/mod/registry/BwrItems.java"), encoding="utf-8").read()
 for retired in RETIRED_BLOCKS:
@@ -675,6 +676,22 @@ for rel, r in recipes.items():
         bad("RECIPE", f"{rel}: uses '{ns}:' items but has no "
                       f"neoforge:mod_loaded condition for '{ns}' "
                       f"(will error on installs without it)")
+    if r.get("type") == "bwr:fabrication":
+        # a fabrication desk recipe (FABRICATION-DESK.md): its ingredients are read above like any other (every bwr id is registered,
+        # every foreign id is in FOREIGN_ITEM_IDS and confirmed against the jar, every tag is confirmed in 5b, and a foreign id needs its
+        # mod_loaded condition); here its own shape
+        desk_recipes.append(rel)
+        for ing in r.get("ingredients") or []:
+            if not isinstance(ing, dict) or ("item" in ing) == ("tag" in ing):
+                bad("RECIPE", f"{rel}: a desk ingredient must be an item or a tag: {json.dumps(ing)}")
+            elif not isinstance(ing.get("count"), int) or not 1 <= ing["count"] <= 64:
+                bad("RECIPE", f"{rel}: desk ingredient {json.dumps(ing)} needs a count of 1 to 64")
+        if not r.get("ingredients"):
+            bad("RECIPE", f"{rel}: a desk recipe has no ingredients")
+        if not isinstance(res, dict) or not isinstance(res.get("count", 1), int) or not 1 <= res.get("count", 1) <= 64:
+            bad("RECIPE", f"{rel}: a desk recipe needs a result count of 1 to 64")
+        if "category" not in r:
+            bad("RECIPE", f"{rel}: a desk recipe needs a category (its tab)")
     if r.get("type") == "minecraft:crafting_shaped":
         pat = r.get("pattern") or []
         keys = set((r.get("key") or {}).keys())
@@ -893,7 +910,7 @@ print(f"Textures on disk           : block={len(os.listdir(os.path.join(RES,'ass
 print(f"Concrete texture refs      : {tex_refs} from models, {len(java_tex_refs)} from Java "
       f"({sum(len(v) for v in java_tex_refs.values())} call site(s))")
 print(f"Textures referenced by none: {len(textures_on_disk - referenced_textures)}")
-print(f"Recipes                    : {len(recipes)}")
+print(f"Recipes                    : {len(recipes)}  ({len(desk_recipes)} of them fabrication desk recipes)")
 print(f"Loot tables                : {len([k for k in jsons if k.startswith('data/bwr/loot_table')])}")
 print(f"Lang keys                  : {len(lang)}")
 print(f"Fuel type entries          : {len(fuel_entries)}  "

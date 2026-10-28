@@ -28,6 +28,13 @@ variant, held back (below) or exempt with a reason, and `--check` fails on one t
 (their `--check` stays green); the other `tools-make-*` / `tools-export-*` scripts that write a recipe (crane, refuelling bridge, shield
 plug, spent fuel pool, breeding, nanofilter, lamps) do not: after running one, run this tool again** (it only adds what is missing). `MekanismRecipeTierTests` fails if a vanilla recipe is left live with Mekanism.
 
+**The 42 control-room parts made at the fabrication desk** (panels and trim, desks, relay cabinets, the control stand, wall displays,
+gauges, switches, lamp, pushbutton, RPS trip, annunciator and segment displays) follow the same rule, but their recipes are
+`bwr:fabrication` files (a list of ingredients with counts, FABRICATION-DESK.md) instead of grid recipes: the same two files, the same
+ids, the same conditions, and the generator writes the Mekanism file from the same table, **with every steel count multiplied by
+`STEEL_FACTOR` (2)** because the owner wants steel to cost more. Their costs in both installs are the table in FABRICATION-DESK.md.
+The desk itself (`fabrication_desk`) is a grid recipe in a pair like any other.
+
 ## The materials ladder
 
 Plant parts are priced by what the real part is. Steel is the floor; each step up is a Mekanism machine more.
@@ -55,7 +62,7 @@ plastic). Lead stays `bwr:lead_ingot` where a recipe names lead (it is tagged `c
 
 ## What each group becomes
 
-**The rows give the design of every recipe, the 52 held back ones included (see Held back: those are still vanilla in both installs until the owner decides).** Counts are those of the vanilla recipe unless stated; S is a steel ingot, B a steel block, N a steel nugget, Z bronze, 1/2/3 the basic,
+**The rows give the design of every recipe, the 10 held back ones included (see Held back: those are still vanilla in both installs until the owner decides). The 42 parts of the panel and furniture, instrument, display, switch and lamp rows that the fabrication desk makes are written, with every steel count doubled (FABRICATION-DESK.md has their costs).** Counts are those of the vanilla recipe unless stated; S is a steel ingot, B a steel block, N a steel nugget, Z bronze, 1/2/3 the basic,
 advanced and elite circuit, a/r the infused and reinforced alloy.
 
 | Group | Recipes | Mekanism ingredients | Why |
@@ -78,7 +85,7 @@ advanced and elite circuit, a/r the infused and reinforced alloy.
 | Displays, recorders | `character_lcd`, `seven_segment_display` (1 + redstone), `sixteen_segment_display` (2), `graphic_display` (2), `full_core_display` (2), `fe_meter` (2), `plant_computer` (3), `grid_tie` (3), `paperless_recorder`, `paperless_recorder_dx2000` (2), `two_pen_recorder` | S, and the circuit tier of what they show | a computer takes the elite circuit; a segment display does not |
 | Switches, small parts | `pushbutton`, `rps_trip`, `annunciator_control`, `key_switch`, `toggle_switch`, `control_switch`, `push_turn_switch`, `joystick_switch`, `rotary_selector`, `setpoint_knob`, `thumbwheel`, `rod_select_matrix`, `controller_station`, `relay_cabinet`, `relay_cabinet_plain`, `cobalt_sample_detector`, `panel_linker` (1), `networking_wrench` (2 + Z), `panel_key`, `panel_wrench`, `nameplate`, `board_blueprint`, `mimic_line`, `mimic_symbol`, `mimic_tape` | S or N, and a basic circuit where it had a redstone | cheap things stay cheap: a nameplate is one steel ingot for four |
 | Lamps | `lamp` (N), `hps_flat_panel`, `hps_high_bay`, `hps_wall_pack` (refined glowstone), `lps_*`, `mercury_*` (S), `xenon_floodlight`, `xenon_high_bay` (1) | S; refined glowstone for the sodium lamps; a basic circuit for the xenon ballast | a lamp is a steel nugget; a decoration never costs a circuit |
-| Panels and furniture | `control_panel_vertical` (4), `control_panel_console`, the desks, `operator_desk*`, `supervisor_desk`, `control_stand`, `wall_display*`, plinths, headers, corners, `relay_cabinet*` | the vertical panel: 5 S + 2 HDPE sheets + 1 basic circuit (+ the dye), so a panel is 1.25 steel, half a sheet and a quarter circuit; the rest S and N in place of iron | the body is a circuit card in a plastic housing; the furniture is steel trim on that |
+| Panels and furniture | `control_panel_vertical` (4), `control_panel_console`, the desks, `operator_desk*`, `supervisor_desk`, `control_stand`, `wall_display*`, plinths, headers, corners, `relay_cabinet*` | the vertical panel: 5 S + 2 HDPE sheets + 1 basic circuit (+ the dye) before the doubling, 10 S written, so a panel is 2.5 steel, half a sheet and a quarter circuit; the rest S and N in place of iron (doubled too) | the body is a circuit card in a plastic housing; the furniture is steel trim on that |
 | Turbine oil | `turbine_oil_drum` | 4 Turbine Oil Cans around 1 S (below) | |
 
 The vanilla column is every recipe file without `_mekanism`: it is not repeated here.
@@ -117,19 +124,20 @@ Without Mekanism the drum is four coal around an iron ingot, as before, and the 
 
 ## Held back
 
-**52 recipes have a designed Mekanism variant that is not written**, because writing it fails an existing test assertion, and those
-assertions are not this work's to change. Their designs are in `HELD` in `tools-generate-mekanism-recipes.py` (the patterns in the
+**10 recipes have a designed Mekanism variant that is not written**, because writing it fails an existing test assertion, and those
+assertions are not this work's to change. (There were 52: the 24 control-room recipes and 18 panel components that the first run
+below lists are no longer held back, because the owner moved them from the grid to the fabrication desk and the tests that pinned
+them were changed to check the desk recipe; see FABRICATION-DESK.md.) Their designs are in `HELD` in `tools-generate-mekanism-recipes.py` (the patterns in the
 table above include them); until the owner decides, they stay vanilla in both installs, and the generator and
 `MekanismRecipeTierTests` list them as held back with the test that pins each.
 
 The list comes from the first full GameTest run with all 172 variants written: 15 required tests failed, one the new oil can's own
-entry in the "not crafted" list (added: it genuinely is not crafted), the other 14 these. Each loads a recipe by its **id** with
+entry in the "not crafted" list (added: it genuinely is not crafted), the other 14 these (the first two rows are the ones that moved to the desk). Each loads a recipe by its **id** with
 Mekanism loaded, or checks its **ingredients**, and with a variant the vanilla recipe at that id is not loaded:
 
 | Held back | Test and assertion |
 | --- | --- |
-| 24 control-room recipes (`control_panel_vertical` and every piece of trim, corner and plinth that has iron, `control_panel_desk`, `_desk_wide`, `_duplex`, `_header_canopy`, `_header_vent`, `control_stand`, `operator_desk`, `_corner`, `_round`, `supervisor_desk`, `wall_display`, `wall_display_wide`, `relay_cabinet`, `relay_cabinet_plain`) | `ControlRoomRecipeTests` (all four: it requires every ingredient to be vanilla or bwr, "the recipe would differ with Mekanism", asserts `controlRoomRecipesDoNotDependOnMekanism`, and prices every desk in iron through the panel chain), `ControlDeskTests.theDesksAreRegistered...`, `RoomFurnitureTests.furnitureIsRegistered...` |
-| 18 panel components (`dial_gauge`, both edgewise gauges, `bar_gauge`, `bar_graph`, `control_switch`, `key_switch`, `rotary_selector`, `setpoint_knob`, `toggle_switch`, `thumbwheel`, `lamp`, `pushbutton`, `rps_trip`, `push_turn_switch`, `annunciator`, both segment displays) | `RealScaleTests.craftedStacksStartAtRealSize` loads each by its own id |
+| ~~24 control-room recipes and 18 panel components~~ | done: made at the fabrication desk, and `ControlRoomRecipeTests`, `ControlDeskTests`, `RoomFurnitureTests` and `RealScaleTests.craftedStacksStartAtRealSize` look the desk recipe up by what it makes |
 | `mimic_tape`, `panel_key`, `paperless_recorder`, `survey_meter`, `area_radiation_monitor`, `rtg`, `isotope_separator`, `cobalt_sample_detector` | `MimicTapeTests`, `PanelRecipeTests`, `PaperlessRecorderTests`, `RadiationToolsTests.theRecipesExist`, `RtgTests.recipesCraftTheBlocksAndTheAmBeRodFromACapsule`, `LargeRtgTests.ingotAndBlockRecipesConserveMassAndTheDataAgrees`: each loads `bwr:<name>` by id |
 | `reprocessing_plant`, `large_rtg` | `ReprocessingTests` ("it must not depend on a mod", crafted from obsidian, hoppers, a blast furnace and iron) and `LargeRtgTests` (crafted from iron blocks and lead): both pin the vanilla ingredients |
 
@@ -161,6 +169,8 @@ This work follows the brief's `_mekanism` and condition scheme, so (b) is not bu
   or ours shadows it); without Mekanism the reverse. The oil route is checked end to end (the chamber recipe's inputs, amounts and
   four-can output, the drum, the old recipe gone, the upstream Mekanism recipes loaded, substrate balanced). The exemption list in the
   test is written by the generator, so it cannot drift from it.
+- `FabricationDeskTests` (namespace `bwrfab`): the desk's recipe set is the right one in each install, and every one of the 42 parts has
+  exactly one live desk recipe and no grid recipe (`MekanismRecipeTierTests` skips the desk recipes in its pairs).
 - `tools-audit-recipes.py`: collisions are compared inside each install's live recipes and with Mekanism's own crafting recipes in its
   jar; every variant has a vanilla twin live only without Mekanism; a variant names no Mekanism item or tag is reported.
 - `tools-audit-assets.py`: every `mekanism:` item id, every tag, and the oil recipe's fluid tag and chemical are confirmed in the pinned
