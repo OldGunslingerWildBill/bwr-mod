@@ -35,8 +35,8 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
     }
 
     private String state() {
-        return !menu.cartridge ? "Side " + side(menu.sideB) + " in service, empty: the oil goes round"
-                : menu.bypass ? "Side " + side(menu.sideB) + " in service, full: the oil goes round it" : "Side " + side(menu.sideB) + " in service";
+        return !menu.cartridge ? side(menu.sideB) + " in service, empty: bypass"
+                : menu.bypass ? side(menu.sideB) + " in service, full: bypass" : side(menu.sideB) + " in service";
     }
 
     private static String side(boolean b) {
@@ -51,8 +51,7 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
     }
 
     private String otherSide() {
-        return !menu.otherCartridge ? "empty: open for a change"
-                : menu.otherBypass ? "full, change it" : pct(menu.otherLife) + " % left, " + num(menu.otherDpPsi, 1) + " psid";
+        return !menu.otherCartridge ? "empty, open" : menu.otherBypass ? "full" : pct(menu.otherLife) + " % left";
     }
 
     @Override
@@ -64,7 +63,7 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
         }
         var line = Layout.line(this::state, Type.CAPTION)
                 .tip("Only the side in service filters and loads. A clean cartridge in service passes the tank's oil through its element and cuts the oil's loss to a tenth. Empty, or full, the oil goes round it through the bypass.");
-        var slot = Layout.card("Cartridges", line, Layout.gap(20), new SlotCaption(), Layout.gap(2), Layout.gap(18),
+        var slot = Layout.card("Cartridges", line, Layout.gap(20), new SlotCaption(), Layout.gap(2), Layout.gap(18), Layout.gap(10),
                 Layout.controls(BwrStyle.SP1).add(transfer, 1));
         var left = Layout.column(BwrStyle.SP2, slot, Layout.flex());
 
@@ -83,7 +82,7 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
                         .tip("The share of the tank's unfiltered oil loss that gets through: 10 % with a cartridge in service, 100 % (the old rate) with the side in service empty or full."),
                 Layout.row("Time left", this::hours)
                         .tip("The cartridge in service, at today's header pressure and oil temperature. Hot oil loads it faster."),
-                Layout.row("Out of service", () -> "Side " + side(!menu.sideB) + ": " + otherSide())
+                Layout.row("Standby", () -> side(!menu.sideB) + ": " + otherSide())
                         .status(() -> menu.otherCartridge && !menu.otherBypass ? Status.NONE : Status.CAUTION)
                         .tip("The side out of service does not filter or load. Its cartridge can be taken out and changed while the plant runs."),
                 Layout.row("Oil", () -> menu.attached ? num(menu.oilC, 1) + " C, " + num(menu.psig, 1) + " psig" : "-")).compact();
@@ -115,7 +114,7 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
             for (int s = 0; s < 2; s++) {
                 boolean inService = (s == 1) == menu.sideB;
                 int cx = leftPos + menu.getSlot(s == 0 ? OilFilterMenu.SLOT_CARTRIDGE : OilFilterMenu.SLOT_B).x + 8;
-                Ui.textCentred(g, "Side " + (s == 0 ? "A" : "B") + (inService ? " (in service)" : ""), cx, y + 1, Type.CAPTION,
+                Ui.textCentred(g, (s == 0 ? "A" : "B") + (inService ? ": in service" : ": standby"), cx, y + 1, Type.CAPTION,
                         inService ? BwrStyle.TEXT_PRIMARY : BwrStyle.TEXT_SECONDARY);
             }
         }

@@ -29,7 +29,7 @@ public class OilFilterMenu extends BwrMenu {
     public static final int SLOT_CARTRIDGE = 0, SLOT_B = 1;
     public static final int CMD_TRANSFER = 0;
     /** Where the slots sit (the left card has room for them) and where the player's inventory goes, as on the other slot screens. */
-    public static final int SLOT_X = 52, SLOT_X_B = 112, SLOT_Y = 100;
+    public static final int SLOT_X = 40, SLOT_X_B = 118, SLOT_Y = 100;
     private static final int INVENTORY_X = 8, INVENTORY_Y = 168, HOTBAR_Y = 226;
     private static final int MACHINE_SLOTS = 2, PLAYER_SLOTS = 36;
 
