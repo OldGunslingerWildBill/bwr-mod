@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/turbine_aux/oil_filter_housing/body",
+  "parent": "bwr:block/turbine_aux/oil_filter_housing/body_a_closed",
   "display": {
     "gui": {
       "rotation": [

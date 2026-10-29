@@ -624,6 +624,12 @@ public final class GuiScreenCheck {
         s.add(new Scenario("aux-oil-filter-due", i -> oilFilter(i, 0.8)));
         s.add(new Scenario("aux-oil-filter-spent", i -> oilFilter(i, 1.0)));
         s.add(new Scenario("aux-oil-filter-empty", i -> oilFilter(i, -1)));
+        // the duplex filter (TURBINE-AUX.md): B in service with A open for a change, and A in service with B holding a used cartridge
+        s.add(new Scenario("aux-oil-filter-b-in-service", i -> oilFilterDuplex(i, true, -1, 0.3)));
+        s.add(new Scenario("aux-oil-filter-a-in-service-b-used", i -> oilFilterDuplex(i, false, 0.38, 0.9)));
+        // the lube oil conditioner (TURBINE-AUX.md): its own screen, running and without power
+        s.add(new Scenario("aux-oil-conditioner", i -> new TurbineAuxScreen(conditionerMenu(i, true), i, t("Lube Oil Conditioner"))));
+        s.add(new Scenario("aux-oil-conditioner-no-power", i -> new TurbineAuxScreen(conditionerMenu(i, false), i, t("Lube Oil Conditioner"))));
         s.add(new Scenario("aux-shaft-pump", i -> new TurbineAuxScreen(auxMenu(i, 1, false), i, t("Turbine Shaft-Driven Main Oil Pump"))));
         s.add(new Scenario("aux-cooling-skid", i -> new TurbineAuxScreen(auxMenu(i, 2, false), i, t("Generator Cooling Skid"))));
         s.add(new Scenario("aux-cooling-skid-unpowered", i -> new TurbineAuxScreen(auxMenu(i, 2, true), i, t("Generator Cooling Skid"))));
@@ -1313,6 +1319,50 @@ public final class GuiScreenCheck {
         return new OilFilterScreen(m, i, t("Oil Filter Housing"));
     }
 
+    /** The duplex housing's screen: which side is in service, the load of the side in service (below 0: empty) and of the other side (below 0: empty). */
+    private static OilFilterScreen oilFilterDuplex(Inventory i, boolean sideB, double inService, double other) {
+        var m = new OilFilterMenu(99, i, P);
+        m.present = true;
+        m.attached = true;
+        m.sideB = sideB;
+        m.cartridge = inService >= 0;
+        m.bypass = inService >= 1 || inService < 0;
+        m.changeDue = m.bypass || dev.bwr.core.turbine.TurbineAux.filterDpPsi(inService) >= dev.bwr.core.turbine.TurbineAux.FILTER_DP_CHANGE_PSI;
+        m.life = inService < 0 ? 0 : 1 - inService;
+        m.dpPsi = inService < 0 ? 0 : dev.bwr.core.turbine.TurbineAux.filterDpPsi(inService);
+        m.hoursLeft = inService < 0 ? -1 : dev.bwr.core.turbine.TurbineAux.filterSecondsLeft(inService, 25, 49.6) / 3600;
+        m.factor = dev.bwr.core.turbine.TurbineAux.filterFactor(inService >= 0, inService);
+        m.otherCartridge = other >= 0;
+        m.otherBypass = other >= 1 || other < 0;
+        m.otherLife = other < 0 ? 0 : 1 - other;
+        m.otherDpPsi = other < 0 ? 0 : dev.bwr.core.turbine.TurbineAux.filterDpPsi(other);
+        m.oilC = 49.6;
+        m.psig = 25;
+        for (int side = 0; side < 2; side++) {
+            double load = (side == 1) == sideB ? inService : other;
+            if (load < 0) continue;
+            var stack = new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get());
+            dev.bwr.mod.power.OilFilterCartridgeItem.setLoad(stack, load);
+            m.getSlot(side).set(stack);
+        }
+        return new OilFilterScreen(m, i, t("Oil Filter Housing"));
+    }
+
+    /** The Lube Oil Conditioner's screen (kind 4): running, or switched on with no FE. */
+    private static TurbineAuxMenu conditionerMenu(Inventory i, boolean running) {
+        var m = new TurbineAuxMenu(99, i, P);
+        m.present = true;
+        m.attached = true;
+        m.kind = 4;
+        m.oilFraction = 0.64;
+        m.condFitted = true;
+        m.condOn = true;
+        m.condRun = running;
+        m.acFe = running ? 82_000 : 0;
+        m.status = "Serves a Main Oil Tank";
+        return m;
+    }
+
     private static TurbineAuxMenu auxMenu(Inventory i, int kind, boolean unpowered) {
         var m = new TurbineAuxMenu(99, i, P);
         m.present = true;
@@ -1325,6 +1375,9 @@ public final class GuiScreenCheck {
         m.oilFraction = 0.64;
         // the oil filter housing on the tank (TURBINE-AUX.md): a cartridge two thirds full in service, or with the pumps down a full one
         m.filterHousing = kind == 0;
+        m.condFitted = kind == 0;
+        m.condOn = kind == 0;
+        m.condRun = kind == 0 && !unpowered;
         m.filterBypass = unpowered;
         m.filterLife = unpowered ? 0 : 0.62;
         m.filterDp = unpowered ? 20 : dev.bwr.core.turbine.TurbineAux.filterDpPsi(0.38);

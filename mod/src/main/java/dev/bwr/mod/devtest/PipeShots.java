@@ -7,6 +7,8 @@ import dev.bwr.mod.piping.LubeOilPipeBlock;
 import dev.bwr.mod.piping.PaintedPipeBlock;
 import dev.bwr.mod.power.LubeOilValveBlock;
 import dev.bwr.mod.power.TurbineAuxBlock;
+import dev.bwr.mod.power.TurbineAuxBlockEntity;
+import dev.bwr.mod.registry.BwrItems;
 import dev.bwr.mod.piping.PipePaint;
 import dev.bwr.mod.power.PowerModuleBlock;
 import dev.bwr.mod.power.PowerModuleBlockEntity;
@@ -56,6 +58,10 @@ public final class PipeShots {
     private static final BlockPos PUMP = new BlockPos(270, 120, 230), MSIV = new BlockPos(250, 120, 231);
     /** The demonstration valves on the hall floor: one open, one shut, on a short oil line. */
     private static final BlockPos VALVE_OPEN = new BlockPos(212, 120, 210), VALVE_SHUT = new BlockPos(218, 120, 210);
+    /** Two duplex filter housings on the hall floor: A in service with B open for a change, and the lever at B. */
+    private static final BlockPos DUPLEX_A = new BlockPos(212, 120, 214), DUPLEX_B = new BlockPos(217, 120, 214);
+    /** The conditioner in the oil room, piped to the tank's suction outlet and fill connection. */
+    private static final BlockPos CONDITIONER = new BlockPos(189, 114, 207);
     /** The lube oil room's tank, in the basement under the hall floor (the floor is y 119, the room y 113 to 118). */
     private static final BlockPos OIL_TANK = new BlockPos(186, 115, 200), OIL_FILTER = new BlockPos(184, 115, 200), HEADER_VALVE = new BlockPos(187, 117, 197);
 
@@ -90,6 +96,12 @@ public final class PipeShots {
             new View("oil-valve-open-close-up", new Vec3(212.5, 120.9, 210.5), new Vec3(.25, .75, .7), 2.6),
             new View("oil-valve-shut-close-up", new Vec3(218.5, 120.9, 210.5), new Vec3(.25, .75, .7), 2.6),
             new View("oil-water-steam-straights", new Vec3(244.5, 121.5, 200.0), new Vec3(-.55, .42, 1), 6.5),
+            // The duplex filter (TURBINE-AUX.md): A in service with B open for a change, the lever at B, and the conditioner piped to the tank.
+            new View("oil-filter-duplex-a-in-service-b-open", new Vec3(212.5, 120.9, 214.5), new Vec3(.35, .75, 1), 3.2),
+            new View("oil-filter-duplex-lever-at-b", new Vec3(217.5, 120.9, 214.5), new Vec3(.35, .75, 1), 3.2),
+            new View("oil-filter-duplex-both", new Vec3(215.0, 120.9, 214.5), new Vec3(0, .6, 1), 6),
+            new View("oil-conditioner-piped-to-tank", new Vec3(188.0, 115.2, 203.5), new Vec3(.1, .2, 1), 9.5),
+            new View("oil-conditioner-close", new Vec3(189.5, 114.8, 207.5), new Vec3(.2, .35, 1), 4.2),
     };
     private static boolean started, built, requested;
     private static int age, joined, stage, shown;
@@ -252,6 +264,20 @@ public final class PipeShots {
             throw new IllegalStateException("The open valve is not open on the client: " + open);
         if (!wasShut.getValue(LubeOilValveBlock.OPEN))
             throw new IllegalStateException("The server opened the second valve but the client still draws it shut: " + wasShut);
+        // The duplex housings: A in service with B's lid open; the lever at B with both lids shut; and the four models all differ.
+        var duplexA = mc.level.getBlockState(DUPLEX_A);
+        var duplexB = mc.level.getBlockState(DUPLEX_B);
+        if (duplexA.getValue(TurbineAuxBlock.SIDE_B) || !duplexA.getValue(TurbineAuxBlock.OFF_OPEN))
+            throw new IllegalStateException("The first duplex housing should show A in service with B open: " + duplexA);
+        if (!duplexB.getValue(TurbineAuxBlock.SIDE_B) || duplexB.getValue(TurbineAuxBlock.OFF_OPEN))
+            throw new IllegalStateException("The second duplex housing should show the lever at B with both lids shut: " + duplexB);
+        var seen = new java.util.HashSet<Integer>();
+        for (boolean sideB : new boolean[] {false, true})
+            for (boolean open : new boolean[] {false, true}) {
+                var st = duplexA.setValue(TurbineAuxBlock.SIDE_B, sideB).setValue(TurbineAuxBlock.OFF_OPEN, open);
+                var quads = mc.getBlockRenderer().getBlockModel(st).getQuads(st, null, net.minecraft.util.RandomSource.create(0), net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
+                if (quads.isEmpty() || !seen.add(quadHash(quads))) throw new IllegalStateException("A duplex housing state draws like another (or nothing): side_b=" + sideB + " off_open=" + open);
+            }
         var randomSource = net.minecraft.util.RandomSource.create(0);
         var openQuads = mc.getBlockRenderer().getBlockModel(open).getQuads(open, null, randomSource, net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
         var shutState = open.setValue(LubeOilValveBlock.OPEN, false);
@@ -339,7 +365,7 @@ public final class PipeShots {
         for (var p : BlockPos.betweenClosed(216, 113, 190, 216, 118, 212)) l.setBlock(p, concrete, 2);
         for (int x = 180; x <= 214; x += 3)
             for (int z = 192; z <= 214; z += 3)
-                for (int y : new int[] {114, 118})
+                for (int y : new int[] {113, 118})
                     l.setBlock(new BlockPos(x, y, z), Blocks.LIGHT.defaultBlockState(), 2);
         // The holes in the hall floor where the risers go through.
         int[][] holes = {{191, 197}, {200, 196}, {208, 197}, {191, 203}, {200, 204}, {208, 203}};
@@ -364,6 +390,29 @@ public final class PipeShots {
         // The pipes that were laid before their neighbours were there get their arms resolved again.
         for (var p : BlockPos.betweenClosed(180, 113, 192, 214, 121, 206))
             if (l.getBlockState(p).is(oil())) l.setBlock(p, state(oil(), l, p), 3);
+        // The in-line housing in the tank's discharge line holds a cartridge in side A (B is open for a change).
+        ((TurbineAuxBlockEntity) l.getBlockEntity(OIL_FILTER)).cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()));
+        // The conditioner, piped to the tank: oil from its suction outlet to the conditioner's inlet, cleaned oil from its outlet to the tank's fill connection.
+        l.setBlock(CONDITIONER, BwrBlocks.LUBE_OIL_CONDITIONER.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.EAST), 3);
+        path(l, oil(), new BlockPos(186, 114, 200), new BlockPos(186, 114, 207), new BlockPos(188, 114, 207));
+        path(l, oil(), new BlockPos(190, 114, 207), new BlockPos(190, 116, 207), new BlockPos(186, 116, 207), new BlockPos(186, 116, 200));
+        requireJoined(l, new BlockPos(188, 114, 207), Direction.EAST);
+        requireJoined(l, new BlockPos(190, 114, 207), Direction.WEST);
+        requireJoined(l, new BlockPos(186, 114, 200), Direction.UP);
+        requireJoined(l, new BlockPos(186, 116, 200), Direction.DOWN);
+        var oilTank = (TurbineAuxBlockEntity) l.getBlockEntity(OIL_TANK);
+        var conditioner = (TurbineAuxBlockEntity) l.getBlockEntity(CONDITIONER);
+        if (conditioner.tank() != oilTank || oilTank.conditioner() != conditioner)
+            throw new IllegalStateException("The conditioner's pipes do not join it to the tank's suction outlet and fill connection");
+        // Two duplex housings on the hall floor.
+        for (var at : new BlockPos[] {DUPLEX_A, DUPLEX_B})
+            l.setBlock(at, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.SOUTH), 3);
+        var duplexA = (TurbineAuxBlockEntity) l.getBlockEntity(DUPLEX_A);
+        duplexA.cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()));
+        var duplexB = (TurbineAuxBlockEntity) l.getBlockEntity(DUPLEX_B);
+        duplexB.cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()));
+        duplexB.cartridgeSlot().setStackInSlot(1, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()));
+        duplexB.selectSide(true);
         // The demonstration valves on the hall floor: open and shut, with short runs of pipe either side.
         for (int x = 209; x <= 221; x++) {
             var p = new BlockPos(x, 120, 210);

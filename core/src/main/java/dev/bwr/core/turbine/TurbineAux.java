@@ -144,6 +144,36 @@ public final class TurbineAux {
         return oilLossLitres(psig, oilC, dt) * factor;
     }
 
+    // ------------------------------------------------ the lube oil conditioner (side-stream cleanup plant)
+
+    /**
+     * What the plant's clean oil lasts, with the conditioner running and a clean cartridge in service: about one refuelling cycle of
+     * running, 8.5 real days (204 h) for a 20,000 L tank at the rated header pressure and 50 C oil. The owner's figure is "the reactor
+     * usually gets refuelled every 7 to 10 days, so the oil would last that long": the middle of that. The mod has no constant for a
+     * fuel cycle's length (its long gameplay times, the breeding targets of 72 to 240 running hours, are "matched to long fuel cycles"
+     * and are real running hours at 20 TPS, the same convention as every other law here), so 204 h sits inside that span.
+     */
+    public static final double OIL_LIFE_CONDITIONED_S = 8.5 * 24 * 3600;
+    /**
+     * What the conditioner leaves of the oil's degradation, whatever the filter does: the centrifuge takes out the particles and free
+     * water, the vacuum dehydrator the dissolved water and gas, so the oil does not degrade and need replacing. Derived so that a full
+     * tank through a clean cartridge AND the conditioner lasts {@link #OIL_LIFE_CONDITIONED_S}: 0.30. (The conditioner alone, with the
+     * filter bypassed, leaves 30 % of the loss: a 20,000 L tank lasts 20 h; the filter alone 62 h; the two together 204 h.)
+     */
+    public static final double CONDITIONER_FACTOR = OIL_TANK_L / (OIL_LEAK_L_PER_S * OIL_FILTER_FACTOR * OIL_LIFE_CONDITIONED_S);
+    /** The skid's motors (centrifuge, vacuum pump, heater), W: 11 kW, a side-stream skid for a 20,000 L system. */
+    public static final double CONDITIONER_W = 11_000;
+
+    /** The share of the oil's degradation that remains with the conditioner running (it is not: all of it, the filter's factor aside). */
+    public static double conditionerFactor(boolean running) {
+        return running ? CONDITIONER_FACTOR : 1;
+    }
+
+    /** Oil lost in dt seconds through a filter that leaves {@code filterFactor} of the loss and a conditioner that leaves {@code conditionerFactor}. */
+    public static double oilLossLitres(double psig, double oilC, double dt, double filterFactor, double conditionerFactor) {
+        return oilLossLitres(psig, oilC, dt, filterFactor) * conditionerFactor;
+    }
+
     // ----------------------------------------------------- shell-and-tube coolers
 
     public static final double WATER_KJ_PER_KG_K = 4.186;

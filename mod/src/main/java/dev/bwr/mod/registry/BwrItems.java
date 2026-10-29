@@ -352,6 +352,7 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> GENERATOR_COOLING_SKID = ITEMS.registerSimpleBlockItem(BwrBlocks.GENERATOR_COOLING_SKID);
     public static final DeferredItem<BlockItem> OIL_FILTER_HOUSING = ITEMS.registerSimpleBlockItem(BwrBlocks.OIL_FILTER_HOUSING);
     public static final DeferredItem<BlockItem> LUBE_OIL_PIPE = ITEMS.registerSimpleBlockItem(BwrBlocks.LUBE_OIL_PIPE);
+    public static final DeferredItem<BlockItem> LUBE_OIL_CONDITIONER = ITEMS.registerSimpleBlockItem(BwrBlocks.LUBE_OIL_CONDITIONER);
     public static final DeferredItem<BlockItem> LUBE_OIL_VALVE = ITEMS.registerSimpleBlockItem(BwrBlocks.LUBE_OIL_VALVE);
     /** Refills a Main Oil Tank: 1,000 L of turbine oil. */
     public static final DeferredItem<Item> TURBINE_OIL_DRUM = ITEMS.registerSimpleItem("turbine_oil_drum", new Item.Properties().stacksTo(16));
@@ -643,6 +644,7 @@ public final class BwrItems {
                         output.accept(SHAFT_OIL_PUMP.get());
                         output.accept(GENERATOR_COOLING_SKID.get());
                         output.accept(OIL_FILTER_HOUSING.get());
+                        output.accept(LUBE_OIL_CONDITIONER.get());
                         output.accept(LUBE_OIL_VALVE.get());
                         output.accept(TURBINE_OIL_DRUM.get());
                         output.accept(TURBINE_OIL_CAN.get());

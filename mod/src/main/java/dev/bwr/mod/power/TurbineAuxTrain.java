@@ -52,6 +52,8 @@ public final class TurbineAuxTrain {
          * supply run joins a pump discharge and its drain run joins a tank return. All false on a train with no oil system.
          */
         public boolean oilFed, oilPiped, oilSupplyPiped, oilDrainPiped;
+        /** A Lube Oil Conditioner serves one of the train's tanks, and whether it ran this tick (TURBINE-AUX.md). */
+        public boolean conditioner, conditionerRunning;
         void clear() {
             lubeGoverned = bowGoverned = genGoverned = oilTank = shaftPump = acRunning = dcRunning = gearOn = gearRolling = gearFed = coolingSkid = statorRunning = false;
             oilPsig = oilFilm = pumpFlow = vibration = statorFlow = 0;
@@ -60,6 +62,7 @@ public final class TurbineAuxTrain {
             filterHousing = filterBypass = filterAlarm = false;
             filterLife = filterDpPsi = Double.NaN;
             oilFed = oilPiped = oilSupplyPiped = oilDrainPiped = false;
+            conditioner = conditionerRunning = false;
         }
         public boolean anyAlarm() {
             return oilPressureAlarm || oilLevelAlarm || oilTempAlarm || bearingAlarm || vibrationAlarm || windingAlarm || h2Alarm;
@@ -196,6 +199,12 @@ public final class TurbineAuxTrain {
                 r.filterAlarm |= f.filterChangeDue();
             }
             if (r.filterHousing) { r.filterLife = life; r.filterDpPsi = dp; }
+            for (var t : tanks) {
+                var c = t.conditioner();
+                if (c == null) continue;
+                r.conditioner = true;
+                r.conditionerRunning |= c.conditionerRunning();
+            }
             // The oil each section's bearings sit in: what reaches them (the tanks of the pumps feeding it), room air when nothing does.
             for (var m : train) {
                 var o = oil.get(m);
@@ -297,6 +306,7 @@ public final class TurbineAuxTrain {
         b.bearingAlarm = a.bearingAlarm; b.vibrationAlarm = a.vibrationAlarm;
         b.filterHousing = a.filterHousing; b.filterBypass = a.filterBypass; b.filterAlarm = a.filterAlarm;
         b.filterLife = a.filterLife; b.filterDpPsi = a.filterDpPsi;
+        b.conditioner = a.conditioner; b.conditionerRunning = a.conditionerRunning;
         b.oilFed = a.oilFed; b.oilPiped = a.oilPiped; b.oilSupplyPiped = a.oilSupplyPiped; b.oilDrainPiped = a.oilDrainPiped;
     }
 

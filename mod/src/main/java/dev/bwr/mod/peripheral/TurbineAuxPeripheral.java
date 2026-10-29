@@ -21,6 +21,7 @@ public final class TurbineAuxPeripheral implements IPeripheral {
             case SHAFT_PUMP -> "bwr_shaft_oil_pump";
             case GEN_COOLING -> "bwr_generator_cooling_skid";
             case OIL_FILTER -> "bwr_oil_filter";
+            case CONDITIONER -> "bwr_lube_oil_conditioner";
         };
     }
     @Override public boolean equals(IPeripheral other) { return other instanceof TurbineAuxPeripheral p && p.skid == skid; }
@@ -38,6 +39,25 @@ public final class TurbineAuxPeripheral implements IPeripheral {
         need(TurbineAuxBlock.Kind.LUBE_OIL, "Only the Main Oil Tank has a DC pump");
         skid.setDcPump(on);
     }
+    /** The conditioner's switch (the Lube Oil Conditioner has no other control; the rest of its face is readings). */
+    @LuaFunction(mainThread = true) public void setRunning(boolean on) throws LuaException {
+        need(TurbineAuxBlock.Kind.CONDITIONER, "Only the Lube Oil Conditioner can be started or stopped");
+        skid.setConditioner(on);
+    }
+    @LuaFunction(mainThread = true) public void start() throws LuaException { setRunning(true); }
+    @LuaFunction(mainThread = true) public void stop() throws LuaException { setRunning(false); }
+
+    /** The duplex filter's transfer valve: "A" or "B" puts that side in service (the other can then be opened for a change). */
+    @LuaFunction(mainThread = true) public void setSide(String side) throws LuaException {
+        need(TurbineAuxBlock.Kind.OIL_FILTER, "Only the Oil Filter Housing has a transfer valve");
+        if (side == null || !(side.equalsIgnoreCase("A") || side.equalsIgnoreCase("B"))) throw new LuaException("The side is \"A\" or \"B\"");
+        skid.selectSide(side.equalsIgnoreCase("B"));
+    }
+    @LuaFunction(mainThread = true) public void transfer() throws LuaException {
+        need(TurbineAuxBlock.Kind.OIL_FILTER, "Only the Oil Filter Housing has a transfer valve");
+        skid.selectSide(!skid.sideBInService());
+    }
+
     @LuaFunction(mainThread = true) public void setStatorPumps(boolean on) throws LuaException {
         need(TurbineAuxBlock.Kind.GEN_COOLING, "Only the Generator Cooling Skid has stator pumps");
         skid.setStatorPumps(on);
@@ -49,6 +69,14 @@ public final class TurbineAuxPeripheral implements IPeripheral {
         m.put("filterLife", filter.filterLife());
         m.put("filterDpPsi", filter.filterDpPsi());
         m.put("filterBypass", filter.filterBypass());
+        // The duplex filter (TURBINE-AUX.md): the side in service, and each side's own readings (the flat ones above are the side in service).
+        m.put("filterSelectedSide", filter.sideBInService() ? "B" : "A");
+        for (int side = 0; side < 2; side++) {
+            var s = new LinkedHashMap<String, Object>();
+            s.put("cartridge", filter.hasCartridge(side)); s.put("life", filter.filterLife(side)); s.put("dpPsi", filter.filterDpPsi(side));
+            s.put("bypass", filter.filterBypass(side)); s.put("changeDue", filter.filterChangeDue(side)); s.put("inService", (side == 1) == filter.sideBInService());
+            m.put(side == 0 ? "sideA" : "sideB", s);
+        }
     }
 
     @LuaFunction(mainThread = true) public Map<String, Object> getStatus() {
@@ -65,6 +93,9 @@ public final class TurbineAuxPeripheral implements IPeripheral {
                 // The oil filter housing against this tank (TURBINE-AUX.md); the other fields are present only with one.
                 var filter = skid.oilFilter();
                 m.put("dischargePiped", skid.dischargePiped());
+                var conditioner = skid.conditioner();
+                m.put("conditioner", conditioner != null);
+                if (conditioner != null) { m.put("conditionerOn", conditioner.conditionerOn()); m.put("conditionerRunning", conditioner.conditionerRunning()); }
                 m.put("filterHousing", filter != null);
                 if (filter != null) filterFields(m, filter);
             }
@@ -75,6 +106,12 @@ public final class TurbineAuxPeripheral implements IPeripheral {
                 m.put("filterChangeDue", skid.filterChangeDue());
                 double hours = skid.filterHoursLeft();
                 if (Double.isFinite(hours)) m.put("filterHoursLeft", hours); // absent when nothing flows through it
+            }
+            case CONDITIONER -> {
+                var tank = skid.tank();
+                m.put("attached", tank != null);
+                m.put("on", skid.conditionerOn()); m.put("running", skid.conditionerRunning()); m.put("supplyFE", skid.acFe());
+                m.put("degradationFactor", dev.bwr.core.turbine.TurbineAux.conditionerFactor(skid.conditionerRunning()));
             }
             case SHAFT_PUMP -> {
                 m.put("delivery", module == null ? 0.0 : dev.bwr.core.turbine.TurbineAux.shaftPumpFlow(module.rpm));

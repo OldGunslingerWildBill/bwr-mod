@@ -161,6 +161,7 @@ final class PlantSignals {
             .boolOrNone("winding_alarm", "Winding temperature alarm", be -> be.block().generator() && be.aux().genGoverned ? (be.aux().windingAlarm ? 1 : 0) : Double.NaN)
             .boolOrNone("h2_alarm", "Hydrogen pressure alarm", be -> be.block().generator() && be.aux().genGoverned ? (be.aux().h2Alarm ? 1 : 0) : Double.NaN)
             // The Oil Filter Housing on the train's Main Oil Tank (TURBINE-AUX.md): "no signal" on a train whose tank has none.
+            .boolOrNone("oil_conditioner_running", "A Lube Oil Conditioner serves the tank and is running (no signal without one)", be -> be.aux().lubeGoverned && be.aux().conditioner ? (be.aux().conditionerRunning ? 1 : 0) : Double.NaN)
             .number("oil_filter_life", "Oil filter cartridge life left", "fraction", 0, 1, be -> be.aux().lubeGoverned && be.aux().filterHousing ? be.aux().filterLife : Double.NaN)
             .number("oil_filter_dp", "Oil filter pressure drop", "psi", 0, 25, be -> be.aux().lubeGoverned && be.aux().filterHousing ? be.aux().filterDpPsi : Double.NaN)
             .boolOrNone("oil_filter_bypass", "Oil filter bypass open (slot empty or cartridge full)", be -> be.aux().lubeGoverned && be.aux().filterHousing ? (be.aux().filterBypass ? 1 : 0) : Double.NaN)
@@ -202,17 +203,40 @@ final class PlantSignals {
             .number("filter_life", "Oil filter cartridge life left", "fraction", 0, 1, be -> be.oilFilter() != null ? be.oilFilter().filterLife() : Double.NaN)
             .number("filter_dp", "Oil filter pressure drop", "psi", 0, 25, be -> be.oilFilter() != null ? be.oilFilter().filterDpPsi() : Double.NaN)
             .boolOrNone("filter_bypass", "Oil filter bypass open (slot empty or cartridge full)", be -> be.oilFilter() != null ? (be.oilFilter().filterBypass() ? 1 : 0) : Double.NaN)
+            .bool("conditioner", "A Lube Oil Conditioner serves this tank", be -> be.conditioner() != null)
+            .boolOrNone("conditioner_running", "The conditioner is running", be -> be.conditioner() != null ? (be.conditioner().conditionerRunning() ? 1 : 0) : Double.NaN)
             .toggle("ac_pump", "AC pump on / off", (be, v) -> { be.setAcPump(v >= 0.5); return true; })
             .toggle("dc_pump", "DC pump on / off", (be, v) -> { be.setDcPump(v >= 0.5); return true; });
 
     /** The Oil Filter Housing: readings only; the cartridge is changed by hand. */
     static final Schema<TurbineAuxBlockEntity> OIL_FILTER = new Schema<TurbineAuxBlockEntity>()
-            .bool("attached", "Against a Main Oil Tank", be -> be.tank() != null)
-            .bool("cartridge", "A cartridge is in the slot", TurbineAuxBlockEntity::hasCartridge)
+            .bool("attached", "Serves a Main Oil Tank (bolted on it, or in-line in its discharge run)", be -> be.tank() != null)
+            // The duplex filter (TURBINE-AUX.md): the transfer valve, and each side's cartridge. The readings without a side are the side in service.
+            .level("selected_side", "Transfer valve: side in service (0 side A, 1 side B)", "side", 0, 1, TurbineAuxBlockEntity::sideInService)
+            .bool("a_cartridge", "Side A holds a cartridge", be -> be.hasCartridge(0))
+            .number("a_life", "Side A cartridge life left", "fraction", 0, 1, be -> be.filterLife(0))
+            .number("a_dp", "Side A pressure drop", "psi", 0, 25, be -> be.filterDpPsi(0))
+            .bool("a_change_due", "Side A needs a change (empty, full or at the change pressure drop)", be -> be.filterChangeDue(0))
+            .bool("b_cartridge", "Side B holds a cartridge", be -> be.hasCartridge(1))
+            .number("b_life", "Side B cartridge life left", "fraction", 0, 1, be -> be.filterLife(1))
+            .number("b_dp", "Side B pressure drop", "psi", 0, 25, be -> be.filterDpPsi(1))
+            .bool("b_change_due", "Side B needs a change (empty, full or at the change pressure drop)", be -> be.filterChangeDue(1))
+            .bool("cartridge", "The side in service holds a cartridge", TurbineAuxBlockEntity::hasCartridge)
             .number("filter_life", "Cartridge life left", "fraction", 0, 1, TurbineAuxBlockEntity::filterLife)
             .number("filter_dp", "Pressure drop across the cartridge", "psi", 0, 25, TurbineAuxBlockEntity::filterDpPsi)
             .bool("filter_bypass", "Bypass open (slot empty or cartridge full)", TurbineAuxBlockEntity::filterBypass)
-            .bool("change_due", "Cartridge change due", TurbineAuxBlockEntity::filterChangeDue);
+            .bool("change_due", "The side in service needs a change", TurbineAuxBlockEntity::filterChangeDue)
+            .command("selected_side", "Transfer valve (0 side A, 1 side B)", Kind.LEVEL, 0, 1, (be, v) -> { be.selectSide(v >= 0.5); return true; });
+
+    /** The Lube Oil Conditioner: read-only readings and its start switch. */
+    static final Schema<TurbineAuxBlockEntity> CONDITIONER = new Schema<TurbineAuxBlockEntity>()
+            .bool("attached", "Serves a Main Oil Tank (bolted on it, or piped to its suction outlet and fill connection)", be -> be.tank() != null)
+            .bool("on", "Switched on", TurbineAuxBlockEntity::conditionerOn)
+            .bool("running", "Running (on, fed, oil passing)", TurbineAuxBlockEntity::conditionerRunning)
+            .number("fe", "FE stored", "FE", 0, TurbineAuxBlockEntity.AC_CAPACITY_FE, TurbineAuxBlockEntity::acFe)
+            .number("degradation_factor", "Share of the oil's degradation that remains", "fraction", 0, 1,
+                    be -> dev.bwr.core.turbine.TurbineAux.conditionerFactor(be.conditionerRunning()))
+            .toggle("on", "Start / stop", (be, v) -> { be.setConditioner(v >= 0.5); return true; });
 
     /** The Shaft-Driven Main Oil Pump: no switch, it turns with the shaft. */
     static final Schema<TurbineAuxBlockEntity> SHAFT_PUMP = new Schema<TurbineAuxBlockEntity>()
@@ -243,6 +267,7 @@ final class PlantSignals {
             case SHAFT_PUMP -> SHAFT_PUMP.bind(be);
             case GEN_COOLING -> GEN_COOLING.bind(be);
             case OIL_FILTER -> OIL_FILTER.bind(be);
+            case CONDITIONER -> CONDITIONER.bind(be);
         };
     }
 }

@@ -610,6 +610,9 @@ public final class BwrBlocks {
     /** The duplex full-flow filter housing that mounts against a Main Oil Tank and takes one Oil Filter Cartridge (TURBINE-AUX.md). */
     public static final DeferredBlock<dev.bwr.mod.power.TurbineAuxBlock> OIL_FILTER_HOUSING =
             BLOCKS.register("oil_filter_housing", () -> new dev.bwr.mod.power.TurbineAuxBlock(machine(), dev.bwr.mod.power.TurbineAuxBlock.Kind.OIL_FILTER));
+    /** The side-stream oil cleanup plant for a Main Oil Tank: a centrifuge and a vacuum dehydrator on one skid (TURBINE-AUX.md). */
+    public static final DeferredBlock<dev.bwr.mod.power.TurbineAuxBlock> LUBE_OIL_CONDITIONER =
+            BLOCKS.register("lube_oil_conditioner", () -> new dev.bwr.mod.power.TurbineAuxBlock(machine(), dev.bwr.mod.power.TurbineAuxBlock.Kind.CONDITIONER));
     /** The turbine hall (TURBINE-MAINTENANCE.md): a rack for spare and damaged LP blade sections, and the cradle an LP hood is set on. */
     public static final DeferredBlock<dev.bwr.mod.power.TurbineStandBlock> LP_BLADE_STAND =
             BLOCKS.register("lp_blade_stand", () -> new dev.bwr.mod.power.TurbineStandBlock(machine().noOcclusion(), dev.bwr.mod.power.TurbineStandBlock.Kind.BLADES));

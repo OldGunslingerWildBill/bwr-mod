@@ -1,4 +1,5 @@
-"""Blender-authored turbine auxiliaries: main oil tank, generator cooling skid, shaft oil pump and oil filter housing.
+"""Blender-authored turbine auxiliaries: main oil tank, generator cooling skid, shaft oil pump, the duplex oil filter housing (four
+states) and the lube oil conditioner.
 Run headless:
 
     blender.exe --background --python art/models/turbine_aux/build_models.py
@@ -283,9 +284,12 @@ box(scene, 'junction lid', (.615, .845, .395), (.845, .865, .585), STEEL)
 sleeve(scene, 'cable conduit', (.73, .865, .49), (.73, .96, .49), .022, .01, DARK)
 export_scene(scene, 'shaft_oil_pump.json', {'size': [1, 1, 1], 'controller': [0, 0, 0], 'ports': []})
 
-# ---- oil filter housing: a duplex full-flow filter, two vertical canisters and a changeover valve between them. The oil flow runs
+# ---- oil filter housing: a duplex full-flow filter, two vertical canisters (A on the left seen from the FRONT, that is at x .75, and B
+# at x .25) and a changeover (transfer) valve between them whose lever points at the canister that is in service. The oil flow runs
 # along Z through the middle: it comes in on the back (+Z) and leaves on the front (-Z), a round flange on each face at the pipe centre
-# (0.5, 0.5), so a lube oil pipe can later be run in-line. Today the back is bolted against a Main Oil Tank.
+# (0.5, 0.5), so a lube oil pipe can be run in-line. The in-service canister has a green band and lamp, the off-service one an amber
+# band and lamp; with its cartridge slot empty ("open for a change") the off-service canister's lid stands open on its hinge.
+# Four baked models: side A or B in service, off-service lid closed or open.
 def oil_flange(scene, name, z, out):
     p, d = Vector((.5, .5, z)), Vector((0, 0, out))
     _, u, v = basis(d)
@@ -297,36 +301,188 @@ def oil_flange(scene, name, z, out):
         bolt(scene, name + ' stud ' + str(i), c - d * .12, c - d * .018, .014)
 
 
-scene = new_scene('BWR | oil filter housing')
+GREENBAND = material('in service band', (.04, .42, .14))
+GREENLAMP = material('in service lamp', (.10, .90, .30))
+AMBERLAMP = material('off service lamp', (.95, .52, .04))
+LETTER = material('letter white', (.92, .93, .90))
+
+# Block letters on a 5 x 7 grid, as rectangles (col0, row0, col1, row1), rows from the top, end exclusive.
+FONT = {
+    'A': [(1, 0, 4, 1), (0, 1, 1, 7), (4, 1, 5, 7), (1, 3, 4, 4)],
+    'B': [(0, 0, 1, 7), (1, 0, 4, 1), (1, 3, 4, 4), (1, 6, 4, 7), (4, 1, 5, 3), (4, 4, 5, 6)],
+}
+
+
+def letter_front(scene, ch, cx, cy, z, cell, depth=.011):
+    """A letter standing out of a face that looks to -Z (the front), read from the front: its left is +X."""
+    for c0, r0, c1, r1 in FONT[ch]:
+        box(scene, 'letter ' + ch, (cx + (2.5 - c1) * cell, cy + (3.5 - r1) * cell, z - depth), (cx + (2.5 - c0) * cell, cy + (3.5 - r0) * cell, z), LETTER)
+
+
+def letter_top(scene, ch, cx, cz, y, cell, depth=.011):
+    """A letter lying on a face that looks up, read from the front: its top points to +Z and its left is +X."""
+    for c0, r0, c1, r1 in FONT[ch]:
+        box(scene, 'letter ' + ch, (cx + (2.5 - c1) * cell, y, cz + (3.5 - r1) * cell), (cx + (2.5 - c0) * cell, y + depth, cz + (3.5 - r0) * cell), LETTER)
+
+
+def yaw_box(scene, name, centre, half, yaw_deg, mat):
+    """A box turned about the vertical axis through its centre (game coordinates)."""
+    cx, cy, cz = centre
+    hx, hy, hz = half
+    c, s = math.cos(math.radians(yaw_deg)), math.sin(math.radians(yaw_deg))
+    pts = []
+    for dy in (-hy, hy):
+        for dx, dz in ((-hx, -hz), (hx, -hz), (hx, hz), (-hx, hz)):
+            pts.append((cx + dx * c - dz * s, cy + dy, cz + dx * s + dz * c))
+    fs = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+    return mesh_object(scene, name, pts, fs, mat)
+
+
+def filter_housing(label, side_a, off_open):
+    scene = new_scene('BWR | oil filter housing ' + label)
+    box(scene, 'base frame', (.05, 0, .06), (.95, .045, .94), GREY)
+    for x in (.25, .75):
+        in_service = (x == .75) == side_a
+        ch = 'A' if x == .75 else 'B'
+        box(scene, 'canister saddle', (x - .17, .045, .32), (x + .17, .075, .68), GREY)
+        cyl(scene, 'filter canister', (x, .075, .5), (x, .70, .5), .15, BODY)
+        sleeve(scene, 'canister band', (x, .16, .5), (x, .185, .5), .158, .14, STEEL)
+        sleeve(scene, 'service band', (x, .56, .5), (x, .595, .5), .162, .14, GREENBAND if in_service else AMBER)
+        cyl(scene, 'canister drain plug', (x, .045, .5), (x, .075, .5), .03, STEEL)
+        # the service lamp and the sight glass on the front
+        cyl(scene, 'service lamp', (x, .635, .36), (x, .635, .322), .024, GREENLAMP if in_service else AMBERLAMP)
+        box(scene, 'cartridge sight glass', (x - .05, .21, .345), (x + .05, .33, .355), GLASS)
+        box(scene, 'cartridge sight frame', (x - .065, .195, .35), (x + .065, .345, .36), STEEL)
+        # the letter plate: A or B, standing out of the front, white on black
+        box(scene, 'letter plate', (x - .08, .382, .338), (x + .08, .552, .352), DARK)
+        letter_front(scene, ch, x, .4675, .338, .0215)
+        if off_open and not in_service:
+            # open for a change: the lid stands up on its back hinge, the rim and the dark empty bore show
+            sleeve(scene, 'canister rim', (x, .70, .5), (x, .725, .5), .165, .125, STEEL)
+            cyl(scene, 'empty bore', (x, .70, .5), (x, .706, .5), .127, DARK)
+            box(scene, 'lid hinge', (x - .05, .70, .665), (x + .05, .735, .695), STEEL)
+            phi = math.radians(45)
+            hinge = Vector((x, .7175, .67))
+            centre = hinge + .17 * Vector((0, math.sin(phi), -math.cos(phi)))
+            normal = Vector((0, math.cos(phi), math.sin(phi)))
+            cyl(scene, 'open lid', tuple(centre - normal * .0175), tuple(centre + normal * .0175), .17, STEEL)
+            for i in range(8):
+                a = i * math.tau / 8
+                bolt(scene, 'rim stud', (x + .145 * math.cos(a), .725, .5 + .145 * math.sin(a)), (x + .145 * math.cos(a), .755, .5 + .145 * math.sin(a)), .014)
+        else:
+            cyl(scene, 'canister lid', (x, .70, .5), (x, .735, .5), .17, STEEL)
+            for i in range(8):
+                a = i * math.tau / 8
+                bolt(scene, 'lid bolt', (x + .145 * math.cos(a), .735, .5 + .145 * math.sin(a)), (x + .145 * math.cos(a), .76, .5 + .145 * math.sin(a)), .016)
+            box(scene, 'lid letter plate', (x - .085, .735, .395), (x + .085, .75, .605), DARK)
+            letter_top(scene, ch, x, .5, .75, .02)
+            cyl(scene, 'vent plug', (x + .106, .735, .5 + .044), (x + .106, .78, .5 + .044), .02, STEEL)
+    cyl(scene, 'inlet pipe', (.5, .5, .5), (.5, .5, .985), .06, BODY)
+    cyl(scene, 'outlet pipe', (.5, .5, .015), (.5, .5, .5), .06, BODY)
+    cyl(scene, 'cross connection', (.40, .5, .5), (.60, .5, .5), .04, STEEL)
+    # the transfer valve: body, stem, a quadrant plate with a stop at each end, and the lever pointing at the canister in service
+    sleeve(scene, 'changeover valve body', (.5, .5, .5), (.5, .66, .5), .05, 0, RED)
+    cyl(scene, 'quadrant plate', (.5, .66, .5), (.5, .675, .5), .09, STEEL)
+    for yaw in (45, 135):
+        a = math.radians(yaw)
+        bolt(scene, 'quadrant stop', (.5 + .075 * math.cos(a), .675, .5 - .075 * math.sin(a)), (.5 + .075 * math.cos(a), .72, .5 - .075 * math.sin(a)), .014)
+    cyl(scene, 'valve stem', (.5, .675, .5), (.5, .775, .5), .018, STEEL)
+    cyl(scene, 'lever boss', (.5, .745, .5), (.5, .795, .5), .034, STEEL)
+    # A is at +X (left from the front): the lever leans forward and toward it; B is at -X. The two positions are 90 degrees apart.
+    sign = 1 if side_a else -1
+    tip = (.5 + sign * .107, .78, .5 - .107)
+    yaw_box(scene, 'transfer lever', ((.5 + tip[0]) / 2, .775, (.5 + tip[2]) / 2), (.092, .014, .016), -sign * 45, RED)
+    cyl(scene, 'lever knob', (tip[0], .76, tip[2]), (tip[0], .835, tip[2]), .03, YELLOW)
+    box(scene, 'differential pressure gauge case', (.40, .60, .045), (.60, .80, .17), YELLOW)
+    cyl(scene, 'gauge dial glass', (.5, .70, .045), (.5, .70, .02), .075, GLASS)
+    cyl(scene, 'gauge impulse tube', (.5, .62, .17), (.5, .62, .46), .014, DARK)
+    box(scene, 'name plate', (.44, .12, .045), (.56, .20, .052), YELLOW)
+    oil_flange(scene, 'inlet', 1.0, 1)
+    oil_flange(scene, 'outlet', 0.0, -1)
+    export_scene(scene, 'oil_filter_housing_' + label + '.json', {'size': [1, 1, 1], 'controller': [0, 0, 0], 'ports': []})
+    return scene
+
+
+HOUSING = {label: filter_housing(label, side_a, off_open)
+           for label, side_a, off_open in (('a_closed', True, False), ('a_open', True, True), ('b_closed', False, False), ('b_open', False, True))}
+
+
+# ---- lube oil conditioner: a side-stream oil cleanup skid. Oil comes in on the back (+Z) into a horizontal disc-stack centrifuge
+# (coalescer) that a motor drives, goes up and over into a vertical vacuum dehydrator column (sight glass, vacuum line to a vacuum pump
+# and a cold trap) and leaves on the front (-Z). A flange with a brown band on each of those two faces at the pipe centre (0.5, 0.5);
+# a control cabinet with the FE terminal stands in the back left corner.
+scene = new_scene('BWR | lube oil conditioner')
 box(scene, 'base frame', (.05, 0, .06), (.95, .045, .94), GREY)
-for x in (.25, .75):
-    box(scene, 'canister saddle', (x - .17, .045, .32), (x + .17, .075, .68), GREY)
-    cyl(scene, 'filter canister', (x, .075, .5), (x, .70, .5), .15, BODY)
-    for y in (.16, .56):
-        sleeve(scene, 'canister band', (x, y, .5), (x, y + .025, .5), .158, .14, STEEL)
-    cyl(scene, 'canister drain plug', (x, .045, .5), (x, .075, .5), .03, STEEL)
-    cyl(scene, 'canister lid', (x, .70, .5), (x, .735, .5), .17, STEEL)
-    cyl(scene, 'canister lid dome', (x, .735, .5), (x, .765, .5), .11, STEEL)
-    for i in range(8):
-        a = i * math.tau / 8
-        bolt(scene, 'lid bolt', (x + .145 * math.cos(a), .735, .5 + .145 * math.sin(a)), (x + .145 * math.cos(a), .76, .5 + .145 * math.sin(a)), .016)
-    cyl(scene, 'vent plug', (x, .765, .5), (x, .81, .5), .022, STEEL)
-    box(scene, 'cartridge sight glass', (x - .05, .30, .345), (x + .05, .42, .355), GLASS)
-    box(scene, 'cartridge sight frame', (x - .065, .285, .35), (x + .065, .435, .36), STEEL)
-cyl(scene, 'inlet pipe', (.5, .5, .5), (.5, .5, .985), .06, BODY)
-cyl(scene, 'outlet pipe', (.5, .5, .015), (.5, .5, .5), .06, BODY)
-cyl(scene, 'cross connection', (.40, .5, .5), (.60, .5, .5), .04, STEEL)
-sleeve(scene, 'changeover valve body', (.5, .5, .5), (.5, .66, .5), .05, 0, RED)
-cyl(scene, 'valve stem', (.5, .66, .5), (.5, .76, .5), .018, STEEL)
-box(scene, 'valve handle', (.40, .76, .475), (.60, .79, .525), RED)
-cyl(scene, 'valve knob', (.5, .79, .5), (.5, .84, .5), .03, STEEL)
-box(scene, 'differential pressure gauge case', (.40, .60, .045), (.60, .80, .17), YELLOW)
-cyl(scene, 'gauge dial glass', (.5, .70, .045), (.5, .70, .02), .075, GLASS)
-cyl(scene, 'gauge impulse tube', (.5, .62, .17), (.5, .62, .46), .014, DARK)
-box(scene, 'name plate', (.44, .12, .045), (.56, .20, .052), YELLOW)
+for x in (.08, .92):
+    for z in (.09, .91):
+        box(scene, 'frame post', (x - .02, .045, z - .02), (x + .02, .30, z + .02), GREY)
+# centrifuge / coalescer, along X at y .5, z .68
+for x in (.34, .56):
+    box(scene, 'centrifuge saddle', (x - .03, .045, .56), (x + .03, .40, .80), GREY)
+cyl(scene, 'centrifuge bowl housing', (.24, .5, .68), (.66, .5, .68), .125, STEEL)
+sleeve(scene, 'bowl housing flange', (.24, .5, .68), (.275, .5, .68), .14, .07, BODY)
+cyl(scene, 'inspection cover', (.215, .5, .68), (.24, .5, .68), .115, BODY)
+cyl(scene, 'inspection cover boss', (.20, .5, .68), (.215, .5, .68), .045, STEEL)
+for i in range(8):
+    a = i * math.tau / 8
+    bolt(scene, 'cover bolt', (.24, .5 + .095 * math.cos(a), .68 + .095 * math.sin(a)), (.20, .5 + .095 * math.cos(a), .68 + .095 * math.sin(a)), .013)
+for x in (.34, .46, .58):
+    sleeve(scene, 'bowl housing band', (x, .5, .68), (x + .02, .5, .68), .133, .12, BODY)
+cyl(scene, 'drive gearbox', (.66, .5, .68), (.72, .5, .68), .10, BODY)
+cyl(scene, 'drive motor', (.72, .5, .68), (.90, .5, .68), .095, BLUE)
+for x in (.76, .79, .82):
+    sleeve(scene, 'motor cooling fin', (x, .5, .68), (x + .015, .5, .68), .103, .09, STEEL)
+cyl(scene, 'motor fan cover', (.90, .5, .68), (.94, .5, .68), .08, STEEL)
+box(scene, 'motor foot', (.70, .38, .60), (.88, .405, .76), GREY)
+box(scene, 'motor stand', (.70, .045, .60), (.88, .405, .62), GREY)
+box(scene, 'motor stand', (.70, .045, .74), (.88, .405, .76), GREY)
+# the inlet from the back flange into the bowl housing, and a drain at its low point
+cyl(scene, 'inlet pipe', (.5, .5, .80), (.5, .5, .985), .06, BODY)
+cyl(scene, 'bowl drain', (.42, .30, .68), (.42, .38, .68), .02, STEEL)
+sleeve(scene, 'sludge discharge', (.30, .375, .68), (.30, .30, .68), .03, .015, DARK)
+# transfer line: up out of the centrifuge, forward over the skid and down into the dehydrator head
+cyl(scene, 'transfer riser', (.5, .60, .68), (.5, .86, .68), .035, BODY)
+cyl(scene, 'transfer line', (.5, .86, .68), (.5, .86, .30), .035, BODY)
+cyl(scene, 'transfer drop', (.5, .86, .30), (.5, .78, .30), .035, BODY)
+sleeve(scene, 'transfer elbow', (.5, .86, .685), (.5, .86, .655), .042, 0, STEEL)
+# vacuum dehydrator column
+cyl(scene, 'column skirt', (.5, .045, .30), (.5, .10, .30), .125, GREY)
+cyl(scene, 'dehydrator column', (.5, .10, .30), (.5, .72, .30), .115, STEEL)
+cyl(scene, 'column dished head', (.5, .72, .30), (.5, .78, .30), .09, STEEL)
+for y in (.20, .44, .66):
+    sleeve(scene, 'column band', (.5, y, .30), (.5, y + .022, .30), .124, .11, BODY)
+sleeve(scene, 'column head flange', (.5, .715, .30), (.5, .735, .30), .13, .09, BODY)
+box(scene, 'sight glass frame', (.455, .24, .176), (.545, .62, .192), STEEL)
+box(scene, 'sight glass', (.47, .26, .168), (.53, .60, .178), GLASS)
+box(scene, 'oil in sight glass', (.47, .26, .165), (.53, .43, .170), AMBER)
+cyl(scene, 'outlet pipe', (.5, .5, .015), (.5, .5, .20), .06, BODY)
+cyl(scene, 'level transmitter', (.40, .38, .20), (.40, .38, .15), .022, STEEL)
+# vacuum line to the pump (right) and a cold trap (left)
+cyl(scene, 'vacuum header', (.5, .68, .30), (.84, .68, .30), .022, BODY)
+cyl(scene, 'vacuum header left', (.5, .68, .30), (.22, .68, .30), .022, BODY)
+cyl(scene, 'trap line', (.22, .68, .30), (.22, .44, .30), .022, BODY)
+cyl(scene, 'cold trap', (.22, .08, .30), (.22, .44, .30), .065, PALE)
+sleeve(scene, 'cold trap head', (.22, .44, .30), (.22, .48, .30), .07, .03, STEEL)
+cyl(scene, 'cold trap drain valve', (.22, .045, .30), (.22, .08, .30), .02, STEAMBAND)
+box(scene, 'cold trap sight glass', (.20, .18, .228), (.24, .34, .236), GLASS)
+cyl(scene, 'vacuum pump casing', (.74, .20, .30), (.80, .20, .30), .075, BODY)
+cyl(scene, 'vacuum pump motor', (.80, .20, .30), (.92, .20, .30), .06, BLUE)
+cyl(scene, 'vacuum pump fan cover', (.92, .20, .30), (.945, .20, .30), .05, STEEL)
+cyl(scene, 'vacuum pump line', (.84, .68, .30), (.84, .275, .30), .022, BODY)
+sleeve(scene, 'vacuum pump discharge', (.74, .20, .30), (.74, .20, .22), .03, .015, DARK)
+box(scene, 'pump skid foot', (.68, .045, .22), (.94, .075, .38), GREY)
+# the control cabinet and the FE terminal, back left
+box(scene, 'control cabinet', (.07, .045, .62), (.19, .62, .93), BLUE)
+box(scene, 'cabinet door', (.065, .09, .66), (.07, .56, .89), STEEL)
+box(scene, 'cabinet handle', (.055, .30, .85), (.065, .38, .865), YELLOW)
+box(scene, 'cabinet roof', (.065, .62, .615), (.195, .64, .935), STEEL)
+sleeve(scene, 'FE conduit', (.13, .64, .78), (.13, .72, .78), .022, .01, DARK)
+box(scene, 'FE terminal plate', (.07, .66, .62), (.19, .70, .66), YELLOW)
+box(scene, 'status lamp box', (.09, .48, .60), (.17, .58, .62), GREY)
+cyl(scene, 'running lamp', (.13, .53, .60), (.13, .53, .575), .022, GREENLAMP)
 oil_flange(scene, 'inlet', 1.0, 1)
 oil_flange(scene, 'outlet', 0.0, -1)
-export_scene(scene, 'oil_filter_housing.json', {'size': [1, 1, 1], 'controller': [0, 0, 0], 'ports': []})
+export_scene(scene, 'lube_oil_conditioner.json', {'size': [1, 1, 1], 'controller': [0, 0, 0], 'ports': []})
 
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT / 'turbine_aux.blend'))
 print('Saved the editable Blender scenes and exported their meshes.')
@@ -376,10 +532,18 @@ def preview(scene_list, filename, offsets, size=(1280, 720), eye=(1.6, -2.1, 1.5
     bpy.ops.render.render(write_still=True, scene=pv.name)
 
 
-NAMES = ['main_oil_tank', 'generator_cooling_skid', 'shaft_oil_pump', 'oil_filter_housing']
+def named(label):
+    return next(sc for sc in SCENES if sc.name == 'BWR | ' + label)
+
+
 if '--no-preview' not in __import__('sys').argv:
     # Blender coordinates: game x -> X, game z -> -Y, so "south" game offsets use xyz(). The camera looks from the front (north, -Z game = +Y blender).
-    for sc, name in zip(SCENES, NAMES):
-        preview([sc], name + '.png', [(0, 0, 0)], eye=(-1.5, 2.2, 1.4))
-        preview([sc], name + '_back.png', [(0, 0, 0)], eye=(1.6, -2.2, 1.4))
-    preview(SCENES, 'turbine_aux_all.png', [(0, 0, 0), (-1.3, 0, 0), (-2.6, 0, 0), (-3.9, 0, 0)], size=(1900, 560), eye=(-0.4, 2.6, 1.3))
+    for name, scene_name in (('main_oil_tank', 'main oil tank'), ('generator_cooling_skid', 'generator cooling skid'), ('shaft_oil_pump', 'shaft oil pump'),
+                             ('oil_filter_housing', 'oil filter housing a_closed'), ('lube_oil_conditioner', 'lube oil conditioner')):
+        preview([named(scene_name)], name + '.png', [(0, 0, 0)], eye=(-1.5, 2.2, 1.4))
+        preview([named(scene_name)], name + '_back.png', [(0, 0, 0)], eye=(1.6, -2.2, 1.4))
+    states = [named('oil filter housing ' + n) for n in ('a_closed', 'a_open', 'b_closed', 'b_open')]
+    preview(states, 'oil_filter_housing_states.png', [(0, 0, 0), (-1.3, 0, 0), (-2.6, 0, 0), (-3.9, 0, 0)], size=(1900, 560), eye=(-0.9, 2.2, 1.5))
+    preview(states[:2] + states[2:3], 'oil_filter_housing_levers.png', [(0, 0, 0), (-1.3, 0, 0), (-2.6, 0, 0)], size=(1900, 700), eye=(-0.1, 1.2, 2.6))
+    preview([named(n) for n in ('main oil tank', 'generator cooling skid', 'shaft oil pump', 'oil filter housing a_closed', 'lube oil conditioner')],
+            'turbine_aux_all.png', [(0, 0, 0), (-1.3, 0, 0), (-2.6, 0, 0), (-3.9, 0, 0), (-5.2, 0, 0)], size=(2300, 560), eye=(-0.4, 2.6, 1.3))

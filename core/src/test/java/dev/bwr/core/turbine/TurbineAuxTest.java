@@ -233,4 +233,42 @@ public final class TurbineAuxTest {
         Check.relative(5_400, TurbineAux.filterSecondsLeft(0.5, 25, 65), 1e-9, "and half that with oil 15 K hotter");
         Check.isTrue(Double.isInfinite(TurbineAux.filterSecondsLeft(0.5, 0, 50)), "nothing flows with no pressure");
     }
+
+    public static void test15_aRunningConditionerAndACleanCartridgeKeepATankForAboutOneRefuellingCycle() {
+        double bare = lastsS(TurbineAux.OIL_TANK_L, 25, 50, 1);
+        double filter = lastsS(TurbineAux.OIL_TANK_L, 25, 50, TurbineAux.OIL_FILTER_FACTOR);
+        double both = lastsS2(TurbineAux.OIL_TANK_L, 25, 50, TurbineAux.OIL_FILTER_FACTOR, TurbineAux.conditionerFactor(true));
+        double conditionerOnly = lastsS2(TurbineAux.OIL_TANK_L, 25, 50, 1, TurbineAux.conditionerFactor(true));
+        Check.inRange(6.0 * 3600, 6.4 * 3600, bare, "a full 20,000 L tank unfiltered lasts about 6.2 h (s): " + bare);
+        Check.inRange(61 * 3600, 63 * 3600, filter, "through a clean cartridge alone about 62 h (s): " + filter);
+        Check.relative(TurbineAux.OIL_LIFE_CONDITIONED_S, both, 0.002, "with the conditioner running too it lasts the target, 8.5 days: " + both / 3600 + " h");
+        Check.inRange(7 * 24 * 3600, 10 * 24 * 3600, both, "which is inside one refuelling cycle of 7 to 10 days");
+        Check.relative(204 * 3600, both, 0.002, "204 hours of running");
+        Check.inRange(19.5 * 3600, 21.5 * 3600, conditionerOnly, "the conditioner alone (bypassed filter) about 20 h (s): " + conditionerOnly / 3600);
+        Check.relative(TurbineAux.CONDITIONER_FACTOR * TurbineAux.OIL_FILTER_FACTOR, 1.0 / (both / bare), 0.002, "the two factors multiply: the filter protects the bearings, the conditioner the oil");
+        Check.inRange(0.29, 0.31, TurbineAux.CONDITIONER_FACTOR, "the conditioner leaves about 30 % of the degradation: " + TurbineAux.CONDITIONER_FACTOR);
+        double hot = TurbineAux.oilLossLitres(25, 80, 3600, 0.1, TurbineAux.CONDITIONER_FACTOR), hotBare = TurbineAux.oilLossLitres(25, 80, 3600);
+        Check.relative(1.0 / (0.1 * TurbineAux.CONDITIONER_FACTOR), hotBare / hot, 1e-9, "the product holds with hot oil");
+        Check.exactly(0.0, TurbineAux.oilLossLitres(0, 50, 3600, 0.1, TurbineAux.CONDITIONER_FACTOR), "a tank nobody pumps still loses nothing");
+        Check.note("20,000 L at 25 psig and 50 C: %.1f h bare, %.1f h clean cartridge, %.1f h conditioner alone, %.1f h (%.2f days) both",
+                bare / 3600, filter / 3600, conditionerOnly / 3600, both / 3600, both / 86400);
+    }
+
+    public static void test16_withoutPowerOrFlowTheOilIsBackOnTheFilterOnlyRate() {
+        Check.exactly(1.0, TurbineAux.conditionerFactor(false), "a stopped conditioner changes nothing");
+        Check.exactly(TurbineAux.CONDITIONER_FACTOR, TurbineAux.conditionerFactor(true), "a running one leaves its factor");
+        Check.exactly(TurbineAux.oilLossLitres(25, 60, 7, 0.1), TurbineAux.oilLossLitres(25, 60, 7, 0.1, TurbineAux.conditionerFactor(false)),
+                "the filter-only loss is the old law's, bit for bit, when the conditioner is not running");
+        Check.exactly(TurbineAux.oilLossLitres(25, 60, 7), TurbineAux.oilLossLitres(25, 60, 7, 1.0, 1.0), "and with neither it is the unfiltered law");
+        Check.isTrue(TurbineAux.CONDITIONER_W > 5_000 && TurbineAux.CONDITIONER_W < 30_000, "a side-stream skid draws a few kW to tens of kW");
+    }
+
+    private static double lastsS2(double litres, double psig, double oilC, double filterFactor, double conditionerFactor) {
+        double left = litres, t = 0;
+        while (left > 0 && t < 4e6) {
+            left -= TurbineAux.oilLossLitres(psig, oilC, 1, filterFactor, conditionerFactor);
+            t += 1;
+        }
+        return t;
+    }
 }

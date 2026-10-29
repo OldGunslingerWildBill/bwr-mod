@@ -1,19 +1,67 @@
 {
   "variants": {
-    "facing=north": {
-      "model": "bwr:block/turbine_aux/oil_filter_housing/body",
+    "facing=north,side_b=false,off_open=false": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_a_closed",
       "y": 0
     },
-    "facing=east": {
-      "model": "bwr:block/turbine_aux/oil_filter_housing/body",
+    "facing=north,side_b=false,off_open=true": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_a_open",
+      "y": 0
+    },
+    "facing=north,side_b=true,off_open=false": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_b_closed",
+      "y": 0
+    },
+    "facing=north,side_b=true,off_open=true": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_b_open",
+      "y": 0
+    },
+    "facing=east,side_b=false,off_open=false": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_a_closed",
       "y": 90
     },
-    "facing=south": {
-      "model": "bwr:block/turbine_aux/oil_filter_housing/body",
+    "facing=east,side_b=false,off_open=true": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_a_open",
+      "y": 90
+    },
+    "facing=east,side_b=true,off_open=false": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_b_closed",
+      "y": 90
+    },
+    "facing=east,side_b=true,off_open=true": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_b_open",
+      "y": 90
+    },
+    "facing=south,side_b=false,off_open=false": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_a_closed",
       "y": 180
     },
-    "facing=west": {
-      "model": "bwr:block/turbine_aux/oil_filter_housing/body",
+    "facing=south,side_b=false,off_open=true": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_a_open",
+      "y": 180
+    },
+    "facing=south,side_b=true,off_open=false": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_b_closed",
+      "y": 180
+    },
+    "facing=south,side_b=true,off_open=true": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_b_open",
+      "y": 180
+    },
+    "facing=west,side_b=false,off_open=false": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_a_closed",
+      "y": 270
+    },
+    "facing=west,side_b=false,off_open=true": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_a_open",
+      "y": 270
+    },
+    "facing=west,side_b=true,off_open=false": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_b_closed",
+      "y": 270
+    },
+    "facing=west,side_b=true,off_open=true": {
+      "model": "bwr:block/turbine_aux/oil_filter_housing/body_b_open",
       "y": 270
     }
   }

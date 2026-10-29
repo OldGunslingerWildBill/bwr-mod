@@ -13,7 +13,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 /** Readings and the pump switches of a turbine auxiliary skid: the Main Oil Tank, the Shaft-Driven Oil Pump or the Generator Cooling Skid. */
 public class TurbineAuxMenu extends BwrMenu {
-    public static final int CMD_AC_PUMP = 0, CMD_DC_PUMP = 1, CMD_STATOR_PUMPS = 2;
+    public static final int CMD_AC_PUMP = 0, CMD_DC_PUMP = 1, CMD_STATOR_PUMPS = 2, CMD_CONDITIONER = 3;
 
     public boolean present, attached, acOn, dcOn, acRun, dcRun, statorOn, statorRun;
     public int kind;
@@ -22,6 +22,8 @@ public class TurbineAuxMenu extends BwrMenu {
     /** The oil filter housing against the tank (TURBINE-AUX.md): fitted, its bypass open, the cartridge life left and the pressure drop across it. */
     public boolean filterHousing, filterBypass;
     public double filterLife, filterDp;
+    /** The Lube Oil Conditioner: on a conditioner, its own switch and whether it runs; on a tank, whether one serves it and whether it is switched on and running. */
+    public boolean condFitted, condOn, condRun;
     public String status = "Waiting for server";
 
     public TurbineAuxMenu(int id, Inventory inv, RegistryFriendlyByteBuf b) { this(id, inv, b.readBlockPos()); }
@@ -42,7 +44,7 @@ public class TurbineAuxMenu extends BwrMenu {
         var m = be.module();
         var aux = m == null ? null : m.aux();
         b.writeInt(be.kind().ordinal());
-        b.writeBoolean(m != null);
+        b.writeBoolean(be.kind() == TurbineAuxBlock.Kind.CONDITIONER ? be.tank() != null : m != null);
         b.writeBoolean(be.acPumpOn());
         b.writeBoolean(be.dcPumpOn());
         b.writeBoolean(be.acRunning());
@@ -59,7 +61,13 @@ public class TurbineAuxMenu extends BwrMenu {
         b.writeBoolean(filter != null && filter.filterBypass());
         b.writeDouble(filter == null ? 0 : filter.filterLife());
         b.writeDouble(filter == null ? 0 : filter.filterDpPsi());
-        b.writeUtf(be.kind() == TurbineAuxBlock.Kind.SHAFT_PUMP ? (m == null ? "Not on a generator shaft end" : "On the generator shaft end")
+        var cond = be.kind() == TurbineAuxBlock.Kind.LUBE_OIL ? be.conditioner() : null;
+        boolean isCond = be.kind() == TurbineAuxBlock.Kind.CONDITIONER;
+        b.writeBoolean(isCond || cond != null);
+        b.writeBoolean(isCond ? be.conditionerOn() : cond != null && cond.conditionerOn());
+        b.writeBoolean(isCond ? be.conditionerRunning() : cond != null && cond.conditionerRunning());
+        b.writeUtf(isCond ? (be.tank() == null ? "Not against a Main Oil Tank and not piped to one" : "Serves a Main Oil Tank")
+                : be.kind() == TurbineAuxBlock.Kind.SHAFT_PUMP ? (m == null ? "Not on a generator shaft end" : "On the generator shaft end")
                         + (be.suctionPiped() ? "; suction piped to a tank" : "") + (be.dischargePiped() ? "; discharge piped to a bearing header" : "")
                 : be.kind() == TurbineAuxBlock.Kind.LUBE_OIL ? (m == null ? (be.dischargePiped() ? "Piped to a bearing header (not bolted on a train)" : "Not against a turbine section and not piped")
                         : be.dischargePiped() ? "Attached; its discharge is piped to a bearing header" : "Attached")
@@ -77,6 +85,7 @@ public class TurbineAuxMenu extends BwrMenu {
         statorFlow = b.readDouble(); h2Psig = b.readDouble(); h2Kg = b.readDouble(); coolantC = b.readDouble(); windingC = b.readDouble(); bearingC = b.readDouble();
         electricMW = b.readDouble(); shaftFlow = b.readDouble();
         filterHousing = b.readBoolean(); filterBypass = b.readBoolean(); filterLife = b.readDouble(); filterDp = b.readDouble();
+        condFitted = b.readBoolean(); condOn = b.readBoolean(); condRun = b.readBoolean();
         status = b.readUtf();
     }
 
@@ -87,6 +96,7 @@ public class TurbineAuxMenu extends BwrMenu {
             case CMD_AC_PUMP -> be.setAcPump(a != 0);
             case CMD_DC_PUMP -> be.setDcPump(a != 0);
             case CMD_STATOR_PUMPS -> be.setStatorPumps(a != 0);
+            case CMD_CONDITIONER -> be.setConditioner(a != 0);
             default -> { }
         }
         markSnapshotDirty();

@@ -58,7 +58,11 @@ public final class OilLineNetwork {
         /** A turbine or generator section's bearing supply inlet. */
         SECTION_SUPPLY,
         /** A section's bearing drain outlet. */
-        SECTION_DRAIN
+        SECTION_DRAIN,
+        /** The conditioner's inlet: oil from the tank's suction outlet. */
+        COND_INLET,
+        /** The conditioner's outlet: cleaned oil back to the tank's fill connection. */
+        COND_OUTLET
     }
 
     private enum Conduit { NONE, PIPE, VALVE, FILTER }

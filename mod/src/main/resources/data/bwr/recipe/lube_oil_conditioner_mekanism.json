@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "P": {
+      "item": "bwr:lube_oil_pipe"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "R": {
+      "tag": "c:circuits/basic"
+    }
+  },
+  "pattern": [
+    "IGI",
+    "PHP",
+    "IRI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:lube_oil_conditioner"
+  }
+}
