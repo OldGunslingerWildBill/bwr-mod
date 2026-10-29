@@ -56,6 +56,7 @@ public final class PowerModulePeripheral implements IPeripheral {
             m.put("oilPressurePsig",a.oilPsig);m.put("oilTempC",a.oilC);m.put("oilLevel",a.oilLevel);m.put("oilFilm",a.oilFilm);
             m.put("bearingTempC",module.bearingC);m.put("oilPressureAlarm",a.oilPressureAlarm);m.put("oilLevelAlarm",a.oilLevelAlarm);
             m.put("oilTempAlarm",a.oilTempAlarm);m.put("bearingAlarm",a.bearingAlarm);m.put("oilTank",a.oilTank);m.put("shaftOilPump",a.shaftPump);
+            m.put("oilFed",a.oilFed);if(a.oilPiped){m.put("oilSupplyPiped",a.oilSupplyPiped);m.put("oilDrainPiped",a.oilDrainPiped);}
             if(a.filterHousing){m.put("oilFilterLife",a.filterLife);m.put("oilFilterDpPsi",a.filterDpPsi);m.put("oilFilterBypass",a.filterBypass);m.put("oilFilterAlarm",a.filterAlarm);}
         }
         if(a.bowGoverned){

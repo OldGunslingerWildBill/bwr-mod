@@ -305,7 +305,7 @@ Damage goes into the generator's shaft damage, so a destroyed winding fails the 
 - **ComputerCraft:** `bwr_generator`, `bwr_hp_turbine` and `bwr_lp_turbine` `getStatus()` carry the same readings as `oilPressurePsig`,
   `bearingTempC`, `rotorBow`, `windingTempC`, `turningGearPowered` ... and `setTurningGear(bool)` / `getTurningGear()` (the generator; engaging above 10 rpm
   raises an error). The skids are `bwr_main_oil_tank` (`setAcPump`, `setDcPump`), `bwr_shaft_oil_pump` and
-  `bwr_generator_cooling_skid` (`setStatorPumps`), each with `getStatus()`, and **`bwr_lube_oil_valve`** (see the valve above). The Main Oil Tank's carries `filterHousing` and, with a housing
+  `bwr_generator_cooling_skid` (`setStatorPumps`), each with `getStatus()`, and **`bwr_lube_oil_valve`** (see the valve above). The power modules' `getStatus()` also carries `oilFed` (and, on a piped train, `oilSupplyPiped` and `oilDrainPiped`); the tank's `dischargePiped`; the shaft pump's `suctionPiped` and `dischargePiped`. The Main Oil Tank's carries `filterHousing` and, with a housing
   against it, `filterCartridge`, `filterLife`, `filterDpPsi` and `filterBypass`; the power modules' `getStatus()` carries `oilFilterLife`,
   `oilFilterDpPsi`, `oilFilterBypass` and `oilFilterAlarm` (with a housing on the train's tank). **`bwr_oil_filter`** is the housing's
   own read-only face (on all six sides, `getStatus()` only): `attached`, `filterCartridge`, `filterLife` (1 new to 0 spent),

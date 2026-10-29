@@ -64,6 +64,7 @@ public final class TurbineAuxPeripheral implements IPeripheral {
                 m.put("coldWaterKg", skid.coldKg()); m.put("hotWaterKg", skid.hotKg()); m.put("acFE", skid.acFe()); m.put("dcFE", skid.dcFe());
                 // The oil filter housing against this tank (TURBINE-AUX.md); the other fields are present only with one.
                 var filter = skid.oilFilter();
+                m.put("dischargePiped", skid.dischargePiped());
                 m.put("filterHousing", filter != null);
                 if (filter != null) filterFields(m, filter);
             }
@@ -75,7 +76,11 @@ public final class TurbineAuxPeripheral implements IPeripheral {
                 double hours = skid.filterHoursLeft();
                 if (Double.isFinite(hours)) m.put("filterHoursLeft", hours); // absent when nothing flows through it
             }
-            case SHAFT_PUMP -> m.put("delivery", module == null ? 0.0 : dev.bwr.core.turbine.TurbineAux.shaftPumpFlow(module.rpm));
+            case SHAFT_PUMP -> {
+                m.put("delivery", module == null ? 0.0 : dev.bwr.core.turbine.TurbineAux.shaftPumpFlow(module.rpm));
+                m.put("suctionPiped", skid.suctionPiped());
+                m.put("dischargePiped", skid.dischargePiped());
+            }
             case GEN_COOLING -> {
                 m.put("statorPumps", skid.statorPumpsOn()); m.put("statorRunning", skid.statorRunning()); m.put("statorFlow", skid.statorFlow());
                 m.put("h2PressurePsig", skid.h2Psig()); m.put("h2Kg", skid.h2Kg()); m.put("coolantTempC", skid.coolantC());
