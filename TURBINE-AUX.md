@@ -21,9 +21,10 @@ annunciators and your computer. Skids have no ticker; the shaft train steps them
 | **Turbine Shaft-Driven Main Oil Pump** (`shaft_oil_pump`) | On the **free shaft end of the generator**, coupling (its back) toward the generator. It turns to face the right way when you place it there | Driven by the shaft: no oil at standstill, full delivery at 90 % of rated speed. It draws its oil from the Main Oil Tank of the same train |
 | **Generator Cooling Skid** (`generator_cooling_skid`) | Against the generator | **Stator water pumps** (FE on any face but the two flanges), a **hydrogen** charge for the casing, and the **coolers** (cooling water as on the oil tank) |
 | **Turning gear** | Built into the generator: a switch, no block | See below |
-| **Oil Filter Housing** (`oil_filter_housing`) | **Directly against a Main Oil Tank** (see Oil filtration below): its back on the tank, on any side of the tank; **or in-line in a Lube Oil Pipe run** on a tank's discharge | A duplex full-flow lube oil filter with **one slot for an Oil Filter Cartridge**. It filters the tank's oil. It is not on the shaft train and needs no power |
+| **Oil Filter Housing** (`oil_filter_housing`) | **Directly against a Main Oil Tank** (see Oil filtration below): its back on the tank, on any side of the tank; **or in-line in a Lube Oil Pipe run** on a tank's discharge | A **duplex** full-flow lube oil filter: **sides A and B**, one Oil Filter Cartridge each, and a **transfer valve** that picks the side in service so the other can be changed while the plant runs (below). It filters the tank's oil. It is not on the shaft train and needs no power |
 | **Lube Oil Pipe** (`lube_oil_pipe`) | Between the oil ports of the equipment (see Lube oil piping below) | A brown, small-bore pipe: a network of its own that never joins a water or steam pipe. Crafted from iron nuggets and brown dye (6 pipes); **with Mekanism** steel nuggets (MEKANISM-RECIPES.md) |
 | **Lube Oil Valve** (`lube_oil_valve`) | In-line in a Lube Oil Pipe run | A quarter-turn ball valve with a **limit switch box** on top that shows open or shut. Crafted from 4 iron, a lever, redstone and 2 Lube Oil Pipes; **with Mekanism** steel, a basic circuit in place of the redstone |
+| **Lube Oil Conditioner** (`lube_oil_conditioner`) | Bolted against a Main Oil Tank, or piped to its suction outlet and fill connection (see Oil cleanup below) | A side-stream **centrifuge and vacuum dehydrator** on FE. Running, it cuts the oil's degradation to 30 %; with a clean filter cartridge too, a 20,000 L tank lasts about one refuelling cycle (8.5 days). Crafted from iron, glass, 2 Lube Oil Pipes, a hopper and redstone; **with Mekanism** steel and a basic circuit |
 | **Oil Filter Cartridge** (item) | The housing's slot: by hand, a hopper or a pipe, or in its screen | The filter element. Crafted from four iron ingots, four paper and white wool; **with Mekanism** four steel ingots, four paper and an HDPE sheet |
 | **Turbine Oil Drum** (item) | Right-click a Main Oil Tank | 1,000 L of oil. A drum that does not fit is not poured. Crafted from coal and an iron ingot; **with Mekanism** from four Turbine Oil Cans (made in a Pressurized Reaction Chamber) and a steel ingot, see [MEKANISM-RECIPES.md](MEKANISM-RECIPES.md) |
 | **Hydrogen Cylinder** (item) | Right-click a Generator Cooling Skid | 5 kg of hydrogen (the casing holds 20 kg, 30 psig). A cylinder that does not fit is not emptied |
@@ -104,12 +105,44 @@ hold it), and it does not change the oil film, the bearing temperature or the fi
   (`TurbineAuxBlockEntity.tank()`, with `oilFilter()` the tank's side of it). Bolted on a tank it is as described here; **in-line in a Lube
   Oil Pipe run** (see Lube oil piping) the tank is the one whose discharge the run from the inlet leads back to, and the tank's filter is
   the first housing entered by its inlet in the run leaving the tank's discharge. Direct contact comes first.
-- **The slot.** Right-click the housing with a cartridge to put one in an empty slot. Right-click with nothing, or with a cartridge when
-  one is in, to open its screen (a slot and the player's inventory; shift-click works). **Hoppers and pipes may put a cartridge into
-  an empty slot, on any face, and can take nothing out**: nothing is pulled out for you, so a hopper under the housing does not empty
-  a cartridge that is in service. Breaking the housing drops its cartridge with its load.
+- **The slots.** Right-click the housing with a cartridge to put one in the side in service when that is empty (with it full, open the
+  screen). Right-click with nothing on a side face to open its screen (two slots, A and B, a transfer button and the player's inventory;
+  shift-click works); right-click on the **top** throws the transfer lever. **Hoppers and pipes may put a cartridge into an empty slot of
+  either side, on any face, and can take nothing out**: nothing is pulled out for you. Breaking the housing drops both cartridges with
+  their loads. Everything about the two sides is in *The duplex filter* below.
 - **No ticker.** The housing has none. The Main Oil Tank's own oil step, which the train calls once a tick, loads the cartridge by the
   oil that flowed.
+
+### The duplex filter: sides A and B and the transfer valve
+
+Plants change a filter **with the plant running**: a duplex filter has two canisters and a **transfer (changeover) valve** that
+puts one in service while the other is isolated and opened. The Oil Filter Housing is one.
+
+- **Two slots, A and B**, one Oil Filter Cartridge each, and a **transfer valve** (a lever on the changeover valve, between the
+  canisters) that picks the side in service. Side A is the one on the left seen from the front (the outlet side). The model shows it:
+  a red lever leaning at the canister in service, a **green band and lamp on the canister in service and an amber one on the other**,
+  a big A and B, and the **lid of the canister out of service standing open when its slot is empty** (open for a change).
+- **Only the side in service filters and loads.** The side out of service is not in the flow: its cartridge does not load, and it
+  can be opened and its cartridge changed while the turbine runs, with the oil never going round the filter.
+- **A cartridge cannot be taken out of the side in service.** The realistic rule is the one chosen: the canister is under
+  pressure, so the screen's slot for the side in service gives nothing up (and shift-click leaves it), and the game never opens the
+  bypass for you by letting one out; **throw the transfer valve first**, then change the other side. An *empty* side in service
+  can be filled (it was running on its bypass), and putting a cartridge in the other side is always allowed.
+- **Throwing the valve.** By hand: **click the top of the housing** (where the lever is) and the action bar says which side is in
+  service; any other face opens the screen, which has a **Transfer to side A/B** button. By **redstone**: power selects side B,
+  losing it selects side A, and only a change of the power counts (the same convention as the Lube Oil Valve). By **signals** and
+  **CC** (`selected_side`, `setSide("A"|"B")`, `transfer()`). Transferring to an empty side is allowed and runs the oil on the bypass.
+- **Right-click with a cartridge** puts it into the side in service when that is empty; with it full the housing says so and the
+  other side is filled from the screen (shift-click puts a cartridge into the side out of service first) or by a hopper.
+- **Hoppers and pipes** see the two slots, A and B, and may put a cartridge into an **empty slot of either side** (a slot in
+  service that is empty is on its bypass, one out of service is waiting) and **can take nothing out of either**.
+- **Readings.** Everything the housing, the tank and the train read (`filter_life`, `filter_dp`, `filter_bypass`, the alarm, the
+  screen's meter) is the side in service; the housing's signals and CC also give each side's cartridge, life, pressure drop and
+  change-due, and the selected side.
+- **Old saves.** A housing saved with one cartridge loads it into **side A with A in service**. `Cartridge` is side A's key as it
+  always was; `CartridgeB` is written only when B holds one, `SideB` only while B is in service, `Powered` only while the redstone
+  reading is powered. The block state (`side_b`, `off_open`, drawn by the model) is brought up to date by the tank's next step or when
+  the screen opens. Breaking the housing drops both cartridges with their loads.
 
 ### Old saves and what is unchanged
 
@@ -117,6 +150,74 @@ A tank saved before the filter existed has no housing and **loses oil exactly as
 unchanged, and a test checks the tank against it tick by tick). The housing, cartridge and menu are new ids; the tank, the train and
 the power modules save no new key. A housing saves `Cartridge` (the item with its load) **only while it holds one**. Trains with no oil
 tank are unaffected, and the `-PbwrNoCC` and `-PbwrNoMekanism` runs play the same game.
+
+## Oil cleanup: the Lube Oil Conditioner
+
+Filters only get so much (a clean cartridge makes the oil last ten times as long, 62 hours for a 20,000 L tank). A plant keeps its
+oil in service far longer with a **side-stream oil cleanup plant** (a lube oil conditioner): a **centrifuge** (a disc stack that takes
+out the particles and the free water) and a **vacuum dehydrator** (a heated column under vacuum that takes out the dissolved water and
+gas), taking a small stream out of the tank and returning it cleaned. The **Lube Oil Conditioner** (`lube_oil_conditioner`) is that skid.
+
+- **Connections.** Oil in on its **back** flange from the Main Oil Tank's **suction outlet** (below the tank), cleaned oil out on its
+  **front** flange to the tank's **fill connection** (on top): two runs of Lube Oil Pipe, which may carry valves (a shut valve in
+  either run cuts the stream). It may also be **bolted directly on the tank**, on any face, as the housing is, and then needs no pipe.
+  The rule that decides which tank it serves is in one place (`TurbineAuxBlockEntity.conditionerTank`): the tank on its back, else the
+  tank whose suction outlet its inlet run reaches *and* whose fill connection its outlet run reaches (it draws from the tank and returns
+  to the same tank), else the first tank against any other face. A tank is fitted with one conditioner. It is not on the train.
+- **Power.** It runs on **FE on any face but its two oil flanges** and draws **11 kW** (821 FE/t, `TurbineAux.CONDITIONER_W`) while it
+  runs: a centrifuge, a vacuum pump and a heater for a 20,000 L system. You **start and stop it** from its screen, a program or a
+  panel; nothing starts it for you. It has no ticker: the tank's oil step, which the train calls once a tick, steps it, so a skid with
+  no train ticking does nothing.
+- **What it does.** Running (switched on, with the FE for the tick, the tank holding oil and oil able to pass: bolted on, or both runs
+  open) it leaves **30 %** of the oil's degradation (`CONDITIONER_FACTOR` = 0.3026). The filter's own factor (a tenth with a clean
+  cartridge in service) is separate and **the two multiply**: the filter protects the bearings, the conditioner keeps the oil itself healthy.
+  It does not change the header pressure, the film, the bearing temperature or the fires, and it does not slow the cartridge's loading
+  (the cartridge keeps its modest factor and its six hours).
+- **Losing power or flow** (stopped, no FE, an empty tank, a shut valve or a cut run) **puts the oil back on the filter-only rate**,
+  bit for bit: the tank's loss is the old law's times 1.0.
+- **No consumable.** A real coalescer element lasts about a year and is cheap, but a change every few hundred hours of play would be a
+  chore the owner did not ask for, so the conditioner has **none**: its cost is the skid, its FE and your attention to the switch.
+
+### How long the oil lasts: the rule, and what "a refuelling cycle" means here
+
+**The rule: with the cleanup plant running and a clean cartridge in service, a full 20,000 L tank at rated turbine speed lasts about one
+refuelling cycle, 8.5 real days (204 h) of running, so you top the oil up at the refuelling outage.** The owner's words: the reactor
+usually gets refuelled every 7 to 10 days, so the oil would last that long; 8.5 days is the middle.
+
+- **Time scale.** The mod has no constant for a fuel cycle's length. What it has is a convention for long laws: they run in **real
+  running hours at 20 TPS** (game time, one game second a second), not Minecraft days: FUELS-AND-RODS.md says so for the breeding
+  targets ("real running hours at 20 TPS, not Minecraft day/night cycles"), whose 72 to 240 hours are "matched to long fuel cycles";
+  SPENT-FUEL-POOL.md does the same for decay heat ("the clock is the server's game time"), and RTG.md for isotope decay. The oil law
+  already ran on it (62 h with a filter). So **8.5 days is 204 h of running at 20 TPS**, which sits inside that 72 to 240 h span.
+- **The numbers** (`TurbineAux`, core `TurbineAuxTest` 15 and 16). `OIL_LIFE_CONDITIONED_S` = 204 h, and the conditioner's factor is
+  *derived*, not chosen: `CONDITIONER_FACTOR = OIL_TANK_L / (OIL_LEAK_L_PER_S x OIL_FILTER_FACTOR x OIL_LIFE_CONDITIONED_S)` =
+  20,000 / (0.9 x 0.1 x 734,400) = **0.3026**. At the rated header pressure (25 psig, the shaft pump alone at speed) and 50 C oil:
+
+| Tank of 20,000 L | Lasts |
+| --- | --- |
+| no filter, no conditioner | 6.2 h |
+| a clean cartridge in service | 62 h |
+| the conditioner running, filter bypassed | 20.4 h |
+| **a clean cartridge and the conditioner running** | **204 h (8.5 days)** |
+
+  Hot oil degrades faster and a header held at more than rated pressure loses more, as the law has always said: with the AC pump also
+  on the header is at 30 psig and the same tank lasts 170 h (7.1 days), still inside a cycle.
+- **Why 30 %.** A conditioner takes out what makes oil need replacing, but not the leak or the oil burned in the bearings, and it
+  cannot make the oil last for ever; 30 % of the degradation with a filter's tenth is the 3 % that makes eight and a half days where a
+  filter alone makes two and a half.
+
+### The conditioner's screen, signals and computers
+
+- **Screen** (the aux skid screen, kind 4): state (running, no power, no oil flow, stopped), the FE it holds, the share of the oil's
+  degradation that remains, the tank's oil, a **Start/Stop** button. The **Main Oil Tank's screen** carries an *Oil conditioner* row.
+- **Signals** on the conditioner: `attached`, `on`, `running`, `fe`, `degradation_factor`, command `on` (start/stop). On the tank:
+  `conditioner`, `conditioner_running`. On every power module: `oil_conditioner_running` ("no signal" without a conditioner on the tank).
+- **ComputerCraft: `bwr_lube_oil_conditioner`** on all six sides: `getStatus()` (`attached`, `on`, `running`, `supplyFE`,
+  `degradationFactor`) and `start()`, `stop()`, `setRunning(bool)`; nothing else is writable. The tank's `getStatus()` carries `conditioner`,
+  `conditionerOn`, `conditionerRunning`; the power modules' `oilConditionerRunning`.
+- **Recipes** (both installs): 5 iron ingots (steel with Mekanism), a glass (the sight glass), 2 Lube Oil Pipes, a hopper (the
+  strainer) and a redstone (a basic circuit with Mekanism, the skid's control). The blockstate is `facing` only; FE terminal and conduit are modelled.
+- **Save keys.** `CondOn` only while switched on, `AcFe` only while it holds FE (the key the AC bus has always used).
 
 ## Lube oil piping
 
@@ -284,9 +385,11 @@ Damage goes into the generator's shaft damage, so a destroyed winding fails the 
 
 ## Readouts, signals and computers
 
-- **Oil Filter Housing screen**: the cartridge slot, the cartridge life (a meter), the pressure drop across it, the bypass state, the
-  share of the unfiltered oil loss that is getting through, the time left at today's pressure and oil temperature, and the tank's oil.
-  The **Main Oil Tank's screen** carries an *Oil filter* row (life and pressure drop, or "bypass open", or "none fitted").
+- **Oil Filter Housing screen**: the two cartridge slots, A and B (the one in service marked, its slot locked while it holds a
+  cartridge), the **Transfer to side A/B** button, the life of the cartridge in service (a meter), the pressure drop across it, the bypass
+  state, the share of the unfiltered oil loss that is getting through, the time left at today's pressure and oil temperature, the side
+  out of service and the tank's oil. The **Main Oil Tank's screen** carries an *Oil filter* row (life and pressure drop of the side in
+  service, or "bypass open", or "none fitted") and an *Oil conditioner* row.
 - **Power module screen** (any section): a *Turbine auxiliaries* card with the oil pressure, temperature, level, film and oil filter, bearing
   temperature, shaft vibration, rotor temperature and bow, turning gear state and its supply, winding temperature, stator flow and
   hydrogen pressure, and the **Turning gear** button on the generator.
@@ -357,7 +460,7 @@ bakes them (`--check` verifies); `python tools-make-turbine-aux-assets.py` makes
 
 ## Tests
 
-Core `TurbineAuxTest` (14 tests; 13 and 14 are the filter). GameTests `bwraux` (18 tests) (`TurbineAuxTests`, `TurbineAuxCcChecks`): the shaft pump makes oil only with
+Core `TurbineAuxTest` (16 tests; 13 and 14 are the filter, 15 and 16 the conditioner: 204 h with both, the factors multiply, back to the filter-only rate without power). GameTests `bwraux` (18 tests) (`TurbineAuxTests`, `TurbineAuxCcChecks`): the shaft pump makes oil only with
 speed; start-up needs the AC pump; no oil while rolling wrecks the bearings, and oil does not; the DC pump holds the oil on loss of
 AC power; the cooler and the oil's leak and the drums; a hot shaft bows without the gear and the gear recovers it; a bowed
 roll-up shakes and damages; the gear switch engages only at low speed (screen, signal, CC); an unpowered cooling skid lets the
@@ -377,5 +480,12 @@ train it needs no pipe; a tank bolted on the train and not piped feeds every sec
 that is then piped feeds only the sections its header reaches; a header reaching every section feeds every bearing; a train never
 piped runs to the bit as before and saves no new key; oil pipes never join water or steam pipes (arms, rules and surveys); a survey is
 kept while nothing changes and redone when a block on its run does; a run across an unloaded chunk is not connected and nothing is loaded.
+`OilConditioningTests` (11 more in `bwroil`, plus a recipe test in `bwrmektier`; `OilConditioningCcChecks` is the computer faces): only the side in
+service filters and loads; the side out of service is changed while the plant runs with the oil never going round, and the cartridge in service
+cannot be taken out (menu slots and shift-click); the transfer valve by hand, redstone, signals and CC; an old housing's cartridge loads into
+side A and keys are written only when set; hoppers fill an empty slot of either side and take nothing out; the block state shows the lever and
+the open lid; a running conditioner bolted on leaves 30 % (the conditioned law to the bit each tick, with the filter too 3 %, back to the
+filter-only rate with no FE or stopped, drawing its FE); piped to the tank's suction and fill it does the same and a shut valve in its suction run
+cuts it off; a 20,000 L tank with both lasts 190 to 220 h at 25 psig; signals, the six computer faces and the saves; the ports and recipes.
 The pipe shots (`-PbwrPipeShots`) check the oil fixtures on the client: a flange at each turbine port and none between pipes,
-brown paint, and that the valve's open and shut states reach the client and draw differently.
+brown paint, that the valve's open and shut states reach the client and draw differently, that the duplex housing's four states (lever at A or B, lid shut or open) all draw differently and show what the server set, and that the conditioner's pipes join it to the tank.

@@ -15,6 +15,20 @@
   wool; with Mekanism steel, paper and an HDPE sheet). A tank with no housing behaves exactly as before, and a housing saves a key only
   when it holds a cartridge. Core `TurbineAuxTest` 13 and 14; GameTests `OilFilterTests`.
 
+- **A duplex Oil Filter Housing and the Lube Oil Conditioner** (TURBINE-AUX.md, *The duplex filter* and *Oil cleanup*). Plants change a filter
+  with the plant running, and keep oil in service for far longer than a filter alone can with a side-stream cleanup plant. The **Oil Filter
+  Housing is now duplex**: sides **A and B**, one cartridge each, and a **transfer valve** (a lever on the changeover valve, a green band on the
+  canister in service, the lid of the other standing open when its slot is empty) that picks the side in service. Only that side filters and
+  loads; the other can be opened and changed with the turbine running and the oil never going round. A cartridge cannot be taken out of the side
+  in service (the canister is under pressure: throw the valve first). Thrown by hand (click the top, or the screen's button), by redstone
+  (power selects B), by signals and by CC; hoppers fill an empty slot of either side and take nothing out. Old saves load their one cartridge
+  into side A with A in service; new keys only when set. The new **Lube Oil Conditioner** (a centrifuge and a vacuum dehydrator skid, Blender
+  model) bolts on a Main Oil Tank or is piped to its suction outlet and fill connection, runs on 11 kW of FE, and when running leaves **30 %**
+  of the oil's degradation; with a clean cartridge too, **a full 20,000 L tank at rated speed lasts about one refuelling cycle, 8.5 days
+  (204 h of running at 20 TPS, the mod's convention for long laws)**, so oil is topped up at refuelling outages; without power or flow it is the
+  filter-only rate again. No consumable. Screen, signals, CC `bwr_lube_oil_conditioner`, recipes in both installs. Core `TurbineAuxTest` 15
+  and 16; GameTests `OilConditioningTests` (namespace `bwroil`).
+
 - **Lube oil piping: the Lube Oil Pipe, the Lube Oil Valve and oil ports on all the oil equipment** (TURBINE-AUX.md, *Lube oil piping*; PIPES.md;
   SIGNALS.md). A **Lube Oil Pipe** (small bore, **brown**, flanged; the `oil` model set that was waiting in `art/models/pipes/`) is a network of
   its own: it joins lube oil pipes, valves, filter housings and the oil ports below, and never a water or steam pipe. The **Main Oil Tank** has

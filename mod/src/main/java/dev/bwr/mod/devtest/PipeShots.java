@@ -97,11 +97,11 @@ public final class PipeShots {
             new View("oil-valve-shut-close-up", new Vec3(218.5, 120.9, 210.5), new Vec3(.25, .75, .7), 2.6),
             new View("oil-water-steam-straights", new Vec3(244.5, 121.5, 200.0), new Vec3(-.55, .42, 1), 6.5),
             // The duplex filter (TURBINE-AUX.md): A in service with B open for a change, the lever at B, and the conditioner piped to the tank.
-            new View("oil-filter-duplex-a-in-service-b-open", new Vec3(212.5, 120.9, 214.5), new Vec3(.35, .75, 1), 3.2),
-            new View("oil-filter-duplex-lever-at-b", new Vec3(217.5, 120.9, 214.5), new Vec3(.35, .75, 1), 3.2),
-            new View("oil-filter-duplex-both", new Vec3(215.0, 120.9, 214.5), new Vec3(0, .6, 1), 6),
-            new View("oil-conditioner-piped-to-tank", new Vec3(188.0, 115.2, 203.5), new Vec3(.1, .2, 1), 9.5),
-            new View("oil-conditioner-close", new Vec3(189.5, 114.8, 207.5), new Vec3(.2, .35, 1), 4.2),
+            new View("oil-filter-duplex-a-in-service-b-open", new Vec3(212.5, 120.5, 214.5), new Vec3(.3, .8, 1), 1.9),
+            new View("oil-filter-duplex-lever-at-b", new Vec3(217.5, 120.5, 214.5), new Vec3(.3, .8, 1), 1.9),
+            new View("oil-filter-duplex-both", new Vec3(215.0, 120.6, 214.5), new Vec3(0, .6, 1), 4.2),
+            new View("oil-conditioner-piped-to-tank", new Vec3(188.0, 115.4, 203.5), new Vec3(.05, .12, 1), 12.5),
+            new View("oil-conditioner-close", new Vec3(189.5, 114.7, 207.5), new Vec3(.2, .05, 1), 3.4),
     };
     private static boolean started, built, requested;
     private static int age, joined, stage, shown;
@@ -273,10 +273,10 @@ public final class PipeShots {
             throw new IllegalStateException("The second duplex housing should show the lever at B with both lids shut: " + duplexB);
         var seen = new java.util.HashSet<Integer>();
         for (boolean sideB : new boolean[] {false, true})
-            for (boolean open : new boolean[] {false, true}) {
-                var st = duplexA.setValue(TurbineAuxBlock.SIDE_B, sideB).setValue(TurbineAuxBlock.OFF_OPEN, open);
+            for (boolean lidOpen : new boolean[] {false, true}) {
+                var st = duplexA.setValue(TurbineAuxBlock.SIDE_B, sideB).setValue(TurbineAuxBlock.OFF_OPEN, lidOpen);
                 var quads = mc.getBlockRenderer().getBlockModel(st).getQuads(st, null, net.minecraft.util.RandomSource.create(0), net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
-                if (quads.isEmpty() || !seen.add(quadHash(quads))) throw new IllegalStateException("A duplex housing state draws like another (or nothing): side_b=" + sideB + " off_open=" + open);
+                if (quads.isEmpty() || !seen.add(quadHash(quads))) throw new IllegalStateException("A duplex housing state draws like another (or nothing): side_b=" + sideB + " off_open=" + lidOpen);
             }
         var randomSource = net.minecraft.util.RandomSource.create(0);
         var openQuads = mc.getBlockRenderer().getBlockModel(open).getQuads(open, null, randomSource, net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);

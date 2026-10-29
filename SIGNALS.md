@@ -727,7 +727,11 @@ Main Oil Tank: `attached` (bolted on a train), `discharge_piped` (its discharge 
 `oil_temp` (degC), `oil_pressure` (psig), `oil_film`, `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `ac_fe`, `dc_fe` (FE),
 `filter_housing` (an Oil Filter Housing is bolted on it), `filter_life` (fraction), `filter_dp` (psi), `filter_bypass` (the last three "no signal" without a housing);
 commands `ac_pump`, `dc_pump` (BOOLEAN). Shaft-Driven Main Oil Pump: `attached`, `suction_piped`, `discharge_piped`, `delivery` (fraction); no commands. Oil Filter Housing (CC `bwr_oil_filter`, read-only, no commands):
-`attached` (against a Main Oil Tank), `cartridge`, `filter_life` (fraction), `filter_dp` (psi), `filter_bypass`, `change_due`. Generator
+`attached` (serves a Main Oil Tank, bolted on or in-line), `selected_side` (the transfer valve: 0 side A, 1 side B; also a LEVEL command 0 or 1),
+`a_cartridge`, `a_life`, `a_dp`, `a_change_due` and `b_cartridge`, `b_life`, `b_dp`, `b_change_due` (each side), and, for the side in service,
+`cartridge`, `filter_life` (fraction), `filter_dp` (psi), `filter_bypass`, `change_due`. Lube Oil Conditioner (CC `bwr_lube_oil_conditioner`):
+`attached`, `on` (switch, and a BOOLEAN command), `running`, `fe`, `degradation_factor` (1 stopped, 0.30 running). Tank: `conditioner` (one serves it),
+`conditioner_running` (no signal without one). Power modules: `oil_conditioner_running` (no signal without one). Generator
 Cooling Skid: `attached`, `stator_pumps` (switch), `stator_running`, `stator_flow`, `h2_pressure` (psig), `h2_kg` (kg), `coolant_temp`,
 `winding_temp` (degC), `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `supply_fe` (FE); command `stator_pumps` (BOOLEAN).
 

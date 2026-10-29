@@ -104,15 +104,16 @@
       ]
     },
     {
-      "title": "Oil filter",
+      "title": "Oil filter and conditioner",
       "text": [
-        "A pumped Main Oil Tank loses about 0.9 L/s of oil: a 1,000 L drum lasts 18 minutes. Bolt an Oil Filter Housing straight against the tank and put an Oil Filter Cartridge in its slot, and the tank loses a tenth of that: a drum lasts three hours.",
+        "A pumped Main Oil Tank loses about 0.9 L/s of oil. The Oil Filter Housing is a duplex filter: sides A and B, one Oil Filter Cartridge each. A clean cartridge in service cuts the loss to a tenth; click the top to throw the transfer lever and change the other side while the plant runs.",
         "",
-        "The cartridge loads up with use, faster with hot oil, and lasts about six hours. At 12 psid across it a change is due; when it is full, or the slot is empty, the oil goes round it and is lost at the old rate. Taking a cartridge out gives back a used one; nothing cleans it."
+        "A Lube Oil Conditioner (a centrifuge and a vacuum dehydrator, on FE) cuts the degradation to 30 %. With both, a 20,000 L tank lasts about one refuelling cycle, 8.5 days: top it up at the outage."
       ],
       "icons": [
         "bwr:oil_filter_housing",
-        "bwr:oil_filter_cartridge"
+        "bwr:oil_filter_cartridge",
+        "bwr:lube_oil_conditioner"
       ]
     },
     {
