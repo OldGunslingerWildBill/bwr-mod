@@ -11,17 +11,17 @@
     "S": {
       "item": "minecraft:smooth_stone"
     },
-    "I": {
-      "tag": "c:ingots/steel"
+    "B": {
+      "tag": "c:storage_blocks/steel"
     },
     "T": {
       "item": "bwr:pressurised_tube"
     }
   },
   "pattern": [
-    "SIS",
-    "ITI",
-    "SIS"
+    "SBS",
+    "BTB",
+    "SBS"
   ],
   "result": {
     "count": 1,

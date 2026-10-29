@@ -16,7 +16,7 @@
       "text": [
         "A working plant is ten steps, in this order: vessel and core, control rod drives, recirculation, fuel, steam, water, generator and load, a startup by hand, protection, and a control room.",
         "",
-        "All plant blocks have crafting recipes. Only items the plant itself produces do not. Find them in the Realistic BWR creative tab or a recipe viewer. With Mekanism the recipes use its steel, circuits and plastic.",
+        "Plant blocks have crafting recipes, except the control-room parts, which a Fabrication Desk makes. Find them in the creative tab or a recipe viewer. With Mekanism the recipes use its steel, circuits and plastic.",
         "",
         "A vessel that fails its structure check says why in chat. Read the message and fix what it names. Turbines, towers and the vessel all have large footprints, so build big and leave room."
       ]

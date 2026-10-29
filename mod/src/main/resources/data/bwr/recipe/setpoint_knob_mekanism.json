@@ -1,0 +1,28 @@
+{
+  "type": "bwr:fabrication",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "switches",
+  "ingredients": [
+    {
+      "tag": "c:ingots/steel",
+      "count": 6
+    },
+    {
+      "tag": "c:circuits/basic",
+      "count": 1
+    },
+    {
+      "item": "minecraft:black_dye",
+      "count": 1
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:setpoint_knob"
+  }
+}

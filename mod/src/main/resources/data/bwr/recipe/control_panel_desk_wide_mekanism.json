@@ -1,0 +1,24 @@
+{
+  "type": "bwr:fabrication",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "furniture",
+  "ingredients": [
+    {
+      "tag": "c:ingots/steel",
+      "count": 2
+    },
+    {
+      "item": "bwr:control_panel_desk",
+      "count": 2
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:control_panel_desk_wide"
+  }
+}

@@ -72,7 +72,9 @@ iron ingots, two desks. Round end and corner desk: one operator desk and an iron
 operator desks and two iron ingots. Mimic band: a vertical control panel and bone meal (cream) or black dye. Wall display: iron
 ingots around one black stained glass pane (2 x 2); the 3 x 2 is a 2 x 2 display between two panes, under three ingots. Control
 stand: a glass pane over a vertical control panel over an iron ingot. The full table, with costs, is in CONTROL-PANELS.md,
-"Control-room recipes".
+"Control-room recipes". Since alpha.59 the cabinets, operator and supervisor desks, the stand and the wall displays (and the panel
+parts they are made of) are not crafted in the grid: they are made at the Fabrication Desk from the same materials in the same
+counts (FABRICATION-DESK.md), and with Mekanism from steel, with every steel count doubled.
 
 ## How it is built
 

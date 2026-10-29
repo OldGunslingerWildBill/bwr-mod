@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "redstone",
+  "key": {
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "R": {
+      "tag": "c:circuits/advanced"
+    }
+  },
+  "pattern": [
+    "ICI",
+    "GRG",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:area_radiation_monitor"
+  }
+}

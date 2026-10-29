@@ -1,1 +1,1 @@
-{"type": "minecraft:crafting_shaped", "category": "redstone", "pattern": [" I ", "IRI", " I "], "key": {"I": {"item": "minecraft:iron_ingot"}, "R": {"item": "minecraft:redstone"}}, "result": {"id": "bwr:rotary_selector", "count": 1}}
+{"type": "bwr:fabrication", "neoforge:conditions": [{"type": "neoforge:not", "value": {"type": "neoforge:mod_loaded", "modid": "mekanism"}}], "category": "switches", "ingredients": [{"item": "minecraft:iron_ingot", "count": 4}, {"item": "minecraft:redstone", "count": 1}], "result": {"id": "bwr:rotary_selector", "count": 1}}

@@ -418,9 +418,13 @@ a 12 x 12 gauge does not). The cells that are not on the top (rows 6 to 15, the 
 Every panel, trim and furniture recipe, with its cost in **iron ingots per item made** (a vertical board V is 2 ingots and a
 quarter of a lime dye; a nugget counts a ninth; glass and dyes are listed apart). Cost grows with the piece: a bench or console
 board is three vertical boards, a 1 m desk a console plus a board plus a frame ingot, a 2 m desk two desks plus a bar, the
-six-block duplex column a bench, two boards, a header strip and a slab ingot. None uses Mekanism, so they are the same with
-and without it. `tools-audit-recipes.py` fails on two recipes with the same ingredient pattern and on circular dependencies;
-`ControlRoomRecipeTests` crafts each desk and each of these pieces through the recipe manager.
+six-block duplex column a bench, two boards, a header strip and a slab ingot. **The pieces with iron in their recipe (the vertical
+board, the console, the desks, the corners, plinths, header canopy and vent, the end cap, the duplex, the cabinets, the stand and the
+wall displays) are made at the Fabrication Desk, not in the grid** (FABRICATION-DESK.md): the table below is their cost without
+Mekanism, now a list of materials at the desk, and FABRICATION-DESK.md has their cost with Mekanism too. The back, the benchboard, the
+flat, bench and console end caps, the header strip, the inside corners and the mimic bands are still grid recipes and the same
+with and without Mekanism. `tools-audit-recipes.py` fails on two recipes with the same ingredient pattern and on circular
+dependencies; `ControlRoomRecipeTests` checks each desk and each of these pieces through the recipe manager.
 
 | Item | Recipe | Makes | Iron |
 |---|---|---|---|

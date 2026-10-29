@@ -8,15 +8,18 @@
   ],
   "category": "building",
   "key": {
-    "I": {
-      "tag": "c:ingots/steel"
+    "B": {
+      "tag": "c:storage_blocks/steel"
     },
     "G": {
       "item": "minecraft:gray_concrete"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
     }
   },
   "pattern": [
-    "I I",
+    "B B",
     "GGG",
     "I I"
   ],

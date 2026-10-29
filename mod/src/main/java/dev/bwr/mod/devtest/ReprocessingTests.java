@@ -467,6 +467,10 @@ public final class ReprocessingTests {
         h.succeed();
     }
 
+    private static net.minecraft.world.item.Item mekanismItem(String path) {
+        return BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("mekanism", path));
+    }
+
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void theItemsAndTheRecipesAreRegisteredAndNeedNoOtherMod(GameTestHelper h) {
         for (String name : new String[] {"plutonium_nugget", "plutonium_ingot", "fission_product_waste", "reprocessing_plant"}) {
@@ -479,17 +483,20 @@ public final class ReprocessingTests {
         h.assertTrue(new ItemStack(BwrItems.FISSION_PRODUCT_WASTE.get()).getMaxStackSize() == 64 && new ItemStack(BwrItems.PLUTONIUM_NUGGET.get()).getMaxStackSize() == 64, "stack sizes");
 
         var manager = h.getLevel().getServer().getRecipeManager();
-        var plantRecipe = manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", "reprocessing_plant"));
-        h.assertTrue(plantRecipe.isPresent(), "no recipe bwr:reprocessing_plant (it must not depend on a mod)");
+        // With Mekanism the plant has its Mekanism recipe (refined obsidian, steel, an advanced circuit; MEKANISM-RECIPES.md); without it, the vanilla one below
+        boolean mek = net.neoforged.fml.ModList.get().isLoaded("mekanism");
+        var plantRecipe = manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", mek ? "reprocessing_plant_mekanism" : "reprocessing_plant"));
+        h.assertTrue(plantRecipe.isPresent(), mek ? "no recipe bwr:reprocessing_plant_mekanism" : "no recipe bwr:reprocessing_plant (it must not depend on a mod)");
         var recipe = (CraftingRecipe) plantRecipe.get().value();
         h.assertTrue(recipe.getResultItem(h.getLevel().registryAccess()).is(BwrItems.REPROCESSING_PLANT.get()), "the recipe does not make the plant");
         // obsidian, a reactor vessel, hoppers, a blast furnace and iron: only vanilla items and our own vessel
         var grid = net.minecraft.core.NonNullList.withSize(9, ItemStack.EMPTY);
-        ItemStack obsidian = new ItemStack(Items.OBSIDIAN);
+        ItemStack obsidian = new ItemStack(mek ? mekanismItem("ingot_refined_obsidian") : Items.OBSIDIAN);
         ItemStack vessel = new ItemStack(BwrItems.REACTOR_VESSEL.get());
         ItemStack hopper = new ItemStack(Items.HOPPER);
         ItemStack furnace = new ItemStack(Items.BLAST_FURNACE);
-        ItemStack iron = new ItemStack(Items.IRON_INGOT);
+        ItemStack iron = new ItemStack(mek ? mekanismItem("block_steel") : Items.IRON_INGOT);
+        ItemStack middle = mek ? new ItemStack(mekanismItem("advanced_control_circuit")) : iron.copy();
         grid.set(0, obsidian);
         grid.set(1, vessel);
         grid.set(2, obsidian.copy());
@@ -497,11 +504,13 @@ public final class ReprocessingTests {
         grid.set(4, furnace);
         grid.set(5, hopper.copy());
         grid.set(6, iron);
-        grid.set(7, iron.copy());
+        grid.set(7, middle);
         grid.set(8, iron.copy());
-        h.assertTrue(recipe.matches(CraftingInput.of(3, 3, grid), h.getLevel()), "obsidian, a vessel, two hoppers, a blast furnace and iron did not craft it");
+        h.assertTrue(recipe.matches(CraftingInput.of(3, 3, grid), h.getLevel()), mek
+                ? "refined obsidian, a vessel, two hoppers, a blast furnace, steel blocks and an advanced circuit did not craft it"
+                : "obsidian, a vessel, two hoppers, a blast furnace and iron did not craft it");
         grid.set(8, ItemStack.EMPTY);
-        h.assertTrue(!recipe.matches(CraftingInput.of(3, 3, grid), h.getLevel()), "two iron ingots crafted it");
+        h.assertTrue(!recipe.matches(CraftingInput.of(3, 3, grid), h.getLevel()), mek ? "a steel block and a circuit crafted it" : "two iron ingots crafted it");
 
         for (String[] pair : new String[][] {{"plutonium_ingot", "9"}, {"plutonium_nugget", "1"}}) {
             var holder = manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", pair[0]));

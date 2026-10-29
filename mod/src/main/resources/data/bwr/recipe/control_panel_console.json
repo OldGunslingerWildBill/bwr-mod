@@ -1,1 +1,1 @@
-{"type": "minecraft:crafting_shaped", "category": "building", "pattern": ["VV", "II"], "key": {"V": {"item": "bwr:control_panel_vertical"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"id": "bwr:control_panel_console", "count": 1}}
+{"type": "bwr:fabrication", "neoforge:conditions": [{"type": "neoforge:not", "value": {"type": "neoforge:mod_loaded", "modid": "mekanism"}}], "category": "panels", "ingredients": [{"item": "minecraft:iron_ingot", "count": 2}, {"item": "bwr:control_panel_vertical", "count": 2}], "result": {"id": "bwr:control_panel_console", "count": 1}}

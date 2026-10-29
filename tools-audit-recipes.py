@@ -23,6 +23,10 @@ Checks:
      and its vanilla twin are never live together, so they never collide), and with Mekanism loaded also against Mekanism's
      own crafting recipes in its pinned jar; every `*_mekanism.json` has a vanilla twin that is live without Mekanism only,
      and a Mekanism recipe that names no Mekanism item or tag is reported; the reaction-chamber recipe is checked for its fields.
+  6. the fabrication desk's recipes (`bwr:fabrication`, FABRICATION-DESK.md): well formed (a known category, one to five
+     ingredients that are each an item or a tag with a count of 1 to 64, none named twice, a result with a count), a recipe that is
+     live without Mekanism names no Mekanism item or tag, and in each install exactly one recipe makes each item the desk makes (no
+     second desk recipe, no grid recipe).
 
 The complement of tools-audit-assets.py, which checks recipes block by block:
 this one also covers the plain items and says, for each item with no recipe,
@@ -371,12 +375,64 @@ for name, r in recipes.items():
         bad(f"{name}: a Mekanism-tier recipe must be loaded with Mekanism and without it never")
     if live(recipes[twin], {"mekanism"}, twin) or not live(recipes[twin], set(), twin):
         bad(f"{twin}: the vanilla twin of {name} must be loaded without Mekanism and with it never")
-    if r.get("result") != recipes[twin].get("result") and name != "turbine_oil_drum_mekanism.json":
+    # the same item; the count may differ (a heavier Mekanism vessel makes two blocks where the vanilla one makes four)
+    if r.get("result", {}).get("id") != recipes[twin].get("result", {}).get("id"):
         bad(f"{name}: makes {r.get('result')} but its vanilla twin makes {recipes[twin].get('result')}")
     named = [ref for ing in (list((r.get("key") or {}).values()) + list(r.get("ingredients") or [])) for ref in ingredient_ids(ing)]
     if not any(ref.startswith("mekanism:") or ref in MEKANISM_TAGS
                or ref.startswith("c:circuits/") or ref.startswith("c:alloys/") for ref in named):
         bad(f"{name}: names no Mekanism item or tag")
+
+# ---- 4c. the fabrication desk's recipes -------------------------------------------------------------------------------
+FAB_CATEGORIES = set(re.findall(r'\("([a-z_]+)"\)', read("fabrication/FabricationCategory.java")))
+if not FAB_CATEGORIES:
+    bad("could not read the desk's categories from FabricationCategory.java")
+fab_live = {mode: 0 for mode in INSTALLS}
+for name, r in sorted(recipes.items()):
+    if r.get("type") != "bwr:fabrication":
+        continue
+    if r.get("category") not in FAB_CATEGORIES:
+        bad(f"{name}: category {r.get('category')!r} is not one of {sorted(FAB_CATEGORIES)}")
+    ings = r.get("ingredients")
+    if not (isinstance(ings, list) and 1 <= len(ings) <= 5):
+        bad(f"{name}: a desk recipe has one to five ingredients (the screen lists five), not {ings!r}")
+        continue
+    seen = set()
+    for ing in ings:
+        names = [k for k in ("item", "tag") if isinstance(ing, dict) and isinstance(ing.get(k), str)]
+        if len(names) != 1:
+            bad(f"{name}: an ingredient must be an item or a tag: {json.dumps(ing)}")
+            continue
+        count = ing.get("count", 1)
+        if not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= 64:
+            bad(f"{name}: ingredient count {count!r} is not 1 to 64")
+        key = (names[0], ing[names[0]])
+        if key in seen:
+            bad(f"{name}: {ing[names[0]]} is named twice")
+        seen.add(key)
+    res = r.get("result")
+    if not (isinstance(res, dict) and isinstance(res.get("count", 1), int) and 1 <= res.get("count", 1) <= 64):
+        bad(f"{name}: a desk recipe needs a result with a count of 1 to 64")
+    for mode, loaded in INSTALLS.items():
+        if not live(r, loaded, name):
+            continue
+        fab_live[mode] += 1
+        if not loaded:
+            for ref in ingredient_ids(ings):
+                if ref.startswith("mekanism:") or ref in MEKANISM_TAGS or ref.startswith("c:circuits/") or ref.startswith("c:alloys/"):
+                    bad(f"{name}: live without Mekanism but names {ref}")
+for mode, loaded in INSTALLS.items():
+    makers = {}
+    for name, r in recipes.items():
+        res = r.get("result")
+        if isinstance(res, dict) and r.get("type") in ("bwr:fabrication", "minecraft:crafting_shaped", "minecraft:crafting_shapeless") \
+                and live(r, loaded, name):
+            makers.setdefault(res.get("id"), []).append(name)
+    for item, names in sorted(makers.items()):
+        if len(names) > 1 and any(recipes[n].get("type") == "bwr:fabrication" for n in names):
+            bad(f"{item} is made by {len(names)} recipes {sorted(names)} ({mode}): a desk part has one recipe and no grid recipe")
+if len(set(fab_live.values())) != 1:
+    bad(f"the desk recipe count differs between the installs: {fab_live}")
 
 # ---- 5. circular dependencies among bwr items ----------------------------------------------------------------
 deps = {}
@@ -388,7 +444,7 @@ for name, r in recipes.items():
     out = res["id"][4:]
     if r.get("type") == "minecraft:crafting_shaped" and isinstance(r.get("key"), dict):
         ings = list(r["key"].values())
-    elif r.get("type") == "minecraft:crafting_shapeless" and isinstance(r.get("ingredients"), list):
+    elif r.get("type") in ("minecraft:crafting_shapeless", "bwr:fabrication") and isinstance(r.get("ingredients"), list):
         ings = r["ingredients"]
     else:
         continue

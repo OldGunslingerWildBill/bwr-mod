@@ -1,0 +1,28 @@
+{
+  "type": "bwr:fabrication",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "gauges",
+  "ingredients": [
+    {
+      "tag": "c:ingots/steel",
+      "count": 6
+    },
+    {
+      "item": "minecraft:glass_pane",
+      "count": 2
+    },
+    {
+      "tag": "c:circuits/basic",
+      "count": 1
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:edgewise_gauge_horizontal"
+  }
+}

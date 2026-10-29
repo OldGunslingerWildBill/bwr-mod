@@ -1,0 +1,28 @@
+{
+  "type": "bwr:fabrication",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "furniture",
+  "ingredients": [
+    {
+      "tag": "c:ingots/steel",
+      "count": 2
+    },
+    {
+      "item": "minecraft:glass_pane",
+      "count": 1
+    },
+    {
+      "item": "bwr:control_panel_vertical",
+      "count": 1
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:control_stand"
+  }
+}

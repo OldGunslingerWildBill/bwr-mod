@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "C": {
+      "tag": "c:ingots/bronze"
+    },
+    "R": {
+      "tag": "c:circuits/basic"
+    },
+    "I": {
+      "tag": "c:ingots/steel"
+    }
+  },
+  "pattern": [
+    "ICI",
+    "RHR",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:rtg"
+  }
+}

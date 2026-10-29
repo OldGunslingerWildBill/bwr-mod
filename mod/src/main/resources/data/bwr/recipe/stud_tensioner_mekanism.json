@@ -8,6 +8,9 @@
   ],
   "category": "building",
   "key": {
+    "B": {
+      "tag": "c:storage_blocks/steel"
+    },
     "I": {
       "tag": "c:ingots/steel"
     },
@@ -19,7 +22,7 @@
     }
   },
   "pattern": [
-    "III",
+    "BBB",
     "IPI",
     "IRI"
   ],

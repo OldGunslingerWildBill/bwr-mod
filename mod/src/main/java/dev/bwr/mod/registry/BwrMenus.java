@@ -118,4 +118,7 @@ public final class BwrMenus {
             MENUS.register("condenser", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.CondenserMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.CoolingMenu>> COOLING =
             MENUS.register("cooling", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.CoolingMenu::new));
+    /** The fabrication desk: pick a control-room part, see its materials with the player's counts, make it. */
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.bwr.mod.gui.FabricationDeskMenu>> FABRICATION_DESK =
+            MENUS.register("fabrication_desk", () -> IMenuTypeExtension.create(dev.bwr.mod.gui.FabricationDeskMenu::new));
 }

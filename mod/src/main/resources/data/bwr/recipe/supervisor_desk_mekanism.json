@@ -1,0 +1,24 @@
+{
+  "type": "bwr:fabrication",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "furniture",
+  "ingredients": [
+    {
+      "tag": "c:ingots/steel",
+      "count": 4
+    },
+    {
+      "item": "bwr:operator_desk",
+      "count": 2
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:supervisor_desk"
+  }
+}

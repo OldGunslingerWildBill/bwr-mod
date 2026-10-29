@@ -348,7 +348,7 @@ public final class MimicTapeTests {
 
     @GameTest(template = "empty")
     public static void tapeIsRegisteredWithItsRecipeComponentsAndDefaults(GameTestHelper helper) {
-        var recipe = helper.getLevel().getRecipeManager().byKey(ResourceLocation.fromNamespaceAndPath("bwr", "mimic_tape"));
+        var recipe = helper.getLevel().getRecipeManager().byKey(ResourceLocation.fromNamespaceAndPath("bwr", "mimic_tape" + (net.neoforged.fml.ModList.get().isLoaded("mekanism") ? "_mekanism" : "")));
         check(helper, recipe.isPresent(), "the mimic tape recipe is missing");
         var result = recipe.get().value().getResultItem(helper.getLevel().registryAccess());
         check(helper, result.is(BwrItems.MIMIC_TAPE.get()) && result.getCount() >= 1 && result.getCount() <= result.getMaxStackSize(),

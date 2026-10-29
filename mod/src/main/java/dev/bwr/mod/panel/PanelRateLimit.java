@@ -29,7 +29,9 @@ public final class PanelRateLimit {
         /** A configure ends in a full panel sync to every watcher. */
         CONFIGURE(10, 0.2),
         /** A press, turn or release; a held control re-sends about once a tick, a drag a little more. */
-        OPERATE(200, 4.0);
+        OPERATE(200, 4.0),
+        /** A craft request at the fabrication desk (FABRICATION-DESK.md); a shift-click makes up to eight crafts in one. */
+        FABRICATE(10, 0.5);
 
         final int burst;
         final double perTick;

@@ -2,6 +2,7 @@
   "title": "The control room",
   "docs": [
     "CONTROL-PANELS.md",
+    "FABRICATION-DESK.md",
     "ROOM-FURNITURE.md",
     "PLANT-COMPUTER.md",
     "SIGNALS.md",
@@ -23,6 +24,20 @@
         "bwr:control_panel_desk",
         "bwr:control_panel_desk_wide",
         "bwr:board_blueprint"
+      ]
+    },
+    {
+      "title": "The fabrication desk",
+      "text": [
+        "The panel bodies, trim, desks, cabinets and wall displays, and the gauges, switches, lamps, annunciators and segment displays, are made at a Fabrication Desk, not in the crafting grid. Craft the desk, place it and right-click it.",
+        "",
+        "Pick a tab and a part. The screen shows what it makes and its materials with what you carry: green when you have enough, red when you are short. Craft makes one; Shift-click makes up to eight. What does not fit in your inventory drops at your feet. With Mekanism the materials are steel, circuits and plastic, and steel costs more."
+      ],
+      "icons": [
+        "bwr:fabrication_desk",
+        "bwr:control_panel_vertical",
+        "bwr:dial_gauge",
+        "bwr:toggle_switch"
       ]
     },
     {

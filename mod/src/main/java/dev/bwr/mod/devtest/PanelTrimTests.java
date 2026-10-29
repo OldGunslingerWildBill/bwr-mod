@@ -174,8 +174,11 @@ public final class PanelTrimTests {
             helper.assertTrue(BuiltInRegistries.ITEM.getKey(block.asItem()).getPath().equals(piece.registryName()),
                     piece + " item has another id");
             helper.assertTrue(BwrItems.TAB.get().contains(new ItemStack(block.asItem())), piece + " is not in the creative tab");
+            // a grid recipe, or (the trim the fabrication desk makes) the desk's recipe for it: FABRICATION-DESK.md
             helper.assertTrue(helper.getLevel().getServer().getRecipeManager().getAllRecipesFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING)
-                            .stream().anyMatch(r -> r.value().getResultItem(helper.getLevel().registryAccess()).is(block.asItem())),
+                            .stream().anyMatch(r -> r.value().getResultItem(helper.getLevel().registryAccess()).is(block.asItem()))
+                            || !dev.bwr.mod.fabrication.FabricationCrafting.making(helper.getLevel().getServer().getRecipeManager(),
+                                    helper.getLevel().registryAccess(), block.asItem()).isEmpty(),
                     piece + " has no crafting recipe");
             // the loot table gives back exactly the block's own item, for every state
             for (BlockState each : block.getStateDefinition().getPossibleStates()) {

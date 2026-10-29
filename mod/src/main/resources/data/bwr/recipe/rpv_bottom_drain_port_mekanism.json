@@ -8,20 +8,23 @@
   ],
   "category": "misc",
   "key": {
+    "B": {
+      "tag": "c:storage_blocks/steel"
+    },
     "I": {
       "tag": "c:ingots/steel"
     },
     "P": {
       "item": "bwr:high_pressure_water_pipe"
     },
-    "B": {
+    "s": {
       "item": "minecraft:iron_bars"
     }
   },
   "pattern": [
-    "III",
-    "PBP",
-    "III"
+    "BIB",
+    "PsP",
+    "BIB"
   ],
   "result": {
     "count": 1,

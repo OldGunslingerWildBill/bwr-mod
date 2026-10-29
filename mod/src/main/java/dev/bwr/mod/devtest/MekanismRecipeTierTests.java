@@ -70,14 +70,6 @@ public final class MekanismRecipeTierTests {
             "cobalt_charge", "cobalt_target", "doped_silicon_redstone", "ferrocerium_flint_and_steel", "hafnium_absorber",
             "lithium_charge", "neptunium_target", "radium_target", "silicon_target", "thorium_target", "thulium_target",
             "tritium_sample_light", "tritium_target", "uranium_target",
-            // HELD BACK, an existing test pins the vanilla recipe: RealScaleTests.craftedStacksStartAtRealSize loads the recipe of every panel component type by its
-            "annunciator", "bar_gauge", "bar_graph", "control_switch", "dial_gauge", "edgewise_gauge_horizontal",
-            "edgewise_gauge_vertical", "key_switch", "lamp", "push_turn_switch", "pushbutton", "rotary_selector", "rps_trip",
-            "setpoint_knob", "seven_segment_display", "sixteen_segment_display", "thumbwheel", "toggle_switch",
-            // HELD BACK, an existing test pins the vanilla recipe: RadiationToolsTests.theRecipesExist loads bwr:area_radiation_monitor by id, with Mekanism too
-            "area_radiation_monitor",
-            // HELD BACK, an existing test pins the vanilla recipe: LargeRtgTests.ingotAndBlockRecipesConserveMassAndTheDataAgrees loads bwr:cobalt_sample_detector b
-            "cobalt_sample_detector",
             // made only of parts that carry the Mekanism price (panel bodies, vessels, pool walls, pipes) plus dye, glass or a hopper; a price of its own would coun
             "control_panel_back", "control_panel_benchboard", "control_panel_corner_bench_inside",
             "control_panel_corner_vertical_inside", "control_panel_end_cap_bench", "control_panel_end_cap_console",
@@ -85,13 +77,6 @@ public final class MekanismRecipeTierTests {
             "recirculation_inlet", "recirculation_outlet", "rpv_steam_outlet", "spent_fuel_pool_cooling_in",
             "spent_fuel_pool_cooling_out", "spent_fuel_pool_makeup_port", "suppression_pool_drain", "suppression_pool_return",
             "suppression_pool_steam_inlet", "suppression_pool_suction", "turbine_steam_outlet",
-            // HELD BACK, an existing test pins the vanilla recipe: ControlRoomRecipeTests (also ControlDeskTests and RoomFurnitureTests) loads bwr:<name> by id, ass
-            "control_panel_console", "control_panel_corner_bench_chamfer", "control_panel_corner_bench_outside",
-            "control_panel_corner_vertical_chamfer", "control_panel_corner_vertical_outside", "control_panel_desk",
-            "control_panel_desk_wide", "control_panel_duplex", "control_panel_end_cap_round", "control_panel_header_canopy",
-            "control_panel_header_vent", "control_panel_plinth_apron", "control_panel_plinth_base", "control_panel_plinth_kick",
-            "control_panel_vertical", "control_stand", "operator_desk", "operator_desk_corner", "operator_desk_round",
-            "relay_cabinet", "relay_cabinet_plain", "supervisor_desk", "wall_display", "wall_display_wide",
             // scrap, not a build: it returns iron, and a steel return would turn the repair loop into a steel mine
             "damaged_lp_blade_section_scrap", "wrecked_lp_turbine_hood_scrap",
             // already built on Mekanism steel, uranium or netherite (a pair of recipes exists, or the recipe has no vanilla form to replace)
@@ -99,22 +84,6 @@ public final class MekanismRecipeTierTests {
             "shield_plug_concrete", "ultra_reinforced_shield_plug_concrete",
             // a book and a nameplate; the nameplate carries the steel
             "guide_book",
-            // HELD BACK, an existing test pins the vanilla recipe: RtgTests.recipesCraftTheBlocksAndTheAmBeRodFromACapsule loads bwr:isotope_separator by id, with M
-            "isotope_separator",
-            // HELD BACK, an existing test pins the vanilla recipe: LargeRtgTests.ingotAndBlockRecipesConserveMassAndTheDataAgrees crafts bwr:large_rtg by id from ir
-            "large_rtg",
-            // HELD BACK, an existing test pins the vanilla recipe: MimicTapeTests.tapeIsRegisteredWithItsRecipeComponentsAndDefaults loads bwr:mimic_tape by id, wit
-            "mimic_tape",
-            // HELD BACK, an existing test pins the vanilla recipe: PanelRecipeTests.panelKeyRecipeMakesOneUnstackableKey loads bwr:panel_key by id, with Mekanism to
-            "panel_key",
-            // HELD BACK, an existing test pins the vanilla recipe: PaperlessRecorderTests.theRecorderHasAnItemARecipeAndNamesForEveryPort loads bwr:paperless_record
-            "paperless_recorder",
-            // HELD BACK, an existing test pins the vanilla recipe: ReprocessingTests asserts bwr:reprocessing_plant 'must not depend on a mod' and crafts it from ob
-            "reprocessing_plant",
-            // HELD BACK, an existing test pins the vanilla recipe: RtgTests.recipesCraftTheBlocksAndTheAmBeRodFromACapsule loads bwr:rtg by id, with Mekanism too
-            "rtg",
-            // HELD BACK, an existing test pins the vanilla recipe: RadiationToolsTests.theRecipesExist loads bwr:survey_meter by id, with Mekanism too
-            "survey_meter",
             // a Mekanism chemical recipe, not a crafting recipe
             "tritium_sample_oxidizing");
     // END GENERATED EXEMPT LIST
@@ -127,13 +96,24 @@ public final class MekanismRecipeTierTests {
         return ModList.get().isLoaded("mekanism");
     }
 
-    /** The names with a Mekanism variant file (from the resource packs, whatever the conditions say). */
+    /**
+     * The names with a Mekanism variant file (from the resource packs, whatever the conditions say) that is a crafting recipe. The
+     * fabrication desk's recipes ({@code bwr:fabrication}, FABRICATION-DESK.md) come in the same pairs but are not grid recipes: the
+     * desk tests (namespace bwrfab) check them.
+     */
     private static Set<String> twinNames(GameTestHelper h) {
         Set<String> names = new TreeSet<>();
         var found = h.getLevel().getServer().getResourceManager().listResources("recipe",
                 id -> id.getNamespace().equals("bwr") && id.getPath().endsWith("_mekanism.json") && !id.getPath().endsWith("_no_mekanism.json"));
-        for (ResourceLocation id : found.keySet()) {
-            String path = id.getPath();
+        for (var entry : found.entrySet()) {
+            String path = entry.getKey().getPath();
+            try (var reader = entry.getValue().openAsReader()) {
+                if (com.google.gson.JsonParser.parseReader(reader).getAsJsonObject().get("type").getAsString().equals("bwr:fabrication")) {
+                    continue;
+                }
+            } catch (java.io.IOException e) {
+                throw new IllegalStateException(e);
+            }
             names.add(path.substring("recipe/".length(), path.length() - "_mekanism.json".length()));
         }
         return names;

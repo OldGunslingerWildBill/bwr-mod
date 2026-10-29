@@ -14,8 +14,8 @@
     "P": {
       "item": "minecraft:piston"
     },
-    "I": {
-      "tag": "c:ingots/steel"
+    "B": {
+      "tag": "c:storage_blocks/steel"
     },
     "R": {
       "tag": "c:circuits/elite"
@@ -23,7 +23,7 @@
   },
   "pattern": [
     "VPV",
-    "IRI",
+    "BRB",
     "VPV"
   ],
   "result": {

@@ -182,9 +182,16 @@ public final class RealScaleTests {
     @GameTest(template = "empty")
     public static void craftedStacksStartAtRealSize(GameTestHelper h) {
         for (ComponentType type : inScope()) {
-            var recipe = h.getLevel().getRecipeManager().byKey(ResourceLocation.fromNamespaceAndPath("bwr", type.id().getPath()));
-            h.assertTrue(recipe.isPresent(), type.id() + " has no recipe of its own name");
-            ItemStack result = recipe.get().value().getResultItem(h.getLevel().registryAccess());
+            // These parts are made at the fabrication desk, not in the grid, and the desk's recipe for each has a different id
+            // with and without Mekanism: look it up by what it makes.
+            List<dev.bwr.mod.fabrication.FabricationRecipe> recipes = new ArrayList<>();
+            for (var holder : h.getLevel().getRecipeManager().getAllRecipesFor(dev.bwr.mod.fabrication.FabricationRecipe.TYPE)) {
+                if (holder.value().getResultItem(h.getLevel().registryAccess()).is(type.item())) {
+                    recipes.add(holder.value());
+                }
+            }
+            h.assertTrue(recipes.size() == 1, type.id() + " has " + recipes.size() + " desk recipes, expected exactly one");
+            ItemStack result = recipes.get(0).getResultItem(h.getLevel().registryAccess());
             h.assertTrue(result.is(type.item()), type.id() + ": its recipe makes " + result);
             h.assertTrue(ComponentItem.footprint(result).equals(type.footprints().get(type.realDefaultIndex())),
                     type.id() + ": a crafted stack is " + ComponentItem.footprint(result) + ", not the real size");
