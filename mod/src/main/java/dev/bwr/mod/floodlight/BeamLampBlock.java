@@ -152,8 +152,28 @@ public abstract class BeamLampBlock extends BaseEntityBlock {
     /** Called by the block entity after a re-plan: keeps one scheduled tick pending while the lamp is lit. */
     void afterReconcile(ServerLevel level, BlockPos pos, BlockState state) {
         if (state.getValue(LIT) && !level.getBlockTicks().hasScheduledTick(pos, this)) {
-            level.scheduleTick(pos, this, nextTickDelay(state));
+            int stagger = 0;
+            if (level.getBlockEntity(pos) instanceof BeamLampBlockEntity lamp) {
+                stagger = refreshStagger(pos, lamp.reach());
+            }
+            level.scheduleTick(pos, this, nextTickDelay(state) + stagger);
         }
+    }
+
+    /** Longest stagger of a long-reach floodlight's refresh, ticks. */
+    public static final int STAGGER_TICKS = 40;
+
+    /**
+     * Ticks added to the refresh of a lamp that reaches farther than the usual 32 blocks: from its position, 0 to
+     * {@link #STAGGER_TICKS} - 1. A plan at 128 blocks costs about 12 ms; a yard of such lamps switched on together would
+     * otherwise all re-plan in the same tick, every five seconds. A lamp at its usual reach, and every other lamp, is not delayed.
+     */
+    public static int refreshStagger(BlockPos pos, int reach) {
+        if (reach <= BeamLampBlockEntity.REACH_DEFAULT) {
+            return 0;
+        }
+        long h = pos.asLong() * 0x9E3779B97F4A7C15L;
+        return (int) ((h >>> 40) % STAGGER_TICKS);
     }
 
     @Override

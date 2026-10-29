@@ -9,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -36,16 +37,28 @@ import java.util.Map;
  * <p>All world writes use {@code UPDATE_CLIENTS | UPDATE_KNOWN_SHAPE}: no neighbour shape updates, which would read (and so
  * load) the neighbours of a cell at the edge of the loaded area. Nothing here runs on a chunk unload, a save or a shutdown.
  *
- * <p>Saved as {@code Yaw} and {@code Pitch} when they are not the defaults, and {@code Lights} (positions) with
- * {@code LightKinds} when the list is not empty.
+ * <p>The floodlight's aim is kept in whole degrees: a yaw offset of 0 to 359 from the lamp's facing, a pitch of -75 to +30 and
+ * a reach of 8 to 128 blocks (32 unless set). It is saved as {@code YawDeg}, {@code PitchDeg} and {@code Reach} when they are
+ * not the defaults; a yaw on the old 45 degree grid and a pitch on the old 15 degree grid are also written as the old step keys
+ * {@code Yaw} and {@code Pitch}, so a save opened by an older build keeps its aim, and a save from an older build (step keys
+ * only) loads to the same aim. {@code Lights} (positions) is saved with {@code LightKinds} when the list is not empty.
+ *
+ * <p>A change of aim from a screen or a computer ({@link #setAim}, {@link #setReach}) moves the head at once and asks for a
+ * re-plan through {@link AimReplans}, which makes one re-plan for a burst of changes.
  */
 public final class BeamLampBlockEntity extends BlockEntity {
-    /** Yaw steps of 45 degrees, relative to the lamp's facing. */
+    /** Yaw steps of 45 degrees, relative to the lamp's facing (the quick turn and the old save format). */
     public static final int YAW_STEPS = 8;
-    /** Pitch steps from -75 to +30 degrees, in 15 degree steps. */
+    /** Pitch steps from -75 to +30 degrees, in 15 degree steps (the quick tilt and the old save format). */
     public static final int PITCH_STEPS = 8;
     /** The pitch step that is level (0 degrees). */
     public static final int PITCH_LEVEL = 5;
+    /** The floodlight's largest yaw offset from its facing, degrees (0 to 359). */
+    public static final int YAW_MAX = 359;
+    /** The floodlight's pitch: lowest (down) and highest (up), degrees. */
+    public static final int PITCH_MIN = -75, PITCH_MAX = 30;
+    /** The floodlight's reach: shortest, longest and default, blocks. */
+    public static final int REACH_MIN = 8, REACH_MAX = 128, REACH_DEFAULT = 32;
     /** Flags of every write: tell the clients, but make no neighbour shape updates (they can load chunks at an edge). */
     public static final int WRITE_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
 
@@ -53,9 +66,23 @@ public final class BeamLampBlockEntity extends BlockEntity {
     private static final int PITCH_BASE = -75;
     private static final int PITCH_DEGREES = 15;
 
-    private int yaw;
-    private int pitch = PITCH_LEVEL;
+    private int yawDeg;
+    private int pitchDeg;
+    private int reach = REACH_DEFAULT;
     private final Map<Long, Byte> lights = new HashMap<>();
+    /** Plans cast since the server started, by all lamps (tests, diagnostics). */
+    private static final java.util.concurrent.atomic.AtomicLong PLANS = new java.util.concurrent.atomic.AtomicLong();
+
+    public static long plansTotal() {
+        return PLANS.get();
+    }
+
+    /** Plans this lamp has cast since it was loaded (tests, diagnostics). */
+    private int plans;
+
+    public int plans() {
+        return plans;
+    }
 
     public BeamLampBlockEntity(BlockPos pos, BlockState state) {
         super(BwrBlockEntities.BEAM_LAMP.get(), pos, state);
@@ -81,22 +108,30 @@ public final class BeamLampBlockEntity extends BlockEntity {
         return getBlockState().hasProperty(BeamLampBlock.LIT) && getBlockState().getValue(BeamLampBlock.LIT);
     }
 
+    /** The yaw as a step of the 45 degree grid (rounded down when the yaw is not on it). */
     public int yawStep() {
-        return yaw;
+        return Math.floorDiv(yawDeg, YAW_DEGREES);
     }
 
+    /** The pitch as a step of the 15 degree grid (rounded down when the pitch is not on it). */
     public int pitchStep() {
-        return pitch;
+        return Math.floorDiv(pitchDeg - PITCH_BASE, PITCH_DEGREES);
     }
 
-    /** The yaw offset from the facing, degrees. */
+    /** The yaw offset from the facing, degrees, 0 to 359. */
     public int yawDegrees() {
-        return yaw * YAW_DEGREES;
+        return yawDeg;
     }
 
     /** The pitch, degrees; negative points down. */
     public int pitchDegrees() {
-        return PITCH_BASE + pitch * PITCH_DEGREES;
+        return pitchDeg;
+    }
+
+    /** How far the beam reaches, blocks: the floodlight's own setting (8 to 128), the fixed range of any other lamp. */
+    public int reach() {
+        BeamLampBlock b = lampBlock();
+        return b instanceof XenonFloodlightBlock ? reach : b == null ? REACH_DEFAULT : (int) Math.round(b.range());
     }
 
     public Vec3 beamDirection() {
@@ -124,18 +159,69 @@ public final class BeamLampBlockEntity extends BlockEntity {
         return Component.translatable("message.bwr.xenon_floodlight.aim", yawDegrees(), pitchDegrees());
     }
 
-    /** Turns the aim by one yaw step (right-click) or one pitch step (sneak-right-click), then re-plans the light. */
+    /**
+     * Turns the aim to the next step of the old grid (one yaw step of 45 degrees, or, for the sneak-right-click, one pitch step
+     * of 15 degrees, wrapping from +30 round to -75), then re-plans the light at once.
+     */
     public void stepAim(boolean pitchStep) {
         if (pitchStep) {
-            pitch = (pitch + 1) % PITCH_STEPS;
+            pitchDeg = PITCH_BASE + ((pitchStep() + 1) % PITCH_STEPS) * PITCH_DEGREES;
         } else {
-            yaw = (yaw + 1) % YAW_STEPS;
+            yawDeg = ((yawStep() + 1) % YAW_STEPS) * YAW_DEGREES;
         }
+        aimChanged();
+        reconcile();
+    }
+
+    public static boolean validYaw(int degrees) {
+        return degrees >= 0 && degrees <= YAW_MAX;
+    }
+
+    public static boolean validPitch(int degrees) {
+        return degrees >= PITCH_MIN && degrees <= PITCH_MAX;
+    }
+
+    public static boolean validReach(int blocks) {
+        return blocks >= REACH_MIN && blocks <= REACH_MAX;
+    }
+
+    /**
+     * Aims the floodlight: yaw offset (0 to 359) and pitch (-75 to +30), degrees. The head turns at once; the light follows at
+     * the next re-plan, one for a burst of calls ({@link AimReplans}). Returns false, and changes nothing, for another lamp or a
+     * value out of range.
+     */
+    public boolean setAim(int yaw, int pitch) {
+        return setAim(yaw, pitch, reach);
+    }
+
+    /** As {@link #setAim(int, int)}, with the reach too (8 to 128 blocks). */
+    public boolean setAim(int yaw, int pitch, int reachBlocks) {
+        if (!floodlight() || !validYaw(yaw) || !validPitch(pitch) || !validReach(reachBlocks)) {
+            return false;
+        }
+        if (yaw != yawDeg || pitch != pitchDeg || reachBlocks != reach) {
+            yawDeg = yaw;
+            pitchDeg = pitch;
+            reach = reachBlocks;
+            aimChanged();
+            if (level instanceof ServerLevel server) {
+                AimReplans.request(server, worldPosition);
+            }
+        }
+        return true;
+    }
+
+    /** Sets the floodlight's reach, blocks (8 to 128). False, and no change, for another lamp or a value out of range. */
+    public boolean setReach(int blocks) {
+        return setAim(yawDeg, pitchDeg, blocks);
+    }
+
+    /** Saves the new aim and tells the clients (the head turns to it). */
+    private void aimChanged() {
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
-        reconcile();
     }
 
     /** Who may aim the lamp: the same rule as the monitor's setpoint. */
@@ -186,8 +272,12 @@ public final class BeamLampBlockEntity extends BlockEntity {
         int lightLevel = block.projectedLevel(state);
         XenonBeam.Plan plan = powered
                 ? XenonBeam.plan(world(server), worldPosition, block.beamOrigin(state, this), block.beamDirection(state, this),
-                        block.range(), block.halfAngleDegrees(), block.spillAngleDegrees(), block.lightStep(), lights)
+                        reach(), block.halfAngleDegrees(), block.spillAngleDegrees(), block.lightStep(), lights)
                 : XenonBeam.Plan.NONE;
+        if (powered) {
+            PLANS.incrementAndGet();
+            plans++;
+        }
         Map<Long, Byte> want = plan.cells();
         int spillLevel = block.spillLevel(lightLevel);
 
@@ -310,7 +400,10 @@ public final class BeamLampBlockEntity extends BlockEntity {
                 chunkKey = key;
                 chunk = server.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4);
                 if (chunk == null) {
+                    // Full, but not yet visible to the chunk source (it became full this tick): reading it would make the
+                    // game finish its load on our stack. It counts as not loaded; the ray stops here.
                     chunkKey = Long.MIN_VALUE;
+                    return false;
                 }
                 return true;
             }
@@ -332,15 +425,32 @@ public final class BeamLampBlockEntity extends BlockEntity {
 
     // ---- saving (nothing here ticks, and nothing here runs on load or unload)
 
+    /**
+     * The aim keys: the degrees and the reach when they are not the defaults, and the old step keys while the aim is on the
+     * old grid (so an older build reads the same aim).
+     */
+    private void putAim(CompoundTag tag) {
+        if (yawDeg != 0) {
+            tag.putInt("YawDeg", yawDeg);
+            if (yawDeg % YAW_DEGREES == 0) {
+                tag.putInt("Yaw", yawDeg / YAW_DEGREES);
+            }
+        }
+        if (pitchDeg != 0) {
+            tag.putInt("PitchDeg", pitchDeg);
+            if ((pitchDeg - PITCH_BASE) % PITCH_DEGREES == 0) {
+                tag.putInt("Pitch", (pitchDeg - PITCH_BASE) / PITCH_DEGREES);
+            }
+        }
+        if (reach != REACH_DEFAULT) {
+            tag.putInt("Reach", reach);
+        }
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        if (yaw != 0) {
-            tag.putInt("Yaw", yaw);
-        }
-        if (pitch != PITCH_LEVEL) {
-            tag.putInt("Pitch", pitch);
-        }
+        putAim(tag);
         if (!lights.isEmpty()) {
             long[] keys = new long[lights.size()];
             byte[] kinds = new byte[lights.size()];
@@ -357,8 +467,19 @@ public final class BeamLampBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        yaw = Math.floorMod(tag.getInt("Yaw"), YAW_STEPS);
-        pitch = Math.floorMod(tag.contains("Pitch", Tag.TAG_INT) ? tag.getInt("Pitch") : PITCH_LEVEL, PITCH_STEPS);
+        // The degrees when they were saved; else the old step keys, to the same aim; else the defaults.
+        if (tag.contains("YawDeg", Tag.TAG_INT)) {
+            yawDeg = Math.floorMod(tag.getInt("YawDeg"), YAW_MAX + 1);
+        } else {
+            yawDeg = Math.floorMod(tag.getInt("Yaw"), YAW_STEPS) * YAW_DEGREES;
+        }
+        if (tag.contains("PitchDeg", Tag.TAG_INT)) {
+            pitchDeg = Mth.clamp(tag.getInt("PitchDeg"), PITCH_MIN, PITCH_MAX);
+        } else {
+            int step = Math.floorMod(tag.contains("Pitch", Tag.TAG_INT) ? tag.getInt("Pitch") : PITCH_LEVEL, PITCH_STEPS);
+            pitchDeg = PITCH_BASE + step * PITCH_DEGREES;
+        }
+        reach = tag.contains("Reach", Tag.TAG_INT) ? Mth.clamp(tag.getInt("Reach"), REACH_MIN, REACH_MAX) : REACH_DEFAULT;
         lights.clear();
         long[] keys = tag.getLongArray("Lights");
         byte[] kinds = tag.getByteArray("LightKinds");
@@ -372,12 +493,7 @@ public final class BeamLampBlockEntity extends BlockEntity {
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
-        if (yaw != 0) {
-            tag.putInt("Yaw", yaw);
-        }
-        if (pitch != PITCH_LEVEL) {
-            tag.putInt("Pitch", pitch);
-        }
+        putAim(tag);
         return tag;
     }
 

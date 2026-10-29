@@ -76,9 +76,8 @@ public final class BwrPeripheralSupport {
         if(be instanceof dev.bwr.mod.power.TurbineAuxBlockEntity b)return new TurbineAuxPeripheral(b);
         if(be instanceof dev.bwr.mod.grid.FeMeterBlockEntity b)return new FeMeterPeripheral(b);
         if(be instanceof dev.bwr.mod.radiation.AreaRadiationMonitorBlockEntity b)return new AreaRadiationMonitorPeripheral(b);
-        // The beam lamps (xenon floodlight, xenon high-bay, HPS flat panel) only report; redstone switches them.
-        if(be instanceof dev.bwr.mod.floodlight.BeamLampBlockEntity b)return new HardwarePeripheral("bwr_beam_lamp",()->Map.of(
-                "lit",b.lit(),"lightBlocks",b.placed().size(),"yawDegrees",b.yawDegrees(),"pitchDegrees",b.pitchDegrees()));
+        // The beam lamps (xenon floodlight, xenon high-bay, HPS flat panel): redstone switches them; a computer reads them all and aims the floodlight.
+        if(be instanceof dev.bwr.mod.floodlight.BeamLampBlockEntity b)return new BeamLampPeripheral(b);
         if(be instanceof dev.bwr.mod.grid.GridTieBlockEntity b)return new GridTiePeripheral(b);
         if(be instanceof SlcTankBlockEntity b)return new HardwarePeripheral("bwr_slc_tank",()->Map.of(
                 "connected",b.ready(),"solutionKg",b.solution().massKg(),"borateKg",b.solution().borateKg(),"boronPpm",b.solution().boronFraction()*1e6,"temperatureC",b.solution().temperatureC(),"capacityKg",dev.bwr.core.eccs.BoronSolution.CAPACITY_KG));

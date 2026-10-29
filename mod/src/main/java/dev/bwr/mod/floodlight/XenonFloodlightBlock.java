@@ -25,9 +25,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.joml.Vector3f;
 
 /**
- * The xenon floodlight: an aimable flood fixture with a 32-block, 30-degree beam (see {@link XenonBeam}). The front faces the
- * way the player was looking when it was placed. Empty-hand right-click turns the aim 45 degrees about the vertical;
- * sneak-right-click steps the pitch (-75 to +30 degrees, 15 degrees a step). A redstone signal switches it on at once.
+ * The xenon floodlight: an aimable flood fixture with a 30-degree beam that reaches 32 blocks, or as far as it is set to
+ * (8 to 128; see {@link XenonBeam}). The front faces the way the player was looking when it was placed. Empty-hand right-click
+ * opens the aiming screen ({@link dev.bwr.mod.gui.FloodlightAimMenu}: heading 0 to 359, tilt -75 to +30, reach, in single
+ * steps); sneak-right-click is the quick tilt (15 degrees a click, -75 to +30 and round). A redstone signal switches it on
+ * at once.
  *
  * <p>The head (reflector, yoke, lens) is drawn by {@link dev.bwr.mod.floodlight.client.XenonFloodlightRenderer} so that it
  * turns to the aim; this block's model is the base and the ballast box.
@@ -130,8 +132,13 @@ public class XenonFloodlightBlock extends BeamLampBlock {
             player.displayClientMessage(Component.translatable("message.bwr.radiation_monitor.not_permitted"), true);
             return InteractionResult.CONSUME;
         }
-        lamp.stepAim(player.isShiftKeyDown());
-        player.displayClientMessage(lamp.aimMessage(), true);
+        if (player.isShiftKeyDown()) {
+            // The quick tilt: 15 degrees a click, round from +30 to -75, with the aim on the action bar.
+            lamp.stepAim(true);
+            player.displayClientMessage(lamp.aimMessage(), true);
+        } else if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+            dev.bwr.mod.gui.FloodlightAimMenu.open(server, pos);
+        }
         return InteractionResult.CONSUME;
     }
 }
