@@ -1,0 +1,13 @@
+{
+  "loader": "neoforge:obj",
+  "model": "bwr:models/block/turbine_aux/lube_oil_conditioner/lamp_on.obj",
+  "automatic_culling": false,
+  "shade_quads": true,
+  "flip_v": true,
+  "emissive_ambient": true,
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "minecraft:block/iron_block"
+  },
+  "render_type": "minecraft:solid"
+}

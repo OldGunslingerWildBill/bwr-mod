@@ -39,8 +39,8 @@ Kd 0.9063317593127924 0.7977377471499069 0.2478005298726647
 map_Kd minecraft:block/white_concrete
 
 newmtl mat_10
-Kd 0.34919021513783693 0.9546871607410429 0.5838315006372918
-map_Kd minecraft:block/white_concrete
+Kd 1.0 1.0 1.0
+map_Kd bwr:block/turbine_aux/conditioner_lamp_off
 
 newmtl mat_11
 Kd 0.5838315006372918 0.43662706283816693 0.26006747994260604

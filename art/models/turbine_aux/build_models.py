@@ -53,6 +53,11 @@ STEAMBAND = material('steam band', (.10, .11, .12), .5)
 RED = material('valve red', (.55, .06, .04))
 BROWN = material('lube oil pipe brown', (.30, .16, .055))
 
+# Materials whose faces carry a real texture (planar UVs over the lens disc) instead of a flat colour on white concrete. The lit lens is
+# emissive: tools-export-turbine-aux.py writes it as its own model part (emissive_ambient, Ka 1) with a labPBR _s map.
+TEXTURES = {'Turbine aux | conditioner lamp lens off': 'bwr:block/turbine_aux/conditioner_lamp_off',
+            'Turbine aux | conditioner lamp lens on': 'bwr:block/turbine_aux/conditioner_lamp_on'}
+
 
 def mesh_object(scene, name, vs, fs, mat):
     mesh = bpy.data.meshes.new(name)
@@ -118,6 +123,18 @@ def flange(scene, name, endpoint, outward, radius=.31, bolts=8, band=None):
         bolt(scene, name + ' stud ' + str(i), c - d * .14, c - d * .018, .026)
 
 
+def lens_disc(scene, name, a, b, radius, mat, segments=16):
+    """A solid disc along -Z from a (back) to b (front), with planar UVs over its front face so a 16 x 16 lens texture fills the circle."""
+    o = sleeve(scene, name, a, b, radius, 0, mat, segments)
+    uv = o.data.uv_layers.active
+    cx, cy = a[0], a[1]
+    for poly in o.data.polygons:
+        for loop in poly.loop_indices:
+            g = game(o.data.vertices[o.data.loops[loop].vertex_index].co)
+            uv.data[loop].uv = tuple(min(.97, max(.03, .5 + (g[i] - c) / (2 * radius))) for i, c in ((0, cx), (1, cy)))
+    return o
+
+
 def box(scene, name, lo, hi, mat):
     x0, y0, z0 = lo
     x1, y1, z1 = hi
@@ -153,6 +170,8 @@ def export_scene(scene, filename, meta):
                 bsdf = next((n for n in m.node_tree.nodes if n.bl_idname == 'ShaderNodeBsdfPrincipled'), None) if m.node_tree else None
                 rgb = list(bsdf.inputs['Base Color'].default_value[:3]) if bsdf else list(m.diffuse_color[:3])
                 mats[key] = {'color': [srgb(x) for x in rgb], 'texture': 'minecraft:block/white_concrete', 'tint': -1}
+                if key in TEXTURES:
+                    mats[key] = {'color': [1.0, 1.0, 1.0], 'texture': TEXTURES[key], 'tint': -1}
             vs = [list(points[i]) + list(uv.data[loop].uv if uv else (.5, .5)) for i, loop in zip(t.vertices, t.loops)]
             if (Vector(vs[1][:3]) - Vector(vs[0][:3])).cross(Vector(vs[2][:3]) - Vector(vs[0][:3])).length > 1e-10:
                 faces.append({'vertices': vs, 'material': key, 'part': o.name})
@@ -302,6 +321,12 @@ def oil_flange(scene, name, z, out):
 
 
 GREENBAND = material('in service band', (.04, .42, .14))
+LENSOFF = material('conditioner lamp lens off', (.008, .03, .015))
+LENSON = material('conditioner lamp lens on', (.02, .55, .10))
+_bsdf = next(n for n in LENSON.node_tree.nodes if n.bl_idname == 'ShaderNodeBsdfPrincipled')
+_bsdf.inputs['Emission Color'].default_value = (.05, 1.0, .12, 1)
+_bsdf.inputs['Emission Strength'].default_value = 1.1
+
 GREENLAMP = material('in service lamp', (.10, .90, .30))
 AMBERLAMP = material('off service lamp', (.95, .52, .04))
 LETTER = material('letter white', (.92, .93, .90))
@@ -478,18 +503,26 @@ box(scene, 'cabinet handle', (.055, .30, .85), (.065, .38, .865), YELLOW)
 box(scene, 'cabinet roof', (.065, .62, .615), (.195, .64, .935), STEEL)
 sleeve(scene, 'FE conduit', (.13, .64, .78), (.13, .72, .78), .022, .01, DARK)
 box(scene, 'FE terminal plate', (.07, .66, .62), (.19, .70, .66), YELLOW)
-box(scene, 'status lamp box', (.09, .48, .60), (.17, .58, .62), GREY)
-cyl(scene, 'running lamp', (.13, .53, .60), (.13, .53, .575), .022, GREENLAMP)
+# The running lamp (TURBINE-AUX.md): a small round green lamp on the front of the cabinet, about 2 px across. The body carries the box, the
+# bezel and a DARK lens; the lit lens (lube_oil_conditioner_lamp_on.json) is its own part laid over it by the blockstate when it runs.
+LAMP_X, LAMP_Y = .13, .53
+box(scene, 'status lamp box', (.06, .45, .595), (.20, .61, .62), GREY)
+sleeve(scene, 'lamp bezel', (LAMP_X, LAMP_Y, .595), (LAMP_X, LAMP_Y, .575), .068, .056, STEEL, segments=16)
+lens_disc(scene, 'lamp lens (dark)', (LAMP_X, LAMP_Y, .595), (LAMP_X, LAMP_Y, .586), .056, LENSOFF)
 oil_flange(scene, 'inlet', 1.0, 1)
 oil_flange(scene, 'outlet', 0.0, -1)
 export_scene(scene, 'lube_oil_conditioner.json', {'size': [1, 1, 1], 'controller': [0, 0, 0], 'ports': []})
+# the lit lens: a disc a hair in front of the dark one (its face at z .580, the dark lens's at .586), same radius
+scene = new_scene('BWR | lube oil conditioner lamp on')
+lens_disc(scene, 'lamp lens (lit)', (LAMP_X, LAMP_Y, .586), (LAMP_X, LAMP_Y, .580), .056, LENSON)
+export_scene(scene, 'lube_oil_conditioner_lamp_on.json', {'size': [1, 1, 1], 'controller': [0, 0, 0], 'ports': []})
 
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT / 'turbine_aux.blend'))
 print('Saved the editable Blender scenes and exported their meshes.')
 
 
 # ---- headless preview renders (one per block, one combined), written after the .blend is saved ----
-def preview(scene_list, filename, offsets, size=(1280, 720), eye=(1.6, -2.1, 1.5)):
+def preview(scene_list, filename, offsets, size=(1280, 720), eye=(1.6, -2.1, 1.5), focus=None, zoom=None):
     pv = bpy.data.scenes.new('Preview | ' + filename)
     for sc, off in zip(scene_list, offsets):
         for o in sc.objects:
@@ -512,6 +545,12 @@ def preview(scene_list, filename, offsets, size=(1280, 720), eye=(1.6, -2.1, 1.5
     w = max(p[0] for p in proj) - min(p[0] for p in proj)
     h = max(p[1] for p in proj) - min(p[1] for p in proj)
     cam_data.ortho_scale = max(w, h * size[0] / size[1]) * 1.12
+    if focus is not None:
+        # a close-up: look at a point (game coordinates) from the same side, the picture this many blocks wide
+        centre = Vector(xyz(focus))
+        cam.location = centre + Vector(eye).normalized() * span * 3
+        cam.rotation_euler = (centre - cam.location).to_track_quat('-Z', 'Y').to_euler()
+        cam_data.ortho_scale = zoom
     for n, offs, power in (('key', (-2, -3, 4), 700), ('fill', (3, -1, 2), 350), ('rim', (0, 3, 3), 500)):
         lamp = bpy.data.lights.new(n, 'AREA')
         lamp.energy = power * span * span
@@ -542,6 +581,10 @@ if '--no-preview' not in __import__('sys').argv:
                              ('oil_filter_housing', 'oil filter housing a_closed'), ('lube_oil_conditioner', 'lube oil conditioner')):
         preview([named(scene_name)], name + '.png', [(0, 0, 0)], eye=(-1.5, 2.2, 1.4))
         preview([named(scene_name)], name + '_back.png', [(0, 0, 0)], eye=(1.6, -2.2, 1.4))
+    pair = [named('lube oil conditioner'), named('lube oil conditioner lamp on')]
+    preview(pair, 'lube_oil_conditioner_lit.png', [(0, 0, 0), (0, 0, 0)], eye=(-1.5, 2.2, 1.4))
+    preview(pair, 'lube_oil_conditioner_lit_close.png', [(0, 0, 0), (0, 0, 0)], size=(1100, 700), eye=(-.25, 1.6, .8), focus=(.13, .53, .585), zoom=.5)
+    preview(pair[:1], 'lube_oil_conditioner_close.png', [(0, 0, 0)], size=(1100, 700), eye=(-.25, 1.6, .8), focus=(.13, .53, .585), zoom=.5)
     states = [named('oil filter housing ' + n) for n in ('a_closed', 'a_open', 'b_closed', 'b_open')]
     preview(states, 'oil_filter_housing_states.png', [(0, 0, 0), (-1.3, 0, 0), (-2.6, 0, 0), (-3.9, 0, 0)], size=(1900, 560), eye=(-0.9, 2.2, 1.5))
     preview(states[:2] + states[2:3], 'oil_filter_housing_levers.png', [(0, 0, 0), (-1.3, 0, 0), (-2.6, 0, 0)], size=(1900, 700), eye=(-0.1, 1.2, 2.6))

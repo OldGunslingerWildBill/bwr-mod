@@ -380,7 +380,19 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     public boolean conditionerOn() { return condOn; }
     public boolean conditionerRunning() { return condRan; }
     public void setConditioner(boolean on) {
-        if (kind() == TurbineAuxBlock.Kind.CONDITIONER && condOn != on) { condOn = on; setChanged(); }
+        if (kind() == TurbineAuxBlock.Kind.CONDITIONER && condOn != on) {
+            condOn = on;
+            if (!on) condRan = false;
+            setChanged();
+            syncLamp();
+        }
+    }
+
+    /** The running lamp on the control box: lit while the conditioner runs, dark otherwise; the block state carries it, so the client needs nothing else. */
+    private void syncLamp() {
+        if (kind() != TurbineAuxBlock.Kind.CONDITIONER || level == null || level.isClientSide()) return;
+        var state = getBlockState();
+        if (state.getValue(TurbineAuxBlock.LIT) != condRan) level.setBlock(worldPosition, state.setValue(TurbineAuxBlock.LIT, condRan), 3);
     }
     /** FE a conditioner draws a tick while it runs. */
     public static final int CONDITIONER_FE_PER_TICK = EccsPower.fePerTickFromWatts(TurbineAux.CONDITIONER_W);
@@ -445,7 +457,7 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     double conditionerPass(TurbineAuxBlockEntity tank) {
         boolean ran = condOn && tank.oilL > 0 && acFe >= CONDITIONER_FE_PER_TICK && conditionerFlows(tank);
         if (ran) acFe -= CONDITIONER_FE_PER_TICK;
-        if (ran != condRan) { condRan = ran; }
+        if (ran != condRan) { condRan = ran; syncLamp(); }
         setChanged();
         return TurbineAux.conditionerFactor(ran);
     }

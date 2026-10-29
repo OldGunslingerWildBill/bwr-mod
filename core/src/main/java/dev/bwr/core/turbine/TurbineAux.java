@@ -174,6 +174,144 @@ public final class TurbineAux {
         return oilLossLitres(psig, oilC, dt, filterFactor) * conditionerFactor;
     }
 
+    // ------------------------------------------------ filter grades, staged filtration and the oil's cleanliness
+
+    /** The three grades of Oil Filter Cartridge: coarse (high flow), standard (the cartridge as it always was) and fine (high filtration). */
+    public static final int GRADE_COARSE = 0, GRADE_STANDARD = 1, GRADE_FINE = 2;
+    public static final String[] GRADE_NAMES = {"coarse", "standard", "fine"};
+
+    /**
+     * What one pass through a cartridge captures, by grade, as the share of the particles that reaches it: of the <b>large</b> particles
+     * (over 10 micrometres: the metal debris of bearings and gears) and of the <b>fine</b> ones (3 to 10 micrometres, with the early
+     * oxidation products). Written as the beta ratio of a multipass test, {@code beta = upstream / downstream counts}, efficiency
+     * {@code 1 - 1/beta}: a coarse element is rated beta10(c) = 10 and beta5(c) = 1.1 (it catches the big bits, lets the rest through), the
+     * standard one beta10(c) = 100 and beta5(c) = 2.9 (a 10 micrometre absolute element), a fine one beta10(c) = 1,000 and beta5(c) = 50
+     * (a 3 micrometre element). {@link #GRADE_STANDARD} is the cartridge the mod has always had.
+     */
+    public static final double[] CAPTURE_LARGE = {0.90, 0.99, 0.999};
+    public static final double[] CAPTURE_FINE = {0.10, 0.65, 0.98};
+    /** The pressure drop across a clean element at its design flow, psid, by grade (the full drop, where the bypass valve opens, is {@link #FILTER_DP_FULL_PSI}). */
+    public static final double[] CLEAN_DP_PSI = {1, FILTER_DP_CLEAN_PSI, 8};
+    /** How long an element lasts against the standard one at the same pressure and oil (a coarse element has a lot of room; a fine one fills fast). */
+    public static final double[] LIFE_FACTOR = {2.5, 1.0, 0.7};
+    /**
+     * The flow a clean element passes, in units of the flow the bearings need at rated speed (1.0 is a whole train's rated need): a coarse
+     * element passes more than any train asks for, a standard one is not limiting (as it never was), a fine one passes 0.6, so <b>one fine
+     * housing cannot feed a whole train</b> at rated speed and two in parallel (1.2) can. It falls as the element loads
+     * ({@link #filterFlowCapacity}); a full element's bypass opens and passes everything, unfiltered.
+     */
+    public static final double[] FLOW_CAPACITY = {3.0, Double.POSITIVE_INFINITY, 0.6};
+    /** The share of its clean capacity an element still passes when it is just short of full. */
+    public static final double CAPACITY_AT_FULL = 0.25;
+
+    public static int clampGrade(int grade) { return Math.max(GRADE_COARSE, Math.min(GRADE_FINE, grade)); }
+
+    /** What a grade lets through of the large and of the fine particles. */
+    public static double passLarge(int grade) { return 1 - CAPTURE_LARGE[clampGrade(grade)]; }
+    public static double passFine(int grade) { return 1 - CAPTURE_FINE[clampGrade(grade)]; }
+
+    /** The pressure drop across a cartridge of a grade holding {@code load}: the standard grade's is {@link #filterDpPsi(double)}, to the bit. */
+    public static double filterDpPsi(double load, int grade) {
+        double clean = CLEAN_DP_PSI[clampGrade(grade)];
+        double l = Math.max(0, Math.min(1, load));
+        return clean + (FILTER_DP_FULL_PSI - clean) * l * l;
+    }
+
+    /** The flow a cartridge passes (see {@link #FLOW_CAPACITY}), falling as it loads; unlimited for the standard grade and with the bypass open. */
+    public static double filterFlowCapacity(int grade, double load) {
+        double clean = FLOW_CAPACITY[clampGrade(grade)];
+        if (Double.isInfinite(clean) || filterBypassOpen(load)) return Double.POSITIVE_INFINITY;
+        return clean * (1 - (1 - CAPACITY_AT_FULL) * Math.max(0, Math.min(1, load)));
+    }
+
+    /**
+     * The cartridge's new load after dt seconds, by grade and by how much dirt reaches it ({@code inflow}, 1 for the first stage of an
+     * oil at its default cleanliness, see {@link #particleInflow}). The standard grade with an inflow of 1 is {@link #filterLoadStep(double,
+     * double, double, double)} to the bit.
+     */
+    public static double filterLoadStep(double load, double psig, double oilC, double dt, int grade, double inflow) {
+        if (grade == GRADE_STANDARD && inflow == 1) return filterLoadStep(load, psig, oilC, dt);
+        double pressureFraction = Math.min(1.2, Math.max(0, psig) / OIL_PSIG_NOMINAL);
+        double heat = Math.pow(2, Math.max(0, Math.min(60, oilC - 50)) / 15);
+        return Math.min(1, Math.max(0, load) + pressureFraction * heat * inflow * dt / (FILTER_LIFE_S * LIFE_FACTOR[clampGrade(grade)]));
+    }
+
+    /** How the mass that loads a cartridge divides: the large particles are most of it, which is why a coarse stage protects a fine one. */
+    private static final double LOAD_WEIGHT_LARGE = 0.85, LOAD_WEIGHT_FINE = 0.15;
+
+    /**
+     * How fast a cartridge of a grade loads, against the standard grade as the first stage of oil at its default cleanliness (1 exactly for
+     * that): what captures of the large and fine particles that reach it ({@code largeIn} and {@code fineIn}, the shares left by the stages
+     * upstream, 1 for the first stage) it holds, over what the standard grade holds of a clean arrival, times how much dirtier the oil
+     * is than its default ({@code cleanliness / default}). A fine cartridge behind a coarse one sees a tenth of the large particles and loads
+     * about four times more slowly than it would first in line.
+     */
+    public static double particleInflow(int grade, double largeIn, double fineIn, double cleanliness) {
+        int g = clampGrade(grade);
+        double held = LOAD_WEIGHT_LARGE * largeIn * CAPTURE_LARGE[g] + LOAD_WEIGHT_FINE * fineIn * CAPTURE_FINE[g];
+        double reference = LOAD_WEIGHT_LARGE * 1 * CAPTURE_LARGE[GRADE_STANDARD] + LOAD_WEIGHT_FINE * 1 * CAPTURE_FINE[GRADE_STANDARD];
+        return held / reference * (cleanliness / CLEANLINESS_DEFAULT);
+    }
+
+    // ---- the oil's cleanliness (a particulate index, 0 clean to 1 filthy)
+
+    /**
+     * The cleanliness index of oil as the plant has always run it (roughly ISO 4406 17/15/12, the oil a standard 10 micrometre element keeps
+     * a plant's oil at). A tank that has never been told otherwise sits here and nothing about it changes: the effects of dirt below are
+     * all zero at this value, which is why the standard cartridge, no cartridge and a bypassed one (the plant as it was) leave every
+     * existing number as it was. Only a grade that lets more through (coarse) or less (fine), a conditioner, or bearing debris moves it.
+     * The index maps to ISO 4406 roughly as 0.2 = 17/15/12, 0.4 = 19/17/14, 0.6 = 21/19/16, 0.8 = 23/21/18, 1.0 = 25/23/20.
+     */
+    public static final double CLEANLINESS_DEFAULT = 0.2;
+    /** The time constant with which the oil's cleanliness follows what the filters hold it at, seconds (about two hours of running). */
+    public static final double CLEANLINESS_TAU_S = 7_200;
+    /** The weights of the large and the fine particles in the cleanliness index (counts: the fine ones are many). */
+    private static final double INDEX_WEIGHT_LARGE = 0.6, INDEX_WEIGHT_FINE = 0.4;
+    /** What the conditioner leaves of the large and of the fine particles: it takes the water and the fines (centrifuge, vacuum) and little of the big bits. */
+    public static final double CONDITIONER_PASS_LARGE = 0.8, CONDITIONER_PASS_FINE = 0.2;
+
+    /**
+     * The cleanliness oil settles at, given the shares of the large and the fine particles that get past every stage in the way (1 and 1: no
+     * filter at all). With the share the standard grade leaves ({@link #passLarge}, {@link #passFine} of {@link #GRADE_STANDARD}) it is
+     * {@link #CLEANLINESS_DEFAULT} exactly; coarse leaves it near three times that, fine at a hundredth.
+     */
+    public static double cleanlinessTarget(double largePass, double finePass) {
+        double neutral = INDEX_WEIGHT_LARGE * passLarge(GRADE_STANDARD) + INDEX_WEIGHT_FINE * passFine(GRADE_STANDARD);
+        return Math.min(1, CLEANLINESS_DEFAULT * (INDEX_WEIGHT_LARGE * largePass + INDEX_WEIGHT_FINE * finePass) / neutral);
+    }
+
+    /** The oil's cleanliness after dt seconds: it moves toward {@code target}, and bearing debris ({@code debris}, index points) adds to it. */
+    public static double cleanlinessStep(double cleanliness, double target, double debris, double dt) {
+        double c = cleanliness + (target - cleanliness) * (1 - Math.exp(-dt / CLEANLINESS_TAU_S)) + Math.max(0, debris);
+        return Math.max(0, Math.min(1, c));
+    }
+
+    /** The index points of debris a bearing's wear puts into the oil per unit of the shaft damage it takes. */
+    public static final double DEBRIS_PER_DAMAGE = 10;
+
+    /** How much dirtier than its default the oil is, 0 at or below it. */
+    public static double dirtExcess(double cleanliness) { return Math.max(0, cleanliness - CLEANLINESS_DEFAULT); }
+
+    /** What dirty oil does to the oil's own degradation: it loses {@code 1 + 1.5 x excess} times what it would (1 exactly at the default). */
+    public static double dirtyOilDegradation(double excess) { return 1 + 1.5 * Math.max(0, excess); }
+
+    /** The extra shaft damage dirty oil does in dt seconds: 0.2 % an hour at rated speed per unit of excess, nothing at standstill. */
+    public static double dirtyOilDamage(double excess, double rpm, double dt) {
+        double s = Math.min(1.5, Math.max(0, rpm) / ShaftDynamics.RATED_RPM);
+        return 0.002 / 3600 * Math.max(0, excess) * s * dt;
+    }
+
+    /** The extra vibration dirty oil brings, mm/s: 2 mm/s per unit of excess at rated speed. */
+    public static double dirtyOilVibration(double excess, double rpm) {
+        double s = Math.min(1.5, Math.max(0, rpm) / ShaftDynamics.RATED_RPM);
+        return 2.0 * Math.max(0, excess) * s;
+    }
+
+    /** The bearing oil flow as a multiple of what the bearings need at this speed (the delivered flow over {@link #flowNeed}; 1 is just enough). Not capped: film is the capped one. */
+    public static double flowRatio(double deliveredFlow, double rpm) {
+        return Math.max(0, deliveredFlow) / flowNeed(rpm);
+    }
+
     // ----------------------------------------------------- shell-and-tube coolers
 
     public static final double WATER_KJ_PER_KG_K = 4.186;

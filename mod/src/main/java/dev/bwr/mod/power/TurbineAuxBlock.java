@@ -61,17 +61,19 @@ public class TurbineAuxBlock extends BaseEntityBlock {
     public static final net.minecraft.world.level.block.state.properties.BooleanProperty SIDE_B = net.minecraft.world.level.block.state.properties.BooleanProperty.create("side_b");
     /** The housing's off-service canister has its lid open because its cartridge slot is empty (open for a change). Always false on the other kinds. */
     public static final net.minecraft.world.level.block.state.properties.BooleanProperty OFF_OPEN = net.minecraft.world.level.block.state.properties.BooleanProperty.create("off_open");
+    /** The Lube Oil Conditioner is running: its control box lamp is lit (the model draws a full-bright lens). Always false on the other kinds. */
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty LIT = net.minecraft.world.level.block.state.properties.BooleanProperty.create("lit");
     private final Kind kind;
 
     public TurbineAuxBlock(Properties properties, Kind kind) {
         super(properties.noOcclusion());
         this.kind = kind;
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SIDE_B, false).setValue(OFF_OPEN, false));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SIDE_B, false).setValue(OFF_OPEN, false).setValue(LIT, false));
     }
 
     public Kind kind() { return kind; }
     @Override protected MapCodec<TurbineAuxBlock> codec() { return CODEC; }
-    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING, SIDE_B, OFF_OPEN); }
+    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING, SIDE_B, OFF_OPEN, LIT); }
     @Override protected RenderShape getRenderShape(BlockState s) { return RenderShape.MODEL; }
     @Override protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) { return Shapes16.FULL; }
     @Override protected BlockState rotate(BlockState s, Rotation r) { return s.setValue(FACING, r.rotate(s.getValue(FACING))); }

@@ -38,6 +38,32 @@ def block(id, variants, recipe):
         m.put(m.RES / f'data/bwr/recipe/{id}.json', dict(recipe, result={'id': 'bwr:' + id, 'count': 1}))
 
 
+def conditioner():
+    """The Lube Oil Conditioner: the body (dark lamp lens) always, and the lit lamp lens, its own emissive part, when the blockstate says it
+    runs (property lit). The lit part is full-bright through emissive_ambient (the OBJ loader takes the light level from the material's Ka, as
+    the industrial lamps' lit lenses do, LIGHTING.md) and its texture has a labPBR _s map with the emission in the alpha channel."""
+    id = 'lube_oil_conditioner'
+    block(id, {}, None)
+    lamp = m.read(id + '_lamp_on.json')
+    folder = m.RES / f'assets/bwr/models/block/turbine_aux/{id}'
+    assert len(lamp['materials']) == 1, lamp['materials'].keys()
+    key = next(iter(lamp['materials']))
+    obj = m.obj(lamp['faces'], {key: 'lamp_on'}).replace('mtllib materials.mtl', 'mtllib lamp_on.mtl')
+    m.put(folder / 'lamp_on.obj', obj)
+    m.put(folder / 'lamp_on.mtl', 'newmtl lamp_on\nKd 1 1 1\nKa 1 1 1\nmap_Kd ' + lamp['materials'][key]['texture'] + '\n\n')
+    m.put(folder / 'lamp_on.json', dict(m.model(f'bwr:models/block/turbine_aux/{id}/lamp_on.obj'), emissive_ambient=True))
+    body, lit = f'bwr:block/turbine_aux/{id}/body', f'bwr:block/turbine_aux/{id}/lamp_on'
+    parts = []
+    # side_b and off_open belong to every TurbineAuxBlock (the filter housing uses them) and mean nothing here: any value takes the part,
+    # named so that every state of the block gets exactly one body and, when it runs, one lamp (tools-audit-assets.py insists on it).
+    anyside = {'side_b': 'false|true', 'off_open': 'false|true'}
+    for d, a in zip(('north', 'east', 'south', 'west'), (0, 90, 180, 270)):
+        turn = {'y': a} if a else {}
+        parts.append({'when': dict({'facing': d}, **anyside), 'apply': dict({'model': body}, **turn)})
+        parts.append({'when': dict({'facing': d, 'lit': 'true'}, **anyside), 'apply': dict({'model': lit}, **turn)})
+    m.put(m.RES / f'assets/bwr/blockstates/{id}.json', {'multipart': parts})
+
+
 def duplex_housing(recipe):
     """The Oil Filter Housing: four baked bodies (side A or B in service, the off-service lid closed or open), chosen by the blockstate
     properties side_b and off_open (TURBINE-AUX.md). One shared materials file, so the four meshes use one numbering."""
@@ -83,7 +109,7 @@ block('main_oil_tank', dict(HORIZONTAL_VARIANTS),
 block('generator_cooling_skid', dict(HORIZONTAL_VARIANTS),
       shaped(['ICI', 'PTP', 'III'], {'I': IRON, 'C': COPPER, 'P': 'bwr:high_pressure_water_pipe', 'T': 'minecraft:cauldron'}))
 duplex_housing(shaped(['ILI', 'BPB', 'III'], {'I': IRON, 'L': 'minecraft:lever', 'B': 'minecraft:bucket', 'P': 'bwr:high_pressure_water_pipe'}))
-block('lube_oil_conditioner', dict(HORIZONTAL_VARIANTS), None)
+conditioner()
 block('shaft_oil_pump', dict(HORIZONTAL_VARIANTS),
       shaped(['ICI', 'RPR', 'III'], {'I': IRON, 'C': COPPER, 'R': 'minecraft:redstone', 'P': 'minecraft:piston'}))
 

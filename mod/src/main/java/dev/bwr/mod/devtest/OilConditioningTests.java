@@ -158,7 +158,7 @@ public final class OilConditioningTests {
                 f.l.getBlockState(pos).useWithoutItem(f.l, player, new BlockHitResult(Vec3.atCenterOf(pos), face, pos, false));
             h.assertTrue(!housing.sideBInService(), "no click on any face of the block throws the transfer valve");
             // The screen's A/B selector switch sends the command; the server throws the valve (and only for a player at the housing).
-            var sp = h.makeMockServerPlayerInLevel();
+            var sp = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(f.l);
             sp.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
             var menu = new OilFilterMenu(9, sp.getInventory(), pos);
             menu.handleCommand(sp, OilFilterMenu.CMD_TRANSFER, 1, 0);

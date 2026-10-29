@@ -15,6 +15,7 @@ turbine_oil_drum_mekanism.json, is written by tools-generate-mekanism-recipes.py
 """
 import io
 import json
+import math
 import os
 import sys
 from PIL import Image
@@ -24,6 +25,7 @@ RES = os.path.join(ROOT, "mod/src/main/resources")
 TEX = os.path.join(RES, "assets/bwr/textures/item")
 MODELS = os.path.join(RES, "assets/bwr/models/item")
 RECIPES = os.path.join(RES, "data/bwr/recipe")
+BLOCK_TEX = os.path.join(RES, "assets/bwr/textures/block/turbine_aux")
 
 OUTPUTS = {}
 
@@ -140,6 +142,40 @@ item("turbine_oil_drum", drum(), ([" C ", "CIC", " C "], {"C": "minecraft:coal",
 item("turbine_oil_can", can())
 item("oil_filter_cartridge", cartridge(), (["IPI", "PWP", "IPI"], {"I": "minecraft:iron_ingot", "P": "minecraft:paper", "W": "minecraft:white_wool"}), gated=True)
 item("hydrogen_cylinder", cylinder(), ([" I ", "IWI", " I "], {"I": "minecraft:iron_ingot", "W": "minecraft:water_bucket"}), gated=True)
+
+# ---- the Lube Oil Conditioner's running lamp (TURBINE-AUX.md): the lens textures, as the industrial lamps' lenses are made (LIGHTING.md):
+# a bright green lit lens with a labPBR specular map (R smoothness 230, G F0 0, B porosity 0, A emission: 220 across the face and 180 on the
+# edge ring, as the lamp lenses; labPBR reads 255 as no emission) and a dark green glass lens with no map, so nothing glows while it is stopped.
+LIT_GREEN, DARK_GREEN = (70, 255, 110), (10, 42, 22)
+
+
+def lens_factor(x, y):
+    c = 7.5
+    d = math.hypot(x - c, y - c) / 8.0
+    return (1.0 - 0.18 * min(d, 1.0)) * (0.97 + 0.03 * math.cos(2 * math.pi * d * 2.0))
+
+
+def lens_image(colour):
+    img = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            f = lens_factor(x, y)
+            img.putpixel((x, y), tuple(min(255, int(round(c * f))) for c in colour) + (255,))
+    return img
+
+
+def lens_specular():
+    img = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            edge = x in (0, 15) or y in (0, 15)
+            img.putpixel((x, y), (230, 0, 0, 220 - (40 if edge else 0)))
+    return img
+
+
+put_png(os.path.join(BLOCK_TEX, "conditioner_lamp_on.png"), lens_image(LIT_GREEN))
+put_png(os.path.join(BLOCK_TEX, "conditioner_lamp_on_s.png"), lens_specular())
+put_png(os.path.join(BLOCK_TEX, "conditioner_lamp_off.png"), lens_image(DARK_GREEN))
 
 for p, data in OUTPUTS.items():
     if "--check" in sys.argv:

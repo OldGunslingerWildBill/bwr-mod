@@ -246,7 +246,7 @@ public final class TurbineAuxTest {
         Check.relative(204 * 3600, both, 0.002, "204 hours of running");
         Check.inRange(19.5 * 3600, 21.5 * 3600, conditionerOnly, "the conditioner alone (bypassed filter) about 20 h (s): " + conditionerOnly / 3600);
         Check.relative(TurbineAux.CONDITIONER_FACTOR * TurbineAux.OIL_FILTER_FACTOR, 1.0 / (both / bare), 0.002, "the two factors multiply: the filter protects the bearings, the conditioner the oil");
-        Check.inRange(0.29, 0.31, TurbineAux.CONDITIONER_FACTOR, "the conditioner leaves about 30 % of the degradation: " + TurbineAux.CONDITIONER_FACTOR);
+        Check.inRange(0.29, 0.31, TurbineAux.CONDITIONER_FACTOR, "the conditioner leaves about 30 percent of the degradation: " + TurbineAux.CONDITIONER_FACTOR);
         double hot = TurbineAux.oilLossLitres(25, 80, 3600, 0.1, TurbineAux.CONDITIONER_FACTOR), hotBare = TurbineAux.oilLossLitres(25, 80, 3600);
         Check.relative(1.0 / (0.1 * TurbineAux.CONDITIONER_FACTOR), hotBare / hot, 1e-9, "the product holds with hot oil");
         Check.exactly(0.0, TurbineAux.oilLossLitres(0, 50, 3600, 0.1, TurbineAux.CONDITIONER_FACTOR), "a tank nobody pumps still loses nothing");
@@ -270,5 +270,95 @@ public final class TurbineAuxTest {
             t += 1;
         }
         return t;
+    }
+
+    public static void test17_filterGradesAreCoarseStandardAndFineAndStandardIsTheCartridgeAsItWas() {
+        for (double load : new double[] {0, 0.1, 0.38, 0.5, 0.8, 0.9999, 1}) {
+            Check.exactly(TurbineAux.filterDpPsi(load), TurbineAux.filterDpPsi(load, TurbineAux.GRADE_STANDARD), "the standard grade's pressure drop is the old law's, bit for bit, at " + load);
+        }
+        Check.exactly(TurbineAux.filterLoadStep(0.3, 25, 50, 1), TurbineAux.filterLoadStep(0.3, 25, 50, 1, TurbineAux.GRADE_STANDARD, 1.0), "and its loading");
+        Check.exactly(TurbineAux.filterLoadStep(0.3, 30, 80, 0.05), TurbineAux.filterLoadStep(0.3, 30, 80, 0.05, TurbineAux.GRADE_STANDARD, 1.0), "at any pressure and heat");
+        Check.isTrue(Double.isInfinite(TurbineAux.filterFlowCapacity(TurbineAux.GRADE_STANDARD, 0)) && Double.isInfinite(TurbineAux.filterFlowCapacity(TurbineAux.GRADE_STANDARD, 0.99)),
+                "a standard cartridge never limits the flow, as it never did");
+        double coarse = TurbineAux.passLarge(TurbineAux.GRADE_COARSE), std = TurbineAux.passLarge(TurbineAux.GRADE_STANDARD), fine = TurbineAux.passLarge(TurbineAux.GRADE_FINE);
+        Check.isTrue(coarse > std && std > fine, "the large particles that get through fall with the grade: " + coarse + " " + std + " " + fine);
+        Check.isTrue(TurbineAux.passFine(TurbineAux.GRADE_COARSE) > TurbineAux.passFine(TurbineAux.GRADE_STANDARD) && TurbineAux.passFine(TurbineAux.GRADE_STANDARD) > TurbineAux.passFine(TurbineAux.GRADE_FINE),
+                "and the fine ones");
+        Check.relative(0.90, TurbineAux.CAPTURE_LARGE[0], 1e-12, "coarse: beta10(c) = 10");
+        Check.relative(0.99, TurbineAux.CAPTURE_LARGE[1], 1e-12, "standard: beta10(c) = 100");
+        Check.relative(0.999, TurbineAux.CAPTURE_LARGE[2], 1e-12, "fine: beta10(c) = 1,000");
+        Check.relative(1 / 0.35, 1 / (1 - TurbineAux.CAPTURE_FINE[1]), 1e-12, "standard: beta5(c) is 2.9");
+        Check.relative(50, 1 / (1 - TurbineAux.CAPTURE_FINE[2]), 1e-9, "fine: beta5(c) = 50");
+        Check.isTrue(TurbineAux.CLEAN_DP_PSI[0] < TurbineAux.CLEAN_DP_PSI[1] && TurbineAux.CLEAN_DP_PSI[1] < TurbineAux.CLEAN_DP_PSI[2], "a finer element drops more pressure clean");
+        Check.isTrue(TurbineAux.filterDpPsi(0, TurbineAux.GRADE_FINE) > 5 && TurbineAux.filterDpPsi(0, TurbineAux.GRADE_COARSE) < 2, "a fine one drops over 5 psid clean, a coarse one under 2");
+        Check.exactly(TurbineAux.FILTER_DP_FULL_PSI, TurbineAux.filterDpPsi(1, TurbineAux.GRADE_FINE), "all three open the bypass at the same pressure drop");
+        // Flow: one fine housing cannot pass a train's rated need, two in parallel can; it falls as the element loads, and a full one passes all (unfiltered).
+        double one = TurbineAux.filterFlowCapacity(TurbineAux.GRADE_FINE, 0);
+        Check.isTrue(one < 1.0 && 2 * one >= 1.0, "one fine housing passes under a whole train's rated flow (" + one + "), two in parallel pass it");
+        Check.isTrue(TurbineAux.filterFlowCapacity(TurbineAux.GRADE_COARSE, 0) > 1.7, "a coarse one passes more than every pump together");
+        double last = Double.POSITIVE_INFINITY;
+        for (int i = 0; i <= 9; i++) {
+            double c = TurbineAux.filterFlowCapacity(TurbineAux.GRADE_FINE, i / 10.0);
+            Check.isTrue(c < last, "a loading fine element passes less and less at " + i / 10.0);
+            last = c;
+        }
+        Check.isTrue(Double.isInfinite(TurbineAux.filterFlowCapacity(TurbineAux.GRADE_FINE, 1)), "a full one opens its bypass and passes everything");
+        // Life: coarse lasts 2.5 times as long, fine 0.7 times.
+        double lc = 0, lf = 0;
+        for (int i = 0; i < 21_600; i++) {
+            lc = TurbineAux.filterLoadStep(lc, 25, 50, 1, TurbineAux.GRADE_COARSE, 1.0);
+            lf = TurbineAux.filterLoadStep(lf, 25, 50, 1, TurbineAux.GRADE_FINE, 1.0);
+        }
+        Check.relative(0.4, lc, 1e-9, "a coarse element is 40 percent full after the standard element's six hours");
+        Check.exactly(1.0, lf, "a fine one is full in 4.2 h");
+    }
+
+    public static void test18_theOilsCleanlinessStaysAtItsDefaultWithTheStandardCartridgeAndMovesWithTheGrade() {
+        double d = TurbineAux.CLEANLINESS_DEFAULT;
+        double neutralL = TurbineAux.passLarge(TurbineAux.GRADE_STANDARD), neutralF = TurbineAux.passFine(TurbineAux.GRADE_STANDARD);
+        Check.exactly(d, TurbineAux.cleanlinessTarget(neutralL, neutralF), "the standard cartridge holds the oil at its default cleanliness, exactly");
+        double c = d;
+        for (int i = 0; i < 100_000; i++) c = TurbineAux.cleanlinessStep(c, d, 0, 1);
+        Check.exactly(d, c, "and the oil stays exactly there for ever (no drift): " + c);
+        Check.exactly(0.0, TurbineAux.dirtExcess(d), "no excess at the default");
+        Check.exactly(1.0, TurbineAux.dirtyOilDegradation(0), "no extra degradation");
+        Check.exactly(0.0, TurbineAux.dirtyOilDamage(0, 1500, 1), "no extra bearing wear");
+        Check.exactly(0.0, TurbineAux.dirtyOilVibration(0, 1500), "no extra vibration");
+        double coarse = TurbineAux.cleanlinessTarget(TurbineAux.passLarge(TurbineAux.GRADE_COARSE), TurbineAux.passFine(TurbineAux.GRADE_COARSE));
+        double fine = TurbineAux.cleanlinessTarget(TurbineAux.passLarge(TurbineAux.GRADE_FINE), TurbineAux.passFine(TurbineAux.GRADE_FINE));
+        double both = TurbineAux.cleanlinessTarget(TurbineAux.passLarge(TurbineAux.GRADE_COARSE) * TurbineAux.passLarge(TurbineAux.GRADE_FINE),
+                TurbineAux.passFine(TurbineAux.GRADE_COARSE) * TurbineAux.passFine(TurbineAux.GRADE_FINE));
+        Check.isTrue(coarse > 0.5 && coarse < 0.65, "a coarse cartridge alone settles near 0.57 (ISO 21/19/16): " + coarse);
+        Check.isTrue(fine < 0.02 && both < fine, "a fine one near 0.01, coarse then fine cleaner still: " + fine + " " + both);
+        // Dirty oil: more degradation, more bearing wear, more vibration, all rising with the excess and none at standstill.
+        double e = TurbineAux.dirtExcess(coarse);
+        Check.isTrue(TurbineAux.dirtyOilDegradation(e) > 1.5, "the oil degrades over half as fast again: " + TurbineAux.dirtyOilDegradation(e));
+        Check.isTrue(TurbineAux.dirtyOilDamage(e, 1500, 3600) > 0.0006 && TurbineAux.dirtyOilDamage(e, 1500, 3600) < 0.002, "an hour of coarse-only oil wears the shaft a few hundredths of a percent: " + TurbineAux.dirtyOilDamage(e, 1500, 3600));
+        Check.isTrue(TurbineAux.dirtyOilVibration(e, 1500) > 0.5 && TurbineAux.dirtyOilVibration(e, 1500) < 1.5, "and shakes it about 0.7 mm/s more: " + TurbineAux.dirtyOilVibration(e, 1500));
+        Check.exactly(0.0, TurbineAux.dirtyOilDamage(e, 0, 3600), "nothing at standstill");
+        Check.isTrue(TurbineAux.dirtyOilDamage(2 * e, 1500, 1) > TurbineAux.dirtyOilDamage(e, 1500, 1), "dirtier, more wear");
+        // Following the target, debris, the ends of the scale.
+        double up = d;
+        for (int i = 0; i < 3 * 7200; i++) up = TurbineAux.cleanlinessStep(up, coarse, 0, 1);
+        Check.relative(coarse, up, 0.06, "it follows its target with a two hour time constant: " + up);
+        Check.isTrue(TurbineAux.cleanlinessStep(d, d, 0.05, 1) > d + 0.049, "bearing debris adds to it");
+        Check.exactly(1.0, TurbineAux.cleanlinessStep(0.99, 1, 5, 1), "capped at filthy");
+        Check.exactly(0.0, TurbineAux.cleanlinessStep(0.0, 0, 0, 1), "and at clean");
+        // Staged filtration protects the fine element: behind a coarse one it sees a fraction of the load.
+        Check.exactly(1.0, TurbineAux.particleInflow(TurbineAux.GRADE_STANDARD, 1, 1, d), "the standard cartridge first in line loads as it always did, exactly");
+        double alone = TurbineAux.particleInflow(TurbineAux.GRADE_FINE, 1, 1, d);
+        double behind = TurbineAux.particleInflow(TurbineAux.GRADE_FINE, TurbineAux.passLarge(TurbineAux.GRADE_COARSE), TurbineAux.passFine(TurbineAux.GRADE_COARSE), d);
+        Check.isTrue(behind < alone * 0.3, "a fine element behind a coarse one loads under a third as fast: " + behind + " against " + alone);
+        Check.isTrue(TurbineAux.particleInflow(TurbineAux.GRADE_STANDARD, 1, 1, 2 * d) > 1.99, "dirtier oil loads it faster");
+        Check.note("settling cleanliness: standard %.3f, coarse %.3f, fine %.4f, coarse then fine %.4f; coarse-only oil degrades x%.2f", d, coarse, fine, both, TurbineAux.dirtyOilDegradation(e));
+    }
+
+    public static void test19_theBearingFlowRatioIsTheDeliveredFlowOverWhatTheSpeedNeeds() {
+        Check.exactly(1.0, TurbineAux.flowRatio(1.0, 1500), "the shaft pump alone at rated speed is just enough");
+        Check.relative(0.7, TurbineAux.flowRatio(TurbineAux.AC_PUMP_FLOW, 1500), 1e-9, "the AC pump alone is 70 percent");
+        Check.relative(1.15, TurbineAux.flowRatio(TurbineAux.AC_PUMP_FLOW + TurbineAux.DC_PUMP_FLOW, 1500), 1e-9, "AC and DC together 115 percent: not capped, film is");
+        Check.exactly(1.0, TurbineAux.film(TurbineAux.AC_PUMP_FLOW + TurbineAux.DC_PUMP_FLOW, 1500), "film is the capped one");
+        Check.isTrue(TurbineAux.flowRatio(0.7, 450) > 1.2, "a lower speed needs less: the AC pump is plenty at 30 percent speed");
+        Check.exactly(0.0, TurbineAux.flowRatio(0, 1500), "no pumps, no flow");
     }
 }

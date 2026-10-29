@@ -1,20 +1,94 @@
 {
-  "variants": {
-    "facing=north": {
-      "model": "bwr:block/turbine_aux/lube_oil_conditioner/body",
-      "y": 0
+  "multipart": [
+    {
+      "when": {
+        "facing": "north",
+        "side_b": "false|true",
+        "off_open": "false|true"
+      },
+      "apply": {
+        "model": "bwr:block/turbine_aux/lube_oil_conditioner/body"
+      }
     },
-    "facing=east": {
-      "model": "bwr:block/turbine_aux/lube_oil_conditioner/body",
-      "y": 90
+    {
+      "when": {
+        "facing": "north",
+        "lit": "true",
+        "side_b": "false|true",
+        "off_open": "false|true"
+      },
+      "apply": {
+        "model": "bwr:block/turbine_aux/lube_oil_conditioner/lamp_on"
+      }
     },
-    "facing=south": {
-      "model": "bwr:block/turbine_aux/lube_oil_conditioner/body",
-      "y": 180
+    {
+      "when": {
+        "facing": "east",
+        "side_b": "false|true",
+        "off_open": "false|true"
+      },
+      "apply": {
+        "model": "bwr:block/turbine_aux/lube_oil_conditioner/body",
+        "y": 90
+      }
     },
-    "facing=west": {
-      "model": "bwr:block/turbine_aux/lube_oil_conditioner/body",
-      "y": 270
+    {
+      "when": {
+        "facing": "east",
+        "lit": "true",
+        "side_b": "false|true",
+        "off_open": "false|true"
+      },
+      "apply": {
+        "model": "bwr:block/turbine_aux/lube_oil_conditioner/lamp_on",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "side_b": "false|true",
+        "off_open": "false|true"
+      },
+      "apply": {
+        "model": "bwr:block/turbine_aux/lube_oil_conditioner/body",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "lit": "true",
+        "side_b": "false|true",
+        "off_open": "false|true"
+      },
+      "apply": {
+        "model": "bwr:block/turbine_aux/lube_oil_conditioner/lamp_on",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "side_b": "false|true",
+        "off_open": "false|true"
+      },
+      "apply": {
+        "model": "bwr:block/turbine_aux/lube_oil_conditioner/body",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "lit": "true",
+        "side_b": "false|true",
+        "off_open": "false|true"
+      },
+      "apply": {
+        "model": "bwr:block/turbine_aux/lube_oil_conditioner/lamp_on",
+        "y": 270
+      }
     }
-  }
+  ]
 }
