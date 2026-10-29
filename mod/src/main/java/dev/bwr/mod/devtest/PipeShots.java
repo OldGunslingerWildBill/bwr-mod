@@ -173,14 +173,14 @@ public final class PipeShots {
         if (stage == 0 && shown == 120) {
             // The shut valve is opened on the server; the client must see it open (the limit switch box shows it, verify below).
             var server = mc.getSingleplayerServer();
-            server.execute(() -> server.overworld().setBlock(VALVE_SHUT, server.overworld().getBlockState(VALVE_SHUT).setValue(LubeOilValveBlock.OPEN, true), 3));
+            server.execute(() -> ((dev.bwr.mod.power.LubeOilValveBlockEntity) server.overworld().getBlockEntity(VALVE_SHUT)).setOpen(true));
         }
         if (++shown < (stage == 0 ? 300 : 110)) return;
         if (stage == 0) {
             verify(mc);
             // Shut again for the pictures.
             var server = mc.getSingleplayerServer();
-            server.execute(() -> server.overworld().setBlock(VALVE_SHUT, server.overworld().getBlockState(VALVE_SHUT).setValue(LubeOilValveBlock.OPEN, false), 3));
+            server.execute(() -> ((dev.bwr.mod.power.LubeOilValveBlockEntity) server.overworld().getBlockEntity(VALVE_SHUT)).setOpen(false));
         }
         if (view.name().equals("oil-valve-shut-close-up") && mc.level.getBlockState(VALVE_SHUT).getValue(LubeOilValveBlock.OPEN))
             throw new IllegalStateException("The shut valve was shut again on the server but the client still draws it open");
