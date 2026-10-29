@@ -79,7 +79,7 @@ public final class OilConditioningTests {
 
     // ------------------------------------------------------------------ the duplex filter
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 300)
     public static void onlyTheSideInServiceFiltersAndLoads(GameTestHelper h) {
         run(h, 86000, f -> {
             var tank = train(f, 10_000);
@@ -108,7 +108,7 @@ public final class OilConditioningTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 300)
     public static void theSideOutOfServiceIsChangedWhilePlantRunsWithNoInterruption(GameTestHelper h) {
         run(h, 86100, f -> {
             var tank = train(f, 10_000);
@@ -146,7 +146,7 @@ public final class OilConditioningTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void theTransferValveIsThrownByHandRedstoneSignalsAndComputers(GameTestHelper h) {
         run(h, 86200, f -> {
             var tank = train(f, 10_000);
@@ -186,7 +186,7 @@ public final class OilConditioningTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void anOldHousingLoadsItsCartridgeIntoSideAAndSavesKeysOnlyWhenSet(GameTestHelper h) {
         run(h, 86300, f -> {
             var tank = train(f, 10_000);
@@ -220,7 +220,7 @@ public final class OilConditioningTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void hoppersFillAnEmptySlotOnEitherSideAndTakeNothingOut(GameTestHelper h) {
         run(h, 86400, f -> {
             var tank = train(f, 10_000);
@@ -236,7 +236,7 @@ public final class OilConditioningTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void theBlockStateShowsTheLeverAndTheOpenLid(GameTestHelper h) {
         run(h, 86500, f -> {
             var tank = train(f, 10_000);
@@ -271,7 +271,7 @@ public final class OilConditioningTests {
         return before - tank.oilLitres();
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 400)
     public static void aRunningConditionerBoltedOnTheTankLeavesThirtyPercentOfTheDegradation(GameTestHelper h) {
         run(h, 86600, f -> {
             var tank = train(f, 10_000);
@@ -316,7 +316,7 @@ public final class OilConditioningTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 400)
     public static void aConditionerPipedToTheTankDrawsFromItsSuctionAndReturnsToItsFillAndAShutValveCutsItOff(GameTestHelper h) {
         run(h, 86700, f -> {
             var tank = train(f, 10_000);
@@ -363,7 +363,7 @@ public final class OilConditioningTests {
         return lost(f, tank, ticks, () -> feed(cond));
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 400)
     public static void aConditionedTankKeepsItsOilAboutOneRefuellingCycle(GameTestHelper h) {
         run(h, 86800, f -> {
             // 20,000 L, the shaft pump alone at rated speed (25 psig), cool oil, a clean cartridge in service and the conditioner running.
@@ -389,7 +389,7 @@ public final class OilConditioningTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void theConditionerHasSignalsAComputerFaceAndSavesKeysOnlyWhenSet(GameTestHelper h) {
         run(h, 86900, f -> {
             var tank = train(f, 10_000);
@@ -424,7 +424,7 @@ public final class OilConditioningTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 100)
     public static void everyConditionerPortAndPortFaceIsWhereItShouldBe(GameTestHelper h) {
         var b = BwrBlocks.LUBE_OIL_CONDITIONER.get();
         var s = b.defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.EAST);

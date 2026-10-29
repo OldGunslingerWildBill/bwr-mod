@@ -26,7 +26,7 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
     private BwrButton transfer;
 
     public OilFilterScreen(OilFilterMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 336, 250);
+        super(menu, inventory, title, 336, 240);
     }
 
     @Override

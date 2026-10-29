@@ -112,7 +112,7 @@ public final class OilPipingTests {
 
     // ------------------------------------------------------------------ ports
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 100)
     public static void everyPieceOfOilEquipmentHasItsOwnOilPorts(GameTestHelper h) {
         // The Main Oil Tank: four oil ports on four faces, none on its two cooling water flanges.
         var tankState = BwrBlocks.MAIN_OIL_TANK.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.EAST);
@@ -166,7 +166,7 @@ public final class OilPipingTests {
 
     // ------------------------------------------------------------------ a piped tank in another room
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void aPipedTankInAnotherRoomFeedsATrain(GameTestHelper h) {
         run(h, 84000, f -> {
             var tank = roomTank(f, 10_000);
@@ -194,7 +194,7 @@ public final class OilPipingTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void aSectionWhoseDrainIsNotPipedBackIsNotFed(GameTestHelper h) {
         run(h, 84100, f -> {
             var tank = roomTank(f, 10_000);
@@ -212,7 +212,7 @@ public final class OilPipingTests {
 
     // ------------------------------------------------------------------ the valve
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 300)
     public static void aClosedOilValveStarvesTheBearingsAndTheyHeatUpByTheExistingLaws(GameTestHelper h) {
         run(h, 84200, f -> {
             var tank = roomTank(f, 10_000);
@@ -244,7 +244,7 @@ public final class OilPipingTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void theValveIsOperatedByHandByRedstoneAndBySignals(GameTestHelper h) {
         run(h, 84300, f -> {
             var pos = at(f, 3, 0, -3);
@@ -281,7 +281,7 @@ public final class OilPipingTests {
 
     // ------------------------------------------------------------------ the filter in-line
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 400)
     public static void theFilterWorksInLineInTheDischargeLine(GameTestHelper h) {
         run(h, 84400, f -> {
             var tank = roomTank(f, 10_000);
@@ -316,7 +316,7 @@ public final class OilPipingTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void aHousingBoltedOnTheTankStillWorksAsBefore(GameTestHelper h) {
         run(h, 84450, f -> {
             var tank = f.tank(10_000);
@@ -333,7 +333,7 @@ public final class OilPipingTests {
 
     // ------------------------------------------------------------------ the shaft pump
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 300)
     public static void theShaftPumpWithNoSuctionLineDeliversNothing(GameTestHelper h) {
         run(h, 84500, f -> {
             var pump = f.shaftPump();
@@ -373,7 +373,7 @@ public final class OilPipingTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 300)
     public static void theShaftPumpOnTheGeneratorWithItsTankOnTheTrainNeedsNoSuctionPipe(GameTestHelper h) {
         run(h, 84550, f -> {
             var tank = f.tank(10_000);
@@ -391,7 +391,7 @@ public final class OilPipingTests {
 
     // ------------------------------------------------------------------ precedence and old trains
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 300)
     public static void aTankBoltedOnTheTrainKeepsFeedingTheWholeTrainAsBeforeWithNoPipe(GameTestHelper h) {
         run(h, 84600, f -> {
             var hp = f.addHp();
@@ -411,7 +411,7 @@ public final class OilPipingTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 400)
     public static void aBoltedTankWhoseDischargeIsPipedFeedsOnlyTheSectionsItsHeaderReaches(GameTestHelper h) {
         run(h, 84700, f -> {
             var hp = f.addHp();
@@ -441,7 +441,7 @@ public final class OilPipingTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 400)
     public static void aHeaderReachingEverySectionFeedsEveryBearing(GameTestHelper h) {
         run(h, 84800, f -> {
             var hp = f.addHp();
@@ -463,7 +463,7 @@ public final class OilPipingTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
     public static void aTrainThatWasNeverPipedRunsExactlyAsItAlwaysDidAndSavesNothingNew(GameTestHelper h) {
         run(h, 84900, f -> {
             var tank = f.tank(10_000);
@@ -493,7 +493,7 @@ public final class OilPipingTests {
 
     // ------------------------------------------------------------------ separate networks
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 100)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 100)
     public static void oilPipesNeverJoinWaterOrSteamNetworks(GameTestHelper h) {
         var l = h.getLevel();
         var base = new BlockPos(85000, 245, 79000);
@@ -551,7 +551,7 @@ public final class OilPipingTests {
 
     // ------------------------------------------------------------------ surveys are kept and redone
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", timeoutTicks = 300)
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 300)
     public static void aSurveyIsKeptWhileNothingChangesAndRedoneWhenABlockOnTheRunDoes(GameTestHelper h) {
         run(h, 85100, f -> {
             var tank = roomTank(f, 10_000);
