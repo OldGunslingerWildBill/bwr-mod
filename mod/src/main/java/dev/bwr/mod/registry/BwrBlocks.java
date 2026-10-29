@@ -226,6 +226,12 @@ public final class BwrBlocks {
 
     public static final DeferredBlock<HighPressureWaterPipeBlock> HIGH_PRESSURE_WATER_PIPE =
             BLOCKS.register("high_pressure_water_pipe", () -> new HighPressureWaterPipeBlock(machine()));
+    /** The lube oil line (TURBINE-AUX.md): a small-bore brown pipe that joins only lube oil equipment, never a water or steam line. */
+    public static final DeferredBlock<dev.bwr.mod.piping.LubeOilPipeBlock> LUBE_OIL_PIPE =
+            BLOCKS.register("lube_oil_pipe", () -> new dev.bwr.mod.piping.LubeOilPipeBlock(machine()));
+    /** A quarter-turn ball valve for a lube oil line, with a limit switch box on top that shows its position. */
+    public static final DeferredBlock<dev.bwr.mod.power.LubeOilValveBlock> LUBE_OIL_VALVE =
+            BLOCKS.register("lube_oil_valve", () -> new dev.bwr.mod.power.LubeOilValveBlock(machine()));
     public static final DeferredBlock<RpvWaterInjectionPortBlock> RPV_WATER_INJECTION_PORT =
             BLOCKS.register("rpv_water_injection_port", () -> new RpvWaterInjectionPortBlock(vesselSteel()));
 

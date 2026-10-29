@@ -146,12 +146,13 @@ public final class PipeTopology {
         }
     }
     private static void availabilityChanged(Level level,net.minecraft.world.level.ChunkPos chunk) {
+        OilLineNetwork.availabilityChanged(level,chunk);
         var cache=CACHE.get(level);if(cache==null)return;
         // Only our routes change; do not detach unrelated energy/fluid/modem capabilities.
         for(var entry:cache.values())if(entry.chunks.contains(chunk.toLong()))entry.stale();
     }
     @SubscribeEvent public static void unload(LevelEvent.Unload event) {
-        if(event.getLevel() instanceof Level level){var gone=CACHE.remove(level);if(gone!=null)gone.values().forEach(Entry::stale);}
+        if(event.getLevel() instanceof Level level){OilLineNetwork.unloaded(level);var gone=CACHE.remove(level);if(gone!=null)gone.values().forEach(Entry::stale);}
     }
 
     /**

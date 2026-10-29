@@ -52,9 +52,9 @@ PIPE_SETS = {
     # Main steam: thick lagging under aluminium cladding (12 px across); the amber service band sits on each sheet joint.
     'steam': dict(radius=6, sides=12, body='cladding', joint='ring', joint_mat='band', joint_len=1, joint_raise=0, cap='cladding',
                   port_radius=7.25, port_len=2, port_studs=8, elbow_segments=4, ship=True, preview_tint=(0xE8, 0xA4, 0x3B)),
-    # Lubricating oil (for the oil pipe a later change adds): small bore, painted brown, flanged at every joint.
+    # Lubricating oil (the Lube Oil Pipe, bwr:lube_oil_pipe): small bore, painted brown, flanged at every joint.
     'oil': dict(radius=2.5, sides=8, body='paint', joint='flange', joint_len=1, joint_flange_radius=4, cap='steel',
-                port_radius=4.5, port_len=1.5, port_studs=4, elbow_segments=4, ship=False, preview_tint=(0x6F, 0x4A, 0x2E)),
+                port_radius=4.5, port_len=1.5, port_studs=4, elbow_segments=4, ship=True, preview_tint=(0x6F, 0x4A, 0x2E)),
 }
 # Material name: (texture, tint index). The tinted ones take the block colour (service colour or dye).
 MATERIALS = {

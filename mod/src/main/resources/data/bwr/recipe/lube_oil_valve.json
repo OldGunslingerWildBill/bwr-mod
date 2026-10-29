@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:mod_loaded",
+        "modid": "mekanism"
+      }
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "L": {
+      "item": "minecraft:lever"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "P": {
+      "item": "bwr:lube_oil_pipe"
+    }
+  },
+  "pattern": [
+    "ILI",
+    "PIP",
+    "IRI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:lube_oil_valve"
+  }
+}

@@ -137,6 +137,8 @@ e("steam_stop_valve", sub={RS: C1})
 e("bypass_steam_valve", sub={CMP: C2})
 e("msiv", sub={RSB: C3})
 e("motor_operated_water_valve", sub={RS: C1})
+e("lube_oil_pipe")  # small bore: steel nuggets for the iron ones (the lining of the big pipes is not needed at this bore)
+e("lube_oil_valve", sub={RS: C1})  # the limit switch takes a signal, as the other valves do
 e("ads_relief_valve", sub={RS: C1})
 e("containment_vent_valve", sub={RS: C1})
 e("containment_spray_header", sub={RS: C1})

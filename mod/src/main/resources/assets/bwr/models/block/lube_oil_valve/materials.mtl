@@ -1,0 +1,47 @@
+newmtl mat_0
+Kd 0.43529411764705883 0.2901960784313726 0.1803921568627451
+map_Kd bwr:block/pipes/painted_steel
+
+newmtl mat_1
+Kd 0.8 0.8 0.82
+map_Kd bwr:block/pipes/flange_steel
+
+newmtl mat_2
+Kd 0.62 0.64 0.68
+map_Kd bwr:block/pipes/flange_steel
+
+newmtl mat_3
+Kd 0.2 0.27 0.31
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_4
+Kd 0.33 0.36 0.39
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_5
+Kd 0.5 0.53 0.56
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_6
+Kd 0.16 0.62 0.24
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_7
+Kd 0.72 0.13 0.11
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_8
+Kd 0.1 0.78 0.26
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_9
+Kd 0.85 0.1 0.09
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_10
+Kd 0.97 0.97 0.94
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_11
+Kd 0.04 0.045 0.05
+map_Kd minecraft:block/white_concrete

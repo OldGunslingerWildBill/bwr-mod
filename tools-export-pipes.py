@@ -7,7 +7,7 @@
 Reads art/models/pipes/<set>/mesh.json, written by art/models/pipes/build_pipes.py in headless Blender, and writes
 for each set: models/block/pipes/<set>/connection_<mask>.obj/.json (the 64 connection patterns), port_<direction>
 (the flange the client adds against a machine), item, and materials.mtl. A set with `ship` writes into the mod's
-assets together with its blockstate and item model; the others (the oil pipe, which has no block yet) go to
+assets together with its blockstate and item model; the others (none today) go to
 art/models/pipes/<set>/resources/, laid out as mod/src/main/resources so they can be moved in as they are.
 Polygons are written as they come from Blender (quads and triangles), with one flat normal per face.
 Standard library only.
@@ -22,7 +22,7 @@ ART = os.path.join(ROOT, "art", "models", "pipes")
 RES = os.path.join(ROOT, "mod", "src", "main", "resources")
 DIRS = ("down", "up", "north", "south", "west", "east")
 # Which block each shipped set draws.
-BLOCKS = {"water": "high_pressure_water_pipe", "steam": "pressurised_tube"}
+BLOCKS = {"water": "high_pressure_water_pipe", "steam": "pressurised_tube", "oil": "lube_oil_pipe"}
 PARTICLE = {"water": "bwr:block/pipes/painted_steel", "steam": "bwr:block/pipes/cladding", "oil": "bwr:block/pipes/painted_steel"}
 OUTPUTS = {}
 

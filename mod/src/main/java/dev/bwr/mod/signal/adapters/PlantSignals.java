@@ -139,6 +139,10 @@ final class PlantSignals {
             .number("oil_temp", "Lube oil temperature", "degC", 0, 120, be -> be.aux().lubeGoverned ? be.aux().oilC : Double.NaN)
             .number("oil_level", "Lube oil level", "fraction", 0, 1, be -> be.aux().lubeGoverned ? be.aux().oilLevel : Double.NaN)
             .number("oil_film", "Bearing oil film", "fraction", 0, 1, be -> be.aux().lubeGoverned ? be.aux().oilFilm : Double.NaN)
+            // The lube oil lines (TURBINE-AUX.md, Piping): whether oil reaches THIS section, and (on a piped train) whether its two runs are connected.
+            .boolOrNone("oil_fed", "Lube oil reaches this section's bearings", be -> be.aux().lubeGoverned ? (be.aux().oilFed ? 1 : 0) : Double.NaN)
+            .boolOrNone("oil_supply_piped", "Supply run joins a pump discharge (piped train)", be -> be.aux().lubeGoverned && be.aux().oilPiped ? (be.aux().oilSupplyPiped ? 1 : 0) : Double.NaN)
+            .boolOrNone("oil_drain_piped", "Drain run joins a tank return (piped train)", be -> be.aux().lubeGoverned && be.aux().oilPiped ? (be.aux().oilDrainPiped ? 1 : 0) : Double.NaN)
             .number("bearing_temp", "Bearing temperature", "degC", 0, 200, be -> be.aux().lubeGoverned ? be.bearingC : Double.NaN)
             .number("vibration", "Shaft vibration", "mm/s", 0, 30, be -> be.aux().bowGoverned ? be.vibration : Double.NaN)
             .number("rotor_temp", "Rotor temperature", "degC", 0, 400, be -> be.aux().bowGoverned && !be.block().generator() ? be.rotorC : Double.NaN)
@@ -168,9 +172,17 @@ final class PlantSignals {
             .number("wreck", "Wreck: 0 sound, 1 holed, 2 burst, 3 shaft out", "", 0, 3, PowerModuleBlockEntity::wreck)
             .toggle("turning_gear", "Turning gear on / off", (be, v) -> be.setTurningGear(v >= 0.5));
 
+    /** The Lube Oil Valve: its two limit switches and the turn command (TURBINE-AUX.md). */
+    static final Schema<dev.bwr.mod.power.LubeOilValveBlockEntity> LUBE_OIL_VALVE = new Schema<dev.bwr.mod.power.LubeOilValveBlockEntity>()
+            .bool("open", "Open limit switch made (valve open)", dev.bwr.mod.power.LubeOilValveBlockEntity::limitOpen)
+            .bool("closed", "Closed limit switch made (valve shut)", dev.bwr.mod.power.LubeOilValveBlockEntity::limitClosed)
+            .number("position", "Valve position", "fraction open", 0, 1, dev.bwr.mod.power.LubeOilValveBlockEntity::position)
+            .toggle("open", "Open / close", (be, v) -> { be.setOpen(v >= 0.5); return true; });
+
     /** The Main Oil Tank. Its pumps are the player's switches. */
     static final Schema<TurbineAuxBlockEntity> OIL_TANK = new Schema<TurbineAuxBlockEntity>()
             .bool("attached", "Attached to a train", be -> be.module() != null)
+            .bool("discharge_piped", "Discharge piped to a bearing header", TurbineAuxBlockEntity::dischargePiped)
             .bool("ac_pump", "AC pump switched on", TurbineAuxBlockEntity::acPumpOn)
             .bool("dc_pump", "DC pump switched on", TurbineAuxBlockEntity::dcPumpOn)
             .bool("ac_running", "AC pump running", TurbineAuxBlockEntity::acRunning)
@@ -205,6 +217,8 @@ final class PlantSignals {
     /** The Shaft-Driven Main Oil Pump: no switch, it turns with the shaft. */
     static final Schema<TurbineAuxBlockEntity> SHAFT_PUMP = new Schema<TurbineAuxBlockEntity>()
             .bool("attached", "On a generator shaft end", be -> be.module() != null)
+            .bool("suction_piped", "Suction piped to a tank", TurbineAuxBlockEntity::suctionPiped)
+            .bool("discharge_piped", "Discharge piped to a bearing header", TurbineAuxBlockEntity::dischargePiped)
             .number("delivery", "Delivery", "fraction", 0, 1, be -> be.module() == null ? 0 : dev.bwr.core.turbine.TurbineAux.shaftPumpFlow(be.module().rpm));
 
     /** The Generator Cooling Skid. */

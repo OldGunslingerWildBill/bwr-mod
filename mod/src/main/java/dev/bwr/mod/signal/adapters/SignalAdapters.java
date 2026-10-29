@@ -48,6 +48,7 @@ public final class SignalAdapters {
         SignalProviders.register(CoolingBlockEntity.class, PlantSignals.COOLING::bind);
         SignalProviders.register(PowerModuleBlockEntity.class, PlantSignals.POWER_MODULE::bind);
         SignalProviders.register(dev.bwr.mod.power.TurbineAuxBlockEntity.class, PlantSignals::aux);
+        SignalProviders.register(dev.bwr.mod.power.LubeOilValveBlockEntity.class, PlantSignals.LUBE_OIL_VALVE::bind);
         SignalProviders.register(ContainmentControllerBlockEntity.class, ContainmentSignals.CONTROLLER::bind);
         SignalProviders.register(ContainmentSprayHeaderBlockEntity.class, ContainmentSignals.SPRAY_HEADER::bind);
         SignalProviders.register(ContainmentPenetrationBlockEntity.class, ContainmentSignals.PENETRATION::bind);

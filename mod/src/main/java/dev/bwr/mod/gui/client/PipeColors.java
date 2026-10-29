@@ -15,17 +15,21 @@ public final class PipeColors {
     /** Plant light blue: the water pipe's paint (PIPES.md); a little greyer than the old bright band blue. */
     private static final int WATER = 0x5A9FCC;
     private static final int STEAM = 0xE8A43B;
+    /** Lube oil brown: the Lube Oil Pipe's paint (the oil pipe preview colour of PIPES.md). */
+    private static final int OIL = 0x6F4A2E;
     private PipeColors() {}
 
     @SubscribeEvent public static void blocks(RegisterColorHandlersEvent.Block event) {
         event.register((state, world, pos, tint) -> tint == 0
-                        ? 0xFF000000 | state.getValue(PaintedPipeBlock.PAINT).color(state.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) ? WATER : STEAM)
+                        ? 0xFF000000 | state.getValue(PaintedPipeBlock.PAINT).color(state.is(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get()) ? WATER
+                                : state.is(BwrBlocks.LUBE_OIL_PIPE.get()) ? OIL : STEAM)
                         : -1,
-                BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.PRESSURISED_TUBE.get());
+                BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.PRESSURISED_TUBE.get(), BwrBlocks.LUBE_OIL_PIPE.get());
     }
 
     @SubscribeEvent public static void items(RegisterColorHandlersEvent.Item event) {
         event.register((stack, tint) -> tint == 0 ? 0xFF000000 | WATER : -1, BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get());
         event.register((stack, tint) -> tint == 0 ? 0xFF000000 | STEAM : -1, BwrBlocks.PRESSURISED_TUBE.get());
+        event.register((stack, tint) -> tint == 0 ? 0xFF000000 | OIL : -1, BwrBlocks.LUBE_OIL_PIPE.get());
     }
 }

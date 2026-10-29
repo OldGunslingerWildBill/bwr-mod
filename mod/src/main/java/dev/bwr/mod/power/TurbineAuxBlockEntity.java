@@ -2,6 +2,7 @@ package dev.bwr.mod.power;
 
 import dev.bwr.core.turbine.TurbineAux;
 import dev.bwr.mod.eccs.EccsPower;
+import dev.bwr.mod.piping.OilLineNetwork;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.registry.BwrItems;
 import dev.bwr.mod.world.LoadedWorld;
@@ -210,16 +211,20 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
 
     /**
      * <b>The one place that decides which Main Oil Tank a housing serves</b> (and {@link #oilFilter} is the one place a tank finds its
-     * housing; everything else asks one of these two). Today the housing is bolted straight on a tank: the tank on its
-     * {@link TurbineAuxBlock#oilInFace inlet face} (the back) if there is one, else the first tank against any face in the order of
-     * {@link Direction#values()}. A later Lube Oil Pipe run changes this method to follow the oil from the inlet face back to its tank,
-     * and the outlet face ({@link TurbineAuxBlock#oilOutFace}) is where the oil leaves to the turbine train; nothing else here changes.
-     * Never loads a chunk.
+     * housing; everything else asks one of these two). In order: the tank bolted on its {@link TurbineAuxBlock#oilInFace inlet face} (the
+     * back); else the tank whose discharge the Lube Oil Pipe run from the inlet face leads back to (the housing is in-line in that tank's
+     * discharge line; the first tank the run joins, in the order the survey finds them); else the first tank against any other face in
+     * the order of {@link Direction#values()} (the old bolted-on rule, so a housing mounted against a tank by its side still works).
+     * The outlet face ({@link TurbineAuxBlock#oilOutFace}) is where the oil leaves toward the turbine train. Never loads a chunk.
      */
     public TurbineAuxBlockEntity tank() {
         if (slot == null || level == null) return null;
-        var inlet = worldPosition.relative(((TurbineAuxBlock) getBlockState().getBlock()).oilInFace(getBlockState()));
+        var block = (TurbineAuxBlock) getBlockState().getBlock();
+        var inlet = worldPosition.relative(block.oilInFace(getBlockState()));
         if (TurbineAuxBlock.tankAt(level, inlet) && LoadedWorld.blockEntity(level, inlet) instanceof TurbineAuxBlockEntity t && !t.isRemoved()) return t;
+        for (var e : OilLineNetwork.survey(level, worldPosition, block.oilInFace(getBlockState())).topo) {
+            if (e.role() == OilLineNetwork.Role.TANK_DISCHARGE && LoadedWorld.blockEntity(level, e.pos()) instanceof TurbineAuxBlockEntity t && !t.isRemoved()) return t;
+        }
         for (Direction d : Direction.values()) {
             var p = worldPosition.relative(d);
             if (TurbineAuxBlock.tankAt(level, p) && LoadedWorld.blockEntity(level, p) instanceof TurbineAuxBlockEntity t && !t.isRemoved()) return t;
@@ -227,7 +232,11 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         return null;
     }
 
-    /** The housing this tank is fitted with (the first of those against it that has this tank as theirs, in the order of {@link Direction#values()}), or null. */
+    /**
+     * The housing this tank is fitted with, or null: first the first of those bolted against it that has this tank as theirs (in the order
+     * of {@link Direction#values()}: direct contact wins), then the first housing in-line in the Lube Oil Pipe run leaving its discharge
+     * port, entered by its inlet face (the nearest one; a second housing further along does not filter).
+     */
     public TurbineAuxBlockEntity oilFilter() {
         if (kind() != TurbineAuxBlock.Kind.LUBE_OIL || level == null) return null;
         for (Direction d : Direction.values()) {
@@ -236,7 +245,33 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
             if (s == null || !(s.getBlock() instanceof TurbineAuxBlock b) || b.kind() != TurbineAuxBlock.Kind.OIL_FILTER) continue;
             if (LoadedWorld.blockEntity(level, p) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && h.tank() == this) return h;
         }
+        for (var p : oilSurvey(OilLineNetwork.Role.TANK_DISCHARGE).filters) {
+            if (LoadedWorld.blockEntity(level, p) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && h.tank() == this) return h;
+        }
         return null;
+    }
+
+    // ---- the lube oil lines (TURBINE-AUX.md, Piping): what the run on each oil port joins
+
+    /** What the Lube Oil Pipe run on this skid's port of {@code role} joins; nothing when it has no such port or no pipe there. */
+    public OilLineNetwork.Survey oilSurvey(OilLineNetwork.Role role) {
+        if (level == null || level.isClientSide()) return OilLineNetwork.Survey.NONE;
+        var face = ((TurbineAuxBlock) getBlockState().getBlock()).oilFaceOf(getBlockState(), role);
+        return face == null ? OilLineNetwork.Survey.NONE : OilLineNetwork.survey(level, worldPosition, face);
+    }
+
+    /** Whether this pump's discharge (the tank's, or the shaft pump's) is piped to a section's bearing supply: it then feeds the sections that run reaches and not the train it is bolted on. */
+    public boolean dischargePiped() {
+        return switch (kind()) {
+            case LUBE_OIL -> oilSurvey(OilLineNetwork.Role.TANK_DISCHARGE).joins(OilLineNetwork.Role.SECTION_SUPPLY);
+            case SHAFT_PUMP -> oilSurvey(OilLineNetwork.Role.PUMP_DISCHARGE).joins(OilLineNetwork.Role.SECTION_SUPPLY);
+            default -> false;
+        };
+    }
+
+    /** Whether the shaft pump's suction is piped to a tank's suction outlet: it then draws from the tanks that run reaches and not from the tanks of its train. */
+    public boolean suctionPiped() {
+        return kind() == TurbineAuxBlock.Kind.SHAFT_PUMP && oilSurvey(OilLineNetwork.Role.PUMP_SUCTION).joins(OilLineNetwork.Role.TANK_SUCTION);
     }
 
     /**

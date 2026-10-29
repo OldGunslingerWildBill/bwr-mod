@@ -57,6 +57,27 @@ public class PowerModuleBlock extends PumpAssemblyBlock {
     public Direction shaftFace(BlockState s,boolean front) { return front?s.getValue(FACING):s.getValue(FACING).getOpposite(); }
     public BlockPos terminal(BlockPos root,BlockState s) { return root.offset(TurbineAssemblyBlock.turn(new BlockPos(2,1,0),s.getValue(FACING))); }
     public Direction terminalFace(BlockState s) { return TurbineAssemblyBlock.turn(Direction.EAST,s.getValue(FACING)); }
+    /**
+     * The lube oil connections of a section (TURBINE-AUX.md, Piping): a bearing supply inlet on the floor row of the west flank and a
+     * bearing drain outlet on the east flank (turned with the section), at the middle of the casing. The flanks, not the underside: an
+     * LP turbine has its condenser right under it.
+     */
+    public Direction oilFace(BlockState s,boolean supply){return TurbineAssemblyBlock.turn(supply?Direction.WEST:Direction.EAST,s.getValue(FACING));}
+    /** The cell (a position in the world) of the section at {@code root} that carries the supply or the drain port. */
+    public BlockPos oilCell(BlockPos root,BlockState s,boolean supply){
+        int half=kind()==Kind.LP_TURBINE?3:2;
+        return root.offset(TurbineAssemblyBlock.turn(new BlockPos(supply?-half:half,0,0),s.getValue(FACING)));
+    }
+    /** The role of the oil port on {@code face} of this cell of a full section, or null. */
+    public dev.bwr.mod.piping.OilLineNetwork.Role oilPortAt(BlockState s,Direction face){
+        if(!isFull(s))return null;
+        int half=kind()==Kind.LP_TURBINE?3:2;
+        BlockPos off=cellOffset(s,s.getValue(CELL));
+        if(off.getY()!=0||off.getZ()!=0)return null;
+        if(off.getX()==-half&&face==oilFace(s,true))return dev.bwr.mod.piping.OilLineNetwork.Role.SECTION_SUPPLY;
+        if(off.getX()==half&&face==oilFace(s,false))return dev.bwr.mod.piping.OilLineNetwork.Role.SECTION_DRAIN;
+        return null;
+    }
     public boolean energyFace(BlockPos pos,BlockState s,Direction side) { return generator() && side==terminalFace(s) && pos.equals(terminal(origin(pos,s),s)); }
     @Override public BlockEntity newBlockEntity(BlockPos pos,BlockState s) { return s.getValue(CELL)==controllerCell(s)?new PowerModuleBlockEntity(pos,s):null; }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level,BlockState s,BlockEntityType<T> type) {

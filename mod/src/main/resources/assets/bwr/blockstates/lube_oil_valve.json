@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,open=true": {
+      "model": "bwr:block/lube_oil_valve/open"
+    },
+    "facing=north,open=false": {
+      "model": "bwr:block/lube_oil_valve/closed"
+    },
+    "facing=east,open=true": {
+      "model": "bwr:block/lube_oil_valve/open",
+      "y": 90
+    },
+    "facing=east,open=false": {
+      "model": "bwr:block/lube_oil_valve/closed",
+      "y": 90
+    },
+    "facing=south,open=true": {
+      "model": "bwr:block/lube_oil_valve/open",
+      "y": 180
+    },
+    "facing=south,open=false": {
+      "model": "bwr:block/lube_oil_valve/closed",
+      "y": 180
+    },
+    "facing=west,open=true": {
+      "model": "bwr:block/lube_oil_valve/open",
+      "y": 270
+    },
+    "facing=west,open=false": {
+      "model": "bwr:block/lube_oil_valve/closed",
+      "y": 270
+    }
+  }
+}

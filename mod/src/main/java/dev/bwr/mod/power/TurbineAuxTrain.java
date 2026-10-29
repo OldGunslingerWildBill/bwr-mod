@@ -46,6 +46,12 @@ public final class TurbineAuxTrain {
         /** The oil filter housing on the train's tank (TURBINE-AUX.md): none, and these read "no signal", on a tank without one. */
         public boolean filterHousing, filterBypass, filterAlarm;
         public double filterLife = Double.NaN, filterDpPsi = Double.NaN;
+        /**
+         * What reaches THIS section's bearings (TURBINE-AUX.md, Piping): {@code oilFed} some pump's oil reaches it (the integral header or its
+         * piped supply and drain), {@code oilPiped} the train's oil is piped (the sections can differ), and for a piped section whether its
+         * supply run joins a pump discharge and its drain run joins a tank return. All false on a train with no oil system.
+         */
+        public boolean oilFed, oilPiped, oilSupplyPiped, oilDrainPiped;
         void clear() {
             lubeGoverned = bowGoverned = genGoverned = oilTank = shaftPump = acRunning = dcRunning = gearOn = gearRolling = gearFed = coolingSkid = statorRunning = false;
             oilPsig = oilFilm = pumpFlow = vibration = statorFlow = 0;
@@ -53,6 +59,7 @@ public final class TurbineAuxTrain {
             oilPressureAlarm = oilLevelAlarm = oilTempAlarm = bearingAlarm = vibrationAlarm = windingAlarm = h2Alarm = false;
             filterHousing = filterBypass = filterAlarm = false;
             filterLife = filterDpPsi = Double.NaN;
+            oilFed = oilPiped = oilSupplyPiped = oilDrainPiped = false;
         }
         public boolean anyAlarm() {
             return oilPressureAlarm || oilLevelAlarm || oilTempAlarm || bearingAlarm || vibrationAlarm || windingAlarm || h2Alarm;
@@ -81,7 +88,9 @@ public final class TurbineAuxTrain {
             if (m.block().generator()) continue;
             m.advanceRotor(m.flowKgPerS > 0.5 && m.inletC > 0 ? m.inletC : Double.NaN);
         }
-        boolean lubeGov = required || !lube.isEmpty() || !shaft.isEmpty();
+        // The oil system the train has: what is bolted on it and what its pipes reach (OilCircuit; with no pipe on it, just what is bolted on).
+        var plan = OilCircuit.plan(train, lube, shaft);
+        boolean lubeGov = required || !plan.tanks.isEmpty() || !plan.shafts.isEmpty();
         boolean bowGov = required || gearOn;
         boolean genGov = required || train.stream().anyMatch(m -> m.block().generator() && !m.genCoolingSkids().isEmpty());
 
@@ -117,46 +126,66 @@ public final class TurbineAuxTrain {
         r.gearFed = gearFed;
         double bearingFilm = 1;
 
+        // One section's oil: the header pressure and film at its bearings, the oil reaching it, and what its lines join.
+        var oil = new java.util.IdentityHashMap<PowerModuleBlockEntity, OilState>();
         if (lubeGov) {
+            // The tanks that serve the train: those bolted on it, and (a piped train) the ones its pipes reach.
+            List<TurbineAuxBlockEntity> tanks = plan.legacy ? lube : List.copyOf(plan.tanks);
             // A train joined half-way through a tick is stepped twice; its tanks are advanced only the first time.
-            boolean fresh = lube.isEmpty();
-            for (var t : lube) fresh |= t.beginStep(now);
-            double flow = 0, suction = 0, psig, oilSum = 0, minLevel = 1;
-            if (fresh) {
-                for (var t : lube) {
-                    flow += t.oilPumpFlow();
-                    suction += t.suction();
+            boolean fresh = tanks.isEmpty();
+            for (var t : tanks) fresh |= t.beginStep(now);
+            double flow = 0, psig, oilSum = 0, minLevel = 1;
+            if (plan.legacy) {
+                // Nothing piped: every pump bolted on the train feeds every section through the integral header, exactly as it always did.
+                double suction = 0;
+                if (fresh) {
+                    for (var t : lube) {
+                        flow += t.oilPumpFlow();
+                        suction += t.suction();
+                    }
+                    double shaftFlow = !shaft.isEmpty() && !lube.isEmpty() ? TurbineAux.shaftPumpFlow(rpm) * suction / lube.size() : 0;
+                    flow += shaftFlow;
+                    psig = TurbineAux.oilPsig(flow);
+                    bearingFilm = TurbineAux.film(flow, rpm);
+                    double heat = TurbineAux.oilHeatKw(rpm, bearingFilm);
+                    for (var t : lube) t.oilThermal(heat / lube.size(), psig, bearingFilm);
+                } else {
+                    psig = lube.get(0).psig();
+                    bearingFilm = lube.get(0).film();
+                    flow = lube.stream().mapToDouble(TurbineAuxBlockEntity::pumpFlow).sum();
                 }
-                double shaftFlow = !shaft.isEmpty() && !lube.isEmpty() ? TurbineAux.shaftPumpFlow(rpm) * suction / lube.size() : 0;
-                flow += shaftFlow;
-                psig = TurbineAux.oilPsig(flow);
-                bearingFilm = TurbineAux.film(flow, rpm);
-                double heat = TurbineAux.oilHeatKw(rpm, bearingFilm);
-                for (var t : lube) t.oilThermal(heat / lube.size(), psig, bearingFilm);
+                var shared = new OilState();
+                shared.psig = psig;
+                shared.film = bearingFilm;
+                shared.flow = flow;
+                shared.fed = !lube.isEmpty() || !shaft.isEmpty();
+                for (var m : train) oil.put(m, shared);
             } else {
-                psig = lube.get(0).psig();
-                bearingFilm = lube.get(0).film();
-                flow = lube.stream().mapToDouble(TurbineAuxBlockEntity::pumpFlow).sum();
+                psig = generalOil(plan, train, rpm, fresh, oil);
+                bearingFilm = oil.values().stream().mapToDouble(o -> o.film).min().orElse(0);
+                flow = oil.values().stream().mapToDouble(o -> o.flow).max().orElse(0);
             }
-            for (var t : lube) {
+            for (var t : tanks) {
                 oilSum += t.oilC();
                 minLevel = Math.min(minLevel, t.oilFraction());
                 r.acRunning |= t.acRunning();
                 r.dcRunning |= t.dcRunning();
             }
-            r.oilTank = !lube.isEmpty();
-            r.shaftPump = !shaft.isEmpty();
+            double trainOilC = tanks.isEmpty() ? TurbineAux.AMBIENT_C : oilSum / tanks.size();
+            r.oilTank = !tanks.isEmpty();
+            r.shaftPump = !(plan.legacy ? shaft : List.copyOf(plan.shafts)).isEmpty();
             r.pumpFlow = flow;
             r.oilPsig = psig;
             r.oilFilm = bearingFilm;
-            r.oilC = lube.isEmpty() ? TurbineAux.AMBIENT_C : oilSum / lube.size();
-            r.oilLevel = lube.isEmpty() ? Double.NaN : minLevel;
+            r.oilC = trainOilC;
+            r.oilLevel = tanks.isEmpty() ? Double.NaN : minLevel;
             r.oilPressureAlarm = rpm >= TurbineAux.STANDSTILL_RPM && psig < ALARM_OIL_PSIG;
-            r.oilLevelAlarm = lube.isEmpty() || minLevel < ALARM_OIL_LEVEL;
+            r.oilLevelAlarm = tanks.isEmpty() || minLevel < ALARM_OIL_LEVEL;
             r.oilTempAlarm = r.oilC > ALARM_OIL_C;
-            // The oil filter housings against the tanks: the worst of them is what the train reports. A tank with none adds nothing.
+            r.oilPiped = !plan.legacy;
+            // The oil filter housings on the tanks: the worst of them is what the train reports. A tank with none adds nothing.
             double life = 1, dp = 0;
-            for (var t : lube) {
+            for (var t : tanks) {
                 var f = t.oilFilter();
                 if (f == null) continue;
                 r.filterHousing = true;
@@ -166,12 +195,23 @@ public final class TurbineAuxTrain {
                 r.filterAlarm |= f.filterChangeDue();
             }
             if (r.filterHousing) { r.filterLife = life; r.filterDpPsi = dp; }
+            // The oil each section's bearings sit in: what reaches them (the tanks of the pumps feeding it), room air when nothing does.
+            for (var m : train) {
+                var o = oil.get(m);
+                if (plan.legacy) { o.oilC = trainOilC; continue; }
+                var f = plan.feeds.get(m);
+                var src = f == null ? List.<TurbineAuxBlockEntity>of() : tanksOf(plan, f);
+                double sum = 0;
+                for (var t : src) sum += t.oilC();
+                o.oilC = src.isEmpty() ? TurbineAux.AMBIENT_C : sum / src.size();
+            }
         }
 
         double maxVibration = 0;
         for (var m : active) {
             if (lubeGov) {
-                double target = TurbineAux.bearingTargetC(bearingFilm, Double.isNaN(r.oilC) ? TurbineAux.AMBIENT_C : r.oilC, rpm);
+                var o = oil.get(m);
+                double target = TurbineAux.bearingTargetC(o.film, Double.isNaN(o.oilC) ? TurbineAux.AMBIENT_C : o.oilC, rpm);
                 m.bearingC = TurbineAux.bearingStepC(m.bearingC, target, DT);
                 m.addShaftDamage(TurbineAux.bearingDamage(m.bearingC, DT));
             } else {
@@ -192,9 +232,10 @@ public final class TurbineAuxTrain {
         r.vibrationAlarm = maxVibration > ALARM_VIBRATION_MM_S;
         for (var m : active) r.bearingAlarm |= lubeGov && m.bearingC > ALARM_BEARING_C;
         // A bearing run dry past the ignition point lights the oil left in its housing, if the train's tanks hold any (TURBINE-MAINTENANCE.md).
-        if (lubeGov && !lube.isEmpty() && !active.isEmpty() && active.get(0).getLevel() instanceof net.minecraft.server.level.ServerLevel server) {
+        if (lubeGov && !plan.tanks.isEmpty() && !active.isEmpty() && active.get(0).getLevel() instanceof net.minecraft.server.level.ServerLevel server) {
+            var burnable = List.copyOf(plan.tanks);
             for (var m : active) {
-                if (!m.burning() && dev.bwr.core.turbine.TurbineFire.bearingIgnites(m.bearingC, rpm)) TurbineFires.bearing(server, m, lube);
+                if (!m.burning() && dev.bwr.core.turbine.TurbineFire.bearingIgnites(m.bearingC, rpm)) TurbineFires.bearing(server, m, burnable);
             }
         }
 
@@ -202,6 +243,17 @@ public final class TurbineAuxTrain {
         for (var m : active) {
             var out = new Readout();
             copy(r, out);
+            var o = oil.get(m);
+            if (o != null) {
+                out.oilPsig = o.psig;
+                out.oilFilm = o.film;
+                out.pumpFlow = o.flow;
+                out.oilC = o.oilC;
+                out.oilFed = o.fed;
+                out.oilSupplyPiped = o.supply;
+                out.oilDrainPiped = o.drain;
+                out.oilPressureAlarm = rpm >= TurbineAux.STANDSTILL_RPM && o.psig < ALARM_OIL_PSIG;
+            }
             if (m.block().generator() && genGov) generator(m, rpm, now, out);
             m.setAux(out);
         }
@@ -244,5 +296,84 @@ public final class TurbineAuxTrain {
         b.bearingAlarm = a.bearingAlarm; b.vibrationAlarm = a.vibrationAlarm;
         b.filterHousing = a.filterHousing; b.filterBypass = a.filterBypass; b.filterAlarm = a.filterAlarm;
         b.filterLife = a.filterLife; b.filterDpPsi = a.filterDpPsi;
+        b.oilFed = a.oilFed; b.oilPiped = a.oilPiped; b.oilSupplyPiped = a.oilSupplyPiped; b.oilDrainPiped = a.oilDrainPiped;
     }
+
+    /** What reaches one section's bearings this tick. */
+    private static final class OilState {
+        double psig, film, flow, oilC = Double.NaN;
+        boolean fed, supply, drain;
+    }
+
+    /** The tanks the pumps feeding a section draw from (a tank pump's own tank, a shaft pump's suction tanks), each once. */
+    private static List<TurbineAuxBlockEntity> tanksOf(OilCircuit.Plan plan, OilCircuit.Feed feed) {
+        var out = new ArrayList<TurbineAuxBlockEntity>();
+        for (var p : feed.pumps) {
+            if (p.kind() == TurbineAuxBlock.Kind.LUBE_OIL) { if (!out.contains(p)) out.add(p); }
+            else for (var t : plan.suctionTanks(p)) if (!out.contains(t)) out.add(t);
+        }
+        return out;
+    }
+
+    /** A shaft pump's delivery: its speed law times the suction its tanks give, nothing with no tank to draw from or a valve shut. */
+    private static double shaftFlow(OilCircuit.Plan plan, TurbineAuxBlockEntity shaft, double rpm) {
+        var from = plan.suctionTanks(shaft);
+        if (from.isEmpty()) return 0;
+        double suction = 0;
+        for (var t : from) suction += t.suction();
+        return TurbineAux.shaftPumpFlow(rpm) * suction / from.size();
+    }
+
+    /**
+     * The oil of a piped train (OilCircuit): each section gets the sum of what the pumps that reach it deliver, so its header pressure and
+     * oil film are its own; the bearing heat of every fed section goes to the tanks its oil comes from, and each tank takes the highest
+     * pressure it supplies. A section no pump reaches has no pressure and no film. Fills {@code out} for every section of the train and
+     * returns the highest header pressure.
+     */
+    private static double generalOil(OilCircuit.Plan plan, List<PowerModuleBlockEntity> train, double rpm, boolean fresh,
+                                     java.util.Map<PowerModuleBlockEntity, OilState> out) {
+        if (fresh) for (var t : plan.tanks) t.oilPumpFlow();
+        double top = 0;
+        for (var m : train) {
+            var f = plan.feeds.get(m);
+            var st = new OilState();
+            double flow = 0;
+            if (f != null) {
+                for (var p : f.pumps) flow += p.kind() == TurbineAuxBlock.Kind.LUBE_OIL ? p.pumpFlow() : shaftFlow(plan, p, rpm);
+                st.fed = f.fed();
+                st.supply = f.supplyPiped;
+                st.drain = f.drainPiped;
+            }
+            st.flow = flow;
+            st.psig = TurbineAux.oilPsig(flow);
+            st.film = TurbineAux.film(flow, rpm);
+            top = Math.max(top, st.psig);
+            out.put(m, st);
+        }
+        if (fresh) {
+            var heat = new java.util.IdentityHashMap<TurbineAuxBlockEntity, double[]>();
+            for (var t : plan.tanks) heat.put(t, new double[] {0, 0, 1, 0});
+            for (var m : train) {
+                var f = plan.feeds.get(m);
+                if (f == null || !f.fed()) continue;
+                var st = out.get(m);
+                double h = TurbineAux.oilHeatKw(rpm, st.film) / train.size();
+                var src = tanksOf(plan, f);
+                for (var t : src) {
+                    var a = heat.get(t);
+                    if (a == null) continue;
+                    a[0] += h / src.size();
+                    a[1] = Math.max(a[1], st.psig);
+                    a[2] = Math.min(a[2], st.film);
+                    a[3] = 1;
+                }
+            }
+            for (var t : plan.tanks) {
+                var a = heat.get(t);
+                t.oilThermal(a[0], a[3] > 0 ? a[1] : 0, a[3] > 0 ? a[2] : 0);
+            }
+        }
+        return top;
+    }
+
 }

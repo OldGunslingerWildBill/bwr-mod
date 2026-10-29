@@ -43,7 +43,7 @@ public final class PipeJointModels {
     private PipeJointModels() {}
 
     private static Map<Block, String> sets() {
-        return Map.of(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), "water", BwrBlocks.PRESSURISED_TUBE.get(), "steam");
+        return Map.of(BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), "water", BwrBlocks.PRESSURISED_TUBE.get(), "steam", BwrBlocks.LUBE_OIL_PIPE.get(), "oil");
     }
 
     public static ModelResourceLocation port(String set, Direction d) {

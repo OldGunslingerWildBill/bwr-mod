@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "building",
+  "key": {
+    "N": {
+      "tag": "c:nuggets/steel"
+    },
+    "B": {
+      "item": "minecraft:brown_dye"
+    }
+  },
+  "pattern": [
+    "NNN",
+    " B ",
+    "NNN"
+  ],
+  "result": {
+    "count": 6,
+    "id": "bwr:lube_oil_pipe"
+  }
+}

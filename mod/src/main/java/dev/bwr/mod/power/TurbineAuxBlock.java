@@ -92,6 +92,36 @@ public class TurbineAuxBlock extends BaseEntityBlock {
     public Direction oilInFace(BlockState s) { return s.getValue(FACING).getOpposite(); }
     public Direction oilOutFace(BlockState s) { return s.getValue(FACING); }
 
+    /** Whether a Lube Oil Pipe run takes oil on {@code face} of an Oil Filter Housing: its inlet and outlet flanges, nothing else. */
+    public boolean acceptsOilLineOn(BlockState s, Direction face) {
+        return kind == Kind.OIL_FILTER && face != null && (face == oilInFace(s) || face == oilOutFace(s));
+    }
+
+    /**
+     * The lube oil port on {@code face}, or null (TURBINE-AUX.md, Piping). The Main Oil Tank: discharge on its front (the AC and DC pumps'
+     * delivery to the bearing header), the return inlet on its back (the bearing drains), the suction outlet below (to the shaft-driven
+     * pump) and the fill connection on top; its two sides are the cooling water flanges. The Shaft-Driven Main Oil Pump: suction below,
+     * discharge on top. The filter housing is a conduit (see {@link #acceptsOilLineOn}); the cooling skid has no oil.
+     */
+    public dev.bwr.mod.piping.OilLineNetwork.Role oilPortAt(BlockState s, Direction face) {
+        if (face == null) return null;
+        return switch (kind) {
+            case LUBE_OIL -> face == s.getValue(FACING) ? dev.bwr.mod.piping.OilLineNetwork.Role.TANK_DISCHARGE
+                    : face == s.getValue(FACING).getOpposite() ? dev.bwr.mod.piping.OilLineNetwork.Role.TANK_RETURN
+                    : face == Direction.DOWN ? dev.bwr.mod.piping.OilLineNetwork.Role.TANK_SUCTION
+                    : face == Direction.UP ? dev.bwr.mod.piping.OilLineNetwork.Role.TANK_FILL : null;
+            case SHAFT_PUMP -> face == Direction.DOWN ? dev.bwr.mod.piping.OilLineNetwork.Role.PUMP_SUCTION
+                    : face == Direction.UP ? dev.bwr.mod.piping.OilLineNetwork.Role.PUMP_DISCHARGE : null;
+            default -> null;
+        };
+    }
+
+    /** The face of this skid's port of the given role, or null (the tank and the shaft pump have one face per role). */
+    public Direction oilFaceOf(BlockState s, dev.bwr.mod.piping.OilLineNetwork.Role role) {
+        for (Direction d : Direction.values()) if (oilPortAt(s, d) == role) return d;
+        return null;
+    }
+
     /** The AC bus (tank pump, stator pumps): every face but the top and the two flanges. */
     public boolean acFace(BlockState s, Direction side) {
         return (kind == Kind.LUBE_OIL || kind == Kind.GEN_COOLING) && side != null && side != Direction.UP && side != coldInFace(s) && side != hotOutFace(s);
@@ -173,7 +203,7 @@ public class TurbineAuxBlock extends BaseEntityBlock {
     @Override protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState old, boolean moving) {
         super.onPlace(state, level, pos, old, moving);
         if (state == old) return;
-        if (hasWater()) dev.bwr.mod.piping.PipeTopology.changed(level, pos);
+        dev.bwr.mod.piping.OilLineNetwork.changed(level, pos);
     }
 
     @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
@@ -182,7 +212,7 @@ public class TurbineAuxBlock extends BaseEntityBlock {
             if (kind == Kind.OIL_FILTER && !level.isClientSide()) be.dropCartridge();
         }
         super.onRemove(state, level, pos, replacement, moving);
-        if (!replacement.is(this) && hasWater()) dev.bwr.mod.piping.PipeTopology.changed(level, pos);
+        if (!replacement.is(this)) dev.bwr.mod.piping.OilLineNetwork.changed(level, pos);
     }
 
     /** A train section placed against a skid that was waiting for one picks it up. */
@@ -241,12 +271,17 @@ public class TurbineAuxBlock extends BaseEntityBlock {
             case LUBE_OIL -> {
                 lines.add(BwrText.tr("tooltip.bwr.main_oil_tank.1", "Set against any section of the shaft train. Holds 20,000 L of turbine oil (right-click with Turbine Oil Drums)."));
                 lines.add(BwrText.tr("tooltip.bwr.main_oil_tank.2", "AC auxiliary pump on the side and bottom faces, emergency DC pump on the top face (wire a battery). Cooling water on the two flanges."));
+                lines.add(BwrText.tr("tooltip.bwr.main_oil_tank.3", "Lube Oil Pipe ports: discharge on the front, return on the back, suction below (for the shaft pump), fill on top. Piped, it can stand in another room."));
             }
             case OIL_FILTER -> {
                 lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.1", "Bolts on a Main Oil Tank. A full-flow lube oil filter with a slot for one Oil Filter Cartridge."));
                 lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.2", "A clean cartridge makes the tank's oil last ten times as long. With the slot empty, or the cartridge full, the oil goes round it."));
+                lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.3", "Or in-line in a Lube Oil Pipe run on a tank's discharge: inlet on its back, outlet on its front."));
             }
-            case SHAFT_PUMP -> lines.add(BwrText.tr("tooltip.bwr.shaft_oil_pump", "Bolts on the free shaft end of the generator, coupling toward it. Pumps oil in proportion to shaft speed."));
+            case SHAFT_PUMP -> {
+                lines.add(BwrText.tr("tooltip.bwr.shaft_oil_pump", "Bolts on the free shaft end of the generator, coupling toward it. Pumps oil in proportion to shaft speed."));
+                lines.add(BwrText.tr("tooltip.bwr.shaft_oil_pump.2", "Lube Oil Pipe ports: suction below (from a tank), discharge on top. With no tank on its train and no suction pipe it delivers nothing."));
+            }
             case GEN_COOLING -> {
                 lines.add(BwrText.tr("tooltip.bwr.generator_cooling_skid.1", "Set against the generator. Stator water pumps (FE on any face but the flanges), a hydrogen charge (Hydrogen Cylinders) and coolers on cooling water."));
                 lines.add(BwrText.tr("tooltip.bwr.generator_cooling_skid.2", "Without cooling the winding heats with load; nothing trips. Cut the load."));

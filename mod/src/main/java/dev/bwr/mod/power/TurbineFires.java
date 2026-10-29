@@ -38,15 +38,9 @@ public final class TurbineFires {
     /** A blade thrown this steeply downwards (the sine of its release angle under this) goes through the lower casing and its oil lines. */
     static final double OIL_LINES_BELOW_SIN = -0.5;
 
-    /** The Main Oil Tanks of a train's sections, loaded ones. */
+    /** The Main Oil Tanks that serve a train, loaded ones: those bolted on its sections, and those its Lube Oil Pipe runs reach (TURBINE-AUX.md). */
     static List<TurbineAuxBlockEntity> tanks(List<PowerModuleBlockEntity> train) {
-        List<TurbineAuxBlockEntity> out = new ArrayList<>();
-        for (var m : train) {
-            for (var a : m.auxEntities()) {
-                if (a.kind() == TurbineAuxBlock.Kind.LUBE_OIL && !out.contains(a)) out.add(a);
-            }
-        }
-        return out;
+        return OilCircuit.tanks(train);
     }
 
     private static double drain(List<TurbineAuxBlockEntity> tanks, double litres) {
