@@ -46,7 +46,7 @@ public class FloodlightAimScreen extends BwrScreen<FloodlightAimMenu> {
                 Layout.gap(BwrStyle.SP1),
                 Layout.controls(BwrStyle.SP1).add(tiltLess, 1).add(tiltMore, 1));
         var reach = Layout.card("Reach",
-                Layout.row("Length", () -> Integer.toString(menu.reach), "blocks")
+                Layout.row("Beam", () -> Integer.toString(menu.reach), "blocks")
                         .tip(() -> java.util.List.of(Component.literal("How far the beam looks for something to light, 8 to 128 blocks. The usual reach is 32."))),
                 Layout.note("usual reach: 32"),
                 Layout.gap(BwrStyle.SP1),

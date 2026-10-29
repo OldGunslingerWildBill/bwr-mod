@@ -5,6 +5,8 @@ import dev.bwr.mod.floodlight.BeamLampBlockEntity;
 import dev.bwr.mod.floodlight.FacingBeamLampBlock;
 import dev.bwr.mod.floodlight.HpsFlatPanelBlock;
 import dev.bwr.mod.floodlight.XenonFloodlightBlock;
+import dev.bwr.mod.gui.FloodlightAimMenu;
+import dev.bwr.mod.gui.client.FloodlightAimScreen;
 import dev.bwr.mod.registry.BwrBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -136,6 +138,10 @@ public final class FloodlightClientCheck {
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 100) return;
         RenderEnvironment.log("FloodlightClientCheck");
+        if (stage >= STAGES.length) {
+            aimRoundtrip(mc);
+            return;
+        }
         if (!requested) {
             requested = true;
             shown = 0;
@@ -207,11 +213,76 @@ public final class FloodlightClientCheck {
             CheckShots.save(mc, dir.resolve(st.name() + ".png"));
             LogUtils.getLogger().info("FLOODLIGHT CLIENT PASS {} {}", kind, st.name());
             if (++stage == STAGES.length) {
-                LogUtils.getLogger().info("FLOODLIGHT CLIENT COMPLETE");
-                mc.stop();
+                roundtrip = 1;
             } else {
                 requested = false;
             }
+        }
+    }
+
+    private static int roundtrip, roundtripAge;
+
+    /**
+     * The last step: the aiming screen over the real connection. The server opens the floodlight's menu for the player; the screen
+     * (client) is clicked three times and the reach changed, through the same methods the buttons call; the commands go to the server as
+     * packets. Then the server's lamp must have the aim (3 degrees, -2 degrees, reach 100) and so must the client's copy of it (the head
+     * turns to the exact angle). A picture of the open screen is saved.
+     */
+    private static void aimRoundtrip(Minecraft mc) throws Exception {
+        var server = mc.getSingleplayerServer();
+        BlockPos lampPos = FARS.get(0).lamp();
+        roundtripAge++;
+        if (roundtrip == 1) {
+            var uuid = mc.player.getUUID();
+            server.execute(() -> {
+                var player = server.getPlayerList().getPlayer(uuid);
+                ServerLevel level = player.serverLevel();
+                if (level.getBlockEntity(lampPos) instanceof BeamLampBlockEntity be) {
+                    be.setAim(0, 0, 32);
+                    be.reconcile();
+                }
+                player.connection.teleport(lampPos.getX() - 2.5, lampPos.getY() + 0.5, lampPos.getZ() + 0.5, -90, 10);
+                FloodlightAimMenu.open(player, lampPos);
+            });
+            roundtrip = 2;
+            roundtripAge = 0;
+            return;
+        }
+        if (roundtrip == 2) {
+            if (mc.screen instanceof FloodlightAimScreen && mc.player.containerMenu instanceof FloodlightAimMenu m && m.present) {
+                m.aimTo(m.yaw + 1, m.pitch);
+                m.aimTo(m.yaw + 1, m.pitch);
+                m.aimTo(m.yaw + 1, m.pitch - 2);
+                m.reachTo(100);
+                roundtrip = 3;
+                roundtripAge = 0;
+            } else if (roundtripAge > 600) {
+                throw new IllegalStateException("The aiming screen never opened");
+            }
+            return;
+        }
+        if (roundtrip == 3 && roundtripAge > 60) {
+            int[] onServer = server.submit(() -> {
+                var be = (BeamLampBlockEntity) server.overworld().getBlockEntity(lampPos);
+                return new int[] {be.yawDegrees(), be.pitchDegrees(), be.reach()};
+            }).get(10, java.util.concurrent.TimeUnit.SECONDS);
+            var client = (BeamLampBlockEntity) mc.level.getBlockEntity(lampPos);
+            var m = (FloodlightAimMenu) mc.player.containerMenu;
+            LogUtils.getLogger().info("FLOODLIGHT CLIENT AIM ROUNDTRIP server {} client {} {} {} screen {} {} {}", java.util.Arrays.toString(onServer),
+                    client.yawDegrees(), client.pitchDegrees(), client.reach(), m.yaw, m.pitch, m.reach);
+            if (onServer[0] != 3 || onServer[1] != -2 || onServer[2] != 100) {
+                throw new IllegalStateException("The server's lamp did not take the aim from the screen: " + java.util.Arrays.toString(onServer));
+            }
+            if (client.yawDegrees() != 3 || client.pitchDegrees() != -2 || client.reach() != 100) {
+                throw new IllegalStateException("The client's lamp does not have the exact angles");
+            }
+            var dir = mc.gameDirectory.toPath().resolve("floodlight-check").resolve(RenderEnvironment.shaderPackInUse() ? "shaders" : "vanilla");
+            java.nio.file.Files.createDirectories(dir);
+            CheckShots.save(mc, dir.resolve("floodlight-aim-screen-open.png"));
+            LogUtils.getLogger().info("FLOODLIGHT CLIENT AIM ROUNDTRIP PASS");
+            LogUtils.getLogger().info("FLOODLIGHT CLIENT COMPLETE");
+            mc.stop();
+            roundtrip = 4;
         }
     }
 

@@ -15,6 +15,19 @@
   wool; with Mekanism steel, paper and an HDPE sheet). A tank with no housing behaves exactly as before, and a housing saves a key only
   when it holds a cartridge. Core `TurbineAuxTest` 13 and 14; GameTests `OilFilterTests`.
 
+- **Xenon floodlight: an aiming screen, one-degree aim and a reach of up to 128 blocks** (LIGHTING.md). Right-click the floodlight with an
+  empty hand to open a small screen: **heading** 0 to 359 degrees, **tilt** -75 to +30 degrees and **reach** 8 to 128 blocks, each with a
+  minus and a plus button (one degree or one block a click, Shift for 10 degrees or 8 blocks). The head turns to the exact angle and the
+  light follows within a fifth of a second; a burst of clicks makes one re-plan. The server checks every command (in reach, not a
+  spectator, may build, rate limited, in range). Sneak-right-click is still the quick 15-degree tilt (the old 45-degree turn on a plain
+  click is replaced by the screen). The usual reach stays 32, so a floodlight nobody changes lights exactly what it did, and a save from
+  before loads to the same aim (the aim is saved as `YawDeg`, `PitchDeg` and `Reach`, and also as the old `Yaw` and `Pitch` steps while it
+  is on the old grid). At reach 128 a wall 123 blocks away is lit within the 256 lights (a re-plan costs about 9 ms, against 0.2 ms at 32;
+  a long-reach floodlight's 5-second refresh is staggered by position); a ray still never loads a chunk, and lights placed far away are
+  cleaned up exactly, through the queue when their chunk is out. CC `bwr_beam_lamp`: `setAim(yawDeg, pitchDeg)` and `setReach(blocks)`
+  on the floodlight only (the high-bay and the panel refuse), and `yawDeg`, `pitchDeg`, `reach` in `getStatus`. GameTests
+  `FloodlightAimTests`.
+
 What a turbine failure leaves behind, how bad it can get, and how it is put right (TURBINE-MAINTENANCE.md).
 
 - **Wrecked casings.** A turbine section has a wreck level the screens and computers read: **holed** (a thrown blade tore out through
