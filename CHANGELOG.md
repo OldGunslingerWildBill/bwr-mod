@@ -29,6 +29,22 @@
   filter-only rate again. No consumable. Screen, signals, CC `bwr_lube_oil_conditioner`, recipes in both installs. Core `TurbineAuxTest` 15
   and 16; GameTests `OilConditioningTests` (namespace `bwroil`).
 
+- **Cartridge grades, staged filtration, bearing oil flow alarms and the conditioner's running lamp** (TURBINE-AUX.md, *Cartridge grades* and
+  *Bearing oil flow*). The Oil Filter Cartridge comes in **three grades**: the existing one is now the **standard** grade (unchanged in every
+  number, id and save), a **coarse** one with a green band (passes a lot of oil, catches the big debris, lasts 2.5 times as long) and a **fine** one
+  with a blue band (catches nearly everything, loads in 4.2 h and passes only **0.6** of a train's rated oil flow, less as it fills). Housings in a
+  Lube Oil Pipe run work **in series** (a coarse one in front protects a fine one behind it: it loads under a quarter as fast) and **in parallel**
+  (two fine housings side by side pass 1.2 and feed a whole train; one alone starves it); the run is read as a small cached graph, rebuilt only when
+  it changes. The grades are rated like real elements (beta10(c) = 10, 100 and 1,000), and the oil has a **cleanliness** that settles where the
+  stages leave it: a standard cartridge, none or a bypassed one is the default, exactly as before; **coarse alone lets it get dirtier** (the
+  oil degrades about 1.5 times as fast, the bearings wear 0.075 percent an hour and the shaft shakes 0.75 mm/s more), a **fine** one or a
+  **running conditioner** cleans it. The **bearing oil flow** (delivered over what the speed needs) is shown on the section, the tank and the
+  housing screens and is `oil_flow` with `oil_flow_good` (100 % or more), `oil_flow_low_alarm` (under 90 %) and `oil_flow_very_low_alarm` (70 % or
+  under), `oil_flow_restricted` and `oil_cleanliness`, ready for an annunciator like `oil_pressure_alarm`; computers read the same. It falls
+  with a low tank, a shut valve, a loaded fine cartridge or a filter that cannot pass the flow. The Lube Oil Conditioner has a **green running
+  lamp**, lit while it runs (block state `lit`, full bright with a labPBR emission map). Recipes for both new grades in both installs. Core
+  `TurbineAuxTest` 17 to 19; GameTests `OilGradeTests` (namespace `bwroil`).
+
 - **Lube oil piping: the Lube Oil Pipe, the Lube Oil Valve and oil ports on all the oil equipment** (TURBINE-AUX.md, *Lube oil piping*; PIPES.md;
   SIGNALS.md). A **Lube Oil Pipe** (small bore, **brown**, flanged; the `oil` model set that was waiting in `art/models/pipes/`) is a network of
   its own: it joins lube oil pipes, valves, filter housings and the oil ports below, and never a water or steam pipe. The **Main Oil Tank** has

@@ -97,6 +97,13 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
                         () -> DisplayUnitReadouts.unit(Quantity.TEMPERATURE)).showIf(() -> menu.lubeGov),
                 Layout.row("Oil level", () -> Double.isNaN(menu.oilLevel) ? "-" : pct(menu.oilLevel), "%").showIf(() -> menu.lubeGov),
                 Layout.row("Oil film", () -> pct(menu.oilFilm), "%").showIf(() -> menu.lubeGov),
+                Layout.row("Oil flow", () -> Double.isNaN(menu.oilFlow) ? "-" : pct(menu.oilFlow) + " %" + ((menu.alarms & 512) != 0 ? " very low" : (menu.alarms & 256) != 0 ? " low" : (menu.alarms & 1024) != 0 ? " held back" : ""))
+                        .status(() -> (menu.alarms & 512) != 0 ? Status.ALARM : (menu.alarms & 256) != 0 ? Status.CAUTION : Status.NONE).showIf(() -> menu.lubeGov)
+                        .tip("The oil delivered to the bearings over what the speed needs: 100 % and over is good, under 90 % is a low-flow alarm and 70 % or under a very-low one. The pumps, the tank level, the cartridges in the filter housings (a fine one passes only part of a train's oil) and the valves set it."),
+                Layout.row("Oil cleanliness", () -> Double.isNaN(menu.oilCleanliness) ? "-" : pct(menu.oilCleanliness), "%")
+                        .status(() -> !Double.isNaN(menu.oilCleanliness) && menu.oilCleanliness > 0.4 ? Status.CAUTION : Status.NONE)
+                        .showIf(() -> menu.lubeGov && !Double.isNaN(menu.oilCleanliness) && menu.filterHousing)
+                        .tip("The particles in the oil, 20 % being the oil the plant always ran. Dirty oil wears the bearings, shakes the shaft and degrades faster; a fine cartridge cleans it, a coarse one alone lets it get dirty."),
                 Layout.row("Oil filter", () -> menu.filterBypass ? "bypass open" : pct(menu.filterLife) + " % left, " + num(menu.filterDp, 1) + " psid")
                         .status(() -> (menu.alarms & 128) != 0 ? Status.CAUTION : Status.NONE).showIf(() -> menu.lubeGov && menu.filterHousing)
                         .tip("The Oil Filter Housing on the Main Oil Tank: what is left in its cartridge and the pressure drop across it. With the slot empty or the cartridge full the oil goes round it and the tank loses oil at the unfiltered rate."),

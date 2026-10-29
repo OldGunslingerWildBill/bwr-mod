@@ -63,6 +63,16 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     private final int[] stampedMilles = {-1, -1};
     private boolean sideB, transferPowered;
 
+    /**
+     * The Main Oil Tank's oil cleanliness (a particulate index, {@link TurbineAux#CLEANLINESS_DEFAULT} for the oil the plant has always run),
+     * what its filter housings did to the flow this tick (the train: it limits the pumps' delivery and decides where the dirt goes) and whether
+     * they held the pumps back.
+     */
+    private double cleanliness = TurbineAux.CLEANLINESS_DEFAULT;
+    private FilterTrain train;
+    private boolean flowLimited;
+    private double filterCapacity = Double.POSITIVE_INFINITY, trainLarge = 1, trainFine = 1;
+
     /** The Lube Oil Conditioner (null stuff on the other kinds): the start switch and what the last step found. */
     private boolean condOn, condRan;
 
@@ -121,6 +131,18 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     public double coldC() { return cold.getFluidAmount() > 0 ? cold.temperatureC() : 13; }
     public double hotC() { return hot.getFluidAmount() > 0 ? hot.temperatureC() : 13; }
 
+    /** The oil's cleanliness, a particulate index (0 clean to 1 filthy; {@link TurbineAux#CLEANLINESS_DEFAULT} is the oil the plant has always run). */
+    public double cleanliness() { return cleanliness; }
+    /** How much dirtier than its default the oil is (0 at or below it). */
+    public double dirtExcess() { double e = TurbineAux.dirtExcess(cleanliness); return e < 1e-9 ? 0 : e; }
+    /** The flow the filter housings in the discharge run pass, in units of a train's rated bearing flow (infinite when nothing limits it). */
+    public double filterCapacity() { return filterCapacity; }
+    /** Whether the housings held the pumps back this tick (their flow capacity is under what the pumps would deliver). */
+    public boolean flowLimited() { return flowLimited; }
+    /** What the housings let through of the large and the fine particles this tick. */
+    public double trainLargePass() { return trainLarge; }
+    public double trainFinePass() { return trainFine; }
+
     /** Pours up to {@code litres} of turbine oil in; returns what the tank took. */
     public double addOil(double litres) {
         if (kind() != TurbineAuxBlock.Kind.LUBE_OIL || !(litres > 0)) return 0;
@@ -158,7 +180,7 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     private final class CartridgeSlots extends ItemStackHandler {
         private boolean quiet;
         CartridgeSlots() { super(2); }
-        @Override public boolean isItemValid(int index, ItemStack stack) { return stack.is(BwrItems.OIL_FILTER_CARTRIDGE.get()); }
+        @Override public boolean isItemValid(int index, ItemStack stack) { return OilFilterCartridgeItem.isCartridge(stack); }
         @Override public int getSlotLimit(int index) { return 1; }
         /** A cartridge leaves carrying exactly how full it is. */
         @Override public ItemStack extractItem(int index, int amount, boolean simulate) {
@@ -248,13 +270,25 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     /** What is left in the cartridge of a side, 1 new to 0 spent; 0 with none in. */
     public double filterLife(int side) { return hasCartridge(side) ? 1 - filterLoads[side] : 0; }
     /** The pressure drop across the cartridge of a side, psi; none with no cartridge. */
-    public double filterDpPsi(int side) { return hasCartridge(side) ? TurbineAux.filterDpPsi(filterLoads[side]) : 0; }
+    public double filterDpPsi(int side) { return hasCartridge(side) ? TurbineAux.filterDpPsi(filterLoads[side], grade(side)) : 0; }
+    /** The grade of the cartridge of a side ({@link TurbineAux#GRADE_STANDARD} with none in). */
+    public int grade(int side) { return slot == null ? TurbineAux.GRADE_STANDARD : OilFilterCartridgeItem.gradeOf(slot.getStackInSlot(side)); }
+    /** The flow the cartridge of a side passes, in units of a train's rated bearing flow; unlimited with none in, a full one, or a standard one. */
+    public double flowCapacity(int side) { return hasCartridge(side) ? TurbineAux.filterFlowCapacity(grade(side), filterLoads[side]) : Double.POSITIVE_INFINITY; }
     /** Whether the oil would go round that side: its slot is empty, or its cartridge is full. */
     public boolean filterBypass(int side) { return !hasCartridge(side) || TurbineAux.filterBypassOpen(filterLoads[side]); }
     /** Whether that side needs a change: a pressure drop at the change level, or oil that would go round it. */
     public boolean filterChangeDue(int side) { return filterBypass(side) || filterDpPsi(side) >= TurbineAux.FILTER_DP_CHANGE_PSI; }
 
     public boolean hasCartridge() { return hasCartridge(sideInService()); }
+    public int grade() { return grade(sideInService()); }
+    public double flowCapacity() { return flowCapacity(sideInService()); }
+    /** What this housing is to the flow through it now (OilLineNetwork.evaluate): a cartridge in service that is not full filters; anything else is an open pipe. */
+    OilLineNetwork.Stage stage() {
+        if (filterFactor() >= 1) return OilLineNetwork.Stage.OPEN;
+        int g = grade();
+        return new OilLineNetwork.Stage(true, flowCapacity(), TurbineAux.passLarge(g), TurbineAux.passFine(g));
+    }
     /** How full the cartridge in service is, 0 to 1 (0 with none in). */
     public double filterLoad() { return filterLoad(sideInService()); }
     /** What is left in the cartridge in service, 1 new to 0 spent; 0 with none in. */
@@ -318,6 +352,51 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         return null;
     }
 
+    /** What the filter housings in a tank's discharge run do: who they are and what they let through (see {@link OilLineNetwork#evaluate}). */
+    public record FilterTrain(java.util.List<TurbineAuxBlockEntity> housings, OilLineNetwork.FilterFlow flow) {}
+
+    /**
+     * The filter housings in this tank's discharge run, in series and in parallel (staged filtration, TURBINE-AUX.md): a housing bolted on the
+     * tank first, then the housings the Lube Oil Pipe run from the housing's outlet (or from the tank's discharge) joins, as the filter graph of
+     * that run says. A run with no bearing supply on it, or a lone housing, is that one housing: the tank's {@link #oilFilter}. Null on the
+     * other kinds; never loads a chunk.
+     */
+    public FilterTrain filterTrain() {
+        if (kind() != TurbineAuxBlock.Kind.LUBE_OIL || level == null) return null;
+        TurbineAuxBlockEntity bolted = null;
+        for (Direction d : Direction.values()) {
+            var p = worldPosition.relative(d);
+            var st = LoadedWorld.state(level, p);
+            if (st == null || !(st.getBlock() instanceof TurbineAuxBlock b) || b.kind() != TurbineAuxBlock.Kind.OIL_FILTER) continue;
+            if (LoadedWorld.blockEntity(level, p) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && h.tank() == this) { bolted = h; break; }
+        }
+        OilLineNetwork.FilterGraph graph = OilLineNetwork.FilterGraph.NONE;
+        if (bolted != null) {
+            var bs = bolted.getBlockState();
+            graph = OilLineNetwork.filterGraph(level, bolted.worldPosition, ((TurbineAuxBlock) bs.getBlock()).oilOutFace(bs));
+        } else {
+            var face = ((TurbineAuxBlock) getBlockState().getBlock()).oilFaceOf(getBlockState(), OilLineNetwork.Role.TANK_DISCHARGE);
+            if (face != null) graph = OilLineNetwork.filterGraph(level, worldPosition, face);
+        }
+        java.util.function.Function<BlockPos, OilLineNetwork.Stage> stages = pos ->
+                LoadedWorld.blockEntity(level, pos) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && h.slot != null ? h.stage() : OilLineNetwork.Stage.OPEN;
+        var flow = OilLineNetwork.evaluate(graph, stages);
+        var housings = new java.util.ArrayList<TurbineAuxBlockEntity>();
+        if (bolted != null) {
+            housings.add(bolted);
+            flow = OilLineNetwork.series(bolted.worldPosition, bolted.stage(), flow);
+        }
+        if (!flow.inflow().isEmpty()) {
+            for (var pos : flow.inflow().keySet()) {
+                if (LoadedWorld.blockEntity(level, pos) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && !housings.contains(h)) housings.add(h);
+            }
+        } else {
+            var first = oilFilter();
+            if (first != null) { housings.add(first); flow = OilLineNetwork.single(first.worldPosition, first.stage()); }
+        }
+        return new FilterTrain(housings, flow);
+    }
+
     // ---- the lube oil lines (TURBINE-AUX.md, Piping): what the run on each oil port joins
 
     /** What the Lube Oil Pipe run on this skid's port of {@code role} joins; nothing when it has no such port or no pipe there. */
@@ -344,14 +423,17 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     /**
      * One tick of oil through the cartridge in service, called by the tank's oil step: returns the share of the unfiltered loss that gets
      * through and loads that cartridge by what flowed. A full cartridge or an empty slot lets all of it through and loads nothing. The
-     * side out of service is not in the flow: it does not load.
+     * side out of service is not in the flow: it does not load. {@code largeIn}/{@code fineIn} are the shares of the large and the fine
+     * particles that reach this housing (stages upstream take theirs), {@code share} the share of the run's flow through it and
+     * {@code tankCleanliness} the tank's oil: a standard cartridge first in line of a lone run in oil at its default loads as it always did.
      */
-    double filterPass(double headerPsig, double oilTempC, double dt) {
+    double loadStep(double headerPsig, double oilTempC, double dt, double largeIn, double fineIn, double share, double tankCleanliness) {
         syncState(); // a housing saved before the transfer valve existed (or a slot changed behind the screen's back) is brought up to date here
         double factor = filterFactor();
         if (factor < 1) {
             int side = sideInService();
-            filterLoads[side] = TurbineAux.filterLoadStep(filterLoads[side], headerPsig, oilTempC, dt);
+            double inflow = TurbineAux.particleInflow(grade(side), largeIn, fineIn, tankCleanliness) * share;
+            filterLoads[side] = TurbineAux.filterLoadStep(filterLoads[side], headerPsig, oilTempC, dt, grade(side), inflow);
             int mille = (int) Math.floor(filterLoads[side] * 1000);
             if (mille != stampedMilles[side]) {
                 // What the screen and a viewer show: the stack in the slot follows the load by a thousandth, not every tick.
@@ -361,6 +443,10 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
             setChanged();
         }
         return factor;
+    }
+
+    double filterPass(double headerPsig, double oilTempC, double dt) {
+        return loadStep(headerPsig, oilTempC, dt, 1, 1, 1, TurbineAux.CLEANLINESS_DEFAULT);
     }
 
     /** The cartridges fall out when the housing is broken, each carrying exactly how full it is. */
@@ -529,7 +615,13 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         dcRan = dcOn && dcFe >= DC_PUMP_FE_PER_TICK;
         if (acRan) acFe -= AC_PUMP_FE_PER_TICK;
         if (dcRan) dcFe -= DC_PUMP_FE_PER_TICK;
-        pumpFlow = ((acRan ? TurbineAux.AC_PUMP_FLOW : 0) + (dcRan ? TurbineAux.DC_PUMP_FLOW : 0)) * TurbineAux.suction(oilL);
+        double raw = ((acRan ? TurbineAux.AC_PUMP_FLOW : 0) + (dcRan ? TurbineAux.DC_PUMP_FLOW : 0)) * TurbineAux.suction(oilL);
+        // The housings in the discharge run pass what their cartridges can (a fine one passes 0.6 of a train's rated flow and less as it loads;
+        // a standard one, a coarse one, a full one, an empty slot and no housing at all do not limit): the pumps deliver no more than that.
+        train = filterTrain();
+        filterCapacity = train == null ? Double.POSITIVE_INFINITY : train.flow().capacity();
+        flowLimited = filterCapacity < raw;
+        pumpFlow = Math.min(raw, filterCapacity);
         return pumpFlow;
     }
 
@@ -541,16 +633,45 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         film = filmQuality;
         coolerKw = cool(oilC, TurbineAux.OIL_COOLER_UA_KW_PER_K, TurbineAux.OIL_COOLER_WATER_KG_PER_S);
         oilC = TurbineAux.oilStepC(oilC, oilL, heatKw, coolerKw, DT);
+        var tr = train != null ? train : filterTrain();
+        train = null;
         if (oilL > 0) {
-            // A tank without a housing loses oil exactly as it always did; with one, the cartridge in it lets a tenth through.
-            var filter = oilFilter();
-            double loss = filter == null ? TurbineAux.oilLossLitres(headerPsig, oilC, DT)
-                    : TurbineAux.oilLossLitres(headerPsig, oilC, DT, filter.filterPass(headerPsig, oilC, DT));
+            // A tank without a housing loses oil exactly as it always did; with one, the best cartridge in the run lets a tenth through (the
+            // standard factor: the grades differ in what they catch and pass, the oil's loss is the same).
+            double loss;
+            if (tr == null || tr.housings().isEmpty()) {
+                loss = TurbineAux.oilLossLitres(headerPsig, oilC, DT);
+            } else {
+                double factor = 1;
+                for (var h : tr.housings()) {
+                    var in = tr.flow().inflow().get(h.worldPosition);
+                    double[] v = in == null ? new double[] {1, 1, 1} : in;
+                    factor = Math.min(factor, h.loadStep(headerPsig, oilC, DT, v[0], v[1], v[2], cleanliness));
+                }
+                loss = TurbineAux.oilLossLitres(headerPsig, oilC, DT, factor);
+            }
+            // Dirty oil degrades faster (nothing extra at its default cleanliness).
+            double excess = dirtExcess();
+            if (excess > 0) loss *= TurbineAux.dirtyOilDegradation(excess);
             // A running Lube Oil Conditioner leaves 30 % of what degrades the oil, whatever the filter does; stopped, short of power or cut off
             // it leaves all of it, and the loss is the filter-only rate, to the bit.
             var conditioner = conditioner();
-            if (conditioner != null) loss *= conditioner.conditionerPass(this);
+            boolean conditioned = false;
+            if (conditioner != null) {
+                loss *= conditioner.conditionerPass(this);
+                conditioned = conditioner.conditionerRunning();
+            }
             oilL = Math.max(0, oilL - loss);
+            // The cleanliness follows what the filters and the conditioner leave of the particles. No cartridge doing anything: the oil the
+            // plant has always run (the standard element's share), so a train with none, a bypassed one or a standard one changes nothing.
+            double lp = TurbineAux.passLarge(TurbineAux.GRADE_STANDARD), fp = TurbineAux.passFine(TurbineAux.GRADE_STANDARD);
+            if (tr != null && tr.flow().effective() > 0) { lp = tr.flow().largePass(); fp = tr.flow().finePass(); }
+            trainLarge = lp; trainFine = fp;
+            if (conditioned) { lp *= TurbineAux.CONDITIONER_PASS_LARGE; fp *= TurbineAux.CONDITIONER_PASS_FINE; }
+            double target = TurbineAux.cleanlinessTarget(lp, fp);
+            if (Math.abs(target - TurbineAux.CLEANLINESS_DEFAULT) < 1e-9) target = TurbineAux.CLEANLINESS_DEFAULT;
+            double next = TurbineAux.cleanlinessStep(cleanliness, target, 0, DT);
+            cleanliness = target == TurbineAux.CLEANLINESS_DEFAULT && Math.abs(next - TurbineAux.CLEANLINESS_DEFAULT) < 1e-9 ? TurbineAux.CLEANLINESS_DEFAULT : next;
         }
         pushHot();
         setChanged();
@@ -631,6 +752,7 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
             if (transferPowered) t.putBoolean("Powered", true);
         }
         if (condOn) t.putBoolean("CondOn", true);
+        if (Math.abs(cleanliness - TurbineAux.CLEANLINESS_DEFAULT) > 1e-12) t.putDouble("OilDirt", cleanliness);
     }
 
     private static void saveWater(CompoundTag t, String key, ThermalWaterTank tank) {
@@ -664,12 +786,13 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
             for (int i = 0; i < 2; i++) {
                 String key = i == 0 ? "Cartridge" : "CartridgeB";
                 var held = t.contains(key) ? ItemStack.parse(r, t.get(key)).orElse(ItemStack.EMPTY) : ItemStack.EMPTY;
-                slot.put(i, held.is(BwrItems.OIL_FILTER_CARTRIDGE.get()) ? held.copyWithCount(1) : ItemStack.EMPTY);
+                slot.put(i, OilFilterCartridgeItem.isCartridge(held) ? held.copyWithCount(1) : ItemStack.EMPTY);
             }
             sideB = t.getBoolean("SideB");
             transferPowered = t.getBoolean("Powered");
         }
         condOn = t.getBoolean("CondOn");
+        cleanliness = t.contains("OilDirt") ? Math.max(0, Math.min(1, t.getDouble("OilDirt"))) : TurbineAux.CLEANLINESS_DEFAULT;
         condRan = false;
         stepTick = Long.MIN_VALUE;
         psig = film = coolerKw = pumpFlow = 0;

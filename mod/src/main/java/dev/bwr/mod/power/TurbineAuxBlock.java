@@ -256,7 +256,7 @@ public class TurbineAuxBlock extends BaseEntityBlock {
 
     @Override protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                                          InteractionHand hand, BlockHitResult hit) {
-        if (kind == Kind.OIL_FILTER && stack.is(BwrItems.OIL_FILTER_CARTRIDGE.get())) {
+        if (kind == Kind.OIL_FILTER && OilFilterCartridgeItem.isCartridge(stack)) {
             // A cartridge in hand goes straight into an empty slot; with one in already the screen is how it is changed.
             if (level.isClientSide()) return ItemInteractionResult.SUCCESS;
             if (!(level.getBlockEntity(pos) instanceof TurbineAuxBlockEntity be)) return ItemInteractionResult.FAIL;

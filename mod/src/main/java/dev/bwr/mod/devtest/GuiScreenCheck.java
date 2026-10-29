@@ -628,6 +628,28 @@ public final class GuiScreenCheck {
         s.add(new Scenario("aux-oil-filter-b-in-service", i -> oilFilterDuplex(i, true, -1, 0.3)));
         s.add(new Scenario("aux-oil-filter-a-in-service-b-used", i -> oilFilterDuplex(i, false, 0.38, 0.9)));
         // the lube oil conditioner (TURBINE-AUX.md): its own screen, running and without power
+        // Cartridge grades and the bearing oil flow (TURBINE-AUX.md): a fine element holding the pumps back (very low flow), a coarse one with dirty oil, the tank's flow alarm.
+        s.add(new Scenario("aux-oil-filter-fine-restricted", i -> oilFilterGraded(i, dev.bwr.core.turbine.TurbineAux.GRADE_FINE, dev.bwr.core.turbine.TurbineAux.GRADE_COARSE, 0.6, 0.012, 0.6)));
+        s.add(new Scenario("aux-oil-filter-coarse-dirty-oil", i -> oilFilterGraded(i, dev.bwr.core.turbine.TurbineAux.GRADE_COARSE, dev.bwr.core.turbine.TurbineAux.GRADE_FINE, 1.15, 0.575, 3.0)));
+        s.add(new Scenario("aux-oil-tank-flow-low", i -> {
+            var m = auxMenu(i, 0, false);
+            m.oilFlow = 0.85;
+            m.flowLow = true;
+            m.cleanliness = 0.575;
+            m.filterGrade = dev.bwr.core.turbine.TurbineAux.GRADE_COARSE;
+            return new TurbineAuxScreen(m, i, t("Turbine Main Oil Tank"));
+        }));
+        s.add(new Scenario("aux-oil-tank-flow-very-low-held-back", i -> {
+            var m = auxMenu(i, 0, false);
+            m.oilFlow = 0.6;
+            m.flowLow = true;
+            m.flowVeryLow = true;
+            m.flowLimited = true;
+            m.filterCap = 0.6;
+            m.cleanliness = 0.012;
+            m.filterGrade = dev.bwr.core.turbine.TurbineAux.GRADE_FINE;
+            return new TurbineAuxScreen(m, i, t("Turbine Main Oil Tank"));
+        }));
         s.add(new Scenario("aux-oil-conditioner", i -> new TurbineAuxScreen(conditionerMenu(i, true), i, t("Lube Oil Conditioner"))));
         s.add(new Scenario("aux-oil-conditioner-no-power", i -> new TurbineAuxScreen(conditionerMenu(i, false), i, t("Lube Oil Conditioner"))));
         s.add(new Scenario("aux-shaft-pump", i -> new TurbineAuxScreen(auxMenu(i, 1, false), i, t("Turbine Shaft-Driven Main Oil Pump"))));
@@ -1343,6 +1365,38 @@ public final class GuiScreenCheck {
             if (load < 0) continue;
             var stack = new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get());
             dev.bwr.mod.power.OilFilterCartridgeItem.setLoad(stack, load);
+            m.getSlot(side).set(stack);
+        }
+        return new OilFilterScreen(m, i, t("Oil Filter Housing"));
+    }
+
+    /** The housing's screen with a cartridge of {@code grade} in service (a third full) and one of {@code other} in standby; the bearing flow, the oil's cleanliness and what the element passes. */
+    private static OilFilterScreen oilFilterGraded(Inventory i, int grade, int other, double bearingFlow, double cleanliness, double cap) {
+        var m = new OilFilterMenu(99, i, P);
+        m.present = true;
+        m.attached = true;
+        m.cartridge = true;
+        m.otherCartridge = true;
+        m.life = 0.66;
+        m.dpPsi = dev.bwr.core.turbine.TurbineAux.filterDpPsi(0.34, grade);
+        m.hoursLeft = 3.2;
+        m.factor = dev.bwr.core.turbine.TurbineAux.OIL_FILTER_FACTOR;
+        m.otherLife = 0.9;
+        m.otherDpPsi = dev.bwr.core.turbine.TurbineAux.filterDpPsi(0.1, other);
+        m.grade = grade;
+        m.otherGrade = other;
+        m.flowCap = cap >= 3 ? -1 : cap;
+        m.bearingFlow = bearingFlow;
+        m.cleanliness = cleanliness;
+        m.flowLimited = cap < bearingFlow || cap <= 0.6;
+        m.flowLow = bearingFlow < 0.9;
+        m.flowVeryLow = bearingFlow <= 0.7;
+        m.oilC = 49.6;
+        m.psig = 25 * Math.min(1.2, bearingFlow);
+        for (int side = 0; side < 2; side++) {
+            var stack = new ItemStack(side == 0 ? (grade == dev.bwr.core.turbine.TurbineAux.GRADE_FINE ? BwrItems.OIL_FILTER_CARTRIDGE_FINE.get() : BwrItems.OIL_FILTER_CARTRIDGE_COARSE.get())
+                    : (other == dev.bwr.core.turbine.TurbineAux.GRADE_FINE ? BwrItems.OIL_FILTER_CARTRIDGE_FINE.get() : BwrItems.OIL_FILTER_CARTRIDGE_COARSE.get()));
+            dev.bwr.mod.power.OilFilterCartridgeItem.setLoad(stack, side == 0 ? 0.34 : 0.1);
             m.getSlot(side).set(stack);
         }
         return new OilFilterScreen(m, i, t("Oil Filter Housing"));

@@ -86,9 +86,10 @@ A cartridge is not cleaned. Taking it out gives back **the same item as a used c
 left off. A spent one is just a spent one (its bar and tooltip say so). There is no scrap return. Changing it is the only reset: take
 the old one out of the slot and put a new one in.
 
-**No extra harm.** The brief offered a small extra bearing wear for oil left unfiltered. It was left out on purpose: the bearing laws
-are made of film, temperature and speed, none of them of oil condition, so a "dirty oil" term would be a new law and not a use of the
-existing ones, and the bypass already costs what matters here (the oil). Unfiltered oil is today's behaviour.
+**No extra harm from an unfiltered or bypassed oil.** The bearing laws are made of film, temperature and speed, and oil with no cartridge,
+a spent one or the bypass open is the plant as it has always run (the oil's default cleanliness), so it costs the oil and nothing else.
+What does cost the bearings is oil that is *dirtier than that*, which only a coarse cartridge on its own (and nothing else) brings:
+see *Cartridge grades* below, where that is a small, slow, visible cost.
 
 **What it does not do.** A loaded cartridge does **not** lower the header pressure (a real discharge has a relief and a regulator that
 hold it), and it does not change the oil film, the bearing temperature or the fires. The oil fire laws (`TurbineFire`) are unchanged.
@@ -146,6 +147,95 @@ puts one in service while the other is isolated and opened. The Oil Filter Housi
   always was; `CartridgeB` is written only when B holds one, `SideB` only while B is in service, `Powered` only while the redstone
   reading is powered. The block state (`side_b`, `off_open`, drawn by the model) is brought up to date by the tank's next step or when
   the screen opens. Breaking the housing drops both cartridges with their loads.
+
+### Cartridge grades, and housings in series and in parallel
+
+Plants do not use one kind of element. A **coarse** element passes a lot of oil and catches only the big debris; a **fine** one catches
+nearly everything but passes less, so it goes **behind** a coarse one (the coarse stage takes the load that would fill the fine one) and
+a big train needs **two fine housings side by side**. The mod has three grades of the **Oil Filter Cartridge**, one item each:
+
+| Grade | Item | Band on the item | Captures (large / fine particles) | Passes at most (a train's rated flow = 1) | Clean pressure drop | Life against a standard one |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Coarse** | `oil_filter_cartridge_coarse` | green | 90 % / 10 % | 3.0 (more than every pump together) | 1 psid | 2.5 times |
+| **Standard** | `oil_filter_cartridge` | none (as it always was) | 99 % / 65 % | no limit | 3 psid | 1 (6 h) |
+| **Fine** | `oil_filter_cartridge_fine` | blue | 99.9 % / 98 % | **0.6** clean, falling to 0.15 as it fills | 8 psid | 0.7 (4.2 h) |
+
+**The standard cartridge, the default cleanliness and no cartridge are the plant exactly as it was**: its pressure drop, load rate, life,
+oil factor and (not) limiting the flow are the old laws to the bit, the oil sits at its default cleanliness and nothing below changes
+a number. Only the new grades, a conditioner or bearing debris move anything; a test pins the standard path.
+
+**The rating, and why this is a beta rating.** Filter elements are rated by the **beta ratio** of a multipass test,
+`beta_x(c) = upstream particle count / downstream count` at particle size x micrometres, and its efficiency `1 - 1/beta`. The grades are
+given the usual ratings: coarse `beta10(c) = 10` (90 %) and `beta5(c) = 1.1` (10 %), standard `beta10(c) = 100` (99 %) and
+`beta5(c) = 2.9` (65 %: a 10 micrometre absolute element), fine `beta10(c) = 1,000` (99.9 %) and `beta5(c) = 50` (98 %: a 3 micrometre
+absolute element). Two particle classes stand for the oil's contamination: the **large** ones (over 10 micrometres: the metal debris of
+bearings and gears, which are most of what loads an element) and the **fine** ones (3 to 10: early oxidation products and silt, which
+are many by count). `TurbineAux.CAPTURE_LARGE` and `CAPTURE_FINE` are those two columns; `passLarge` and `passFine` are what is left.
+In a real plant the cleanliness is reported as an ISO 4406 code (a count of particles over 4, 6 and 14 micrometres per millilitre);
+the game keeps a single **cleanliness index**, 0 clean to 1 filthy, that maps onto it roughly as 0.2 = 17/15/12, 0.4 = 19/17/14,
+0.6 = 21/19/16, 0.8 = 23/21/18 and 1.0 = 25/23/20.
+
+**Cleanliness.** A Main Oil Tank's oil has a cleanliness. Its **default is 0.2** (ISO 17/15/12, what a standard 10 micrometre element
+keeps a plant's oil at), and it sits there for ever in any plant that has only standard cartridges, none, or a bypassed one. The oil
+**follows what the filter stages leave** with a two-hour time constant (`CLEANLINESS_TAU_S`): the target is `0.2 x (0.6 x large +
+0.4 x fine) / 0.146`, where *large* and *fine* are the shares of the particles that get past every stage (the product along a series
+of housings, the flow-weighted mean over branches in parallel) and 0.146 is what the standard grade leaves. A **running conditioner**
+takes a further 20 % of the large and 80 % of the fine ones (`CONDITIONER_PASS_LARGE`, `CONDITIONER_PASS_FINE`: a centrifuge and a
+vacuum dehydrator are good at fines and water and poor at big debris). It is saved (`OilDirt`) **only when it is not the default**.
+
+**Dirty oil costs.** Only the **excess** over the default counts, so cleaner than the default earns nothing (a fine cartridge keeps the
+bearings no healthier than a standard one, it keeps the oil clean for a coarse one's worth less). Per unit of excess:
+
+- the oil **degrades faster**: the tank's loss is multiplied by `1 + 1.5 x excess` (a coarse-only train is at x1.56, about 40 hours for a
+  20,000 L tank instead of 62);
+- the bearings **wear**: `0.2 percent of shaft damage per hour at rated speed` per unit (`dirtyOilDamage`), none at standstill;
+- the shaft **vibrates** more: `2 mm/s` per unit at rated speed (`dirtyOilVibration`), on the turbine sections (the generator reads the
+  worst of them).
+
+The three numbers are small on purpose (a coarse-only train wears 0.075 percent an hour and shakes 0.75 mm/s more, against an alarm at
+7.1): a slow cost that a screen shows and a tank or a program can watch (`oil_cleanliness`), not a surprise. Bearing wear does not put
+debris back in the oil (a feedback was considered and left out: it is a runaway the brief did not ask for; `cleanliness_step` has the
+term and a test pins it).
+
+**Staged filtration in the run.** The housings in a tank's discharge run are read as a small graph (cached with the run's survey,
+`OilLineNetwork.filterGraph`, rebuilt only when the run changes): the pipes and open valves join into junctions, each housing is an
+edge from the junction at its inlet to the one at its outlet, and the junctions that touch a bearing supply are the ends. Housings in a
+row are **in series**; branches that leave a junction and rejoin are **in parallel**; a shut valve in a branch takes that branch out.
+What each housing holds is read live every tick (`OilLineNetwork.evaluate`):
+
+- **flow**: the most that can go from the start to a bearing supply (a max-flow over the edges): the sum over parallel branches, limited
+  by the tightest housing in each branch in series. A housing with no cartridge, a full one (its bypass is open) or a standard one is a
+  pipe. The AC and DC pumps' delivery is **capped at that flow** (the shaft-driven pump has its own discharge and is not in the tank's
+  run). Nothing limiting reads as unlimited, so a plant with no fine cartridge in its run delivers what it did;
+- **particles**: the share of large and fine particles that gets past, and for each housing the share that **reaches** it (a fine one
+  behind a coarse one sees a tenth of the large ones) and the **share of the flow** that goes through it (two equal branches carry half
+  each), which together set how fast its cartridge loads: `loading = pressure x heat x (grade life) x (what it captures of what reaches
+  it) x (how dirty the oil is) x (flow share)`, one for the first standard cartridge on its own in oil at the default;
+- a housing **bolted on the tank** is the first stage of the run; the housings piped after it are its next stages. A run with no
+  bearing supply on it, or a lone housing, is that housing (the old rule: the tank's first filter).
+
+**What the tank's oil loss does.** The oil loss filter factor is still the standard one (a tenth) whatever the grade: the best cartridge
+in service in the run sets it. The grades differ in what they catch and pass, not in the leak.
+
+**An arrangement table** (a 20,000 L tank at rated speed, AC and DC pumps both delivering 1.15 of a train's rated flow, oil at 50 C and
+rated pressure; the cartridge lives are for a train that is not held back; "+ conditioner" is the 204 hour figure of the conditioner
+section divided by the same dirt factor):
+
+| Arrangement | Oil settles at | Oil life (filter only / + conditioner) | Extra wear, vibration | Run passes | Flow to the bearings | Cartridge lives |
+| --- | --- | --- | --- | --- | --- | --- |
+| No housing, or every cartridge out | 0.20 (default) | 62 h / 204 h | none | no limit | **115 %** good | none |
+| One standard | 0.20 | 62 h / 204 h | none | no limit | **115 %** good | standard 6 h |
+| One coarse | 0.575 | 40 h / 131 h | 0.075 %/h, +0.75 mm/s | 3.0 | **115 %** good | coarse 18 h |
+| One fine | 0.012 | 62 h / 204 h | none | 0.6 | **60 %** very low, held back | fine 4 h |
+| Two fine in parallel | 0.012 | 62 h / 204 h | none | 1.2 | **115 %** good | each fine 7.9 h |
+| Coarse then one fine | 0.010 | 62 h / 204 h | none | 0.6 | **60 %** very low, held back | coarse 18 h, fine 18 h |
+| Coarse then two fine in parallel | 0.010 | 62 h / 204 h | none | 1.2 | **115 %** good | coarse 18 h, each fine 36 h |
+| Standard then one fine | 0.004 | 62 h / 204 h | none | 0.6 | 60 % very low | standard 6 h, fine 66 h |
+
+A coarse cartridge alone is the arrangement that costs something, and a running conditioner makes it cost nothing (coarse then conditioner
+settles at 0.164, under the default): the conditioner takes the fines a coarse element lets by. **One fine housing on a whole train
+starves it** (a film of 0.6 puts a bearing near 330 C and wears it at 3.6 percent of the shaft's life a second once it is hot): that is
+what the low-flow alarm is for, and the cure is a second fine housing in parallel (or a coarse or standard cartridge in service).
 
 ### Old saves and what is unchanged
 
@@ -221,6 +311,51 @@ usually gets refuelled every 7 to 10 days, so the oil would last that long; 8.5 
 - **Recipes** (both installs): 5 iron ingots (steel with Mekanism), a glass (the sight glass), 2 Lube Oil Pipes, a hopper (the
   strainer) and a redstone (a basic circuit with Mekanism, the skid's control). The blockstate is `facing` only; FE terminal and conduit are modelled.
 - **Save keys.** `CondOn` only while switched on, `AcFe` only while it holds FE (the key the AC bus has always used).
+- **Running lamp.** A small **green lamp** on the control box is lit while the conditioner **runs** (switched on, fed, oil passing) and dark
+  otherwise, so a walk through the oil room tells at a glance. It is the block state `lit`, set by the same step that decides whether it
+  runs; the lens is a separate part of the model drawn **full bright** (`emissive_ambient`) with a labPBR emission map, like the industrial
+  lamps (LIGHTING.md), and the dark glass beside it has none. Pictures: the Blender previews `art/models/turbine_aux/lube_oil_conditioner_lit.png`, `lube_oil_conditioner_lit_close.png` and the dark `lube_oil_conditioner_close.png`; the pipe shots check on the client that the lit and dark states draw differently and that only the lit one has full-bright quads.
+  The conditioner also cleans the oil of fines and water: with a running conditioner the oil's cleanliness target is 80 % less fines and
+  20 % less large particles (see *Cartridge grades*), which is why a coarse cartridge and a conditioner together keep it clean.
+
+## Bearing oil flow and its alarms
+
+The **bearing oil flow** is the oil the pumps get to the bearings over what the speed needs: `delivered / (0.4 + 0.6 x speed / rated)`
+(`TurbineAux.flowRatio`; `film` is the same ratio capped at 1, the oil film the bearing laws use). 100 % is just enough; the AC pump alone
+at rated speed is **70 %**, the AC and DC pumps together **115 %**, the shaft-driven pump at rated speed **100 %**. It is a reading of
+the train, per section (a piped train's sections differ), and it is **not capped**: more than 100 % is a margin.
+
+What it depends on, all of it already in the model:
+
+- the **pumps** that reach the section (the AC and DC pumps switched on and fed, the shaft pump by its speed law) and their **suction**:
+  a tank below 5 % of its volume delivers less and less (`suction`), nothing from an empty one;
+- the **valves** in the supply (a shut valve cuts the pump off from the section);
+- the **filter housings** in the tank's discharge run: the cartridge in service passes only so much (a fine one 0.6, less as it loads),
+  housings in series are limited by the tightest, housings in parallel add, a coarse or standard cartridge, an empty slot and a full
+  cartridge's open bypass do not limit (see *Cartridge grades*). The transfer valve picks which side is the stage.
+
+| Reading | Meaning |
+| --- | --- |
+| `oil_flow` | the ratio (1.0 is just enough); no signal on a train with no oil system |
+| `oil_flow_good` | 100 % or more |
+| `oil_flow_low_alarm` | **under 90 %** while the shaft turns |
+| `oil_flow_very_low_alarm` | **70 % or under** while the shaft turns |
+| `oil_flow_restricted` | the filter housings are holding the pumps back (their limit is under what the pumps would deliver) |
+
+**Why 90 % and 70 %.** The two are the film: a flow of 90 % is a film of 0.9, which puts a bearing at about 87 C at rated speed (the
+bearing alarm is at 100 C), so the low-flow alarm is the warning *before* anything is hot; a flow of 70 % is a film of 0.7, which puts
+it near 217 C, past the 115 C at which the babbitt softens and **wears at 2 percent of the shaft's life a second**, so *very low* means
+damage is being done. 70 % is also exactly where the AC pump alone sits at rated speed, which is the point: running a train on the AC
+pump alone is an emergency. The alarms, like the pressure alarm, are readings only while the shaft turns (a standing train asks for
+less); nothing trips. `oil_flow_good` is not gated, so a panel can show a green lamp at standstill with a pump running.
+
+**Where it shows.** The oil card of the turbine section screen, the Main Oil Tank screen and the Oil Filter Housing screen each have
+the reading (and *held back* when the housings are the reason); the tank and the housing have it as signals for the train their tank is bolted on
+(a tank in another room is on no train, so it reads "no signal" there: read the sections), the section as `oil_flow`, `oil_flow_good`, `oil_flow_low_alarm`, `oil_flow_very_low_alarm` and `oil_flow_restricted`, built
+like `oil_pressure_alarm` so an annunciator takes them as they are. Computers read `oilFlow`, `oilFlowGood`, `oilFlowLowAlarm`,
+`oilFlowVeryLowAlarm`, `oilFlowRestricted` and `oilCleanliness` from the section and the tank; the housing and the tank add `filterGrade`,
+`filterFlowCapacity` and `filterFlowLimit` (see Readouts). The core law is numbers only (`flowRatio`, `filterFlowCapacity`); the
+thresholds are the mod's, like the other alarms.
 
 ## Lube oil piping
 
@@ -396,6 +531,12 @@ Damage goes into the generator's shaft damage, so a destroyed winding fails the 
 - **Power module screen** (any section): a *Turbine auxiliaries* card with the oil pressure, temperature, level, film and oil filter, bearing
   temperature, shaft vibration, rotor temperature and bow, turning gear state and its supply, winding temperature, stator flow and
   hydrogen pressure, and the **Turning gear** button on the generator.
+- **Grades, cleanliness and flow** (see *Cartridge grades* and *Bearing oil flow*): the housing screen adds *Element* (grade and what it
+  passes), *Bearing flow* and the oil's cleanliness; the tank screen *Bearing oil flow*, *Oil cleanliness* and the grade in its *Oil filter*
+  row; the section's card *Oil flow* and *Oil cleanliness*. Signals: sections `oil_flow`, `oil_flow_good`, `oil_flow_low_alarm`,
+  `oil_flow_very_low_alarm`, `oil_flow_restricted`, `oil_cleanliness`; tank the same flow readings plus `oil_cleanliness`, `flow_limited`
+  and `filter_flow_limit`; housing `grade`, `a_grade`, `b_grade`, `flow_capacity` and the train's flow alarms. Computers: `oilFlow*`,
+  `oilCleanliness` on the section and the tank, `filterGrade` and `filterFlowCapacity` (and per side `grade`, `flowCapacity`) on the housing.
 - **Skid screens** show their own pumps, buses, inventories and cooling water, with the pump switches.
 - **Signals** (panels, gauges, annunciators, through the Networking Wrench; see [SIGNALS.md](SIGNALS.md)): on every power module
   `oil_pressure`, `oil_temp`, `oil_level`, `oil_film`, `bearing_temp`, `vibration`, `rotor_temp`, `rotor_bow`, `turning_gear`,
@@ -449,7 +590,9 @@ reading was powered; its position is the block state. Nothing about piping is sa
 The oil piping pictures are saved by the pipe shots check (`:mod:runTurbineModelCheck -PbwrPipeShots=<label>`, `PipeShots`), in
 `run/turbineModelCheck/pipe-shots/<label>/` and copied to `art/oil-piping/`: `oil-room` and `oil-room-tank-and-filter` (the basement lube
 oil room), `oil-filter-in-line`, `oil-risers-south-flank` and `oil-risers-close` (the risers through the hall floor to the train),
-`oil-valves-open-and-shut`, `oil-valve-open-close-up` and `oil-valve-shut-close-up` (the limit switch box), `oil-water-steam-straights`.
+`oil-valves-open-and-shut`, `oil-valve-open-close-up` and `oil-valve-shut-close-up` (the limit switch box), `oil-water-steam-straights`,
+`oil-filter-train-coarse-and-two-fine` (a coarse housing and two
+fine ones in parallel, piped in the oil room).
 
 ## Models and sources
 
@@ -463,7 +606,7 @@ bakes them (`--check` verifies); `python tools-make-turbine-aux-assets.py` makes
 
 ## Tests
 
-Core `TurbineAuxTest` (16 tests; 13 and 14 are the filter, 15 and 16 the conditioner: 204 h with both, the factors multiply, back to the filter-only rate without power). GameTests `bwraux` (18 tests) (`TurbineAuxTests`, `TurbineAuxCcChecks`): the shaft pump makes oil only with
+Core `TurbineAuxTest` (19 tests; 13 and 14 are the filter, 15 and 16 the conditioner: 204 h with both, the factors multiply, back to the filter-only rate without power; 17 the three grades and that the standard one is the old law to the bit, 18 the oil's cleanliness and what dirty oil does, 19 the bearing flow ratio). GameTests `bwraux` (18 tests) (`TurbineAuxTests`, `TurbineAuxCcChecks`): the shaft pump makes oil only with
 speed; start-up needs the AC pump; no oil while rolling wrecks the bearings, and oil does not; the DC pump holds the oil on loss of
 AC power; the cooler and the oil's leak and the drums; a hot shaft bows without the gear and the gear recovers it; a bowed
 roll-up shakes and damages; the gear switch engages only at low speed (screen, signal, CC); an unpowered cooling skid lets the
@@ -490,5 +633,6 @@ side A and keys are written only when set; hoppers fill an empty slot of either 
 the open lid; a running conditioner bolted on leaves 30 % (the conditioned law to the bit each tick, with the filter too 3 %, back to the
 filter-only rate with no FE or stopped, drawing its FE); piped to the tank's suction and fill it does the same and a shut valve in its suction run
 cuts it off; a 20,000 L tank with both lasts 190 to 220 h at 25 psig; signals, the six computer faces and the saves; the ports and recipes.
+`OilGradeTests` (9 in `bwroil`, plus a recipe test in `bwrmektier`): the standard cartridge and no cartridge leave the oil at its default cleanliness exactly, never hold the pumps back, read 100 % flow and save no new key; one fine housing in the discharge run holds a full train to 60 % (low and very low alarms, held back, the signals), a second fine housing in parallel clears it and each carries about half the load, loaded cartridges bring the alarm back and standard ones in the same housings do not limit; a fine cartridge bolted on the tank holds the integral header back too and the transfer valve to a coarse one clears it; a low tank level lowers the flow; a coarse housing in front of a fine one makes the fine cartridge load under a third as fast, the run passes the tightest housing and an unchanged run is not walked again; coarse alone raises the cleanliness, fine lowers it, a conditioner takes it under the default; dirty oil shakes the shaft, wears the bearings and degrades the oil faster; the three grades are cartridges that keep their grade and load in slots, saves, hoppers and a broken housing; the recipes of both grades in both installs; the conditioner's lamp is lit only while it runs.
 The pipe shots (`-PbwrPipeShots`) check the oil fixtures on the client: a flange at each turbine port and none between pipes,
-brown paint, that the valve's open and shut states reach the client and draw differently, that the duplex housing's four states (lever at A or B, lid shut or open) all draw differently and show what the server set, and that the conditioner's pipes join it to the tank.
+brown paint, that the valve's open and shut states reach the client and draw differently, that the duplex housing's four states (lever at A or B, lid shut or open) all draw differently and show what the server set, that the conditioner's pipes join it to the tank, that its lit and dark states draw differently with only the lit one full bright, and that the oil room's filter train is a coarse housing and two fine ones in parallel passing 1.2.

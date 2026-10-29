@@ -106,13 +106,16 @@
     {
       "title": "Oil filter and conditioner",
       "text": [
-        "A pumped Main Oil Tank loses about 0.9 L/s of oil. The Oil Filter Housing is a duplex filter: sides A and B, one Oil Filter Cartridge each. A clean cartridge in service cuts the loss to a tenth; set the A/B switch on its screen to change the other side while the plant runs.",
+        "The Oil Filter Housing is a duplex filter: sides A and B, one cartridge each; the A/B switch on its screen changes the other side while the plant runs. A clean standard cartridge cuts a pumped tank's 0.9 L/s oil loss to a tenth.",
         "",
-        "A Lube Oil Conditioner (a centrifuge and a vacuum dehydrator, on FE) cuts the degradation to 30 %. With both, a 20,000 L tank lasts about one refuelling cycle, 8.5 days: top it up at the outage."
+        "Coarse cartridges (green band) pass plenty of oil but let fine dirt through; fine ones (blue) pass only 60 % of a train's oil: put coarse ahead of fine, and fine ones side by side. Bearing oil flow under 90 % is a low-flow alarm.",
+        "",
+        "A Lube Oil Conditioner cuts the degradation to 30 %: with both, 20,000 L lasts about 8.5 days."
       ],
       "icons": [
         "bwr:oil_filter_housing",
-        "bwr:oil_filter_cartridge",
+        "bwr:oil_filter_cartridge_coarse",
+        "bwr:oil_filter_cartridge_fine",
         "bwr:lube_oil_conditioner"
       ]
     },

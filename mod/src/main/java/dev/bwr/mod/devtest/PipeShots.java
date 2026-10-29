@@ -102,6 +102,9 @@ public final class PipeShots {
             new View("oil-filter-duplex-both", new Vec3(215.0, 120.6, 214.5), new Vec3(0, .6, 1), 4.2),
             new View("oil-conditioner-piped-to-tank", new Vec3(188.0, 115.4, 203.5), new Vec3(.05, .12, 1), 12.5),
             new View("oil-conditioner-close", new Vec3(189.5, 114.7, 207.5), new Vec3(.2, .05, 1), 3.4),
+            // The staged filter train: a coarse housing and two fine ones in parallel, and the three cartridge grades.
+            new View("oil-filter-train-coarse-and-two-fine", new Vec3(182.6, 115.4, 200.6), new Vec3(.1, .35, 1), 6.0),
+            new View("oil-filter-cartridge-grades", new Vec3(244.5, 121.0, 198.5), new Vec3(-.3, .5, 1), 4.5),
     };
     private static boolean started, built, requested;
     private static int age, joined, stage, shown;
@@ -147,6 +150,12 @@ public final class PipeShots {
                 player.getAbilities().flying = true;
                 player.onUpdateAbilities();
                 if (build) build(l);
+                if (VIEWS[selected].name().equals("oil-filter-cartridge-grades")) {
+                    player.getInventory().setItem(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE_COARSE.get()));
+                    player.getInventory().setItem(1, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()));
+                    player.getInventory().setItem(2, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE_FINE.get()));
+                    player.getInventory().selected = 1;
+                }
                 if (VIEWS[selected].name().equals("items")) {
                     player.getInventory().setItem(0, new ItemStack(water()));
                     player.getInventory().setItem(1, new ItemStack(steam()));
@@ -165,8 +174,8 @@ public final class PipeShots {
         mc.player.yRotO = yaw;
         mc.player.xRotO = pitch;
         mc.player.setDeltaMovement(Vec3.ZERO);
-        mc.options.hideGui = !view.name().equals("items");
-        if (!mc.options.hideGui) mc.player.getInventory().selected = 0;
+        mc.options.hideGui = !view.name().equals("items") && !view.name().equals("oil-filter-cartridge-grades");
+        if (!mc.options.hideGui && view.name().equals("items")) mc.player.getInventory().selected = 0;
         mc.getToasts().clear();
         if (stage == 0 && shown == 80) {
             // Newly built sections far from spawn can reach the client before their sky light does (SteamValveShots,
@@ -278,6 +287,18 @@ public final class PipeShots {
                 var quads = mc.getBlockRenderer().getBlockModel(st).getQuads(st, null, net.minecraft.util.RandomSource.create(0), net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
                 if (quads.isEmpty() || !seen.add(quadHash(quads))) throw new IllegalStateException("A duplex housing state draws like another (or nothing): side_b=" + sideB + " off_open=" + lidOpen);
             }
+        // The conditioner's lamp: lit and dark draw differently, and the lit lens is full bright (emissive ambient lighting on the quads).
+        var cond = mc.level.getBlockState(CONDITIONER);
+        var condDark = cond.setValue(TurbineAuxBlock.LIT, false);
+        var condLit = cond.setValue(TurbineAuxBlock.LIT, true);
+        var noData = net.neoforged.neoforge.client.model.data.ModelData.EMPTY;
+        var darkQuads = mc.getBlockRenderer().getBlockModel(condDark).getQuads(condDark, null, net.minecraft.util.RandomSource.create(0), noData, null);
+        var litQuads = mc.getBlockRenderer().getBlockModel(condLit).getQuads(condLit, null, net.minecraft.util.RandomSource.create(0), noData, null);
+        if (darkQuads.isEmpty() || litQuads.size() <= darkQuads.size() || quadHash(darkQuads) == quadHash(litQuads))
+            throw new IllegalStateException("The conditioner's lit and dark models do not differ: " + litQuads.size() + " / " + darkQuads.size());
+        long bright = litQuads.stream().filter(PipeShots::fullBright).count();
+        if (bright == 0) throw new IllegalStateException("The conditioner's lit lens is not full bright (no quad with light emission)");
+        if (darkQuads.stream().anyMatch(PipeShots::fullBright)) throw new IllegalStateException("The conditioner's dark lamp glows");
         var randomSource = net.minecraft.util.RandomSource.create(0);
         var openQuads = mc.getBlockRenderer().getBlockModel(open).getQuads(open, null, randomSource, net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
         var shutState = open.setValue(LubeOilValveBlock.OPEN, false);
@@ -285,6 +306,12 @@ public final class PipeShots {
         if (openQuads.isEmpty() || shutQuads.isEmpty()) throw new IllegalStateException("A valve state has no model");
         if (java.util.Objects.hash(quadHash(openQuads)) == java.util.Objects.hash(quadHash(shutQuads)) && quadSprites(openQuads).equals(quadSprites(shutQuads)))
             throw new IllegalStateException("The open and shut valve models are the same: the indicator would not change");
+    }
+
+    /** Whether a quad is drawn full bright: its vertices carry a packed light (the block format keeps it in the seventh int of each vertex). */
+    private static boolean fullBright(net.minecraft.client.renderer.block.model.BakedQuad q) {
+        int[] v = q.getVertices();
+        return (v[6] & 0xFFFF) > 0 || (v[6] >>> 16) > 0;
     }
 
     private static int quadHash(java.util.List<net.minecraft.client.renderer.block.model.BakedQuad> quads) {
@@ -375,7 +402,9 @@ public final class PipeShots {
         l.setBlock(OIL_FILTER, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.WEST), 3);
         // Supply: the tank's discharge through the housing and up, then along the header under the train; risers to each section's north flank.
         line(l, oil(), new BlockPos(185, 115, 200), new BlockPos(185, 115, 200));
-        path(l, oil(), new BlockPos(183, 115, 200), new BlockPos(183, 117, 200), new BlockPos(183, 117, 197), new BlockPos(208, 117, 197));
+        // After the housing: a junction at x 183, two fine housings in parallel (x 182, z 200 and 201), the junction at x 181 and up to the header.
+        path(l, oil(), new BlockPos(183, 115, 201), new BlockPos(183, 115, 200));
+        path(l, oil(), new BlockPos(181, 115, 201), new BlockPos(181, 115, 200), new BlockPos(181, 117, 200), new BlockPos(181, 117, 197), new BlockPos(208, 117, 197));
         path(l, oil(), new BlockPos(191, 120, 197), new BlockPos(191, 117, 197));
         path(l, oil(), new BlockPos(208, 120, 197), new BlockPos(208, 117, 197));
         path(l, oil(), new BlockPos(200, 120, 196), new BlockPos(200, 117, 196), new BlockPos(200, 117, 197));
@@ -390,8 +419,21 @@ public final class PipeShots {
         // The pipes that were laid before their neighbours were there get their arms resolved again.
         for (var p : BlockPos.betweenClosed(180, 113, 192, 214, 121, 206))
             if (l.getBlockState(p).is(oil())) l.setBlock(p, state(oil(), l, p), 3);
-        // The in-line housing in the tank's discharge line holds a cartridge in side A (B is open for a change).
-        ((TurbineAuxBlockEntity) l.getBlockEntity(OIL_FILTER)).cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()));
+        // The staged filter train in the tank's discharge line: a coarse housing first, then two fine ones in parallel (B is open for a change on each).
+        ((TurbineAuxBlockEntity) l.getBlockEntity(OIL_FILTER)).cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE_COARSE.get()));
+        for (var fine : new BlockPos[] {new BlockPos(182, 115, 200), new BlockPos(182, 115, 201)}) {
+            l.setBlock(fine, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.WEST), 3);
+            ((TurbineAuxBlockEntity) l.getBlockEntity(fine)).cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE_FINE.get()));
+        }
+        for (var p : BlockPos.betweenClosed(180, 113, 192, 214, 121, 206))
+            if (l.getBlockState(p).is(oil())) l.setBlock(p, state(oil(), l, p), 3);
+        var stagedTank = (TurbineAuxBlockEntity) l.getBlockEntity(OIL_TANK);
+        var graph = dev.bwr.mod.piping.OilLineNetwork.filterGraph(l, OIL_TANK, Direction.WEST);
+        if (graph.edges.size() != 3 || graph.sinks.isEmpty())
+            throw new IllegalStateException("The oil room's filter train is not a coarse housing and two fine ones in parallel: " + graph.edges.size() + " housings, " + graph.sinks.size() + " supplies");
+        var staged = stagedTank.filterTrain();
+        if (staged == null || staged.housings().size() != 3 || Math.abs(staged.flow().capacity() - 1.2) > 1e-9)
+            throw new IllegalStateException("The oil room's filter train should pass 1.2 of a train's rated flow (two fine in parallel): " + (staged == null ? "none" : staged.flow().capacity()));
         // The conditioner, piped to the tank: oil from its suction outlet to the conditioner's inlet, cleaned oil from its outlet to the tank's fill connection.
         l.setBlock(CONDITIONER, BwrBlocks.LUBE_OIL_CONDITIONER.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.EAST), 3);
         path(l, oil(), new BlockPos(186, 114, 200), new BlockPos(186, 114, 207), new BlockPos(188, 114, 207));

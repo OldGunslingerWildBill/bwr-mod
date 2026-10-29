@@ -46,7 +46,13 @@ public class TurbineAuxScreen extends BwrScreen<TurbineAuxMenu> {
                 Layout.meter("Oil level", () -> menu.oilFraction, () -> menu.oilFraction < TurbineAuxTrain.ALARM_OIL_LEVEL ? Status.CAUTION : Status.NORMAL,
                         () -> grouped(menu.oilFraction * TurbineAux.OIL_TANK_L, 0) + " L"),
                 Layout.row("Oil temperature", () -> num(menu.oilC, 1), "C"),
-                Layout.row("Oil filter", () -> !menu.filterHousing ? "none fitted" : menu.filterBypass ? "bypass open" : pct(menu.filterLife) + " % left, " + num(menu.filterDp, 1) + " psid")
+                Layout.row("Bearing oil flow", () -> Double.isNaN(menu.oilFlow) ? "-" : pct(menu.oilFlow) + " %" + (menu.flowVeryLow ? " very low" : menu.flowLow ? " low" : menu.flowLimited ? " held back" : ""))
+                        .status(() -> menu.flowVeryLow ? Status.ALARM : menu.flowLow || menu.flowLimited ? Status.CAUTION : Status.NONE)
+                        .tip("The oil the pumps get to the bearings over what the speed needs: 100 % and over is good, under 90 % a low-flow alarm, 70 % or under a very-low one. A fine cartridge in the housing passes only 60 percent of a train's rated flow; two side by side pass 120."),
+                Layout.row("Oil cleanliness", () -> pct(menu.cleanliness), "%")
+                        .status(() -> menu.cleanliness > 0.4 ? Status.CAUTION : Status.NONE)
+                        .tip("The particles in the oil; 20 % is the oil the plant has always run. A fine cartridge (or a conditioner) cleans it, a coarse cartridge alone lets it get dirty, and dirty oil wears the bearings and degrades faster."),
+                Layout.row("Oil filter", () -> !menu.filterHousing ? "none fitted" : (menu.filterGrade >= 0 ? TurbineAux.GRADE_NAMES[menu.filterGrade] + ", " : "") + (menu.filterBypass ? "bypass open" : pct(menu.filterLife) + " % left, " + num(menu.filterDp, 1) + " psid"))
                         .status(() -> menu.filterHousing && (menu.filterBypass || menu.filterDp >= TurbineAux.FILTER_DP_CHANGE_PSI) ? Status.CAUTION : Status.NONE)
                         .tip("The Oil Filter Housing bolted on this tank. A clean cartridge cuts the oil's loss to a tenth; with the slot empty or the cartridge full the oil goes round it."),
                 Layout.row("Oil conditioner", () -> !menu.condFitted ? "none fitted" : menu.condRun ? "running: 30 % of the degradation" : menu.condOn ? "no power or no flow" : "stopped")

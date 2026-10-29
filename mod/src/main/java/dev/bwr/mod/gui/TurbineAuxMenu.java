@@ -24,6 +24,10 @@ public class TurbineAuxMenu extends BwrMenu {
     public double filterLife, filterDp;
     /** The Lube Oil Conditioner: on a conditioner, its own switch and whether it runs; on a tank, whether one serves it and whether it is switched on and running. */
     public boolean condFitted, condOn, condRun;
+    /** Staged filtration (TURBINE-AUX.md): the housing's grade (-1 none), what its run passes (-1 unlimited), whether it holds the pumps back, the bearing oil flow (NaN unattached) and the oil's cleanliness. */
+    public int filterGrade = -1;
+    public double filterCap = -1, oilFlow = Double.NaN, cleanliness = TurbineAux.CLEANLINESS_DEFAULT;
+    public boolean flowLimited, flowGood, flowLow, flowVeryLow;
     public String status = "Waiting for server";
 
     public TurbineAuxMenu(int id, Inventory inv, RegistryFriendlyByteBuf b) { this(id, inv, b.readBlockPos()); }
@@ -63,6 +67,15 @@ public class TurbineAuxMenu extends BwrMenu {
         b.writeDouble(filter == null ? 0 : filter.filterDpPsi());
         var cond = be.kind() == TurbineAuxBlock.Kind.LUBE_OIL ? be.conditioner() : null;
         boolean isCond = be.kind() == TurbineAuxBlock.Kind.CONDITIONER;
+        b.writeInt(filter == null ? -1 : filter.grade());
+        double cap = be.kind() == TurbineAuxBlock.Kind.LUBE_OIL ? be.filterCapacity() : Double.POSITIVE_INFINITY;
+        b.writeDouble(Double.isFinite(cap) ? cap : -1);
+        b.writeDouble(aux != null && aux.lubeGoverned ? aux.oilFlow : Double.NaN);
+        b.writeDouble(be.cleanliness());
+        b.writeBoolean(be.flowLimited());
+        b.writeBoolean(aux != null && aux.oilFlowGood);
+        b.writeBoolean(aux != null && aux.oilFlowLowAlarm);
+        b.writeBoolean(aux != null && aux.oilFlowVeryLowAlarm);
         b.writeBoolean(isCond || cond != null);
         b.writeBoolean(isCond ? be.conditionerOn() : cond != null && cond.conditionerOn());
         b.writeBoolean(isCond ? be.conditionerRunning() : cond != null && cond.conditionerRunning());
@@ -85,6 +98,8 @@ public class TurbineAuxMenu extends BwrMenu {
         statorFlow = b.readDouble(); h2Psig = b.readDouble(); h2Kg = b.readDouble(); coolantC = b.readDouble(); windingC = b.readDouble(); bearingC = b.readDouble();
         electricMW = b.readDouble(); shaftFlow = b.readDouble();
         filterHousing = b.readBoolean(); filterBypass = b.readBoolean(); filterLife = b.readDouble(); filterDp = b.readDouble();
+        filterGrade = b.readInt(); filterCap = b.readDouble(); oilFlow = b.readDouble(); cleanliness = b.readDouble();
+        flowLimited = b.readBoolean(); flowGood = b.readBoolean(); flowLow = b.readBoolean(); flowVeryLow = b.readBoolean();
         condFitted = b.readBoolean(); condOn = b.readBoolean(); condRun = b.readBoolean();
         status = b.readUtf();
     }

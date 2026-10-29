@@ -23,6 +23,8 @@ public class PowerModuleMenu extends BwrMenu {
     /** The oil filter housing on the train's oil tank (TURBINE-AUX.md): fitted, its bypass open, the cartridge life left and the pressure drop across it. */
     public boolean filterHousing,filterBypass;
     public double filterLife=Double.NaN,filterDp=Double.NaN;
+    /** The bearing oil flow (1 is just enough; NaN with no oil system) and the oil's cleanliness (worst tank): bits 256 low, 512 very low, 1024 restricted, 2048 good in {@link #alarms}. */
+    public double oilFlow=Double.NaN,oilCleanliness=Double.NaN;
     /** The blade sections and the casing (TURBINE-MAINTENANCE.md). Section masks: bit 0 flow A, bit 1 flow B. */
     public boolean lp,coverOff,motoring,hasClose;
     public int sectionsIn,thrown;
@@ -53,7 +55,8 @@ public class PowerModuleMenu extends BwrMenu {
         gearFed=a.gearFed;
         oilPsig=a.oilPsig;oilC=a.oilC;oilLevel=a.oilLevel;oilFilm=a.oilFilm;bearingC=m.bearingC;vibration=m.vibration;bow=m.bow();rotorC=m.rotorC;
         windingC=m.windingC;statorFlow=a.statorFlow;h2Psig=a.h2Psig;coolantC=a.coolantC;
-        alarms=(a.oilPressureAlarm?1:0)|(a.oilLevelAlarm?2:0)|(a.oilTempAlarm?4:0)|(a.bearingAlarm?8:0)|(a.vibrationAlarm?16:0)|(a.windingAlarm?32:0)|(a.h2Alarm?64:0)|(a.filterAlarm?128:0);
+        alarms=(a.oilPressureAlarm?1:0)|(a.oilLevelAlarm?2:0)|(a.oilTempAlarm?4:0)|(a.bearingAlarm?8:0)|(a.vibrationAlarm?16:0)|(a.windingAlarm?32:0)|(a.h2Alarm?64:0)|(a.filterAlarm?128:0)|(a.oilFlowLowAlarm?256:0)|(a.oilFlowVeryLowAlarm?512:0)|(a.oilFlowRestricted?1024:0)|(a.oilFlowGood?2048:0);
+        oilFlow=a.oilFlow;oilCleanliness=a.oilCleanliness;
         filterHousing=a.filterHousing;filterBypass=a.filterBypass;filterLife=a.filterLife;filterDp=a.filterDpPsi;
         lp=m.lp();coverOff=m.coverOff();motoring=m.motoring;hasClose=m.hasCloseShock();
         sectionsIn=(m.bladeIn(0)?1:0)|(m.bladeIn(1)?2:0);thrown=(m.bladeThrown(0)?1:0)|(m.bladeThrown(1)?2:0);
@@ -74,6 +77,7 @@ public class PowerModuleMenu extends BwrMenu {
         for(double v:new double[]{bladeA,bladeB,hoodC,reverseMW,closeAngle,closePu,shaftDamage,damage})b.writeDouble(v);
         b.writeByte(wreck);b.writeByte(fire);b.writeDouble(fireFuel);
         b.writeBoolean(filterHousing);b.writeBoolean(filterBypass);b.writeDouble(filterLife);b.writeDouble(filterDp);
+        b.writeDouble(oilFlow);b.writeDouble(oilCleanliness);
     }
     @Override protected void readSnapshot(FriendlyByteBuf b){
         present=b.readBoolean();if(!present)return;running=b.readBoolean();generator=b.readBoolean();hp=b.readBoolean();
@@ -89,6 +93,7 @@ public class PowerModuleMenu extends BwrMenu {
         shaftDamage=b.readDouble();damage=b.readDouble();
         wreck=b.readByte();fire=b.readByte();fireFuel=b.readDouble();
         filterHousing=b.readBoolean();filterBypass=b.readBoolean();filterLife=b.readDouble();filterDp=b.readDouble();
+        oilFlow=b.readDouble();oilCleanliness=b.readDouble();
     }
     @Override public void handleCommand(ServerPlayer sender,int command,int a,int unused){
         // Turbine sections have no local steam actuator; use the upstream steam valve. The generator's turning gear is the one switch here.

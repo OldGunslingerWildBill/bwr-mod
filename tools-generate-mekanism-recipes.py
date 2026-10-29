@@ -271,6 +271,8 @@ e("turbine_oil_drum", pattern=[" C ", "CSC", " C "], key={"C": CAN, "S": STEEL})
 # --- the oil filter: a housing of steel with a control circuit in place of the lever, and a cartridge of steel caps round a plastic element
 e("oil_filter_housing", sub={"minecraft:lever": C1})
 e("oil_filter_cartridge", sub={"minecraft:white_wool": HDPE_SHEET})
+e("oil_filter_cartridge_coarse")
+e("oil_filter_cartridge_fine", sub={"minecraft:white_wool": HDPE_SHEET})
 
 # --- the fabrication desk itself is crafted in the grid: a bench of steel with a crafting table, a circuit in each side of it
 e("fabrication_desk", pattern=["SSS", "ETE", "S S"],

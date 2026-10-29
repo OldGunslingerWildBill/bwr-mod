@@ -7,6 +7,7 @@ Standard library plus Pillow. Everything is drawn procedurally; no external art.
   turbine_oil_drum    an amber steel drum of lubricating oil (refills the Turbine Main Oil Tank)
   hydrogen_cylinder   a pale grey-blue gas cylinder with a valve cap (refills the Generator Cooling Skid)
   oil_filter_cartridge a pleated filter element between two steel end caps (the element of the Oil Filter Housing)
+  oil_filter_cartridge_coarse / _fine  the same with a green (coarse, high flow) or blue (fine, high filtration) grade band
   turbine_oil_can     a small amber oil can with a spout (250 L of synthetic oil from a Mekanism reaction chamber; four fill a drum
                       when Mekanism is installed; MEKANISM-RECIPES.md). It has no crafting recipe, so none is written for it here.
 
@@ -84,7 +85,8 @@ def cylinder():
     return img
 
 
-def cartridge():
+def cartridge(band=None):
+    """band: None for the standard cartridge (as it always was), or a colour for the grade: green coarse, blue fine."""
     img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     cap, cap_dark, media, fold, core = (150, 150, 156), (96, 96, 102), (232, 222, 190), (186, 172, 128), (70, 70, 74)
     rect(img, 4, 1, 11, 2, cap)             # top end cap
@@ -97,11 +99,16 @@ def cartridge():
     rect(img, 4, 3, 4, 12, (255, 248, 222))  # lit edge
     rect(img, 7, 0, 8, 0, core)             # centre tube showing at the top
     rect(img, 7, 15, 8, 15, core)
+    if band is not None:
+        rect(img, 4, 6, 11, 8, band)        # the grade band across the media
+        rect(img, 4, 6, 11, 6, tuple(min(255, c + 40) for c in band))
+        rect(img, 4, 8, 11, 8, tuple(int(c * 0.65) for c in band))
     for x, y in ((4, 1), (11, 1), (4, 14), (11, 14)):
         img.putpixel((x, y), (0, 0, 0, 0))
     return img
 
 
+GRADE_GREEN, GRADE_BLUE = (52, 168, 76), (52, 104, 214)
 NOT_MEKANISM = [{"type": "neoforge:not", "value": {"type": "neoforge:mod_loaded", "modid": "mekanism"}}]
 
 
@@ -141,6 +148,8 @@ def item(id, image, recipe=None, gated=False):
 item("turbine_oil_drum", drum(), ([" C ", "CIC", " C "], {"C": "minecraft:coal", "I": "minecraft:iron_ingot"}), gated=True)
 item("turbine_oil_can", can())
 item("oil_filter_cartridge", cartridge(), (["IPI", "PWP", "IPI"], {"I": "minecraft:iron_ingot", "P": "minecraft:paper", "W": "minecraft:white_wool"}), gated=True)
+item("oil_filter_cartridge_coarse", cartridge(GRADE_GREEN), (["IPI", "PBP", "IPI"], {"I": "minecraft:iron_ingot", "P": "minecraft:paper", "B": "minecraft:iron_bars"}), gated=True)
+item("oil_filter_cartridge_fine", cartridge(GRADE_BLUE), (["IPI", "WGW", "IPI"], {"I": "minecraft:iron_ingot", "P": "minecraft:paper", "W": "minecraft:white_wool", "G": "minecraft:glass_pane"}), gated=True)
 item("hydrogen_cylinder", cylinder(), ([" I ", "IWI", " I "], {"I": "minecraft:iron_ingot", "W": "minecraft:water_bucket"}), gated=True)
 
 # ---- the Lube Oil Conditioner's running lamp (TURBINE-AUX.md): the lens textures, as the industrial lamps' lenses are made (LIGHTING.md):

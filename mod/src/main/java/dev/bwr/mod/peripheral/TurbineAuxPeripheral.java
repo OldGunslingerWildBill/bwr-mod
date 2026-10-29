@@ -69,14 +69,22 @@ public final class TurbineAuxPeripheral implements IPeripheral {
         m.put("filterLife", filter.filterLife());
         m.put("filterDpPsi", filter.filterDpPsi());
         m.put("filterBypass", filter.filterBypass());
+        m.put("filterGrade", dev.bwr.core.turbine.TurbineAux.GRADE_NAMES[filter.grade()]);
+        if (Double.isFinite(filter.flowCapacity())) m.put("filterFlowCapacity", filter.flowCapacity());
         // The duplex filter (TURBINE-AUX.md): the side in service, and each side's own readings (the flat ones above are the side in service).
         m.put("filterSelectedSide", filter.sideBInService() ? "B" : "A");
         for (int side = 0; side < 2; side++) {
             var s = new LinkedHashMap<String, Object>();
             s.put("cartridge", filter.hasCartridge(side)); s.put("life", filter.filterLife(side)); s.put("dpPsi", filter.filterDpPsi(side));
+            s.put("grade", dev.bwr.core.turbine.TurbineAux.GRADE_NAMES[filter.grade(side)]); if (Double.isFinite(filter.flowCapacity(side))) s.put("flowCapacity", filter.flowCapacity(side));
             s.put("bypass", filter.filterBypass(side)); s.put("changeDue", filter.filterChangeDue(side)); s.put("inService", (side == 1) == filter.sideBInService());
             m.put(side == 0 ? "sideA" : "sideB", s);
         }
+    }
+
+    /** The bearing oil flow of the train a tank serves and its three flags (TURBINE-AUX.md, Bearing oil flow). */
+    private static void flowFields(Map<String, Object> m, dev.bwr.mod.power.TurbineAuxTrain.Readout a) {
+        m.put("oilFlow", a.oilFlow); m.put("oilFlowGood", a.oilFlowGood); m.put("oilFlowLowAlarm", a.oilFlowLowAlarm); m.put("oilFlowVeryLowAlarm", a.oilFlowVeryLowAlarm);
     }
 
     @LuaFunction(mainThread = true) public Map<String, Object> getStatus() {
@@ -93,6 +101,9 @@ public final class TurbineAuxPeripheral implements IPeripheral {
                 // The oil filter housing against this tank (TURBINE-AUX.md); the other fields are present only with one.
                 var filter = skid.oilFilter();
                 m.put("dischargePiped", skid.dischargePiped());
+                m.put("oilCleanliness", skid.cleanliness()); m.put("flowLimited", skid.flowLimited());
+                if (Double.isFinite(skid.filterCapacity())) m.put("filterFlowLimit", skid.filterCapacity());
+                if (module != null && module.aux().lubeGoverned) flowFields(m, module.aux());
                 var conditioner = skid.conditioner();
                 m.put("conditioner", conditioner != null);
                 if (conditioner != null) { m.put("conditionerOn", conditioner.conditionerOn()); m.put("conditionerRunning", conditioner.conditionerRunning()); }
@@ -103,6 +114,11 @@ public final class TurbineAuxPeripheral implements IPeripheral {
                 var tank = skid.tank();
                 m.put("attached", tank != null);
                 filterFields(m, skid);
+                if (tank != null) {
+                    m.put("oilCleanliness", tank.cleanliness());
+                    var served = tank.module();
+                    if (served != null && served.aux().lubeGoverned) flowFields(m, served.aux());
+                }
                 m.put("filterChangeDue", skid.filterChangeDue());
                 double hours = skid.filterHoursLeft();
                 if (Double.isFinite(hours)) m.put("filterHoursLeft", hours); // absent when nothing flows through it

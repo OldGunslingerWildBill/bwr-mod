@@ -690,6 +690,11 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `oil_filter_life` | Oil filter cartridge life left (no signal without a housing on the tank) | fraction | 0 to 1 | NUMBER |
 | `oil_filter_dp` | Oil filter pressure drop (no signal without a housing) | psi | 0 to 25 | NUMBER |
 | `oil_filter_bypass`, `oil_filter_alarm` | Oil goes round the filter (slot empty or cartridge full); a cartridge change is due (no signal without a housing) |  | 0 to 1 | BOOLEAN |
+| `oil_flow` | Bearing oil flow: the oil delivered to this section over what its speed needs (1.0 is just enough; the AC pump alone at rated speed is 0.70; TURBINE-AUX.md, Bearing oil flow) | fraction | 0 to 1.5 | NUMBER |
+| `oil_flow_good` | Bearing oil flow 100 % or more |  | 0 to 1 | BOOLEAN |
+| `oil_flow_low_alarm`, `oil_flow_very_low_alarm` | Bearing oil flow under 90 % / 70 % or under, while the shaft turns (readings like `oil_pressure_alarm`; nothing trips) |  | 0 to 1 | BOOLEAN |
+| `oil_flow_restricted` | The filter housings in the tank's discharge run hold the pumps back (a fine cartridge passes only 0.6 of a train's rated flow; no signal without a tank) |  | 0 to 1 | BOOLEAN |
+| `oil_cleanliness` | Lube oil cleanliness, worst tank (a particulate index; 0.2 is the oil the plant has always run; dirtier oil wears, shakes and degrades; no signal without a tank) | fraction | 0 to 1 | NUMBER |
 | `fire` | Turbine fire (TURBINE-MAINTENANCE.md) |  | 0 to 1 | BOOLEAN |
 | `fire_fuel` | Fire fuel left (oil L, hydrogen kg) |  | 0 to 20000 | NUMBER |
 | `wrecked` | Casing wrecked (burst or shaft out) |  | 0 to 1 | BOOLEAN |
@@ -725,11 +730,15 @@ has its own list. The train steps a skid; none has a ticker.
 
 Main Oil Tank: `attached` (bolted on a train), `discharge_piped` (its discharge port has a run that reaches a section's supply), `ac_pump`, `dc_pump` (switches), `ac_running`, `dc_running`, `oil_level` (fraction), `oil_litres` (L),
 `oil_temp` (degC), `oil_pressure` (psig), `oil_film`, `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `ac_fe`, `dc_fe` (FE),
-`filter_housing` (an Oil Filter Housing is bolted on it), `filter_life` (fraction), `filter_dp` (psi), `filter_bypass` (the last three "no signal" without a housing);
+`filter_housing` (an Oil Filter Housing is bolted on it), `filter_life` (fraction), `filter_dp` (psi), `filter_bypass` (the last three "no signal" without a housing),
+`oil_cleanliness` (fraction), `flow_limited` (the housings hold the pumps back), `filter_flow_limit` (the flow they pass, of a train's rated flow; no signal when nothing limits it),
+and for the train it serves `oil_flow`, `oil_flow_good`, `oil_flow_low_alarm`, `oil_flow_very_low_alarm` (no signal when it is not on a lube-governed train);
 commands `ac_pump`, `dc_pump` (BOOLEAN). Shaft-Driven Main Oil Pump: `attached`, `suction_piped`, `discharge_piped`, `delivery` (fraction); no commands. Oil Filter Housing (CC `bwr_oil_filter`, read-only, no commands):
 `attached` (serves a Main Oil Tank, bolted on or in-line), `selected_side` (the transfer valve: 0 side A, 1 side B; also a LEVEL command 0 or 1),
 `a_cartridge`, `a_life`, `a_dp`, `a_change_due` and `b_cartridge`, `b_life`, `b_dp`, `b_change_due` (each side), and, for the side in service,
-`cartridge`, `filter_life` (fraction), `filter_dp` (psi), `filter_bypass`, `change_due`. Lube Oil Conditioner (CC `bwr_lube_oil_conditioner`):
+`cartridge`, `filter_life` (fraction), `filter_dp` (psi), `filter_bypass`, `change_due`, and the cartridge grade: `grade` (0 coarse, 1 standard, 2 fine; the side in service),
+`a_grade`, `b_grade` (no signal with no cartridge), `flow_capacity` (the flow the cartridge in service passes, of a train's rated flow; no signal when it does not limit),
+and the flow of the train its tank serves: `oil_flow`, `oil_flow_low_alarm`, `oil_flow_very_low_alarm`. Lube Oil Conditioner (CC `bwr_lube_oil_conditioner`):
 `attached`, `on` (switch, and a BOOLEAN command), `running`, `fe`, `degradation_factor` (1 stopped, 0.30 running). Tank: `conditioner` (one serves it),
 `conditioner_running` (no signal without one). Power modules: `oil_conditioner_running` (no signal without one). Generator
 Cooling Skid: `attached`, `stator_pumps` (switch), `stator_running`, `stator_flow`, `h2_pressure` (psig), `h2_kg` (kg), `coolant_temp`,

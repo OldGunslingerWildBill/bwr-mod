@@ -51,7 +51,12 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
     }
 
     private String otherSide() {
-        return !menu.otherCartridge ? "empty, open" : menu.otherBypass ? "full" : pct(menu.otherLife) + " % left";
+        return !menu.otherCartridge ? "empty, open" : TurbineAux.GRADE_NAMES[menu.otherGrade] + " " + (menu.otherBypass ? "full" : pct(menu.otherLife) + " %");
+    }
+
+    private String element() {
+        if (!menu.cartridge) return "none";
+        return TurbineAux.GRADE_NAMES[menu.grade] + (menu.flowCap >= 0 ? " " + pct(menu.flowCap) + " %" : "");
     }
 
     @Override
@@ -76,6 +81,12 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
                 Layout.row("Bypass", () -> menu.bypass ? "open" : "shut")
                         .status(() -> menu.bypass ? Status.CAUTION : Status.NONE)
                         .tip("Open when the side in service has an empty slot or a full cartridge: the oil goes round the element."),
+                Layout.row("Element", this::element)
+                        .status(() -> menu.cartridge && menu.flowLimited ? Status.CAUTION : Status.NONE)
+                        .tip("The grade of the cartridge in service and the flow it passes, as a share of what a whole train's bearings need at rated speed. A fine element passes 60 percent clean and less as it loads: one fine housing alone starves a train, two side by side do not. A coarse element passes more than every pump together."),
+                Layout.row("Bearing flow", () -> Double.isNaN(menu.bearingFlow) ? "-" : pct(menu.bearingFlow) + " %")
+                        .status(() -> menu.flowVeryLow ? Status.ALARM : menu.flowLow ? Status.CAUTION : Status.NONE)
+                        .tip("The oil delivered to the bearings of the train this tank serves, over what the speed needs. Under 90 % is a low-flow alarm (amber), 70 % or under a very-low one (red)."),
                 Layout.row("Oil loss", () -> pct(menu.factor), "%")
                         .tip("The share of the tank's unfiltered oil loss that gets through: 10 % with a cartridge in service, 100 % (the old rate) with the side in service empty or full."),
                 Layout.row("Time left", this::hours)
@@ -83,7 +94,10 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
                 Layout.row("Standby", () -> side(!menu.sideB) + ": " + otherSide())
                         .status(() -> menu.otherCartridge && !menu.otherBypass ? Status.NONE : Status.CAUTION)
                         .tip("The side out of service does not filter or load. Its cartridge can be taken out and changed while the plant runs."),
-                Layout.row("Oil", () -> menu.attached ? num(menu.oilC, 1) + " C, " + num(menu.psig, 1) + " psig" : "-")).compact();
+                Layout.row("Oil", () -> menu.attached ? num(menu.oilC, 1) + " C, " + num(menu.psig, 1) + " psig" : "-"),
+                Layout.row("Cleanliness", () -> Double.isNaN(menu.cleanliness) ? "-" : pct(menu.cleanliness), "%")
+                        .status(() -> !Double.isNaN(menu.cleanliness) && menu.cleanliness > 0.4 ? Status.CAUTION : Status.NONE)
+                        .tip("The particles in the tank's oil; 20 % is the oil the plant has always run. Dirtier oil wears the bearings, shakes the shaft and degrades faster.")).compact();
 
         var tank = Layout.note(() -> menu.attached ? "Serves a Main Oil Tank." : "Not on a Main Oil Tank: it filters nothing.").body()
                 .status(() -> menu.attached ? Status.NONE : Status.CAUTION);

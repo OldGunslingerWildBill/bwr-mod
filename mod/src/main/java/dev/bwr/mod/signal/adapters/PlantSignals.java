@@ -17,6 +17,22 @@ import dev.bwr.mod.suppression.SuppressionPoolBlockEntity;
 final class PlantSignals {
     private PlantSignals() {}
 
+    /**
+     * What the train a Main Oil Tank serves reads for its bearing oil flow: 0 the flow ratio, 1 good, 2 low alarm, 3 very low alarm.
+     * NaN (no signal) for a tank that is not on a lube-governed train, or none.
+     */
+    private static double tankFlow(TurbineAuxBlockEntity tank, int which) {
+        var module = tank == null ? null : tank.module();
+        if (module == null || !module.aux().lubeGoverned) return Double.NaN;
+        var a = module.aux();
+        return switch (which) {
+            case 0 -> a.oilFlow;
+            case 1 -> a.oilFlowGood ? 1 : 0;
+            case 2 -> a.oilFlowLowAlarm ? 1 : 0;
+            default -> a.oilFlowVeryLowAlarm ? 1 : 0;
+        };
+    }
+
     static final Schema<SuppressionPoolBlockEntity> POOL = new Schema<SuppressionPoolBlockEntity>()
             .bool("formed", "Pool formed", SuppressionPoolBlockEntity::isFormed)
             .number("temperature", "Pool temperature", "degC", 0, 200, be -> be.pool().getTemperatureC())
@@ -154,6 +170,13 @@ final class PlantSignals {
             .number("h2_pressure", "Hydrogen pressure", "psig", 0, 40, be -> be.block().generator() && be.aux().genGoverned ? be.aux().h2Psig : Double.NaN)
             .number("coolant_temp", "Generator coolant temperature", "degC", 0, 150, be -> be.block().generator() && be.aux().genGoverned ? be.aux().coolantC : Double.NaN)
             .boolOrNone("oil_pressure_alarm", "Oil pressure alarm", be -> be.aux().lubeGoverned ? (be.aux().oilPressureAlarm ? 1 : 0) : Double.NaN)
+            // The bearing oil flow (delivered over what the speed needs) and its alarms, annunciator-ready like the pressure alarm (TURBINE-AUX.md, Bearing oil flow).
+            .number("oil_flow", "Bearing oil flow (delivered over needed; 1 is just enough)", "fraction", 0, 1.5, be -> be.aux().lubeGoverned ? be.aux().oilFlow : Double.NaN)
+            .boolOrNone("oil_flow_good", "Bearing oil flow good (100 % or more)", be -> be.aux().lubeGoverned ? (be.aux().oilFlowGood ? 1 : 0) : Double.NaN)
+            .boolOrNone("oil_flow_low_alarm", "Bearing oil flow low alarm (under 90 %)", be -> be.aux().lubeGoverned ? (be.aux().oilFlowLowAlarm ? 1 : 0) : Double.NaN)
+            .boolOrNone("oil_flow_very_low_alarm", "Bearing oil flow very low alarm (70 % or under)", be -> be.aux().lubeGoverned ? (be.aux().oilFlowVeryLowAlarm ? 1 : 0) : Double.NaN)
+            .boolOrNone("oil_flow_restricted", "The filter housings hold the pumps back", be -> be.aux().lubeGoverned && be.aux().oilTank ? (be.aux().oilFlowRestricted ? 1 : 0) : Double.NaN)
+            .number("oil_cleanliness", "Lube oil cleanliness (particulate index; 0.2 is the oil the plant has always run)", "fraction", 0, 1, be -> be.aux().lubeGoverned && be.aux().oilTank ? be.aux().oilCleanliness : Double.NaN)
             .boolOrNone("oil_level_alarm", "Oil level alarm", be -> be.aux().lubeGoverned ? (be.aux().oilLevelAlarm ? 1 : 0) : Double.NaN)
             .boolOrNone("oil_temp_alarm", "Oil temperature alarm", be -> be.aux().lubeGoverned ? (be.aux().oilTempAlarm ? 1 : 0) : Double.NaN)
             .boolOrNone("bearing_alarm", "Bearing temperature alarm", be -> be.aux().lubeGoverned ? (be.aux().bearingAlarm ? 1 : 0) : Double.NaN)
@@ -203,6 +226,14 @@ final class PlantSignals {
             .number("filter_life", "Oil filter cartridge life left", "fraction", 0, 1, be -> be.oilFilter() != null ? be.oilFilter().filterLife() : Double.NaN)
             .number("filter_dp", "Oil filter pressure drop", "psi", 0, 25, be -> be.oilFilter() != null ? be.oilFilter().filterDpPsi() : Double.NaN)
             .boolOrNone("filter_bypass", "Oil filter bypass open (slot empty or cartridge full)", be -> be.oilFilter() != null ? (be.oilFilter().filterBypass() ? 1 : 0) : Double.NaN)
+            .number("oil_cleanliness", "Lube oil cleanliness (particulate index; 0.2 is the oil the plant has always run)", "fraction", 0, 1, TurbineAuxBlockEntity::cleanliness)
+            .boolOrNone("flow_limited", "The filter housings hold the pumps back", be -> be.flowLimited() ? 1 : 0)
+            .number("filter_flow_limit", "Flow the filter housings in the discharge run pass (of a train's rated flow; no signal when nothing limits it)", "fraction", 0, 3,
+                    be -> Double.isFinite(be.filterCapacity()) ? be.filterCapacity() : Double.NaN)
+            .number("oil_flow", "Bearing oil flow of the train (delivered over needed)", "fraction", 0, 1.5, be -> tankFlow(be, 0))
+            .boolOrNone("oil_flow_good", "Bearing oil flow good (100 % or more)", be -> tankFlow(be, 1))
+            .boolOrNone("oil_flow_low_alarm", "Bearing oil flow low alarm (under 90 %)", be -> tankFlow(be, 2))
+            .boolOrNone("oil_flow_very_low_alarm", "Bearing oil flow very low alarm (70 % or under)", be -> tankFlow(be, 3))
             .bool("conditioner", "A Lube Oil Conditioner serves this tank", be -> be.conditioner() != null)
             .boolOrNone("conditioner_running", "The conditioner is running", be -> be.conditioner() != null ? (be.conditioner().conditionerRunning() ? 1 : 0) : Double.NaN)
             .toggle("ac_pump", "AC pump on / off", (be, v) -> { be.setAcPump(v >= 0.5); return true; })
@@ -226,6 +257,15 @@ final class PlantSignals {
             .number("filter_dp", "Pressure drop across the cartridge", "psi", 0, 25, TurbineAuxBlockEntity::filterDpPsi)
             .bool("filter_bypass", "Bypass open (slot empty or cartridge full)", TurbineAuxBlockEntity::filterBypass)
             .bool("change_due", "The side in service needs a change", TurbineAuxBlockEntity::filterChangeDue)
+            // Cartridge grades (TURBINE-AUX.md): 0 coarse, 1 standard, 2 fine; no signal with no cartridge.
+            .number("grade", "Grade of the cartridge in service (0 coarse, 1 standard, 2 fine)", "grade", 0, 2, be -> be.hasCartridge() ? be.grade() : Double.NaN)
+            .number("a_grade", "Grade of side A's cartridge", "grade", 0, 2, be -> be.hasCartridge(0) ? be.grade(0) : Double.NaN)
+            .number("b_grade", "Grade of side B's cartridge", "grade", 0, 2, be -> be.hasCartridge(1) ? be.grade(1) : Double.NaN)
+            .number("flow_capacity", "Flow the cartridge in service passes (of a train's rated flow; no signal when it does not limit)", "fraction", 0, 3,
+                    be -> be.hasCartridge() && Double.isFinite(be.flowCapacity()) ? be.flowCapacity() : Double.NaN)
+            .number("oil_flow", "Bearing oil flow of the train this housing's tank serves", "fraction", 0, 1.5, be -> tankFlow(be.tank(), 0))
+            .boolOrNone("oil_flow_low_alarm", "Bearing oil flow low alarm (under 90 %)", be -> tankFlow(be.tank(), 2))
+            .boolOrNone("oil_flow_very_low_alarm", "Bearing oil flow very low alarm (70 % or under)", be -> tankFlow(be.tank(), 3))
             .command("selected_side", "Transfer valve (0 side A, 1 side B)", Kind.LEVEL, 0, 1, (be, v) -> { be.selectSide(v >= 0.5); return true; });
 
     /** The Lube Oil Conditioner: read-only readings and its start switch. */

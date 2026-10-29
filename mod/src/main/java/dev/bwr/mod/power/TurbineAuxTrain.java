@@ -29,6 +29,13 @@ public final class TurbineAuxTrain {
     /** The readings that raise an alarm flag. They are facts for a panel or a program; nothing acts on them. */
     public static final double ALARM_BEARING_C = 100, ALARM_OIL_C = 65, ALARM_OIL_LEVEL = 0.30, ALARM_OIL_PSIG = 15, ALARM_VIBRATION_MM_S = 7.1,
             ALARM_WINDING_C = 120, ALARM_H2_PSIG = 20;
+    /**
+     * The bearing oil flow (delivered over what the speed needs, {@link TurbineAux#flowRatio}) below which the low-flow alarm is raised, and
+     * the one at or below which the very-low alarm is. At 90 % the film is 0.9: the bearing metal runs about 87 C and the bearing alarm
+     * (100 C) is a few minutes away; at 70 % (the AC pump alone at rated speed) the film is 0.7 and a bearing settles near 217 C, well past the
+     * 115 C at which the babbitt softens and wears, so something is being damaged. Good is 100 % and over.
+     */
+    public static final double ALARM_FLOW_LOW = 0.90, ALARM_FLOW_VERY_LOW = 0.70;
     /** The filter's pressure drop at which a change is due, psi (an alarm reading, like the rest). */
     public static final double ALARM_FILTER_DP_PSI = TurbineAux.FILTER_DP_CHANGE_PSI;
     public static final int GEAR_FE_PER_TICK = EccsPower.fePerTickFromWatts(TurbineAux.GEAR_MOTOR_W);
@@ -54,6 +61,13 @@ public final class TurbineAuxTrain {
         public boolean oilFed, oilPiped, oilSupplyPiped, oilDrainPiped;
         /** A Lube Oil Conditioner serves one of the train's tanks, and whether it ran this tick (TURBINE-AUX.md). */
         public boolean conditioner, conditionerRunning;
+        /**
+         * The bearing oil flow as a multiple of what the speed needs (1 is just enough; NaN on a train with no oil system), the three flags
+         * it sets, whether the filter housings are holding the pumps back, and the oil's cleanliness (worst tank; NaN with no tank) and how
+         * much dirtier than its default it is.
+         */
+        public double oilFlow = Double.NaN, oilCleanliness = Double.NaN, oilDirt;
+        public boolean oilFlowGood, oilFlowLowAlarm, oilFlowVeryLowAlarm, oilFlowRestricted;
         void clear() {
             lubeGoverned = bowGoverned = genGoverned = oilTank = shaftPump = acRunning = dcRunning = gearOn = gearRolling = gearFed = coolingSkid = statorRunning = false;
             oilPsig = oilFilm = pumpFlow = vibration = statorFlow = 0;
@@ -63,6 +77,9 @@ public final class TurbineAuxTrain {
             filterLife = filterDpPsi = Double.NaN;
             oilFed = oilPiped = oilSupplyPiped = oilDrainPiped = false;
             conditioner = conditionerRunning = false;
+            oilFlow = oilCleanliness = Double.NaN;
+            oilDirt = 0;
+            oilFlowGood = oilFlowLowAlarm = oilFlowVeryLowAlarm = oilFlowRestricted = false;
         }
         public boolean anyAlarm() {
             return oilPressureAlarm || oilLevelAlarm || oilTempAlarm || bearingAlarm || vibrationAlarm || windingAlarm || h2Alarm;
@@ -128,6 +145,7 @@ public final class TurbineAuxTrain {
         r.gearRolling = rolling;
         r.gearFed = gearFed;
         double bearingFilm = 1;
+        double dirt = 0;
 
         // One section's oil: the header pressure and film at its bearings, the oil reaching it, and what its lines join.
         var oil = new java.util.IdentityHashMap<PowerModuleBlockEntity, OilState>();
@@ -186,6 +204,17 @@ public final class TurbineAuxTrain {
             r.oilPressureAlarm = rpm >= TurbineAux.STANDSTILL_RPM && psig < ALARM_OIL_PSIG;
             r.oilLevelAlarm = tanks.isEmpty() || minLevel < ALARM_OIL_LEVEL;
             r.oilTempAlarm = r.oilC > ALARM_OIL_C;
+            // The bearing oil flow, and the oil's cleanliness (the worst of the tanks).
+            r.oilFlow = TurbineAux.flowRatio(flow, rpm);
+            flowFlags(r, rpm);
+            double worst = Double.NaN;
+            for (var t : tanks) {
+                r.oilFlowRestricted |= t.flowLimited();
+                worst = Double.isNaN(worst) ? t.cleanliness() : Math.max(worst, t.cleanliness());
+                dirt = Math.max(dirt, t.dirtExcess());
+            }
+            r.oilCleanliness = worst;
+            r.oilDirt = dirt;
             r.oilPiped = !plan.legacy;
             // The oil filter housings on the tanks: the worst of them is what the train reports. A tank with none adds nothing.
             double life = 1, dp = 0;
@@ -224,12 +253,15 @@ public final class TurbineAuxTrain {
                 double target = TurbineAux.bearingTargetC(o.film, Double.isNaN(o.oilC) ? TurbineAux.AMBIENT_C : o.oilC, rpm);
                 m.bearingC = TurbineAux.bearingStepC(m.bearingC, target, DT);
                 m.addShaftDamage(TurbineAux.bearingDamage(m.bearingC, DT));
+                // Dirty oil wears the bearings (nothing at the oil's default cleanliness).
+                if (dirt > 0) m.addShaftDamage(TurbineAux.dirtyOilDamage(dirt, rpm, DT));
             } else {
                 m.bearingC = TurbineAux.AMBIENT_C;
             }
             if (bowGov && !m.block().generator()) {
                 m.advanceBow(rpm, rolling);
                 m.vibration = TurbineAux.vibrationMmPerS(m.bow(), rpm);
+                if (dirt > 0) m.vibration += TurbineAux.dirtyOilVibration(dirt, rpm);
                 m.addShaftDamage(TurbineAux.vibrationDamage(m.vibration, DT));
                 maxVibration = Math.max(maxVibration, m.vibration);
             } else if (!bowGov) {
@@ -263,10 +295,20 @@ public final class TurbineAuxTrain {
                 out.oilSupplyPiped = o.supply;
                 out.oilDrainPiped = o.drain;
                 out.oilPressureAlarm = rpm >= TurbineAux.STANDSTILL_RPM && o.psig < ALARM_OIL_PSIG;
+                out.oilFlow = TurbineAux.flowRatio(o.flow, rpm);
+                flowFlags(out, rpm);
             }
             if (m.block().generator() && genGov) generator(m, rpm, now, out);
             m.setAux(out);
         }
+    }
+
+    /** Sets the three flow flags from the flow reading: good at 100 % and over, low under 90 %, very low at 70 % and under (the last two only while the shaft turns, as the pressure alarm). */
+    private static void flowFlags(Readout r, double rpm) {
+        boolean turning = rpm >= TurbineAux.STANDSTILL_RPM;
+        r.oilFlowGood = r.oilFlow >= 1 - 1e-9;
+        r.oilFlowLowAlarm = turning && r.oilFlow < ALARM_FLOW_LOW;
+        r.oilFlowVeryLowAlarm = turning && r.oilFlow <= ALARM_FLOW_VERY_LOW + 1e-9;
     }
 
     private static void generator(PowerModuleBlockEntity g, double rpm, long now, Readout out) {
@@ -307,6 +349,8 @@ public final class TurbineAuxTrain {
         b.filterHousing = a.filterHousing; b.filterBypass = a.filterBypass; b.filterAlarm = a.filterAlarm;
         b.filterLife = a.filterLife; b.filterDpPsi = a.filterDpPsi;
         b.conditioner = a.conditioner; b.conditionerRunning = a.conditionerRunning;
+        b.oilFlow = a.oilFlow; b.oilCleanliness = a.oilCleanliness; b.oilDirt = a.oilDirt;
+        b.oilFlowGood = a.oilFlowGood; b.oilFlowLowAlarm = a.oilFlowLowAlarm; b.oilFlowVeryLowAlarm = a.oilFlowVeryLowAlarm; b.oilFlowRestricted = a.oilFlowRestricted;
         b.oilFed = a.oilFed; b.oilPiped = a.oilPiped; b.oilSupplyPiped = a.oilSupplyPiped; b.oilDrainPiped = a.oilDrainPiped;
     }
 

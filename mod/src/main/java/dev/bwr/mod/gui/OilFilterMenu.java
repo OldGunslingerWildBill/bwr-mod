@@ -1,5 +1,6 @@
 package dev.bwr.mod.gui;
 
+import dev.bwr.core.turbine.TurbineAux;
 import dev.bwr.mod.power.OilFilterCartridgeItem;
 import dev.bwr.mod.power.TurbineAuxBlockEntity;
 import dev.bwr.mod.registry.BwrBlocks;
@@ -39,6 +40,10 @@ public class OilFilterMenu extends BwrMenu {
     public double otherLife, otherDpPsi;
     /** Cartridge life left (1 new, 0 spent), pressure drop (psid), hours left at today's flow (negative: nothing flows), the share of the unfiltered loss let through. */
     public double life, dpPsi, hoursLeft, factor, oilC, psig;
+    /** Staged filtration: the grade in service and in standby, what the element in service passes (-1 unlimited), the bearing oil flow of the train it serves (NaN none), the tank's cleanliness, and whether it holds the pumps back. */
+    public int grade = TurbineAux.GRADE_STANDARD, otherGrade = TurbineAux.GRADE_STANDARD;
+    public double flowCap = -1, bearingFlow = Double.NaN, cleanliness = Double.NaN;
+    public boolean flowLimited, flowLow, flowVeryLow;
 
     /** The slot of the side in service: 0 for A, 1 for B (what the server knows, what the last snapshot said on the client). */
     private int inService() {
@@ -55,7 +60,7 @@ public class OilFilterMenu extends BwrMenu {
         for (int side = 0; side < 2; side++) {
             final int index = side;
             addSlot(new SlotItemHandler(items, index, index == 0 ? SLOT_X : SLOT_X_B, SLOT_Y) {
-                @Override public boolean mayPlace(ItemStack stack) { return stack.is(BwrItems.OIL_FILTER_CARTRIDGE.get()); }
+                @Override public boolean mayPlace(ItemStack stack) { return OilFilterCartridgeItem.isCartridge(stack); }
                 /** The cartridge in service stays: it cannot be taken out while the canister is under pressure. */
                 @Override public boolean mayPickup(Player player) { return index != inService() || !hasItem(); }
             });
@@ -89,6 +94,17 @@ public class OilFilterMenu extends BwrMenu {
         for (double v : new double[] {be.filterLife(), be.filterDpPsi(), Double.isFinite(hours) ? hours : -1, be.filterFactor(),
                 tank == null ? 0 : tank.oilC(), tank == null ? 0 : tank.psig()})
             b.writeDouble(v);
+        var module = tank == null ? null : tank.module();
+        var aux = module == null ? null : module.aux();
+        double cap = be.flowCapacity();
+        b.writeInt(be.grade());
+        b.writeInt(be.grade(other));
+        b.writeDouble(Double.isFinite(cap) ? cap : -1);
+        b.writeDouble(aux != null && aux.lubeGoverned ? aux.oilFlow : Double.NaN);
+        b.writeDouble(tank == null ? Double.NaN : tank.cleanliness());
+        b.writeBoolean(tank != null && tank.flowLimited());
+        b.writeBoolean(aux != null && aux.oilFlowLowAlarm);
+        b.writeBoolean(aux != null && aux.oilFlowVeryLowAlarm);
     }
 
     @Override protected void readSnapshot(FriendlyByteBuf b) {
@@ -97,6 +113,8 @@ public class OilFilterMenu extends BwrMenu {
         attached = b.readBoolean(); cartridge = b.readBoolean(); bypass = b.readBoolean(); changeDue = b.readBoolean();
         sideB = b.readBoolean(); otherCartridge = b.readBoolean(); otherBypass = b.readBoolean(); otherLife = b.readDouble(); otherDpPsi = b.readDouble();
         life = b.readDouble(); dpPsi = b.readDouble(); hoursLeft = b.readDouble(); factor = b.readDouble(); oilC = b.readDouble(); psig = b.readDouble();
+        grade = b.readInt(); otherGrade = b.readInt(); flowCap = b.readDouble(); bearingFlow = b.readDouble(); cleanliness = b.readDouble();
+        flowLimited = b.readBoolean(); flowLow = b.readBoolean(); flowVeryLow = b.readBoolean();
     }
 
     @Override public void handleCommand(ServerPlayer who, int command, int a, int unused) {
@@ -119,7 +137,7 @@ public class OilFilterMenu extends BwrMenu {
         boolean moved;
         if (index < MACHINE_SLOTS) {
             moved = moveItemStackTo(stack, MACHINE_SLOTS, MACHINE_SLOTS + PLAYER_SLOTS, true);
-        } else if (stack.is(BwrItems.OIL_FILTER_CARTRIDGE.get())) {
+        } else if (OilFilterCartridgeItem.isCartridge(stack)) {
             // Into the side out of service first (the way a cartridge is changed with the plant running), then an empty side in service.
             int off = 1 - inService();
             moved = moveItemStackTo(stack, off, off + 1, false) || moveItemStackTo(stack, 1 - off, 2 - off, false);

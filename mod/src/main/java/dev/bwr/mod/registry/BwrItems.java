@@ -365,6 +365,11 @@ public final class BwrItems {
     /** The element of an Oil Filter Housing: a clean one cuts a pumped tank's oil loss to a tenth until it is full (TURBINE-AUX.md). */
     public static final DeferredItem<dev.bwr.mod.power.OilFilterCartridgeItem> OIL_FILTER_CARTRIDGE = ITEMS.register("oil_filter_cartridge",
             () -> new dev.bwr.mod.power.OilFilterCartridgeItem(new Item.Properties().stacksTo(16)));
+    /** The coarse and the fine grades of the cartridge (TURBINE-AUX.md, Cartridge grades): high flow and high filtration. */
+    public static final DeferredItem<dev.bwr.mod.power.OilFilterCartridgeItem> OIL_FILTER_CARTRIDGE_COARSE = ITEMS.register("oil_filter_cartridge_coarse",
+            () -> new dev.bwr.mod.power.OilFilterCartridgeItem(new Item.Properties().stacksTo(16), dev.bwr.core.turbine.TurbineAux.GRADE_COARSE));
+    public static final DeferredItem<dev.bwr.mod.power.OilFilterCartridgeItem> OIL_FILTER_CARTRIDGE_FINE = ITEMS.register("oil_filter_cartridge_fine",
+            () -> new dev.bwr.mod.power.OilFilterCartridgeItem(new Item.Properties().stacksTo(16), dev.bwr.core.turbine.TurbineAux.GRADE_FINE));
     /** Recharges a Generator Cooling Skid with 5 kg of hydrogen. */
     public static final DeferredItem<Item> HYDROGEN_CYLINDER = ITEMS.registerSimpleItem("hydrogen_cylinder", new Item.Properties().stacksTo(16));
     /** The turbine hall (TURBINE-MAINTENANCE.md): blade sections and the hood are crane loads; as items they sit on stands or the hook. */
@@ -649,6 +654,8 @@ public final class BwrItems {
                         output.accept(TURBINE_OIL_DRUM.get());
                         output.accept(TURBINE_OIL_CAN.get());
                         output.accept(OIL_FILTER_CARTRIDGE.get());
+                        output.accept(OIL_FILTER_CARTRIDGE_COARSE.get());
+                        output.accept(OIL_FILTER_CARTRIDGE_FINE.get());
                         output.accept(HYDROGEN_CYLINDER.get());
                         output.accept(LP_BLADE_SECTION.get());
                         output.accept(DAMAGED_LP_BLADE_SECTION.get());

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "c:ingots/steel"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "B": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "pattern": [
+    "IPI",
+    "PBP",
+    "IPI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:oil_filter_cartridge_coarse"
+  }
+}
