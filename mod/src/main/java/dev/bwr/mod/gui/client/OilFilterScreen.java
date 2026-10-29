@@ -23,7 +23,7 @@ import java.util.Locale;
  */
 public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
     private static final int LEFT_COLUMN = 164;
-    private BwrButton transfer;
+    private SelectorSwitch transfer;
 
     public OilFilterScreen(OilFilterMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 336, 240);
@@ -57,14 +57,12 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
     @Override
     protected UiElement buildUi() {
         if (transfer == null) {
-            transfer = BwrButton.secondary("Transfer", "Throw the transfer valve: the other side goes into service and the one that was in service goes out of service, "
-                            + "where it can be opened and its cartridge changed while the plant runs. An empty side in service runs the oil on its bypass.",
-                    b -> menu.sendCommand(OilFilterMenu.CMD_TRANSFER, menu.sideB ? 0 : 1));
+            transfer = new SelectorSwitch(side -> menu.sendCommand(OilFilterMenu.CMD_TRANSFER, side));
         }
         var line = Layout.line(this::state, Type.CAPTION)
                 .tip("Only the side in service filters and loads. A clean cartridge in service passes the tank's oil through its element and cuts the oil's loss to a tenth. Empty, or full, the oil goes round it through the bypass.");
         var slot = Layout.card("Cartridges", line, Layout.gap(20), new SlotCaption(), Layout.gap(2), Layout.gap(18), Layout.gap(10),
-                Layout.controls(BwrStyle.SP1).add(transfer, 1));
+                Layout.controls(BwrStyle.SP1).label("Transfer", 42).add(transfer, 1));
         var left = Layout.column(BwrStyle.SP2, slot, Layout.flex());
 
         var life = Layout.card("Filtration",
@@ -98,8 +96,69 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
     protected void containerTick() {
         super.containerTick();
         if (transfer != null) {
-            transfer.setMessage(Component.literal(menu.sideB ? "Transfer to side A" : "Transfer to side B"));
+            transfer.sideB = menu.sideB;
             transfer.active = menu.present;
+        }
+    }
+
+    /**
+     * The transfer valve as a two-position A/B selector switch: a recessed plate with the letters A and B at its ends and a knob (with a
+     * pointer) at the position selected. Click the other end, or the knob, to throw it; Enter or Space on a focused switch throws it too.
+     */
+    private static final class SelectorSwitch extends net.minecraft.client.gui.components.AbstractButton {
+        private final java.util.function.IntConsumer thrown;
+        boolean sideB;
+
+        SelectorSwitch(java.util.function.IntConsumer thrown) {
+            super(0, 0, 100, BwrStyle.CONTROL, Component.literal("Transfer valve"));
+            this.thrown = thrown;
+            setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("The transfer valve, a two-position selector: A or B. "
+                    + "The side selected goes into service; the other goes out of service, where it can be opened and its cartridge changed while the plant runs. "
+                    + "An empty side in service runs the oil on its bypass."), Component.literal("Transfer valve")));
+        }
+
+        @Override
+        public void onPress() {
+            thrown.accept(sideB ? 0 : 1);
+        }
+
+        @Override
+        @SuppressWarnings("deprecation")
+        public void onClick(double mouseX, double mouseY) {
+            // A click on an end throws it to that end; on the knob, between, it moves to the other end.
+            int mid = getX() + getWidth() / 2;
+            int target = mouseX < mid - 8 ? 0 : mouseX > mid + 8 ? 1 : (sideB ? 0 : 1);
+            if ((target == 1) != sideB) thrown.accept(target);
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+            int x = getX(), y = getY(), w = getWidth(), h = getHeight();
+            boolean hover = isHovered() && active;
+            g.fill(x, y, x + w, y + h, active ? BwrStyle.INSET : BwrStyle.SURFACE);
+            Ui.frame(g, x, y, w, h, isFocused() ? BwrStyle.FOCUS : hover ? BwrStyle.BORDER_STRONG : BwrStyle.BORDER);
+            // The slot the knob slides in, between the two letters.
+            int slotL = x + 20, slotR = x + w - 20, cy = y + h / 2;
+            g.fill(slotL, cy - 2, slotR, cy + 2, 0xFF05070A);
+            Ui.frame(g, slotL, cy - 2, slotR - slotL, 4, BwrStyle.RULE);
+            // The knob: raised, with a pointer toward the letter selected.
+            int kw = 16, kh = h - 6;
+            int kx = sideB ? slotR - kw + 2 : slotL - 2;
+            int ky = y + 3;
+            int face = !active ? BwrStyle.SURFACE : hover ? BwrStyle.RAISED_HOVER : BwrStyle.RAISED;
+            g.fill(kx, ky, kx + kw, ky + kh, face);
+            Ui.frame(g, kx, ky, kw, kh, active ? BwrStyle.BORDER_STRONG : BwrStyle.BORDER);
+            int px = sideB ? kx + kw - 5 : kx + 3;
+            g.fill(px, ky + 3, px + 2, ky + kh - 3, active ? BwrStyle.ACCENT : BwrStyle.TEXT_DISABLED);
+            // The letters, the one selected lit.
+            int ink = active ? BwrStyle.TEXT_SECONDARY : BwrStyle.TEXT_DISABLED;
+            Ui.textCentred(g, "A", x + 10, y + (h - 8) / 2, Type.BODY, !sideB && active ? BwrStyle.ACCENT : ink);
+            Ui.textCentred(g, "B", x + w - 10, y + (h - 8) / 2, Type.BODY, sideB && active ? BwrStyle.ACCENT : ink);
+        }
+
+        @Override
+        protected void updateWidgetNarration(net.minecraft.client.gui.narration.NarrationElementOutput output) {
+            output.add(net.minecraft.client.gui.narration.NarratedElementType.TITLE, Component.literal("Transfer valve: side " + (sideB ? "B" : "A") + " in service"));
         }
     }
 

@@ -244,17 +244,7 @@ public class TurbineAuxBlock extends BaseEntityBlock {
     // ---- use
 
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        // The housing's transfer lever sits on its top: a click on the top face throws it (A to B or B to A); any other face opens the screen.
-        if (kind == Kind.OIL_FILTER && hit.getDirection() == Direction.UP) {
-            if (!level.isClientSide() && level.getBlockEntity(pos) instanceof TurbineAuxBlockEntity be) {
-                boolean toB = !be.sideBInService();
-                be.selectSide(toB);
-                level.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.8F, toB ? 0.7F : 0.5F);
-                player.displayClientMessage(BwrText.tr(toB ? "status.bwr.turbine_aux.side_b" : "status.bwr.turbine_aux.side_a",
-                        toB ? "Transfer valve: side B in service. Side A can be opened for a change." : "Transfer valve: side A in service. Side B can be opened for a change."), true);
-            }
-            return InteractionResult.sidedSuccess(level.isClientSide());
-        }
+        // Right-clicking the housing anywhere opens its screen; the transfer valve is the A/B selector switch there (or redstone, or a computer).
         if (player instanceof ServerPlayer sp) {
             if (kind == Kind.OIL_FILTER) dev.bwr.mod.gui.OilFilterMenu.open(sp, pos);
             else dev.bwr.mod.gui.TurbineAuxMenu.open(sp, pos);
@@ -310,9 +300,9 @@ public class TurbineAuxBlock extends BaseEntityBlock {
                 lines.add(BwrText.tr("tooltip.bwr.lube_oil_conditioner.2", "Runs on FE (any face but its two flanges) when you start it. With a clean filter cartridge too, a 20,000 L tank's oil lasts about one refuelling cycle."));
             }
             case OIL_FILTER -> {
-                lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.1", "Bolts on a Main Oil Tank. A duplex full-flow lube oil filter: sides A and B, one Oil Filter Cartridge each, a transfer lever on top."));
+                lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.1", "Bolts on a Main Oil Tank. A duplex full-flow lube oil filter: sides A and B, one Oil Filter Cartridge each, a transfer valve (an A/B switch on its screen)."));
                 lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.2", "A clean cartridge makes the tank's oil last ten times as long. With the slot empty, or the cartridge full, the oil goes round it."));
-                lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.3", "Or in-line in a Lube Oil Pipe run on a tank's discharge: inlet on its back, outlet on its front. Click the top to throw the transfer lever: the other side can be changed while the plant runs."));
+                lines.add(BwrText.tr("tooltip.bwr.oil_filter_housing.3", "Or in-line in a Lube Oil Pipe run on a tank's discharge: inlet on its back, outlet on its front. The transfer valve is the A/B switch on its screen: the other side can be changed while the plant runs."));
             }
             case SHAFT_PUMP -> {
                 lines.add(BwrText.tr("tooltip.bwr.shaft_oil_pump", "Bolts on the free shaft end of the generator, coupling toward it. Pumps oil in proportion to shaft speed."));

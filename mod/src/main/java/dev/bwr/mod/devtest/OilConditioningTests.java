@@ -147,19 +147,29 @@ public final class OilConditioningTests {
     }
 
     @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
-    public static void theTransferValveIsThrownByHandRedstoneSignalsAndComputers(GameTestHelper h) {
+    public static void theTransferValveIsThrownByTheScreenSwitchRedstoneSignalsAndComputers(GameTestHelper h) {
         run(h, 86200, f -> {
             var tank = train(f, 10_000);
             var housing = housing(f, tank);
             var pos = housing.getBlockPos();
             var player = h.makeMockPlayer(GameType.SURVIVAL);
-            // By hand: the lever is on the top; a click on the top throws it, a click on a side only opens the screen.
-            f.l.getBlockState(pos).useWithoutItem(f.l, player, new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
-            h.assertTrue(housing.sideBInService(), "a click on the top threw the lever to B");
-            f.l.getBlockState(pos).useWithoutItem(f.l, player, new BlockHitResult(Vec3.atCenterOf(pos), Direction.EAST, pos, false));
-            h.assertTrue(housing.sideBInService(), "a click on a side did not");
-            f.l.getBlockState(pos).useWithoutItem(f.l, player, new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
-            h.assertTrue(!housing.sideBInService(), "and the next click on the top threw it back to A");
+            // By hand the block itself is never clicked to throw it: a right-click anywhere (the top included) only opens the screen.
+            for (Direction face : Direction.values())
+                f.l.getBlockState(pos).useWithoutItem(f.l, player, new BlockHitResult(Vec3.atCenterOf(pos), face, pos, false));
+            h.assertTrue(!housing.sideBInService(), "no click on any face of the block throws the transfer valve");
+            // The screen's A/B selector switch sends the command; the server throws the valve (and only for a player at the housing).
+            var sp = h.makeMockServerPlayerInLevel();
+            sp.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
+            var menu = new OilFilterMenu(9, sp.getInventory(), pos);
+            menu.handleCommand(sp, OilFilterMenu.CMD_TRANSFER, 1, 0);
+            h.assertTrue(housing.sideBInService(), "the switch thrown to B puts side B in service");
+            menu.handleCommand(sp, OilFilterMenu.CMD_TRANSFER, 1, 0);
+            h.assertTrue(housing.sideBInService(), "thrown to B again changes nothing");
+            menu.handleCommand(sp, OilFilterMenu.CMD_TRANSFER, 0, 0);
+            h.assertTrue(!housing.sideBInService(), "thrown back to A");
+            sp.setPos(pos.getX() + 40, pos.getY() + 1, pos.getZ() + 0.5);
+            menu.handleCommand(sp, OilFilterMenu.CMD_TRANSFER, 1, 0);
+            h.assertTrue(!housing.sideBInService(), "a player too far from the housing cannot throw it");
             // Redstone: power selects B, losing it A; only a change counts.
             var rs = pos.east();
             f.l.setBlock(rs, Blocks.REDSTONE_BLOCK.defaultBlockState(), 3);

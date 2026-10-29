@@ -20,7 +20,7 @@
   Housing is now duplex**: sides **A and B**, one cartridge each, and a **transfer valve** (a lever on the changeover valve, a green band on the
   canister in service, the lid of the other standing open when its slot is empty) that picks the side in service. Only that side filters and
   loads; the other can be opened and changed with the turbine running and the oil never going round. A cartridge cannot be taken out of the side
-  in service (the canister is under pressure: throw the valve first). Thrown by hand (click the top, or the screen's button), by redstone
+  in service (the canister is under pressure: throw the valve first). Thrown by an A/B selector switch on the housing's screen (right-clicking the block anywhere opens it), by redstone
   (power selects B), by signals and by CC; hoppers fill an empty slot of either side and take nothing out. Old saves load their one cartridge
   into side A with A in service; new keys only when set. The new **Lube Oil Conditioner** (a centrifuge and a vacuum dehydrator skid, Blender
   model) bolts on a Main Oil Tank or is piped to its suction outlet and fill connection, runs on 11 kW of FE, and when running leaves **30 %**

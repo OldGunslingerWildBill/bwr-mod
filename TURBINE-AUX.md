@@ -107,7 +107,7 @@ hold it), and it does not change the oil film, the bearing temperature or the fi
   the first housing entered by its inlet in the run leaving the tank's discharge. Direct contact comes first.
 - **The slots.** Right-click the housing with a cartridge to put one in the side in service when that is empty (with it full, open the
   screen). Right-click with nothing on a side face to open its screen (two slots, A and B, a transfer button and the player's inventory;
-  shift-click works); right-click on the **top** throws the transfer lever. **Hoppers and pipes may put a cartridge into an empty slot of
+  shift-click works); the transfer valve is the **A/B selector switch on that screen**. **Hoppers and pipes may put a cartridge into an empty slot of
   either side, on any face, and can take nothing out**: nothing is pulled out for you. Breaking the housing drops both cartridges with
   their loads. Everything about the two sides is in *The duplex filter* below.
 - **No ticker.** The housing has none. The Main Oil Tank's own oil step, which the train calls once a tick, loads the cartridge by the
@@ -119,17 +119,20 @@ Plants change a filter **with the plant running**: a duplex filter has two canis
 puts one in service while the other is isolated and opened. The Oil Filter Housing is one.
 
 - **Two slots, A and B**, one Oil Filter Cartridge each, and a **transfer valve** (a lever on the changeover valve, between the
-  canisters) that picks the side in service. Side A is the one on the left seen from the front (the outlet side). The model shows it:
+  canisters) that picks the side in service, worked from the screen's switch. Side A is the one on the left seen from the front (the outlet side). The model shows it:
   a red lever leaning at the canister in service, a **green band and lamp on the canister in service and an amber one on the other**,
-  a big A and B, and the **lid of the canister out of service standing open when its slot is empty** (open for a change).
+  a big A and B, and the **lid of the canister out of service standing open when its slot is empty** (open for a change). The lever is
+  a position indicator: the block is not clicked to throw it.
 - **Only the side in service filters and loads.** The side out of service is not in the flow: its cartridge does not load, and it
   can be opened and its cartridge changed while the turbine runs, with the oil never going round the filter.
 - **A cartridge cannot be taken out of the side in service.** The realistic rule is the one chosen: the canister is under
   pressure, so the screen's slot for the side in service gives nothing up (and shift-click leaves it), and the game never opens the
   bypass for you by letting one out; **throw the transfer valve first**, then change the other side. An *empty* side in service
   can be filled (it was running on its bypass), and putting a cartridge in the other side is always allowed.
-- **Throwing the valve.** By hand: **click the top of the housing** (where the lever is) and the action bar says which side is in
-  service; any other face opens the screen, which has a **Transfer to side A/B** button. By **redstone**: power selects side B,
+- **Throwing the valve.** By hand: right-click the housing on **any face** and the screen opens (or, with a cartridge in hand, it goes into
+  the side in service if that is empty); the transfer valve is the **two-position A/B selector switch** on the screen (a recessed plate with
+  an A and a B at its ends and a knob with a pointer at the side selected; click the other end or the knob, or Enter or Space on it when
+  it is focused). Nothing on the block itself is clicked: the lever on the model only shows the position. By **redstone**: power selects side B,
   losing it selects side A, and only a change of the power counts (the same convention as the Lube Oil Valve). By **signals** and
   **CC** (`selected_side`, `setSide("A"|"B")`, `transfer()`). Transferring to an empty side is allowed and runs the oil on the bypass.
 - **Right-click with a cartridge** puts it into the side in service when that is empty; with it full the housing says so and the
@@ -386,7 +389,7 @@ Damage goes into the generator's shaft damage, so a destroyed winding fails the 
 ## Readouts, signals and computers
 
 - **Oil Filter Housing screen**: the two cartridge slots, A and B (the one in service marked, its slot locked while it holds a
-  cartridge), the **Transfer to side A/B** button, the life of the cartridge in service (a meter), the pressure drop across it, the bypass
+  cartridge), the **A/B transfer switch**, the life of the cartridge in service (a meter), the pressure drop across it, the bypass
   state, the share of the unfiltered oil loss that is getting through, the time left at today's pressure and oil temperature, the side
   out of service and the tank's oil. The **Main Oil Tank's screen** carries an *Oil filter* row (life and pressure drop of the side in
   service, or "bypass open", or "none fitted") and an *Oil conditioner* row.
