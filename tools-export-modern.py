@@ -1,4 +1,6 @@
-"""Bake Blender-authored pumps and pipe fittings, preserving UVs. --check is read-only."""
+"""Bake Blender-authored pumps, preserving UVs. --check is read-only.
+
+The pipes are no longer baked here: art/models/pipes/build_pipes.py and tools-export-pipes.py (PIPES.md)."""
 import json
 import math
 import sys
@@ -163,29 +165,8 @@ def bake_pump(id):
          'conditions':[{'condition':'minecraft:any_of','terms':terms},{'condition':'minecraft:survives_explosion'}]}]})
     print(f'{id}: {w}x{h}x{d}, {len(faces)} triangles, {count} cells; UVs and surface area preserved')
 
-def bake_pipes():
-    folder=RES/'assets/bwr/models/block/pipes/round'
-    variants={}
-    sources=[read('pipe_'+str(mask)+'.json') for mask in range(64)]
-    shared={k:v for source in sources for k,v in source['materials'].items()}
-    mats=materials({'materials':dict(sorted(shared.items()))},folder)
-    for mask,source in enumerate(sources):
-        b=bounds([p for f in source['faces'] for p in f['vertices']])
-        assert all(b[a]>=-EPS and b[a+3]<=1+EPS for a in range(3)),(mask,b)
-        # Every pattern uses the same named materials from one Blender run.
-        put(folder/f'connection_{mask}.obj',obj(source['faces'],mats))
-        put(folder/f'connection_{mask}.json',model(f'bwr:models/block/pipes/round/connection_{mask}.obj'))
-        key=','.join(f'{name}={str(bool(mask & (1<<i))).lower()}' for i,name in enumerate(DIRS))
-        variants[key]={'model':f'bwr:block/pipes/round/connection_{mask}'}
-    for id in ('pressurised_tube','high_pressure_water_pipe'):
-        put(RES/f'assets/bwr/blockstates/{id}.json',{'variants':variants})
-        put(RES/f'assets/bwr/models/item/{id}.json',{'parent':'bwr:block/pipes/round/connection_12',
-            'display':{'gui':{'rotation':[25,225,0],'scale':[.85,.85,.85]},'ground':{'scale':[.5,.5,.5]}}})
-    print('Pipes: 64 Blender fittings shared by steam and water; painted bands use tint index 0')
-
 def run():
     for id in IDS: bake_pump(id)
-    bake_pipes()
     for p in (SOURCE/'textures').glob('*.png'): put(RES/'assets/bwr/textures/block/modern'/p.name,p.read_bytes())
     for p,data in OUTPUTS.items():
         if '--check' in sys.argv:

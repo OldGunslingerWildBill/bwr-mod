@@ -141,6 +141,53 @@ public class PressurisedTubeBlock extends dev.bwr.mod.piping.PaintedPipeBlock im
     }
 
     // -----------------------------------------------------------------
+    // Shapes
+    // -----------------------------------------------------------------
+    //
+    // The steam pipe is drawn in 12 px of lagging and cladding (PIPES.md), fatter than the 8 px pipe its collision
+    // has always been. The outline, which is what the crosshair picks and the selection box shows, follows the
+    // cladding, so a click on the lagging lands on this pipe and not on the block behind it. Collision (and with it
+    // walking, fluids, support and occlusion) keeps the original 8 px shape: nothing that moves or flows changes.
+
+    private static final net.minecraft.world.phys.shapes.VoxelShape[] OUTLINE = outlines(6F / 16F);
+
+    private static net.minecraft.world.phys.shapes.VoxelShape[] outlines(float apothem) {
+        // The same construction as PipeBlock's own shapes: a centre cube and an arm to each connected face.
+        var core = net.minecraft.world.phys.shapes.Shapes.box(.5 - apothem, .5 - apothem, .5 - apothem, .5 + apothem, .5 + apothem, .5 + apothem);
+        var out = new net.minecraft.world.phys.shapes.VoxelShape[64];
+        Direction[] dirs = Direction.values();
+        for (int mask = 0; mask < 64; mask++) {
+            var shape = core;
+            for (int i = 0; i < dirs.length; i++) {
+                if ((mask & 1 << i) == 0) continue;
+                Direction d = dirs[i];
+                shape = net.minecraft.world.phys.shapes.Shapes.or(shape, net.minecraft.world.phys.shapes.Shapes.box(
+                        .5 + Math.min(-apothem, d.getStepX() * .5), .5 + Math.min(-apothem, d.getStepY() * .5), .5 + Math.min(-apothem, d.getStepZ() * .5),
+                        .5 + Math.max(apothem, d.getStepX() * .5), .5 + Math.max(apothem, d.getStepY() * .5), .5 + Math.max(apothem, d.getStepZ() * .5)));
+            }
+            out[mask] = shape.optimize();
+        }
+        return out;
+    }
+
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos,
+                                                                 net.minecraft.world.phys.shapes.CollisionContext context) {
+        return OUTLINE[getAABBIndex(state)];
+    }
+
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
+                                                                          net.minecraft.world.phys.shapes.CollisionContext context) {
+        return hasCollision ? shapeByIndex[getAABBIndex(state)] : net.minecraft.world.phys.shapes.Shapes.empty();
+    }
+
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return shapeByIndex[getAABBIndex(state)];
+    }
+
+    // -----------------------------------------------------------------
     // Rotation and mirroring
     // -----------------------------------------------------------------
     //

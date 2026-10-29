@@ -1,196 +1,196 @@
 {
   "variants": {
     "down=false,up=false,north=false,south=false,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_0"
+      "model": "bwr:block/pipes/water/connection_0"
     },
     "down=true,up=false,north=false,south=false,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_1"
+      "model": "bwr:block/pipes/water/connection_1"
     },
     "down=false,up=true,north=false,south=false,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_2"
+      "model": "bwr:block/pipes/water/connection_2"
     },
     "down=true,up=true,north=false,south=false,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_3"
+      "model": "bwr:block/pipes/water/connection_3"
     },
     "down=false,up=false,north=true,south=false,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_4"
+      "model": "bwr:block/pipes/water/connection_4"
     },
     "down=true,up=false,north=true,south=false,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_5"
+      "model": "bwr:block/pipes/water/connection_5"
     },
     "down=false,up=true,north=true,south=false,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_6"
+      "model": "bwr:block/pipes/water/connection_6"
     },
     "down=true,up=true,north=true,south=false,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_7"
+      "model": "bwr:block/pipes/water/connection_7"
     },
     "down=false,up=false,north=false,south=true,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_8"
+      "model": "bwr:block/pipes/water/connection_8"
     },
     "down=true,up=false,north=false,south=true,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_9"
+      "model": "bwr:block/pipes/water/connection_9"
     },
     "down=false,up=true,north=false,south=true,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_10"
+      "model": "bwr:block/pipes/water/connection_10"
     },
     "down=true,up=true,north=false,south=true,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_11"
+      "model": "bwr:block/pipes/water/connection_11"
     },
     "down=false,up=false,north=true,south=true,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_12"
+      "model": "bwr:block/pipes/water/connection_12"
     },
     "down=true,up=false,north=true,south=true,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_13"
+      "model": "bwr:block/pipes/water/connection_13"
     },
     "down=false,up=true,north=true,south=true,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_14"
+      "model": "bwr:block/pipes/water/connection_14"
     },
     "down=true,up=true,north=true,south=true,west=false,east=false": {
-      "model": "bwr:block/pipes/round/connection_15"
+      "model": "bwr:block/pipes/water/connection_15"
     },
     "down=false,up=false,north=false,south=false,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_16"
+      "model": "bwr:block/pipes/water/connection_16"
     },
     "down=true,up=false,north=false,south=false,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_17"
+      "model": "bwr:block/pipes/water/connection_17"
     },
     "down=false,up=true,north=false,south=false,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_18"
+      "model": "bwr:block/pipes/water/connection_18"
     },
     "down=true,up=true,north=false,south=false,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_19"
+      "model": "bwr:block/pipes/water/connection_19"
     },
     "down=false,up=false,north=true,south=false,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_20"
+      "model": "bwr:block/pipes/water/connection_20"
     },
     "down=true,up=false,north=true,south=false,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_21"
+      "model": "bwr:block/pipes/water/connection_21"
     },
     "down=false,up=true,north=true,south=false,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_22"
+      "model": "bwr:block/pipes/water/connection_22"
     },
     "down=true,up=true,north=true,south=false,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_23"
+      "model": "bwr:block/pipes/water/connection_23"
     },
     "down=false,up=false,north=false,south=true,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_24"
+      "model": "bwr:block/pipes/water/connection_24"
     },
     "down=true,up=false,north=false,south=true,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_25"
+      "model": "bwr:block/pipes/water/connection_25"
     },
     "down=false,up=true,north=false,south=true,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_26"
+      "model": "bwr:block/pipes/water/connection_26"
     },
     "down=true,up=true,north=false,south=true,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_27"
+      "model": "bwr:block/pipes/water/connection_27"
     },
     "down=false,up=false,north=true,south=true,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_28"
+      "model": "bwr:block/pipes/water/connection_28"
     },
     "down=true,up=false,north=true,south=true,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_29"
+      "model": "bwr:block/pipes/water/connection_29"
     },
     "down=false,up=true,north=true,south=true,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_30"
+      "model": "bwr:block/pipes/water/connection_30"
     },
     "down=true,up=true,north=true,south=true,west=true,east=false": {
-      "model": "bwr:block/pipes/round/connection_31"
+      "model": "bwr:block/pipes/water/connection_31"
     },
     "down=false,up=false,north=false,south=false,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_32"
+      "model": "bwr:block/pipes/water/connection_32"
     },
     "down=true,up=false,north=false,south=false,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_33"
+      "model": "bwr:block/pipes/water/connection_33"
     },
     "down=false,up=true,north=false,south=false,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_34"
+      "model": "bwr:block/pipes/water/connection_34"
     },
     "down=true,up=true,north=false,south=false,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_35"
+      "model": "bwr:block/pipes/water/connection_35"
     },
     "down=false,up=false,north=true,south=false,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_36"
+      "model": "bwr:block/pipes/water/connection_36"
     },
     "down=true,up=false,north=true,south=false,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_37"
+      "model": "bwr:block/pipes/water/connection_37"
     },
     "down=false,up=true,north=true,south=false,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_38"
+      "model": "bwr:block/pipes/water/connection_38"
     },
     "down=true,up=true,north=true,south=false,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_39"
+      "model": "bwr:block/pipes/water/connection_39"
     },
     "down=false,up=false,north=false,south=true,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_40"
+      "model": "bwr:block/pipes/water/connection_40"
     },
     "down=true,up=false,north=false,south=true,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_41"
+      "model": "bwr:block/pipes/water/connection_41"
     },
     "down=false,up=true,north=false,south=true,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_42"
+      "model": "bwr:block/pipes/water/connection_42"
     },
     "down=true,up=true,north=false,south=true,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_43"
+      "model": "bwr:block/pipes/water/connection_43"
     },
     "down=false,up=false,north=true,south=true,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_44"
+      "model": "bwr:block/pipes/water/connection_44"
     },
     "down=true,up=false,north=true,south=true,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_45"
+      "model": "bwr:block/pipes/water/connection_45"
     },
     "down=false,up=true,north=true,south=true,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_46"
+      "model": "bwr:block/pipes/water/connection_46"
     },
     "down=true,up=true,north=true,south=true,west=false,east=true": {
-      "model": "bwr:block/pipes/round/connection_47"
+      "model": "bwr:block/pipes/water/connection_47"
     },
     "down=false,up=false,north=false,south=false,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_48"
+      "model": "bwr:block/pipes/water/connection_48"
     },
     "down=true,up=false,north=false,south=false,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_49"
+      "model": "bwr:block/pipes/water/connection_49"
     },
     "down=false,up=true,north=false,south=false,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_50"
+      "model": "bwr:block/pipes/water/connection_50"
     },
     "down=true,up=true,north=false,south=false,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_51"
+      "model": "bwr:block/pipes/water/connection_51"
     },
     "down=false,up=false,north=true,south=false,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_52"
+      "model": "bwr:block/pipes/water/connection_52"
     },
     "down=true,up=false,north=true,south=false,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_53"
+      "model": "bwr:block/pipes/water/connection_53"
     },
     "down=false,up=true,north=true,south=false,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_54"
+      "model": "bwr:block/pipes/water/connection_54"
     },
     "down=true,up=true,north=true,south=false,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_55"
+      "model": "bwr:block/pipes/water/connection_55"
     },
     "down=false,up=false,north=false,south=true,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_56"
+      "model": "bwr:block/pipes/water/connection_56"
     },
     "down=true,up=false,north=false,south=true,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_57"
+      "model": "bwr:block/pipes/water/connection_57"
     },
     "down=false,up=true,north=false,south=true,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_58"
+      "model": "bwr:block/pipes/water/connection_58"
     },
     "down=true,up=true,north=false,south=true,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_59"
+      "model": "bwr:block/pipes/water/connection_59"
     },
     "down=false,up=false,north=true,south=true,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_60"
+      "model": "bwr:block/pipes/water/connection_60"
     },
     "down=true,up=false,north=true,south=true,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_61"
+      "model": "bwr:block/pipes/water/connection_61"
     },
     "down=false,up=true,north=true,south=true,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_62"
+      "model": "bwr:block/pipes/water/connection_62"
     },
     "down=true,up=true,north=true,south=true,west=true,east=true": {
-      "model": "bwr:block/pipes/round/connection_63"
+      "model": "bwr:block/pipes/water/connection_63"
     }
   }
 }

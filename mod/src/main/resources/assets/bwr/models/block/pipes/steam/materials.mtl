@@ -1,0 +1,12 @@
+newmtl band
+Kd 1 1 1
+map_Kd bwr:block/pipes/service_band
+neoforge_TintIndex 0
+
+newmtl cladding
+Kd 1 1 1
+map_Kd bwr:block/pipes/cladding
+
+newmtl steel
+Kd 1 1 1
+map_Kd bwr:block/pipes/flange_steel

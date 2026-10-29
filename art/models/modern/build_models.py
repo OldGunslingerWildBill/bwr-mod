@@ -204,66 +204,6 @@ def build_pump(id):
     export_scene(scene,id+'.json',meta)
     return scene
 
-def curved_tube(scene,name,path,tangents,radius,mat):
-    """Sweep a continuous round tube through a right-angle bend."""
-    n=16
-    plane=Vector(tangents[0]).cross(Vector(tangents[-1])).normalized()
-    vs=[]
-    for p,t in zip(path,tangents):
-        u=plane;v=Vector(t).cross(u).normalized()
-        vs += [tuple(Vector(p)+radius*(math.cos(i*math.tau/n)*u+math.sin(i*math.tau/n)*v)) for i in range(n)]
-    fs=[(j*n+i,j*n+(i+1)%n,(j+1)*n+(i+1)%n,(j+1)*n+i) for j in range(len(path)-1) for i in range(n)]
-    return mesh_object(scene,name,vs,fs,mat)
-
-def build_pipes():
-    # The order matches Direction.values() in Minecraft.
-    dirs=list(DIRECTIONS.values())
-    models=[]
-    for mask in range(64):
-        scene=new_scene('BWR | pipe '+str(mask).zfill(2))
-        active=[Vector(dirs[i]) for i in range(6) if mask & (1<<i)]
-        c=Vector((.5,.5,.5))
-        if len(active)==2 and abs(active[0].dot(active[1]))<.1:
-            a,b=active
-            # Straight tails keep the flanges and dye bands coaxial with the bore.
-            radius=.32
-            origin=c+(a+b)*radius
-            path=[];tangents=[]
-            for i in range(13):
-                angle=i*math.pi/24
-                path.append(origin-radius*(b*math.cos(angle)+a*math.sin(angle)))
-                tangents.append(b*math.sin(angle)-a*math.cos(angle))
-            curved_tube(scene,'swept elbow',path,tangents,.25,BODY)
-            for d in active:
-                sleeve(scene,'elbow tail',c+d*radius,c+d*.5,.25,.205,BODY,16)
-        elif len(active)==2:
-            sleeve(scene,'straight barrel',c+active[0]*.5,c+active[1]*.5,.25,.205,BODY,16)
-        else:
-            # Cast round junction, including a closed end on an unused fitting.
-            vs=[];fs=[];n=16;rows=8
-            for j in range(rows+1):
-                angle=math.pi*j/rows
-                for i in range(n):
-                    vs.append(tuple(c+.265*Vector((math.sin(angle)*math.cos(i*math.tau/n),math.cos(angle),math.sin(angle)*math.sin(i*math.tau/n)))))
-            fs=[(j*n+i,j*n+(i+1)%n,(j+1)*n+(i+1)%n,(j+1)*n+i) for j in range(rows) for i in range(n)]
-            mesh_object(scene,'cast round junction',vs,fs,BODY)
-            for i,d in enumerate(active):
-                sleeve(scene,'branch '+str(i),c+d*.16,c+d*.5,.25,.205,BODY,16)
-        for i,d in enumerate(active):
-            # Narrow clamped flange and a replaceable painted identification band.
-            p=c+d*.5
-            sleeve(scene,'coupling '+str(i),p-d*.065,p,.315,.205,STEEL,16)
-            sleeve(scene,'paint '+str(i),p-d*.16,p-d*.09,.26,.249,PAINT,16)
-            _,u,v=basis(d)
-            for j in range(4):
-                q=p+.287*(math.cos(j*math.pi/2)*u+math.sin(j*math.pi/2)*v)
-                bolt(scene,'fastener',q-d*.075,q-d*.01,.018)
-        if not active:
-            sleeve(scene,'paint center',(.5,.41,.5),(.5,.59,.5),.273,.265,PAINT,16)
-        export_scene(scene,'pipe_'+str(mask)+'.json',{'mask':mask})
-        models.append(scene)
-    return models
-
 def save_library():
     bpy.data.libraries.write(str(OUT/'modern_pumps_and_pipes.blend'),set(SCENES),compress=True)
 
@@ -272,5 +212,5 @@ if __name__ == '__main__':
         # turbine_feed_pump.json now comes from art/models/turbine_pumps/build_models.py.
         if id != 'turbine_feed_pump':
             build_pump(id)
-    build_pipes()
+    # The pipes are built by art/models/pipes/build_pipes.py (PIPES.md).
     save_library()

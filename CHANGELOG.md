@@ -147,6 +147,15 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   `tools-audit-recipes.py` and `tools-audit-assets.py` read `bwr:fabrication` (shape, categories, counts, one maker per item and
   install, no Mekanism ingredient in a vanilla recipe, every `mekanism:` id and tag against the jar); `tools-generate-mekanism-recipes.py`
   writes the Mekanism side and prints and verifies the cost table in FABRICATION-DESK.md. The GUI screen check has three pictures of it.
+- **The water and steam pipes are remodelled (PIPES.md).** The water pipe is painted carbon steel in plant light blue (the
+  whole pipe takes the dye now) with a raised weld at each joint, smooth elbows, welded tees and capped ends; the steam pipe is a
+  12 px lagged main steam line in aluminium cladding with lap seams, gored elbows and an amber service band on each joint. Where
+  either meets a machine rather than another pipe, a bolted flange is drawn (client only, from the neighbours when the chunk is
+  meshed). Straight runs tile with no seam; every part is 10 to 20 times lighter (a straight: 800 polygons before, 60 water, 36
+  steam). Ids, connections, collision, recipes and saves are unchanged; the steam pipe's selection outline follows its lagging.
+  Built in headless Blender from one parameter set per pipe (`art/models/pipes/build_pipes.py`, `tools-export-pipes.py`,
+  `tools-make-pipe-textures.py`, labPBR `_s` maps); the parameter set and models for a brown, flanged oil pipe wait in
+  `art/models/pipes/oil/`. New client check `-PbwrPipeShots=<label>` (`art/pipe-remodel/`, before and after).
 
 ## Unreleased: held panel controls are let go when they are removed, and a relaunched player's controls work
 

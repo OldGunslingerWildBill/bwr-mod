@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/pipes/round/connection_12",
+  "parent": "bwr:block/pipes/water/item",
   "display": {
     "gui": {
       "rotation": [

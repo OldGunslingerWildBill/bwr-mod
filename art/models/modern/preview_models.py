@@ -43,17 +43,7 @@ for id,width,height in [('lpcs_pump',5,5),('hpcs_pump',9,4),('rhr_pump',7,3),('m
     studio(scene,(width/2,-1.5,height*.45),width+2)
     scene.render.filepath=str(OUT/(id+'_preview.png'));bpy.ops.render.render(write_still=True)
 
-scene=bpy.data.scenes.new('Pipe fittings preview')
-for i,mask in enumerate((12,36,44,63)):
-    source=next(s for s in bpy.data.scenes if s.name.startswith('BWR | pipe '+str(mask).zfill(2)))
-    for row,color in enumerate(((.025,.35,.75),(.95,.3,.025))):
-        for o in source.objects:
-            if o.type!='MESH':continue
-            clone=o.copy();clone.data=o.data.copy();clone.location+=Vector((i*1.6,-row*2,0));scene.collection.objects.link(clone)
-            for j,m in enumerate(clone.data.materials):
-                if m.get('tint_index',-1)==0:clone.data.materials[j]=mat('service band',color)
-studio(scene,(2.9,-1.5,.5),7.7)
-scene.render.filepath=str(OUT/'pipe_fittings_preview.png');bpy.ops.render.render(write_still=True)
+# The pipe fittings preview moved with the pipes to art/models/pipes (PIPES.md).
 bpy.context.window.scene=bpy.data.scenes['BWR | modern rhr_pump']
 bpy.context.preferences.filepaths.save_version=0
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'modern_pumps_and_pipes.blend'),compress=True)
