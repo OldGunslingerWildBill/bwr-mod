@@ -60,7 +60,7 @@ public class TurbineAuxScreen extends BwrScreen<TurbineAuxMenu> {
         var shaftCard = Layout.card("Shaft-driven pump",
                 Layout.row("Shaft speed", () -> num(menu.rpm, 0), "rpm"),
                 Layout.row("Delivery", () -> pct(menu.shaftFlow), "%").tip("The shaft-driven pump delivers nothing at standstill and its full flow near 90% of rated speed."),
-                Layout.note("Bolted on the free shaft end of the generator and driven by the shaft. Its oil comes from the Main Oil Tank on the same train.").body(),
+                Layout.note("Bolted on the free shaft end of the generator and driven by the shaft. Its oil comes from the Main Oil Tank on the same train, or from one its suction is piped to.").body(),
                 Layout.note("The AC pump carries the shaft below about 90% of rated speed; this pump carries it above.")).showIf(this::shaftPump);
         var right = Layout.card("Cooling water and switches",
                 Layout.row("Cold side", () -> grouped(menu.coldKg, 0) + " kg, " + num(menu.coldC, 1) + " C"),

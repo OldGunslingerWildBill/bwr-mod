@@ -57,7 +57,7 @@ public final class PumpModelCheck {
     }
     private static void waterModels(ModelEvent.BakingCompleted event) {
         int states=0;
-        for (var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.PRESSURISED_TUBE.get(), BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get(), BwrBlocks.CONDENSATE_STORAGE_TANK.get(),BwrBlocks.STEAM_STOP_VALVE.get(),BwrBlocks.TURBINE_CONTROL_VALVE.get(),BwrBlocks.MSIV.get(),BwrBlocks.BYPASS_STEAM_VALVE.get()}) {
+        for (var block:new net.minecraft.world.level.block.Block[]{BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(), BwrBlocks.PRESSURISED_TUBE.get(), BwrBlocks.RPV_WATER_INJECTION_PORT.get(), BwrBlocks.RECIRCULATION_OUTLET.get(), BwrBlocks.RECIRCULATION_INLET.get(), BwrBlocks.CONDENSATE_STORAGE_TANK.get(),BwrBlocks.STEAM_STOP_VALVE.get(),BwrBlocks.TURBINE_CONTROL_VALVE.get(),BwrBlocks.MSIV.get(),BwrBlocks.BYPASS_STEAM_VALVE.get(),BwrBlocks.LUBE_OIL_PIPE.get(),BwrBlocks.LUBE_OIL_VALVE.get()}) {
             for (var state:block.getStateDefinition().getPossibleStates()) {
                 var model=event.getModels().get(BlockModelShaper.stateToModelLocation(state));
                 if(model==null || model==event.getModelManager().getMissingModel()) throw new IllegalStateException("Missing water model "+state);
@@ -87,6 +87,6 @@ public final class PumpModelCheck {
             if(item==null || item==event.getModelManager().getMissingModel() || itemQuads==0)
                 throw new IllegalStateException("Missing water inventory model "+id);
         }
-        LogUtils.getLogger().info("WATER/STEAM MODEL CHECK PASS: {} block states and ten inventory models",states);
+        LogUtils.getLogger().info("WATER/STEAM MODEL CHECK PASS: {} block states and twelve inventory models",states);
     }
 }

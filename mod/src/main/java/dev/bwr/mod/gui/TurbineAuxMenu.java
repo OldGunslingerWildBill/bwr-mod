@@ -60,6 +60,9 @@ public class TurbineAuxMenu extends BwrMenu {
         b.writeDouble(filter == null ? 0 : filter.filterLife());
         b.writeDouble(filter == null ? 0 : filter.filterDpPsi());
         b.writeUtf(be.kind() == TurbineAuxBlock.Kind.SHAFT_PUMP ? (m == null ? "Not on a generator shaft end" : "On the generator shaft end")
+                        + (be.suctionPiped() ? "; suction piped to a tank" : "") + (be.dischargePiped() ? "; discharge piped to a bearing header" : "")
+                : be.kind() == TurbineAuxBlock.Kind.LUBE_OIL ? (m == null ? (be.dischargePiped() ? "Piped to a bearing header (not bolted on a train)" : "Not against a turbine section and not piped")
+                        : be.dischargePiped() ? "Attached; its discharge is piped to a bearing header" : "Attached")
                 : m == null ? (be.kind() == TurbineAuxBlock.Kind.GEN_COOLING ? "Not against a generator" : "Not against a turbine section") : "Attached");
     }
 

@@ -15,6 +15,25 @@
   wool; with Mekanism steel, paper and an HDPE sheet). A tank with no housing behaves exactly as before, and a housing saves a key only
   when it holds a cartridge. Core `TurbineAuxTest` 13 and 14; GameTests `OilFilterTests`.
 
+- **Lube oil piping: the Lube Oil Pipe, the Lube Oil Valve and oil ports on all the oil equipment** (TURBINE-AUX.md, *Lube oil piping*; PIPES.md;
+  SIGNALS.md). A **Lube Oil Pipe** (small bore, **brown**, flanged; the `oil` model set that was waiting in `art/models/pipes/`) is a network of
+  its own: it joins lube oil pipes, valves, filter housings and the oil ports below, and never a water or steam pipe. The **Main Oil Tank** has
+  a discharge (front, the AC and DC pumps' delivery), a return (back), a suction outlet (down) and a fill connection (up, ready for a later
+  drum); the **Shaft-Driven Pump** a suction (down) and a discharge (up); **every turbine and generator section** a bearing supply (west flank)
+  and a bearing drain (east flank); the **Oil Filter Housing** works **in-line** on a tank's discharge as well as bolted on. A tank can now
+  stand in a **basement lube oil room** and be piped up through the floor to each bearing. Oil goes out by the supply and back by the drain;
+  a section no header reaches has no oil (film 0: the bearing laws act as for no oil pressure); a shaft pump with no suction line and no tank
+  on its train delivers nothing. **Nothing old changes**: a tank bolted against a section, or a shaft pump on the generator end with its tank
+  on the same train, still feeds the whole train through the machine's own header with no pipe (every old save, to the bit); a pump whose
+  discharge is piped feeds only the sections its header reaches. The new **Lube Oil Valve** is a quarter-turn ball valve with a **limit
+  switch box** on top (dome green and bar along the pipe when open, red and across when shut); right-click, redstone (power opens, losing
+  it shuts) or a computer or panel (`open`, `closed`, `position` signals; CC `bwr_lube_oil_valve`); a shut valve stops the oil on its run and
+  the bearings heat by the existing laws. Surveys are cached and redone only when a block on a run changes, a run across an unloaded chunk
+  is not connected and nothing is loaded for it, no ticker, no new save key but the valve's `Powered`. Per-section signals `oil_fed`,
+  `oil_supply_piped`, `oil_drain_piped`. Recipes in both installs (6 pipes from iron nuggets and brown dye; the valve from iron, a lever,
+  redstone and two pipes; with Mekanism steel and a basic circuit). Blender: the valve, with its switch box (`art/models/lube_oil_valve/`,
+  `tools-export-lube-oil-valve.py`). GameTests `OilPipingTests` (namespace `bwroil`), pictures in `art/oil-piping/`.
+
 What a turbine failure leaves behind, how bad it can get, and how it is put right (TURBINE-MAINTENANCE.md).
 
 - **Wrecked casings.** A turbine section has a wreck level the screens and computers read: **holed** (a thrown blade tore out through

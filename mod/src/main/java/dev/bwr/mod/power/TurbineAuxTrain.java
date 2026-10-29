@@ -132,8 +132,9 @@ public final class TurbineAuxTrain {
             // The tanks that serve the train: those bolted on it, and (a piped train) the ones its pipes reach.
             List<TurbineAuxBlockEntity> tanks = plan.legacy ? lube : List.copyOf(plan.tanks);
             // A train joined half-way through a tick is stepped twice; its tanks are advanced only the first time.
-            boolean fresh = tanks.isEmpty();
-            for (var t : tanks) fresh |= t.beginStep(now);
+            var stepped = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<TurbineAuxBlockEntity, Boolean>());
+            for (var t : tanks) if (t.beginStep(now)) stepped.add(t);
+            boolean fresh = tanks.isEmpty() || !stepped.isEmpty();
             double flow = 0, psig, oilSum = 0, minLevel = 1;
             if (plan.legacy) {
                 // Nothing piped: every pump bolted on the train feeds every section through the integral header, exactly as it always did.
@@ -161,7 +162,7 @@ public final class TurbineAuxTrain {
                 shared.fed = !lube.isEmpty() || !shaft.isEmpty();
                 for (var m : train) oil.put(m, shared);
             } else {
-                psig = generalOil(plan, train, rpm, fresh, oil);
+                psig = generalOil(plan, train, rpm, stepped, oil);
                 bearingFilm = oil.values().stream().mapToDouble(o -> o.film).min().orElse(0);
                 flow = oil.values().stream().mapToDouble(o -> o.flow).max().orElse(0);
             }
@@ -330,9 +331,10 @@ public final class TurbineAuxTrain {
      * pressure it supplies. A section no pump reaches has no pressure and no film. Fills {@code out} for every section of the train and
      * returns the highest header pressure.
      */
-    private static double generalOil(OilCircuit.Plan plan, List<PowerModuleBlockEntity> train, double rpm, boolean fresh,
+    private static double generalOil(OilCircuit.Plan plan, List<PowerModuleBlockEntity> train, double rpm, java.util.Set<TurbineAuxBlockEntity> stepped,
                                      java.util.Map<PowerModuleBlockEntity, OilState> out) {
-        if (fresh) for (var t : plan.tanks) t.oilPumpFlow();
+        // A tank is advanced once a tick, by the first train that reaches it: the others read what it delivered.
+        for (var t : plan.tanks) if (stepped.contains(t)) t.oilPumpFlow();
         double top = 0;
         for (var m : train) {
             var f = plan.feeds.get(m);
@@ -350,7 +352,7 @@ public final class TurbineAuxTrain {
             top = Math.max(top, st.psig);
             out.put(m, st);
         }
-        if (fresh) {
+        if (!stepped.isEmpty()) {
             var heat = new java.util.IdentityHashMap<TurbineAuxBlockEntity, double[]>();
             for (var t : plan.tanks) heat.put(t, new double[] {0, 0, 1, 0});
             for (var m : train) {
@@ -369,6 +371,7 @@ public final class TurbineAuxTrain {
                 }
             }
             for (var t : plan.tanks) {
+                if (!stepped.contains(t)) continue;
                 var a = heat.get(t);
                 t.oilThermal(a[0], a[3] > 0 ? a[1] : 0, a[3] > 0 ? a[2] : 0);
             }

@@ -3,7 +3,8 @@
   "docs": [
     "TURBINE-MAINTENANCE.md",
     "MODULAR-TURBINES.md",
-    "BUILDING-CRANE.md"
+    "BUILDING-CRANE.md",
+    "TURBINE-AUX.md"
   ],
   "pages": [
     {
@@ -112,6 +113,18 @@
       "icons": [
         "bwr:oil_filter_housing",
         "bwr:oil_filter_cartridge"
+      ]
+    },
+    {
+      "title": "Lube oil piping",
+      "text": [
+        "A Main Oil Tank bolted against the train feeds every bearing through the machine's own header. To put it in another room, run brown Lube Oil Pipe from its front (discharge) to each section's west flank (supply), and from each section's east flank (drain) back to the tank's back (return).",
+        "",
+        "A pump whose discharge is piped feeds only the sections its header reaches. A Lube Oil Valve shuts a run: green dome, bar along the pipe is open; red, across, is shut. The shaft pump's suction is piped to the tank's underside."
+      ],
+      "icons": [
+        "bwr:lube_oil_pipe",
+        "bwr:lube_oil_valve"
       ]
     },
     {

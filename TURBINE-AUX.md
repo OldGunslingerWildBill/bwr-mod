@@ -5,6 +5,10 @@ shutdown or it bows, and a 1,500 MW generator must have its winding cooled. Thes
 numbers are game calibration, not a manufacturer's curves. The physics is `dev.bwr.core.turbine.TurbineAux` (pure functions,
 `TurbineAuxTest`); the train step is `dev.bwr.mod.power.TurbineAuxTrain`.
 
+Since alpha.59 the oil can also be **piped**: a brown Lube Oil Pipe, a Lube Oil Valve with a limit switch box, and oil ports on the
+tank, the shaft-driven pump, the filter housing and every turbine and generator section (see *Lube oil piping* below). Everything
+described before that section is still true for a train with no oil pipe on it.
+
 **House rules, as everywhere in the mod.** Nothing acts on its own. A pump runs when you switch it on, the turning gear engages when
 you engage it, and nothing trips the turbine or sheds load when an alarm reads: the alarms are readings for your panel, your
 annunciators and your computer. Skids have no ticker; the shaft train steps them once a tick, so a skid with no train does nothing.
@@ -17,7 +21,9 @@ annunciators and your computer. Skids have no ticker; the shaft train steps them
 | **Turbine Shaft-Driven Main Oil Pump** (`shaft_oil_pump`) | On the **free shaft end of the generator**, coupling (its back) toward the generator. It turns to face the right way when you place it there | Driven by the shaft: no oil at standstill, full delivery at 90 % of rated speed. It draws its oil from the Main Oil Tank of the same train |
 | **Generator Cooling Skid** (`generator_cooling_skid`) | Against the generator | **Stator water pumps** (FE on any face but the two flanges), a **hydrogen** charge for the casing, and the **coolers** (cooling water as on the oil tank) |
 | **Turning gear** | Built into the generator: a switch, no block | See below |
-| **Oil Filter Housing** (`oil_filter_housing`) | **Directly against a Main Oil Tank** (see Oil filtration below): its back on the tank, on any side of the tank | A duplex full-flow lube oil filter with **one slot for an Oil Filter Cartridge**. It filters the tank's oil. It is not on the shaft train and needs no power |
+| **Oil Filter Housing** (`oil_filter_housing`) | **Directly against a Main Oil Tank** (see Oil filtration below): its back on the tank, on any side of the tank; **or in-line in a Lube Oil Pipe run** on a tank's discharge | A duplex full-flow lube oil filter with **one slot for an Oil Filter Cartridge**. It filters the tank's oil. It is not on the shaft train and needs no power |
+| **Lube Oil Pipe** (`lube_oil_pipe`) | Between the oil ports of the equipment (see Lube oil piping below) | A brown, small-bore pipe: a network of its own that never joins a water or steam pipe. Crafted from iron nuggets and brown dye (6 pipes); **with Mekanism** steel nuggets (MEKANISM-RECIPES.md) |
+| **Lube Oil Valve** (`lube_oil_valve`) | In-line in a Lube Oil Pipe run | A quarter-turn ball valve with a **limit switch box** on top that shows open or shut. Crafted from 4 iron, a lever, redstone and 2 Lube Oil Pipes; **with Mekanism** steel, a basic circuit in place of the redstone |
 | **Oil Filter Cartridge** (item) | The housing's slot: by hand, a hopper or a pipe, or in its screen | The filter element. Crafted from four iron ingots, four paper and white wool; **with Mekanism** four steel ingots, four paper and an HDPE sheet |
 | **Turbine Oil Drum** (item) | Right-click a Main Oil Tank | 1,000 L of oil. A drum that does not fit is not poured. Crafted from coal and an iron ingot; **with Mekanism** from four Turbine Oil Cans (made in a Pressurized Reaction Chamber) and a steel ingot, see [MEKANISM-RECIPES.md](MEKANISM-RECIPES.md) |
 | **Hydrogen Cylinder** (item) | Right-click a Generator Cooling Skid | 5 kg of hydrogen (the casing holds 20 kg, 30 psig). A cylinder that does not fit is not emptied |
@@ -93,10 +99,11 @@ hold it), and it does not change the oil film, the bearing temperature or the fi
   stands against. A tank uses the first housing against it that has it as its tank, so a second housing on one tank does nothing, and a
   housing next to no tank filters nothing (its screen says so). Nothing is stored for this: the tank finds its housing by looking at
   its six neighbours in its oil step, never loading a chunk, so it survives any rebuilding.
-- **Flow axis, for the pipes to come.** The housing has an **inlet face** (the back, `TurbineAuxBlock.oilInFace`) and an **outlet face**
-  (the front, `oilOutFace`), with a round flange on each in the model. The rule that decides which tank a housing serves is in **one
-  place** (`TurbineAuxBlockEntity.tank()`, with `oilFilter()` the tank's side of it), so a Lube Oil Pipe run can later feed the inlet
-  and take the outlet to the train by changing those two methods and nothing else.
+- **Flow axis.** The housing has an **inlet face** (the back, `TurbineAuxBlock.oilInFace`) and an **outlet face** (the front,
+  `oilOutFace`), with a round flange on each in the model. The rule that decides which tank a housing serves is in **one place**
+  (`TurbineAuxBlockEntity.tank()`, with `oilFilter()` the tank's side of it). Bolted on a tank it is as described here; **in-line in a Lube
+  Oil Pipe run** (see Lube oil piping) the tank is the one whose discharge the run from the inlet leads back to, and the tank's filter is
+  the first housing entered by its inlet in the run leaving the tank's discharge. Direct contact comes first.
 - **The slot.** Right-click the housing with a cartridge to put one in an empty slot. Right-click with nothing, or with a cartridge when
   one is in, to open its screen (a slot and the player's inventory; shift-click works). **Hoppers and pipes may put a cartridge into
   an empty slot, on any face, and can take nothing out**: nothing is pulled out for you, so a hopper under the housing does not empty
@@ -110,6 +117,133 @@ A tank saved before the filter existed has no housing and **loses oil exactly as
 unchanged, and a test checks the tank against it tick by tick). The housing, cartridge and menu are new ids; the tank, the train and
 the power modules save no new key. A housing saves `Cartridge` (the item with its load) **only while it holds one**. Trains with no oil
 tank are unaffected, and the `-PbwrNoCC` and `-PbwrNoMekanism` runs play the same game.
+
+## Lube oil piping
+
+Oil does not have to be bolted on. A **Lube Oil Pipe** run carries it between the oil equipment, so the tank can stand in a basement
+lube oil room and be piped up through the floor to every bearing, the way a real plant is built. Everything below is *added to* the
+old rule (a tank bolted against a section feeds the whole train); a plant with no oil pipe in it behaves exactly as it always did.
+
+### The pieces
+
+| Block | What it is |
+| --- | --- |
+| **Lube Oil Pipe** (`lube_oil_pipe`) | A small-bore (5 px), flanged, **brown** line. It is a network of its own: it joins other lube oil pipes, lube oil valves, filter housings and the oil ports below, and **nothing else**, so it can never join a water or steam pipe (the water and steam rules do not accept it either). Dye repaints its paint like the other pipes. Up to 256 blocks of pipe in one run |
+| **Lube Oil Valve** (`lube_oil_valve`) | In-line, two flanges. See below |
+| **Oil Filter Housing** | In-line in a run, inlet face (its back) to outlet face (its front), as well as bolted on a tank |
+
+### Oil ports of the equipment
+
+Every connection is a flange on one face of the block; a pipe laid against it takes a bolted flange, and the machine's own face needs no
+model change (`PipeJointModels` draws the flange on the pipe side).
+
+| Equipment | Port | Face | What it is |
+| --- | --- | --- | --- |
+| **Main Oil Tank** | discharge | front (the way it faces) | what the **AC pump and the emergency DC pump** on the skid deliver, to the bearing header |
+| | return | back | the bearing drains come back here |
+| | suction | down | the outlet to a shaft-driven pump's suction |
+| | fill | up | for a filling line (and, later, a placeable drum); it takes a pipe today and nothing flows through it yet |
+| | (cooling water flanges) | left and right | unchanged, and never an oil port |
+| **Shaft-Driven Main Oil Pump** | suction | down | needs a pipe to a tank's suction outlet (or, as before, a tank on its own train) |
+| | discharge | up | to the bearing header |
+| **Each turbine and generator section** (HP, LP, generator) | bearing **supply** | the west flank, floor row, middle of the casing | the header ends here |
+| | bearing **drain** | the east flank, floor row, middle of the casing | the return line starts here |
+| **Oil Filter Housing** | inlet / outlet | back / front | in-line, the oil enters by the inlet |
+| **Lube Oil Valve** | two flanges | on the flow axis | in-line |
+
+"West" and "east" are the section's own, turned with it: the flanks are the two long sides of the casing. They are the flanks and not the
+underside because an LP turbine has its condenser right under it. Pipe goes down from them through the floor to the basement.
+
+### The flow model
+
+```
+                   fill (up)
+                       |
+ supply run <---- discharge  [ MAIN OIL TANK ]  return <---- drain run
+ (header)        (front)     [ AC 70 %, DC 45% ]  (back)      (header)
+    |   ^                    [   20,000 L      ]    ^            |
+    |   | filter, valve      [  suction (down) ]    |            |
+    v   |                         |                 |            v
+ section SUPPLY  ---- bearings ---+-> section DRAIN ------------>+
+ (west flank)                  shaft-driven pump     (east flank)
+                               suction (down) <- tank suction
+                               discharge (up) -> header
+```
+
+Oil goes **out by the supply and back by the drain**. For a section the model asks, once a tick:
+
+1. **Which pumps does its supply run reach?** A pump's discharge (the tank's, or a shaft pump's) joined to the section's supply port by
+   pipes and open valves. A **shut valve cuts the run**: the oil does not pass.
+2. **Does its drain run lead back to the tank that pump draws from?** (the tank's return inlet; for a shaft pump the tank it draws
+   from). If not, the oil has no way home and the section is **not fed**: its bearing housings flood, in the game's terms.
+3. **Its oil is the sum of those pumps' delivery**, each counted once, and its header pressure and **film** follow from that sum exactly
+   as before (`oilPsig(flow)`, `film(flow, rpm)`). **A section that nothing reaches has no oil**: film 0, pressure 0, the bearing laws act as for
+   no oil pressure (heating by the existing law, damage above 115 C, fire above 300 C when a tank has oil to burn).
+4. The bearing heat of each fed section goes to the tanks its oil comes from, split evenly; each tank takes the highest header pressure
+   it supplies (that sets its oil loss, with the filter) and the lowest film.
+
+A pump's delivery is its rated share of the whole train's need, as it has always been, and a pump delivers it to every section it reaches
+in full (it is not shared out by section).
+
+**The shaft-driven pump's suction.** Piped to a tank's suction outlet it draws from the tanks that run reaches, through open valves
+(a shut valve, a cut line: it delivers nothing). Not piped, it draws from the Main Oil Tanks bolted on its own train, as it always did.
+With neither it **delivers nothing**.
+
+### Direct contact against piped: the precedence rule
+
+| Pump | Its discharge is... | It feeds |
+| --- | --- | --- |
+| a tank or shaft pump **bolted on the train** | not piped (no pipe run from its discharge port reaches a section's supply port) | **every section of the train**, through the machine's own header: no pipe, nothing to cut, exactly the old rule (every old save) |
+| any tank or shaft pump, bolted on or **not** | **piped** (a run from its discharge reaches the supply port of at least one section) | **only the sections its header reaches** through open valves, and loops (drain back to its tank) |
+
+- "Piped" is decided by the pipework alone, with valves taken as open. So **closing a valve starves what is behind it and never puts the
+  pump back on the integral header**, and a pump with a pipe on it never feeds the whole train as well.
+- It is a **cliff by design**: a tank bolted on the train that you then pipe to the generator's supply feeds the generator and not the HP or
+  LP (they get no oil until their own supply and drain are on the header). That is what a real header does.
+- A section's oil is the union of all this: the pumps bolted on its train and not piped, and the pumps its pipes reach. A tank can serve
+  several trains and a train can have several tanks; one tank shared between two trains takes the bearing heat of the train that steps it.
+- A train that has **no pump bolted on it, but is piped to one**, is governed by the oil system too (the bearing laws apply and the
+  readings are live), the same as a train with a tank against it.
+- Direct contact also covers the **filter housing**: a housing bolted on a tank (any face) is that tank's filter first; failing that, the
+  first housing in-line in the run leaving the tank's discharge, entered by its inlet face, is.
+- A housing in the run installed **backwards** (entered by its outlet) is a plain conduit: it passes the oil and filters nothing.
+
+### The Lube Oil Valve
+
+A **quarter-turn full-bore ball valve** with a **limit switch box** on top.
+
+- **Why a ball valve.** It is what a lube oil isolation is in a plant: quarter-turn, full bore (no loss open), tight shut-off, and a
+  quarter-turn stem is what a pair of limit switches reports. A gate valve (multi-turn, rising stem) would need a stroke the block does
+  not have.
+- **The box.** A generic limit switch box: a lid with four screws and a conduit gland, and a domed indicator showing the stem. **Open:
+  the dome is green and its white bar lies along the pipe. Shut: the dome is red and the bar lies across it.** It is the block state
+  (`open`), so the picture changes the moment the valve does, for everyone looking.
+- **Operated by hand** (right-click turns it, the action bar says OPEN or SHUT), by **redstone** (power opens it, losing the power shuts
+  it; only a *change* of the power is a command, so a valve placed new is open) and by a **computer or panel** (below). Nothing else
+  ever moves it: no alarm or trip closes it, and a fire does not.
+- **Stroke.** A quarter-turn is under a second, so it is taken as instant: the open and closed limit switches are never both off.
+- **A shut valve stops the oil on that run**: the survey is thrown away and redone when the valve moves, and a section or a shaft pump
+  behind it is starved by the rules above.
+- Signals `open` (open limit switch made), `closed` (closed limit switch made), `position` (0 or 1) and the command `open`
+  (see [SIGNALS.md](SIGNALS.md#lube-oil-valve)); CC `bwr_lube_oil_valve` on all six sides (`open()`, `close()`, `setOpen(bool)`,
+  `isOpen()`, `isClosed()`, `getPosition()`, `getStatus()`).
+
+### How it is kept cheap and safe
+
+- **No ticker.** The train's own step reads the oil system once a tick. The Lube Oil Pipe, the valve and the ports have none.
+- **Surveys are cached.** Each oil port's run is surveyed when it is first asked for and kept (`OilLineNetwork`); it is thrown away
+  only when a block at or beside the run is placed, removed or toggled, or a chunk of it becomes available or unavailable. A plant that
+  does not change builds no survey. A port with no pipe on it is answered by reading one block and keeps nothing.
+- **Loaded chunks only.** A run that crosses a chunk that is not loaded is **not connected past it** (the pump behind it is starved
+  until the chunk is back, and the survey is redone when it arrives). Nothing is ever loaded for it: a survey reads only chunks that are
+  completely available, and takes no chunk ticket.
+- **No new save key** except the valve's `Powered` (only while powered). The tank, the pumps and the sections save what they always did;
+  old saves load, and a piped plant saved and loaded again finds its runs again from the blocks.
+
+### Back-compat, in one line
+
+A Main Oil Tank placed against a section keeps feeding that train as today; a Shaft-Driven Pump on the generator's end with its tank on the
+same train keeps working with no suction pipe; piping is the extra and the proper way.
 
 ## Turning gear and the rotor bow
 
@@ -161,6 +295,8 @@ Damage goes into the generator's shaft damage, so a destroyed winding fails the 
   `oil_pressure`, `oil_temp`, `oil_level`, `oil_film`, `bearing_temp`, `vibration`, `rotor_temp`, `rotor_bow`, `turning_gear`,
   `turning_gear_rolling`, `winding_temp`, `stator_flow`, `h2_pressure`, `coolant_temp` and the alarms
   `oil_pressure_alarm`, `oil_level_alarm`, `oil_temp_alarm`, `bearing_alarm`, `vibration_alarm`, `winding_alarm`, `h2_alarm`
+  `oil_fed` (oil reaches this section's bearings), `oil_supply_piped` and `oil_drain_piped` (on a piped train: its supply run joins a pump
+  discharge, its drain run joins a tank return; "no signal" where nothing is piped),
   `oil_filter_life` (fraction left), `oil_filter_dp` (psi across the cartridge), `oil_filter_bypass` and `oil_filter_alarm` (a change is
   due: the pressure drop is at 12 psid, or the oil is going round the filter), which read "no signal" on a train whose tank has no
   housing (a system the train does not have reads "no signal"); the command `turning_gear`. On the skids their switches (`ac_pump`,
@@ -169,7 +305,7 @@ Damage goes into the generator's shaft damage, so a destroyed winding fails the 
 - **ComputerCraft:** `bwr_generator`, `bwr_hp_turbine` and `bwr_lp_turbine` `getStatus()` carry the same readings as `oilPressurePsig`,
   `bearingTempC`, `rotorBow`, `windingTempC`, `turningGearPowered` ... and `setTurningGear(bool)` / `getTurningGear()` (the generator; engaging above 10 rpm
   raises an error). The skids are `bwr_main_oil_tank` (`setAcPump`, `setDcPump`), `bwr_shaft_oil_pump` and
-  `bwr_generator_cooling_skid` (`setStatorPumps`), each with `getStatus()`. The Main Oil Tank's carries `filterHousing` and, with a housing
+  `bwr_generator_cooling_skid` (`setStatorPumps`), each with `getStatus()`, and **`bwr_lube_oil_valve`** (see the valve above). The Main Oil Tank's carries `filterHousing` and, with a housing
   against it, `filterCartridge`, `filterLife`, `filterDpPsi` and `filterBypass`; the power modules' `getStatus()` carries `oilFilterLife`,
   `oilFilterDpPsi`, `oilFilterBypass` and `oilFilterAlarm` (with a housing on the train's tank). **`bwr_oil_filter`** is the housing's
   own read-only face (on all six sides, `getStatus()` only): `attached`, `filterCartridge`, `filterLife` (1 new to 0 spent),
@@ -195,7 +331,8 @@ The rule is per system, and the simplest fair one: **a train runs as it always d
 Every new key is written only when it is not its default: `AuxLinks`, `AuxRequired`, `TurningGear`, `Bow`, `BearingC`,
 `RotorC`, `WindingC` on a power module; `Host`, `AcOn`, `DcOn`, `StatorOn`, `AcFe`, `DcFe`, `OilL`, `OilC`, `H2Kg`, `CoolantC`,
 `StatorFlow` and the two cooling-water tanks on a skid. An Oil Filter Housing saves `Cartridge` (the cartridge item, with its load)
-only while it holds one. A skid or link in an unloaded chunk is kept, never loaded to look at.
+only while it holds one. A skid or link in an unloaded chunk is kept, never loaded to look at. The Lube Oil Valve saves `Powered` only while its last redstone
+reading was powered; its position is the block state. Nothing about piping is saved anywhere else: the runs are found again from the blocks.
 
 ## Pictures
 
@@ -203,11 +340,19 @@ only while it holds one. A skid or link in an unloaded chunk is kept, never load
 `aux-shaft-pump`, `aux-cooling-skid` (the world), `gui-generator-aux`, `gui-hp-aux`, `gui-oil-tank`, `gui-cooling-skid`, `gui-shaft-pump`,
 `gui-generator-turning-gear` (the screens, the last with the turning gear on and rolling the shaft).
 
+The oil piping pictures are saved by the pipe shots check (`:mod:runTurbineModelCheck -PbwrPipeShots=<label>`, `PipeShots`), in
+`run/turbineModelCheck/pipe-shots/<label>/` and copied to `art/oil-piping/`: `oil-room` and `oil-room-tank-and-filter` (the basement lube
+oil room), `oil-filter-in-line`, `oil-risers-south-flank` and `oil-risers-close` (the risers through the hall floor to the train),
+`oil-valves-open-and-shut`, `oil-valve-open-close-up` and `oil-valve-shut-close-up` (the limit switch box), `oil-water-steam-straights`.
+
 ## Models and sources
 
 Four Blender models (headless): the oil tank (3,892 triangles), the generator cooling skid (5,628), the shaft-driven pump (2,056)
 and the oil filter housing (3,648: two canisters, a changeover valve, a pressure-drop gauge, and a flange with a brown band on each of
-its inlet and outlet faces), in `art/models/turbine_aux/` (`build_models.py`, `turbine_aux.blend`, the previews). `python tools-export-turbine-aux.py`
+its inlet and outlet faces), in `art/models/turbine_aux/` (`build_models.py`, `turbine_aux.blend`, the previews). The **Lube Oil Valve** (636 polygons a state: ball body,
+actuator, limit switch box with a green or red dome and a white bar, flanges at both ends) is `art/models/lube_oil_valve/build_models.py`
+(headless Blender) and `python tools-export-lube-oil-valve.py` (`--check` verifies); the **Lube Oil Pipe** models are the `oil` set of
+`art/models/pipes/build_pipes.py` (PIPES.md). `python tools-export-turbine-aux.py`
 bakes them (`--check` verifies); `python tools-make-turbine-aux-assets.py` makes the item textures (the cartridge's too).
 
 ## Tests
@@ -223,3 +368,14 @@ run; the cartridge loads up, its pressure drop rises and a full one is bypassed 
 filtration, an empty slot is the same as no filter, a used cartridge keeps its load, hoppers insert only; a tank with no housing loses
 oil exactly as the old law says and saves no filter key; the housing saves its cartridge only when it has one and drops it when broken;
 the signals and the computer faces (`bwr_oil_filter`, the tank's summary); and the cartridge and the housing have a recipe in both installs.
+Since alpha.59 `OilPipingTests` (16 in namespace `bwroil`, plus one in `bwrmektier` for the recipes; `OilPipingCcChecks` is the computer face): every
+oil port is where it should be and no face is both a water flange and an oil port; a piped tank in another room feeds a train; a
+section whose drain is not piped back is not fed; a shut valve starves the bearings and they heat by the existing laws, opened again
+the oil is back; the valve by hand, redstone, signals and computers; the filter in-line (and backwards); a housing bolted on a tank as
+before; the shaft pump with no suction line delivers nothing, with one it delivers, a cut or shut line starves it, and with its tank on its
+train it needs no pipe; a tank bolted on the train and not piped feeds every section with the old law's exact numbers; a bolted tank
+that is then piped feeds only the sections its header reaches; a header reaching every section feeds every bearing; a train never
+piped runs to the bit as before and saves no new key; oil pipes never join water or steam pipes (arms, rules and surveys); a survey is
+kept while nothing changes and redone when a block on its run does; a run across an unloaded chunk is not connected and nothing is loaded.
+The pipe shots (`-PbwrPipeShots`) check the oil fixtures on the client: a flange at each turbine port and none between pipes,
+brown paint, and that the valve's open and shut states reach the client and draw differently.

@@ -175,7 +175,7 @@ Lube oil burns, and so does a generator's hydrogen. A fire belongs to a turbine 
 
 - **What lights it.** A **bearing run dry**: with no oil film on a turning shaft the bearing metal heads for 600 C (TURBINE-AUX.md); past
   **300 C** (turbine oil mist lights on hot metal from about there; it takes about a minute at rated speed) the oil left in its housing and
-  drains catches, **200 L** out of the train's tanks. A **cut oil line**: a disc fragment, a blade thrown steeply downwards (through the lower
+  drains catches, **200 L** out of the train's tanks (the tanks bolted on it and, with Lube Oil Pipe, the ones its runs reach: TURBINE-AUX.md). A **cut oil line**: a disc fragment, a blade thrown steeply downwards (through the lower
   casing where the oil lines run), or a shaft excursion's rotor half pours **1,000 L** onto the hot casing. The **generator's hydrogen**,
   let out when the train comes apart in an excursion, burns at its seals. **A train with no oil in its tanks, or no lube oil system at all,
   has no oil to burn** (an old train that never chose the oil system keeps running as it did).

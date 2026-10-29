@@ -3,7 +3,10 @@ package dev.bwr.mod.devtest;
 import com.mojang.logging.LogUtils;
 import dev.bwr.mod.eccs.AssemblyPort;
 import dev.bwr.mod.eccs.PumpAssemblyBlock;
+import dev.bwr.mod.piping.LubeOilPipeBlock;
 import dev.bwr.mod.piping.PaintedPipeBlock;
+import dev.bwr.mod.power.LubeOilValveBlock;
+import dev.bwr.mod.power.TurbineAuxBlock;
 import dev.bwr.mod.piping.PipePaint;
 import dev.bwr.mod.power.PowerModuleBlock;
 import dev.bwr.mod.power.PowerModuleBlockEntity;
@@ -36,7 +39,9 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 /**
  * Pictures of the high-pressure water pipe and the steam pipe in a real world, for the before/after comparison of the pipe
- * remodel (PIPES.md): straight runs side by side, corners, tees and six-way junctions of each, pipes meeting machine ports (an
+ * remodel (PIPES.md), and of the lube oil piping (TURBINE-AUX.md): a basement lube oil room piped up through the hall floor to the
+ * turbine train, the Lube Oil Valve open and shut with its limit switch box close up, the oil filter housing in-line, and the oil
+ * pipe beside the water and steam pipes. The pipe pictures: straight runs side by side, corners, tees and six-way junctions of each, pipes meeting machine ports (an
  * LPCS pump and an MSIV), a turbine hall with the main steam line and the crossaround, and dyed pipes. Every pipe is placed
  * the way a player's would be (its arms resolved against what is around it). Test harness only:
  * {@code :mod:runTurbineModelCheck -PbwrPipeShots=<label>} saves run/turbineModelCheck/pipe-shots/<label>/. The check fails
@@ -49,6 +54,10 @@ public final class PipeShots {
     /** The pipe fixtures stand on a slab of smooth stone at y 119, x 236..284, z 190..238. */
     private static final int FY = 121, WATER_ROW = 204, STEAM_ROW = 213;
     private static final BlockPos PUMP = new BlockPos(270, 120, 230), MSIV = new BlockPos(250, 120, 231);
+    /** The demonstration valves on the hall floor: one open, one shut, on a short oil line. */
+    private static final BlockPos VALVE_OPEN = new BlockPos(212, 120, 210), VALVE_SHUT = new BlockPos(218, 120, 210);
+    /** The lube oil room's tank, in the basement under the hall floor (the floor is y 119, the room y 113 to 118). */
+    private static final BlockPos OIL_TANK = new BlockPos(186, 115, 200), OIL_FILTER = new BlockPos(184, 115, 200), HEADER_VALVE = new BlockPos(187, 117, 197);
 
     private record View(String name, Vec3 centre, Vec3 dir, double distance) {}
 
@@ -71,6 +80,16 @@ public final class PipeShots {
             new View("dyed", new Vec3(250.5, 121.5, 221.5), new Vec3(-.2, .7, 1), 9),
             // The two pipe items in the hotbar and the water pipe in hand (the only view with the GUI shown).
             new View("items", new Vec3(244.5, 121.0, 198.5), new Vec3(-.3, .5, 1), 4.5),
+            // Lube oil (TURBINE-AUX.md): the basement room under the hall floor, the risers on the train's two flanks, the valve and the filter.
+            new View("oil-room", new Vec3(196.0, 115.4, 200.5), new Vec3(0, .1, 1), 15),
+            new View("oil-room-tank-and-filter", new Vec3(186.5, 115.8, 200.0), new Vec3(.3, .1, 1), 7),
+            new View("oil-filter-in-line", new Vec3(184.5, 115.5, 200.5), new Vec3(.2, .45, 1), 4.4),
+            new View("oil-risers-south-flank", new Vec3(199.5, 121.0, 203.5), new Vec3(-.3, .45, 1), 17),
+            new View("oil-risers-close", new Vec3(190.5, 120.4, 202.5), new Vec3(-.7, .5, 1), 6),
+            new View("oil-valves-open-and-shut", new Vec3(215.0, 120.6, 210.5), new Vec3(0, .5, 1), 6.5),
+            new View("oil-valve-open-close-up", new Vec3(212.5, 120.9, 210.5), new Vec3(.25, .75, .7), 2.6),
+            new View("oil-valve-shut-close-up", new Vec3(218.5, 120.9, 210.5), new Vec3(.25, .75, .7), 2.6),
+            new View("oil-water-steam-straights", new Vec3(244.5, 121.5, 200.0), new Vec3(-.55, .42, 1), 6.5),
     };
     private static boolean started, built, requested;
     private static int age, joined, stage, shown;
@@ -151,8 +170,20 @@ public final class PipeShots {
                                 l.getChunk(x, z), l.getChunkSource().getLightEngine(), null, null));
             });
         }
+        if (stage == 0 && shown == 120) {
+            // The shut valve is opened on the server; the client must see it open (the limit switch box shows it, verify below).
+            var server = mc.getSingleplayerServer();
+            server.execute(() -> server.overworld().setBlock(VALVE_SHUT, server.overworld().getBlockState(VALVE_SHUT).setValue(LubeOilValveBlock.OPEN, true), 3));
+        }
         if (++shown < (stage == 0 ? 300 : 110)) return;
-        if (stage == 0) verify(mc);
+        if (stage == 0) {
+            verify(mc);
+            // Shut again for the pictures.
+            var server = mc.getSingleplayerServer();
+            server.execute(() -> server.overworld().setBlock(VALVE_SHUT, server.overworld().getBlockState(VALVE_SHUT).setValue(LubeOilValveBlock.OPEN, false), 3));
+        }
+        if (view.name().equals("oil-valve-shut-close-up") && mc.level.getBlockState(VALVE_SHUT).getValue(LubeOilValveBlock.OPEN))
+            throw new IllegalStateException("The shut valve was shut again on the server but the client still draws it open");
         var dir = mc.gameDirectory.toPath().resolve("pipe-shots").resolve(label());
         java.nio.file.Files.createDirectories(dir);
         var file = dir.resolve(view.name() + ".png");
@@ -160,7 +191,7 @@ public final class PipeShots {
         LogUtils.getLogger().info("PIPE SHOT: {}", file.toAbsolutePath());
         requested = false;
         if (++stage == VIEWS.length) {
-            LogUtils.getLogger().info("PIPE SHOTS PASS: {} pictures, every fixture pipe joined to what it was laid against", stage);
+            LogUtils.getLogger().info("PIPE SHOTS PASS: {} pictures, every fixture pipe joined to what it was laid against, the oil valve's indicator reached the client", stage);
             mc.options.hideGui = false;
             mc.stop();
         }
@@ -194,6 +225,52 @@ public final class PipeShots {
         var model = mc.getBlockRenderer().getBlockModel(steamState);
         if (!(model instanceof dev.bwr.mod.piping.client.PipeJointModels.Joints))
             throw new IllegalStateException("Steam pipe model is not wrapped for port flanges: " + model);
+        verifyOil(mc);
+    }
+
+    /** The lube oil fixtures: the flange at a turbine port, none between pipes, brown paint, and the valve's two states on the client. */
+    private static void verifyOil(Minecraft mc) {
+        var hpSupply = new BlockPos(191, 120, 197);
+        var state = mc.level.getBlockState(hpSupply);
+        if (!state.is(BwrBlocks.LUBE_OIL_PIPE.get())) throw new IllegalStateException("No oil pipe at the HP section's supply port: " + state);
+        int mask = dev.bwr.mod.piping.client.PipeJointModels.ports(mc.level, hpSupply, state);
+        if (mask != 1 << Direction.SOUTH.ordinal())
+            throw new IllegalStateException("The oil pipe at the HP supply port should have one flange, towards the turbine: " + mask);
+        var below = hpSupply.below();
+        if (dev.bwr.mod.piping.client.PipeJointModels.ports(mc.level, below, mc.level.getBlockState(below)) != 0)
+            throw new IllegalStateException("Oil pipe to oil pipe drew a machine flange");
+        if (!(mc.getBlockRenderer().getBlockModel(state) instanceof dev.bwr.mod.piping.client.PipeJointModels.Joints))
+            throw new IllegalStateException("The oil pipe model is not wrapped for port flanges");
+        int colour = mc.getBlockColors().getColor(state, mc.level, hpSupply, 0) & 0xFFFFFF;
+        if (colour != 0x6F4A2E) throw new IllegalStateException("The oil pipe's paint is not lube oil brown: " + Integer.toHexString(colour));
+        int steelTint = mc.getBlockColors().getColor(state, mc.level, hpSupply, -1);
+        if (steelTint != -1) throw new IllegalStateException("The oil pipe's flanges take the paint colour: " + Integer.toHexString(steelTint));
+        // The indicator state reached the client: the first valve is open, the second was opened by the server during the check.
+        var open = mc.level.getBlockState(VALVE_OPEN);
+        var wasShut = mc.level.getBlockState(VALVE_SHUT);
+        if (!open.is(BwrBlocks.LUBE_OIL_VALVE.get()) || !open.getValue(LubeOilValveBlock.OPEN))
+            throw new IllegalStateException("The open valve is not open on the client: " + open);
+        if (!wasShut.getValue(LubeOilValveBlock.OPEN))
+            throw new IllegalStateException("The server opened the second valve but the client still draws it shut: " + wasShut);
+        var randomSource = net.minecraft.util.RandomSource.create(0);
+        var openQuads = mc.getBlockRenderer().getBlockModel(open).getQuads(open, null, randomSource, net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
+        var shutState = open.setValue(LubeOilValveBlock.OPEN, false);
+        var shutQuads = mc.getBlockRenderer().getBlockModel(shutState).getQuads(shutState, null, randomSource, net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
+        if (openQuads.isEmpty() || shutQuads.isEmpty()) throw new IllegalStateException("A valve state has no model");
+        if (java.util.Objects.hash(quadHash(openQuads)) == java.util.Objects.hash(quadHash(shutQuads)) && quadSprites(openQuads).equals(quadSprites(shutQuads)))
+            throw new IllegalStateException("The open and shut valve models are the same: the indicator would not change");
+    }
+
+    private static int quadHash(java.util.List<net.minecraft.client.renderer.block.model.BakedQuad> quads) {
+        int h = quads.size();
+        for (var q : quads) h = 31 * h + java.util.Arrays.hashCode(q.getVertices());
+        return h;
+    }
+
+    private static java.util.Set<String> quadSprites(java.util.List<net.minecraft.client.renderer.block.model.BakedQuad> quads) {
+        var out = new java.util.TreeSet<String>();
+        for (var q : quads) out.add(q.getSprite().contents().name().toString() + "/" + q.getTintIndex());
+        return out;
     }
 
     private static Block water() { return BwrBlocks.HIGH_PRESSURE_WATER_PIPE.get(); }
@@ -231,6 +308,9 @@ public final class PipeShots {
                 l.setBlock(p, l.getBlockState(p).setValue(PaintedPipeBlock.PAINT, PipePaint.of(dyes[i])), Block.UPDATE_CLIENTS);
             }
         }
+        // Lube oil beside the water and steam runs, for the colour and the size of the pipe.
+        line(l, oil(), new BlockPos(240, FY, 202), new BlockPos(249, FY, 202));
+        oilFixtures(l);
         // An LPCS pump with its suction and discharge piped.
         var pump = BwrBlocks.LPCS_PUMP.get();
         var state = pump.placementState();
@@ -248,6 +328,69 @@ public final class PipeShots {
         }
     }
 
+    /** The lube oil room under the hall floor, its piping up through the floor to the train, and the two demonstration valves. */
+    private static void oilFixtures(ServerLevel l) {
+        var concrete = Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState();
+        var dark = Blocks.GRAY_CONCRETE.defaultBlockState();
+        // The room: floor at y 112, back and side walls, open to the south, the hall floor for a ceiling. A cutaway, lit by invisible light blocks.
+        for (var p : BlockPos.betweenClosed(178, 112, 190, 216, 112, 240)) l.setBlock(p, dark, 2);
+        for (var p : BlockPos.betweenClosed(178, 113, 190, 216, 118, 190)) l.setBlock(p, concrete, 2);
+        for (var p : BlockPos.betweenClosed(178, 113, 190, 178, 118, 212)) l.setBlock(p, concrete, 2);
+        for (var p : BlockPos.betweenClosed(216, 113, 190, 216, 118, 212)) l.setBlock(p, concrete, 2);
+        for (int x = 180; x <= 214; x += 3)
+            for (int z = 192; z <= 214; z += 3)
+                for (int y : new int[] {114, 118})
+                    l.setBlock(new BlockPos(x, y, z), Blocks.LIGHT.defaultBlockState(), 2);
+        // The holes in the hall floor where the risers go through.
+        int[][] holes = {{191, 197}, {200, 196}, {208, 197}, {191, 203}, {200, 204}, {208, 203}};
+        for (var h : holes) l.setBlock(new BlockPos(h[0], 119, h[1]), Blocks.AIR.defaultBlockState(), 2);
+        // The tank: discharge on its west face (front), return on its east face (back); the filter housing in-line on the discharge.
+        l.setBlock(OIL_TANK, BwrBlocks.MAIN_OIL_TANK.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.WEST), 3);
+        l.setBlock(OIL_FILTER, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.WEST), 3);
+        // Supply: the tank's discharge through the housing and up, then along the header under the train; risers to each section's north flank.
+        line(l, oil(), new BlockPos(185, 115, 200), new BlockPos(185, 115, 200));
+        path(l, oil(), new BlockPos(183, 115, 200), new BlockPos(183, 117, 200), new BlockPos(183, 117, 197), new BlockPos(208, 117, 197));
+        path(l, oil(), new BlockPos(191, 120, 197), new BlockPos(191, 117, 197));
+        path(l, oil(), new BlockPos(208, 120, 197), new BlockPos(208, 117, 197));
+        path(l, oil(), new BlockPos(200, 120, 196), new BlockPos(200, 117, 196), new BlockPos(200, 117, 197));
+        // Drain: each section's south flank down to the header, back along it to the tank's return.
+        path(l, oil(), new BlockPos(187, 115, 200), new BlockPos(187, 115, 203), new BlockPos(208, 115, 203));
+        path(l, oil(), new BlockPos(191, 120, 203), new BlockPos(191, 115, 203));
+        path(l, oil(), new BlockPos(208, 120, 203), new BlockPos(208, 115, 203));
+        path(l, oil(), new BlockPos(200, 120, 204), new BlockPos(200, 115, 204), new BlockPos(200, 115, 203));
+        // A valve in the supply header, open.
+        l.setBlock(HEADER_VALVE, BwrBlocks.LUBE_OIL_VALVE.get().defaultBlockState().setValue(LubeOilValveBlock.FACING, Direction.EAST), 3);
+        for (var p : new BlockPos[] {HEADER_VALVE.west(), HEADER_VALVE.east()}) l.setBlock(p, state(oil(), l, p), 3);
+        // The pipes that were laid before their neighbours were there get their arms resolved again.
+        for (var p : BlockPos.betweenClosed(180, 113, 192, 214, 121, 206))
+            if (l.getBlockState(p).is(oil())) l.setBlock(p, state(oil(), l, p), 3);
+        // The demonstration valves on the hall floor: open and shut, with short runs of pipe either side.
+        for (int x = 209; x <= 221; x++) {
+            var p = new BlockPos(x, 120, 210);
+            if (x != VALVE_OPEN.getX() && x != VALVE_SHUT.getX() && !(x >= 214 && x <= 216)) l.setBlock(p, oil().defaultBlockState(), 3);
+        }
+        l.setBlock(VALVE_OPEN, BwrBlocks.LUBE_OIL_VALVE.get().defaultBlockState().setValue(LubeOilValveBlock.FACING, Direction.EAST).setValue(LubeOilValveBlock.OPEN, true), 3);
+        l.setBlock(VALVE_SHUT, BwrBlocks.LUBE_OIL_VALVE.get().defaultBlockState().setValue(LubeOilValveBlock.FACING, Direction.EAST).setValue(LubeOilValveBlock.OPEN, false), 3);
+        for (int x = 213; x <= 217; x++) l.setBlock(new BlockPos(x, 120, 210), oil().defaultBlockState(), 3);
+        for (var p : BlockPos.betweenClosed(209, 120, 210, 221, 120, 210))
+            if (l.getBlockState(p).is(oil())) l.setBlock(p, state(oil(), l, p), 3);
+        // Every port pipe must join its machine.
+        requireJoined(l, new BlockPos(191, 120, 197), Direction.SOUTH);
+        requireJoined(l, new BlockPos(200, 120, 196), Direction.SOUTH);
+        requireJoined(l, new BlockPos(208, 120, 197), Direction.SOUTH);
+        requireJoined(l, new BlockPos(191, 120, 203), Direction.NORTH);
+        requireJoined(l, new BlockPos(200, 120, 204), Direction.NORTH);
+        requireJoined(l, new BlockPos(208, 120, 203), Direction.NORTH);
+        requireJoined(l, new BlockPos(185, 115, 200), Direction.EAST);
+        requireJoined(l, new BlockPos(185, 115, 200), Direction.WEST);
+        requireJoined(l, new BlockPos(183, 115, 200), Direction.EAST);
+        requireJoined(l, new BlockPos(187, 115, 200), Direction.WEST);
+        requireJoined(l, HEADER_VALVE.west(), Direction.EAST);
+        requireJoined(l, HEADER_VALVE.east(), Direction.WEST);
+        requireJoined(l, new BlockPos(211, 120, 210), Direction.EAST);
+        requireJoined(l, new BlockPos(213, 120, 210), Direction.WEST);
+    }
+
     /** Corner (flat and rising), tee and six-way junction of one pipe type, along a row at z. */
     private static void fittings(ServerLevel l, Block pipe, int z) {
         path(l, pipe, new BlockPos(238, FY, z), new BlockPos(241, FY, z), new BlockPos(241, FY, z + 3));
@@ -261,8 +404,11 @@ public final class PipeShots {
 
     private static BlockState state(Block pipe, ServerLevel l, BlockPos p) {
         return pipe instanceof dev.bwr.mod.water.HighPressureWaterPipeBlock w ? w.stateWithConnections(l, p)
+                : pipe instanceof LubeOilPipeBlock o ? o.stateWithConnections(l, p)
                 : ((dev.bwr.mod.steam.PressurisedTubeBlock) pipe).stateWithConnections(l, p);
     }
+
+    private static Block oil() { return BwrBlocks.LUBE_OIL_PIPE.get(); }
 
     /** One axis-aligned run of pipe, laid block by block the way a player places it. */
     private static void line(ServerLevel l, Block pipe, BlockPos a, BlockPos b) {

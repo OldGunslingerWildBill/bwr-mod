@@ -1,6 +1,7 @@
 # Pipes: the look of the water, steam and oil lines
 
-The **High-Pressure Water Pipe** and the **High-Pressure Steam Pipe** (`bwr:pressurised_tube`) were remodelled in alpha.59.
+The **High-Pressure Water Pipe** and the **High-Pressure Steam Pipe** (`bwr:pressurised_tube`) were remodelled in alpha.59, and the
+**Lube Oil Pipe** (`bwr:lube_oil_pipe`, below) joined them as a third pipe of its own.
 Only the look changed: the block ids, the blockstate properties (six connections, `paint`, `waterlogged`), the connection
 rules, the collision shape, the recipes and the saves are as they were. Old worlds get the new look as they load.
 Before and after pictures are in [`art/pipe-remodel/`](art/pipe-remodel/).
@@ -47,21 +48,25 @@ Before and after pictures are in [`art/pipe-remodel/`](art/pipe-remodel/).
 - **Steam outline.** The steam pipe's **outline** (the selection box and what the crosshair picks) follows the 12 px cladding,
   so clicking the lagging selects the pipe and not the block behind it. Its **collision** and occlusion keep the 8 px shape
   they always had: walking, fluids, support and pathing are unchanged.
-- **Tests.** The client check `:mod:runTurbineModelCheck -PbwrPipeShots=<label>` (`PipeShots`) saves 17 pictures to
+- **Tests.** The client check `:mod:runTurbineModelCheck -PbwrPipeShots=<label>` (`PipeShots`) saves 26 pictures to
   `run/turbineModelCheck/pipe-shots/<label>/`. It fails if:
   - a fixture pipe does not join what it was laid against;
   - a pump-port pipe lacks its flange;
   - a pipe-to-pipe joint draws one;
-  - the steam pipe's outline and collision shapes are not 12 px and 8 px.
+  - the steam pipe's outline and collision shapes are not 12 px and 8 px;
+  - the lube oil fixtures fail the same tests (a flange where an oil pipe meets a turbine port, none between pipes, the brown paint
+    and plain flanges, the pipe model wrapped for port flanges) or the Lube Oil Valve's open and shut states do not reach the client or
+    draw alike (the valve is opened on the server mid-check and the client must show it).
 
-  The model check (`PumpModelCheck`) still asserts that every state of both pipes has tinted paint and plain metal.
+  The model check (`PumpModelCheck`) still asserts that every state of all three pipes has tinted paint and plain metal, and that the
+  Lube Oil Valve has a model in every state.
 
 ## Polygons
 
 Polygons are counts of quads (a few triangles in caps). The old models were all triangles, and the NeoForge OBJ loader turns
 each triangle into its own quad.
 
-| Part | Before (water and steam shared it) | Water | Steam | Oil (not in game yet) |
+| Part | Before (water and steam shared it) | Water | Steam | Oil |
 | --- | ---: | ---: | ---: | ---: |
 | Lone segment | 352 | 70 | 46 | 46 |
 | Dead end | 688 | 41 | 29 | 27 |
@@ -77,18 +82,21 @@ Straight runs, which are most of any plant, are open prisms with no faces on the
 seam and nothing hidden is drawn. The only boundary faces are the flanges' outer faces at machines, and those cull against
 full blocks (`automatic_culling`).
 
-## The oil pipe (not a block yet)
+## The oil pipe
 
-The `oil` parameter set is ready for the lubricating-oil pipe a later change adds:
+The **Lube Oil Pipe** (`bwr:lube_oil_pipe`) carries turbine lube oil (TURBINE-AUX.md, *Lube oil piping*):
 
-- a 5 px small-bore pipe, painted **brown** (tint index 0), flanged at every joint, with a four-stud flange at machines;
-- the same 64 + 6 + 1 models, already exported to `art/models/pipes/oil/resources/`, laid out like `mod/src/main/resources`
-  (with a blockstate and item model for a block called `oil_pipe`);
-- a preview at `art/models/pipes/oil_preview.png`.
+- a 5 px small-bore pipe, painted **brown** (tint index 0, `0x6F4A2E` in `PipeColors`), flanged at every joint, with a four-stud flange at
+  machines (the `oil` set of `build_pipes.py`; the models are in the mod's assets like the other two, with a blockstate and item model);
+- **a network of its own.** Its one connection rule is `OilLineNetwork.acceptsLineOn`: other lube oil pipes, lube oil valves, filter
+  housings (inlet and outlet faces) and the oil ports of the oil equipment (Main Oil Tank, Shaft-Driven Main Oil Pump, every turbine and
+  generator section). The water and steam rules accept none of these blocks, so an oil pipe laid against a water or steam pipe grows no
+  arm and the other pipe grows none towards it; it also never joins the cooling water flanges of the oil tank, which are not oil ports;
+- **dyeable** like the others (the shared `PaintedPipeBlock`): only the paint changes colour, and the default service colour is brown;
+- the client adds the **bolted flange** where it meets a machine (`PipeJointModels`, set `oil`), not between two pipes;
+- the **Lube Oil Valve** (`bwr:lube_oil_valve`, `art/models/lube_oil_valve/`) is a ball valve with a limit switch box on top whose
+  dome is green (open, bar along the pipe) or red (shut, bar across it); its two models, `open` and `closed`, are chosen by the `open`
+  block state, so the indicator changes in the world the moment the valve does. `python tools-export-lube-oil-valve.py --check` verifies
+  its assets.
 
-To ship it:
-
-1. Register the block (a `PaintedPipeBlock`), then set `'ship': True` for `oil` in `build_pipes.py` and add the block id to
-   `BLOCKS` in `tools-export-pipes.py`.
-2. Re-run the build and the export.
-3. Add the block to `PipeColors` (default brown, for example `0x6F4A2E`, the preview colour) and to `PipeJointModels`.
+Pictures: `art/oil-piping/` (the pipe shots check, `-PbwrPipeShots`).

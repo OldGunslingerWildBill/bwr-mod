@@ -52,7 +52,7 @@ when nothing is there or the chunk is not loaded. It never loads a chunk and nev
   rates and now read `FE/t` (they said `FE`).
 
 This file is generated from the adapter sources in `dev.bwr.mod.signal.adapters`; keep it in step when a
-signal is added. Coverage: reactor controller, MSIV, SRV, turbine valves, motor-operated water valve, turbine steam outlet, RPV steam
+signal is added. Coverage: reactor controller, MSIV, SRV, turbine valves, motor-operated water valve, lube oil valve, turbine steam outlet, RPV steam
 outlet, feedwater pump, recirculation pump, ECCS pumps, suppression pool, RHR heat exchanger, condenser,
 condensate tank, cooling, power module, RWCU stainless steel nanofilter (below), new fuel elevator (below), containment controller, penetrations, vault door, airlock, and
 containment atmosphere equipment, and the ADS controller (its three switch inputs, below). The SLC tank, water
@@ -360,6 +360,25 @@ Block entity `MotorOperatedWaterValveBlockEntity`; CC peripheral `bwr_motor_oper
 
 The reactor's `getCavity()` (CC) now also lists the cavity drain ports; see [REFUELLING-BRIDGE.md](REFUELLING-BRIDGE.md#draining-the-well-the-cavity-drain-port). The ports have no signals of their own.
 
+## Lube oil valve
+
+Block entity `LubeOilValveBlockEntity`; CC peripheral `bwr_lube_oil_valve` (all six sides). A quarter-turn ball valve with a limit switch box on
+top (TURBINE-AUX.md, *Lube oil piping*). Its position is the block state; the stroke is taken as instant, so exactly one limit switch is made.
+
+| Signal key | Label | Unit | Range | Kind |
+| --- | --- | --- | --- | --- |
+| `open` | Open limit switch made (valve open) |  | 0 to 1 | BOOLEAN |
+| `closed` | Closed limit switch made (valve shut) |  | 0 to 1 | BOOLEAN |
+| `position` | Valve position | fraction open | 0 to 1 | NUMBER |
+
+| Command key | Label | Kind | Range |
+| --- | --- | --- | --- |
+| `open` | Open / close | BOOLEAN | 0 to 1 |
+
+`open` as a command: 0.5 or more opens it, less shuts it; a redstone change and a right-click are the same kind of command, the latest wins.
+CC: `open()`, `close()`, `setOpen(bool)`, `isOpen()`, `isClosed()`, `getPosition()`, `getStatus()` (`open`, `closed`, `limitOpen`, `limitClosed`, `position`).
+Nothing in the plant ever closes it for you.
+
 ## Turbine steam outlet
 
 Block entity `TurbineSteamOutletBlockEntity`; CC peripheral `bwr_turbine_steam_outlet`.
@@ -666,6 +685,8 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `coolant_temp` | Generator coolant temperature | degC | 0 to 150 | NUMBER |
 | `oil_pressure_alarm`, `oil_level_alarm`, `oil_temp_alarm`, `bearing_alarm` | Oil system alarms |  | 0 to 1 | BOOLEAN |
 | `vibration_alarm`, `winding_alarm`, `h2_alarm` | Vibration, winding and hydrogen alarms |  | 0 to 1 | BOOLEAN |
+| `oil_fed` | Lube oil reaches this section's bearings (the integral header, or its piped supply and drain) |  | 0 to 1 | BOOLEAN |
+| `oil_supply_piped`, `oil_drain_piped` | On a piped train (TURBINE-AUX.md, Piping): this section's supply run joins a pump discharge; its drain run joins a tank return (no signal where nothing is piped) |  | 0 to 1 | BOOLEAN |
 | `oil_filter_life` | Oil filter cartridge life left (no signal without a housing on the tank) | fraction | 0 to 1 | NUMBER |
 | `oil_filter_dp` | Oil filter pressure drop (no signal without a housing) | psi | 0 to 25 | NUMBER |
 | `oil_filter_bypass`, `oil_filter_alarm` | Oil goes round the filter (slot empty or cartridge full); a cartridge change is due (no signal without a housing) |  | 0 to 1 | BOOLEAN |
@@ -702,10 +723,10 @@ Buffer discharge can exceed current generation; delivered MW is not rating-cappe
 Block entity `TurbineAuxBlockEntity`; CC peripherals `bwr_main_oil_tank`, `bwr_shaft_oil_pump`, `bwr_generator_cooling_skid`. Each kind
 has its own list. The train steps a skid; none has a ticker.
 
-Main Oil Tank: `attached`, `ac_pump`, `dc_pump` (switches), `ac_running`, `dc_running`, `oil_level` (fraction), `oil_litres` (L),
+Main Oil Tank: `attached` (bolted on a train), `discharge_piped` (its discharge port has a run that reaches a section's supply), `ac_pump`, `dc_pump` (switches), `ac_running`, `dc_running`, `oil_level` (fraction), `oil_litres` (L),
 `oil_temp` (degC), `oil_pressure` (psig), `oil_film`, `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `ac_fe`, `dc_fe` (FE),
 `filter_housing` (an Oil Filter Housing is bolted on it), `filter_life` (fraction), `filter_dp` (psi), `filter_bypass` (the last three "no signal" without a housing);
-commands `ac_pump`, `dc_pump` (BOOLEAN). Shaft-Driven Main Oil Pump: `attached`, `delivery` (fraction); no commands. Oil Filter Housing (CC `bwr_oil_filter`, read-only, no commands):
+commands `ac_pump`, `dc_pump` (BOOLEAN). Shaft-Driven Main Oil Pump: `attached`, `suction_piped`, `discharge_piped`, `delivery` (fraction); no commands. Oil Filter Housing (CC `bwr_oil_filter`, read-only, no commands):
 `attached` (against a Main Oil Tank), `cartridge`, `filter_life` (fraction), `filter_dp` (psi), `filter_bypass`, `change_due`. Generator
 Cooling Skid: `attached`, `stator_pumps` (switch), `stator_running`, `stator_flow`, `h2_pressure` (psig), `h2_kg` (kg), `coolant_temp`,
 `winding_temp` (degC), `cooler_duty` (kW), `cold_water`, `hot_water` (kg), `supply_fe` (FE); command `stator_pumps` (BOOLEAN).
