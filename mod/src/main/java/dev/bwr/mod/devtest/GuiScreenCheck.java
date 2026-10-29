@@ -1380,7 +1380,7 @@ public final class GuiScreenCheck {
         m.life = 0.66;
         m.dpPsi = dev.bwr.core.turbine.TurbineAux.filterDpPsi(0.34, grade);
         m.hoursLeft = 3.2;
-        m.factor = dev.bwr.core.turbine.TurbineAux.OIL_FILTER_FACTOR;
+        m.factor = dev.bwr.core.turbine.TurbineAux.OIL_FILTER_FACTORS[grade];
         m.otherLife = 0.9;
         m.otherDpPsi = dev.bwr.core.turbine.TurbineAux.filterDpPsi(0.1, other);
         m.grade = grade;
