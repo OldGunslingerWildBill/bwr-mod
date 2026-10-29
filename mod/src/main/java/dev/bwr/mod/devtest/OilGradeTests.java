@@ -97,20 +97,11 @@ public final class OilGradeTests {
         return s;
     }
 
-    /** A housing in the line (inlet to the west, outlet to the east) holding a cartridge of a grade in side A. */
+    /** A housing on the return line, the oil leaving it to the south (toward the tank) holding a cartridge of a grade in side A. */
     private static TurbineAuxBlockEntity housingAt(TurbineAuxTests.Fx f, BlockPos pos, int grade, double load) {
-        f.l.setBlock(pos, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.EAST), 3);
+        f.l.setBlock(pos, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.SOUTH), 3);
         var housing = (TurbineAuxBlockEntity) f.l.getBlockEntity(pos);
         housing.cartridgeSlot().setStackInSlot(0, cartridge(grade, load));
-        return housing;
-    }
-
-    /** The parallel branch round the housing at (3, 0, 8): pipes at (2, 0, 9) and (4, 0, 9) and a housing at (3, 0, 9) with a cartridge of a grade. */
-    private static TurbineAuxBlockEntity parallelBranch(TurbineAuxTests.Fx f, int grade, double load) {
-        pipes(f, at(f, 2, 0, 9), at(f, 2, 0, 9));
-        pipes(f, at(f, 4, 0, 9), at(f, 4, 0, 9));
-        var housing = housingAt(f, at(f, 3, 0, 9), grade, load);
-        resolve(f, at(f, 2, 0, 8), at(f, 4, 0, 8), at(f, 2, 0, 9), at(f, 4, 0, 9));
         return housing;
     }
 
@@ -142,65 +133,83 @@ public final class OilGradeTests {
         });
     }
 
-    // ------------------------------------------------------------------ the flow alarms
+    // ------------------------------------------------------------------ the flow alarms and the return line
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 600)
-    public static void aFineCartridgeAloneStarvesAFullTrainTwoInParallelDoNot(GameTestHelper h) {
+    /**
+     * Housings in parallel on the return line, between the generator's drain and the tank (the drain run goes south along x = -1 from z 3 to z 8,
+     * the oil leaving each housing toward the tank, so they face south): {@code n} housings at x = -1 .. -n, z = 5, holding cartridges of
+     * {@code grade} at {@code load}, between a row of pipe at z = 4 and one at z = 6.
+     */
+    private static java.util.List<TurbineAuxBlockEntity> bank(TurbineAuxTests.Fx f, int n, int grade, double load) {
+        var out = new java.util.ArrayList<TurbineAuxBlockEntity>();
+        for (int i = 0; i < n; i++) {
+            int x = -1 - i;
+            if (i > 0) { pipes(f, at(f, x, 0, 4), at(f, x, 0, 4)); pipes(f, at(f, x, 0, 6), at(f, x, 0, 6)); }
+            out.add(housingAt(f, at(f, x, 0, 5), grade, load));
+        }
+        for (int i = 0; i < n; i++) { resolve(f, at(f, -1 - i, 0, 4), at(f, -1 - i, 0, 6)); }
+        return out;
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 800)
+    public static void oneFineHousingStarvesAFullTrainAndItTakesFourInParallel(GameTestHelper h) {
         run(h, 87100, f -> {
             var tank = pipedTrain(f, 10_000);
             var gs = SignalProviders.of(f.gen);
             var ts = SignalProviders.of(tank);
             f.tick(f.gen, 80, () -> feed(tank));
             h.assertTrue(Math.abs(f.gen.aux().oilFlow - 1.15) < 0.01 && f.gen.aux().oilFlowGood, "the AC and DC pumps together read 115 percent with no housing: " + f.gen.aux().oilFlow);
-            var fine1 = housingAt(f, at(f, 3, 0, 8), TurbineAux.GRADE_FINE, 0);
+            var fine1 = housingAt(f, at(f, -1, 0, 5), TurbineAux.GRADE_FINE, 0);
             f.tick(f.gen, 80, () -> feed(tank));
-            h.assertTrue(Math.abs(f.gen.aux().oilFlow - 0.6) < 0.01, "one fine housing passes 60 percent of a train's rated flow: " + f.gen.aux().oilFlow);
+            h.assertTrue(Math.abs(f.gen.aux().oilFlow - 0.3) < 0.01, "one fine housing on the return line passes 30 percent of a train's rated flow: " + f.gen.aux().oilFlow);
             h.assertTrue(f.gen.aux().oilFlowLowAlarm && f.gen.aux().oilFlowVeryLowAlarm && !f.gen.aux().oilFlowGood && f.gen.aux().oilFlowRestricted, "low and very low alarms, held back");
             h.assertTrue(gs.read("oil_flow_low_alarm").getAsDouble() == 1 && gs.read("oil_flow_very_low_alarm").getAsDouble() == 1 && gs.read("oil_flow_good").getAsDouble() == 0
                     && gs.read("oil_flow_restricted").getAsDouble() == 1, "the section's signals");
-            h.assertTrue(Math.abs(gs.read("oil_flow").getAsDouble() - 0.6) < 0.01 && ts.read("oil_flow").isEmpty(), "the flow signal on the section (a tank in another room is on no train: no signal there)");
-            h.assertTrue(ts.read("flow_limited").getAsDouble() == 1 && Math.abs(ts.read("filter_flow_limit").getAsDouble() - 0.6) < 0.01, "the tank reads the filter's limit");
-            h.assertTrue(f.gen.aux().oilPsig < 16 && f.gen.aux().oilFilm < 0.65, "the starved bearings see the pressure and the film fall: " + f.gen.aux().oilPsig + " " + f.gen.aux().oilFilm);
-            // A second fine housing round it, in parallel: together they pass 120 percent, enough for the 115 the pumps deliver.
-            double before1 = fine1.filterLoad(0);
-            var fine2 = parallelBranch(f, TurbineAux.GRADE_FINE, 0);
+            h.assertTrue(Math.abs(gs.read("oil_flow").getAsDouble() - 0.3) < 0.01 && ts.read("oil_flow").isEmpty(), "the flow signal on the section (a tank in another room is on no train: no signal there)");
+            h.assertTrue(ts.read("flow_limited").getAsDouble() == 1 && Math.abs(ts.read("filter_flow_limit").getAsDouble() - 0.3) < 0.01, "the tank reads the filter's limit");
+            h.assertTrue(f.gen.aux().oilPsig < 8 && f.gen.aux().oilFilm < 0.35, "the starved bearings see the pressure and the film fall: " + f.gen.aux().oilPsig + " " + f.gen.aux().oilFilm);
+            // More fine housings in parallel: 2 pass 0.6, 3 pass 0.9, 4 pass 1.2, enough for the 1.15 the pumps deliver.
+            double[] expect = {0.3, 0.6, 0.9, 1.15};
+            for (int n = 2; n <= 4; n++) {
+                var all = bank(f, n, TurbineAux.GRADE_FINE, 0);
+                f.tick(f.gen, 80, () -> feed(tank));
+                h.assertTrue(Math.abs(f.gen.aux().oilFlow - expect[n - 1]) < 0.02, n + " fine housings in parallel give " + expect[n - 1] + ": " + f.gen.aux().oilFlow);
+            }
+            h.assertTrue(f.gen.aux().oilFlowGood && !f.gen.aux().oilFlowLowAlarm && !f.gen.aux().oilFlowRestricted, "four feed the whole train");
+            // Each carries about a quarter of the flow, so each loads about a quarter as fast as one alone would.
+            var four = bank(f, 4, TurbineAux.GRADE_FINE, 0);
+            f.tick(f.gen, 400, () -> feed(tank));
+            double l0 = four.get(0).filterLoad(0), l3 = four.get(3).filterLoad(0);
+            h.assertTrue(l3 > 0 && Math.abs(l0 - l3) < 0.2 * l3, "the last one loads, and about as much as the first: " + l0 + " " + l3);
+            // Loading drives the flow down: four housings with their elements 90 percent full pass 0.39 between them.
+            for (var each : four) each.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_FINE, 0.9));
             f.tick(f.gen, 80, () -> feed(tank));
-            h.assertTrue(Math.abs(f.gen.aux().oilFlow - 1.15) < 0.01 && f.gen.aux().oilFlowGood && !f.gen.aux().oilFlowLowAlarm && !f.gen.aux().oilFlowRestricted,
-                    "two in parallel feed the whole train: " + f.gen.aux().oilFlow);
-            // Each carries half the flow, so each loads about half as fast as one alone would.
-            double load1 = fine1.filterLoad(0) - before1, load2 = fine2.filterLoad(0);
-            h.assertTrue(load1 > 0 && load2 > 0 && Math.abs(load1 - load2) < 0.2 * load1, "both load, about equally: " + load1 + " " + load2);
-            // Loading drives the flow down: the same two housings with their elements 90 percent full pass 0.39 between them.
-            fine1.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_FINE, 0.9));
-            fine2.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_FINE, 0.9));
-            f.tick(f.gen, 80, () -> feed(tank));
-            double loaded = TurbineAux.filterFlowCapacity(TurbineAux.GRADE_FINE, 0.9) * 2;
+            double loaded = TurbineAux.filterFlowCapacity(TurbineAux.GRADE_FINE, 0.9) * 4;
             h.assertTrue(Math.abs(f.gen.aux().oilFlow - loaded) < 0.02 && f.gen.aux().oilFlowVeryLowAlarm, "loaded cartridges pass less and the alarm comes back: " + f.gen.aux().oilFlow + " against " + loaded);
-            // One side valved off is one fewer branch: here, a branch pulled out leaves the single fine housing again.
-            fine1.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_STANDARD, 0));
-            fine2.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_STANDARD, 0));
+            for (var each : four) each.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_STANDARD, 0));
             f.tick(f.gen, 80, () -> feed(tank));
-            h.assertTrue(Math.abs(f.gen.aux().oilFlow - 1.15) < 0.01 && f.gen.aux().oilFlowGood, "standard cartridges in the same two housings do not limit: " + f.gen.aux().oilFlow);
+            h.assertTrue(f.gen.aux().oilFlow > 1.1 && f.gen.aux().oilFlowGood && !f.gen.aux().oilFlowRestricted, "standard cartridges in the same housings do not limit: " + f.gen.aux().oilFlow);
         });
     }
 
     @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 400)
-    public static void aFineCartridgeBoltedOnTheTankHoldsBackTheIntegralHeaderToo(GameTestHelper h) {
+    public static void aFineCartridgeBoltedOnTheTankHoldsBackTheShaftPumpsOilToo(GameTestHelper h) {
         run(h, 87200, f -> {
             var tank = f.tank(10_000);
+            f.shaftPump();
             f.gen.markAuxRequired();
             f.gen.rpm = 1500;
-            tank.setAcPump(true);
-            tank.setDcPump(true);
+            f.tick(f.gen, 80);
+            h.assertTrue(Math.abs(f.gen.aux().oilFlow - 1.0) < 0.02 && f.gen.aux().oilFlowGood, "the shaft pump alone at rated speed reads 100 percent");
             var housing = f.skid(BwrBlocks.OIL_FILTER_HOUSING.get(), tank.getBlockPos().relative(Direction.SOUTH), Direction.SOUTH);
             housing.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_FINE, 0));
-            f.tick(f.gen, 80, () -> feed(tank));
-            h.assertTrue(Math.abs(f.gen.aux().oilFlow - 0.6) < 0.01 && tank.flowLimited(), "bolted on the tank a fine cartridge alone holds the pumps to 60 percent: " + f.gen.aux().oilFlow);
+            f.tick(f.gen, 80);
+            h.assertTrue(Math.abs(f.gen.aux().oilFlow - 0.3) < 0.01 && tank.flowLimited(), "every pump's oil goes back through the return line: a fine cartridge there holds even the shaft pump to 30 percent: " + f.gen.aux().oilFlow);
             // The transfer valve: a coarse cartridge on the other side, thrown into service, clears it.
             housing.cartridgeSlot().setStackInSlot(1, cartridge(TurbineAux.GRADE_COARSE, 0));
             housing.selectSide(true);
-            f.tick(f.gen, 80, () -> feed(tank));
-            h.assertTrue(Math.abs(f.gen.aux().oilFlow - 1.15) < 0.01 && !tank.flowLimited(), "thrown over to a coarse cartridge the full flow is back: " + f.gen.aux().oilFlow);
+            f.tick(f.gen, 80);
+            h.assertTrue(Math.abs(f.gen.aux().oilFlow - 1.0) < 0.02 && !tank.flowLimited(), "thrown over to a coarse cartridge the full flow is back: " + f.gen.aux().oilFlow);
         });
     }
 
@@ -219,27 +228,53 @@ public final class OilGradeTests {
         });
     }
 
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 500)
+    public static void eachGradeHasItsOwnOilLossFactorAndTheBestOnTheWayThroughCounts(GameTestHelper h) {
+        run(h, 87350, f -> {
+            var tank = f.tank(10_000);
+            f.shaftPump();
+            f.gen.markAuxRequired();
+            f.gen.rpm = 1500;
+            var housing = f.skid(BwrBlocks.OIL_FILTER_HOUSING.get(), tank.getBlockPos().relative(Direction.SOUTH), Direction.SOUTH);
+            f.tick(f.gen, 40);
+            h.assertTrue(tank.lossFactor() == 1, "an empty housing leaves all of the loss");
+            double[] want = {0.2, 0.1, 0.03};
+            for (int g = 0; g < 3; g++) {
+                housing.cartridgeSlot().setStackInSlot(0, cartridge(g, 0));
+                f.tick(f.gen, 5);
+                h.assertTrue(tank.lossFactor() == want[g], TurbineAux.GRADE_NAMES[g] + " leaves " + want[g] + ": " + tank.lossFactor());
+            }
+            housing.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_STANDARD, 0));
+            f.tick(f.gen, 5);
+            h.assertTrue(tank.lossFactor() == TurbineAux.OIL_FILTER_FACTOR && tank.filterCapacity() == Double.POSITIVE_INFINITY, "the standard grade is the old factor to the bit and never limits");
+            housing.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_FINE, 1));
+            f.tick(f.gen, 5);
+            h.assertTrue(tank.lossFactor() == 1, "a full cartridge, bypassed, leaves all of it");
+        });
+    }
+
     // ------------------------------------------------------------------ series: coarse then fine
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 800)
-    public static void aCoarseCartridgeInFrontProtectsAFineOneBehindIt(GameTestHelper h) {
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 900)
+    public static void aCoarseCartridgeInFrontProtectsAFineOneBehindItOnTheReturnLine(GameTestHelper h) {
         run(h, 87400, f -> {
             var tank = pipedTrain(f, 10_000);
             var ts = SignalProviders.of(tank);
-            var fine = housingAt(f, at(f, 3, 0, 8), TurbineAux.GRADE_FINE, 0);
+            // The fine housing nearest the tank (z 6); the coarse one goes in front of it (z 5), the oil running south to the tank.
+            var fine = housingAt(f, at(f, -1, 0, 6), TurbineAux.GRADE_FINE, 0);
             f.tick(f.gen, 3000, () -> feed(tank));
             double alone = fine.filterLoad(0);
-            h.assertTrue(alone > 0.001, "the fine cartridge alone loaded: " + alone);
-            // The same fine cartridge, fresh, now with a coarse housing in front of it.
+            h.assertTrue(alone > 0.0005, "the fine cartridge alone loaded: " + alone);
             fine.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_FINE, 0));
-            var coarse = housingAt(f, at(f, 2, 0, 8), TurbineAux.GRADE_COARSE, 0);
-            h.assertTrue(OilLineNetwork.filterGraph(f.l, tank.getBlockPos(), Direction.EAST).edges.size() == 2, "the graph of the discharge run holds both housings");
+            var coarse = housingAt(f, at(f, -1, 0, 5), TurbineAux.GRADE_COARSE, 0);
+            h.assertTrue(OilLineNetwork.filterGraph(f.l, tank.getBlockPos(), Direction.WEST).edges.size() == 2, "the graph of the return run holds both housings");
             f.tick(f.gen, 3000, () -> feed(tank));
             double behind = fine.filterLoad(0);
             h.assertTrue(behind > 0 && behind < alone * 0.35, "behind a coarse one the fine cartridge loads under a third as fast: " + behind + " against " + alone);
             h.assertTrue(coarse.filterLoad(0) > 0, "and the coarse one takes the load: " + coarse.filterLoad(0));
             h.assertTrue(Math.abs(ts.read("filter_flow_limit").getAsDouble() - TurbineAux.filterFlowCapacity(TurbineAux.GRADE_FINE, behind)) < 0.01,
                     "the run passes what the tightest housing in it does");
+            h.assertTrue(tank.lossFactor() == 0.03, "and leaves the best factor on the way through: " + tank.lossFactor());
             long builds = OilLineNetwork.graphBuildCount();
             f.tick(f.gen, 200, () -> feed(tank));
             h.assertTrue(OilLineNetwork.graphBuildCount() == builds, "an unchanged run is not walked again");

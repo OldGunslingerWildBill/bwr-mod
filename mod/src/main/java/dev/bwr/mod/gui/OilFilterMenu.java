@@ -44,6 +44,8 @@ public class OilFilterMenu extends BwrMenu {
     public int grade = TurbineAux.GRADE_STANDARD, otherGrade = TurbineAux.GRADE_STANDARD;
     public double flowCap = -1, bearingFlow = Double.NaN, cleanliness = Double.NaN;
     public boolean flowLimited, flowLow, flowVeryLow;
+    /** The housing is on a supply run: it passes the oil and filters nothing (filters belong on the tank's return line). */
+    public boolean supplyLine;
 
     /** The slot of the side in service: 0 for A, 1 for B (what the server knows, what the last snapshot said on the client). */
     private int inService() {
@@ -60,7 +62,8 @@ public class OilFilterMenu extends BwrMenu {
         for (int side = 0; side < 2; side++) {
             final int index = side;
             addSlot(new SlotItemHandler(items, index, index == 0 ? SLOT_X : SLOT_X_B, SLOT_Y) {
-                @Override public boolean mayPlace(ItemStack stack) { return OilFilterCartridgeItem.isCartridge(stack); }
+                /** The canister in service is never opened: not even an empty one takes a cartridge by hand. */
+                @Override public boolean mayPlace(ItemStack stack) { return index != inService() && OilFilterCartridgeItem.isCartridge(stack); }
                 /** The cartridge in service stays: it cannot be taken out while the canister is under pressure. */
                 @Override public boolean mayPickup(Player player) { return index != inService() || !hasItem(); }
             });
@@ -105,6 +108,7 @@ public class OilFilterMenu extends BwrMenu {
         b.writeBoolean(tank != null && tank.flowLimited());
         b.writeBoolean(aux != null && aux.oilFlowLowAlarm);
         b.writeBoolean(aux != null && aux.oilFlowVeryLowAlarm);
+        b.writeBoolean(be.onSupplyLine());
     }
 
     @Override protected void readSnapshot(FriendlyByteBuf b) {
@@ -114,7 +118,7 @@ public class OilFilterMenu extends BwrMenu {
         sideB = b.readBoolean(); otherCartridge = b.readBoolean(); otherBypass = b.readBoolean(); otherLife = b.readDouble(); otherDpPsi = b.readDouble();
         life = b.readDouble(); dpPsi = b.readDouble(); hoursLeft = b.readDouble(); factor = b.readDouble(); oilC = b.readDouble(); psig = b.readDouble();
         grade = b.readInt(); otherGrade = b.readInt(); flowCap = b.readDouble(); bearingFlow = b.readDouble(); cleanliness = b.readDouble();
-        flowLimited = b.readBoolean(); flowLow = b.readBoolean(); flowVeryLow = b.readBoolean();
+        flowLimited = b.readBoolean(); flowLow = b.readBoolean(); flowVeryLow = b.readBoolean(); supplyLine = b.readBoolean();
     }
 
     @Override public void handleCommand(ServerPlayer who, int command, int a, int unused) {
@@ -138,9 +142,9 @@ public class OilFilterMenu extends BwrMenu {
         if (index < MACHINE_SLOTS) {
             moved = moveItemStackTo(stack, MACHINE_SLOTS, MACHINE_SLOTS + PLAYER_SLOTS, true);
         } else if (OilFilterCartridgeItem.isCartridge(stack)) {
-            // Into the side out of service first (the way a cartridge is changed with the plant running), then an empty side in service.
+            // Into the side out of service (the way a cartridge is changed with the plant running); the side in service is never opened.
             int off = 1 - inService();
-            moved = moveItemStackTo(stack, off, off + 1, false) || moveItemStackTo(stack, 1 - off, 2 - off, false);
+            moved = moveItemStackTo(stack, off, off + 1, false);
         } else {
             boolean fromHotbar = index >= MACHINE_SLOTS + 27;
             moved = fromHotbar ? moveItemStackTo(stack, MACHINE_SLOTS, MACHINE_SLOTS + 27, false)

@@ -167,6 +167,12 @@ public final class TurbineAuxTrain {
                     }
                     double shaftFlow = !shaft.isEmpty() && !lube.isEmpty() ? TurbineAux.shaftPumpFlow(rpm) * suction / lube.size() : 0;
                     flow += shaftFlow;
+                    // Every drop of the circulating oil goes back to the tank by its return line: housings there that cannot pass it back it up.
+                    double cap = returnCapacity(lube);
+                    if (flow > cap) {
+                        for (var t : lube) t.markFlowLimited();
+                        flow = cap;
+                    }
                     psig = TurbineAux.oilPsig(flow);
                     bearingFilm = TurbineAux.film(flow, rpm);
                     double heat = TurbineAux.oilHeatKw(rpm, bearingFilm);
@@ -370,6 +376,17 @@ public final class TurbineAuxTrain {
         return out;
     }
 
+    /** The flow the return lines of these tanks pass, in units of a train's rated bearing flow: the sum of what each passes (infinite when any is not limited, or there are none). */
+    private static double returnCapacity(List<TurbineAuxBlockEntity> tanks) {
+        double sum = 0;
+        for (var t : tanks) {
+            double c = t.filterCapacity();
+            if (Double.isInfinite(c)) return Double.POSITIVE_INFINITY;
+            sum += c;
+        }
+        return tanks.isEmpty() ? Double.POSITIVE_INFINITY : sum;
+    }
+
     /** A shaft pump's delivery: its speed law times the suction its tanks give, nothing with no tank to draw from or a valve shut. */
     private static double shaftFlow(OilCircuit.Plan plan, TurbineAuxBlockEntity shaft, double rpm) {
         var from = plan.suctionTanks(shaft);
@@ -396,6 +413,13 @@ public final class TurbineAuxTrain {
             double flow = 0;
             if (f != null) {
                 for (var p : f.pumps) flow += p.kind() == TurbineAuxBlock.Kind.LUBE_OIL ? p.pumpFlow() : shaftFlow(plan, p, rpm);
+                // What the return lines of the tanks the section's oil comes from can pass back (housings that cannot back the oil up).
+                var back = tanksOf(plan, f);
+                double cap = returnCapacity(back);
+                if (flow > cap) {
+                    for (var t : back) t.markFlowLimited();
+                    flow = cap;
+                }
                 st.fed = f.fed();
                 st.supply = f.supplyPiped;
                 st.drain = f.drainPiped;

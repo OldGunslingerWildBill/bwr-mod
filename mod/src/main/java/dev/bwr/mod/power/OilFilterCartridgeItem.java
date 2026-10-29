@@ -50,7 +50,7 @@ public final class OilFilterCartridgeItem extends Item {
     private static String gradeLine(int grade) {
         return switch (grade) {
             case TurbineAux.GRADE_COARSE -> "Coarse: passes plenty of oil, catches only the big debris. Put it ahead of a fine one.";
-            case TurbineAux.GRADE_FINE -> "Fine: catches nearly everything, but passes only 60 percent of a train's oil. Two side by side feed a whole train.";
+            case TurbineAux.GRADE_FINE -> "Fine: catches nearly everything and cuts the oil loss to 3 percent, but passes only 30 percent of a train's oil. It takes four side by side.";
             default -> "Standard: the general-purpose element.";
         };
     }
@@ -73,7 +73,7 @@ public final class OilFilterCartridgeItem extends Item {
             lines.add(BwrText.tr("tooltip.bwr.oil_filter_cartridge.used", "Used: %s left, %s psid across it.",
                     String.format(Locale.ROOT, "%.0f %%", 100 * (1 - load)), String.format(Locale.ROOT, "%.1f", TurbineAux.filterDpPsi(load, grade))).withStyle(ChatFormatting.YELLOW));
         }
-        lines.add(BwrText.tr("tooltip.bwr.oil_filter_cartridge.1", "Goes in the slot of an Oil Filter Housing against a Main Oil Tank. A clean one cuts the oil's loss to a tenth.").withStyle(ChatFormatting.GRAY));
+        lines.add(BwrText.tr("tooltip.bwr.oil_filter_cartridge.1", "Goes in the slot of an Oil Filter Housing on a Main Oil Tank's return line. A clean standard one cuts the oil's loss to a tenth.").withStyle(ChatFormatting.GRAY));
         lines.add(BwrText.tr("tooltip.bwr.oil_filter_cartridge.2", "It loads up with use, faster with hot oil. When it is full the oil goes round it. It cannot be cleaned.").withStyle(ChatFormatting.GRAY));
         super.appendHoverText(stack, context, lines, flag);
     }

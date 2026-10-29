@@ -267,59 +267,71 @@ public final class OilLineNetwork {
         return ends;
     }
 
-    // ---- staged filtration: the filter housings in a run, in series and in parallel
+    // ---- staged filtration: the filter housings on a tank's return line, in series and in parallel
 
-    /** One housing in a run: it takes oil from {@code from} and puts it into {@code to} (the pipe junctions either side of it). */
+    /** One housing in a run: the oil goes through it from the junction {@code from} (its inlet side, the far side from the tank) to {@code to} (its outlet side). */
     public record FilterEdge(BlockPos housing, int from, int to) {}
 
     /**
-     * The topology of the Lube Oil Pipe run that leaves one port, for its filter housings (kept with the survey, invalidated with it):
-     * the junctions the pipes and open valves form, the housings that join them, the junction the run starts in and the ones that end in a
-     * bearing supply. Housings in a row are in series; branches that leave a junction and rejoin downstream are in parallel. What each
-     * housing holds is read live ({@link #evaluate}).
+     * The topology of the Lube Oil Pipe run that leaves a tank's <b>return</b> port, for its filter housings (kept with the survey,
+     * invalidated with it). Filters belong on the return line: every pump's oil passes the bearings and drains back to the tank, so
+     * every drop is filtered there. The pipes and open valves of the run form junctions; each housing entered by its <b>outlet</b> face from
+     * the tank's side is an edge from the junction at its inlet (the sections' side) to the one at its outlet (the tank's side); the junctions
+     * that touch a bearing drain are the <b>sources</b> (a source appears once for every drain port that touches it), the junction the run
+     * starts in is the <b>sink</b>. Housings in a row are in series; branches that leave a junction and rejoin are in parallel. A housing that
+     * is entered by its inlet face from the tank's side is installed backwards: a plain conduit that filters nothing. What each housing
+     * holds is read live ({@link #evaluate}).
      */
     public static final class FilterGraph {
-        public static final FilterGraph NONE = new FilterGraph(0, List.of(), Set.of(), 0);
+        public static final FilterGraph NONE = new FilterGraph(0, List.of(), List.of(), 0);
         public final int comps;
         public final List<FilterEdge> edges;
-        public final Set<Integer> sinks;
-        public final int source;
+        public final List<Integer> sources;
+        public final int sink;
 
-        FilterGraph(int comps, List<FilterEdge> edges, Set<Integer> sinks, int source) {
-            this.comps = comps; this.edges = edges; this.sinks = sinks; this.source = source;
+        FilterGraph(int comps, List<FilterEdge> edges, List<Integer> sources, int sink) {
+            this.comps = comps; this.edges = edges; this.sources = sources; this.sink = sink;
         }
     }
 
-    /** What one housing is, for the evaluation: whether a cartridge is in service and not bypassed, and its grade, load and flow capacity. */
-    public record Stage(boolean effective, double capacity, double passLarge, double passFine) {
-        public static final Stage OPEN = new Stage(false, Double.POSITIVE_INFINITY, 1, 1);
+    /**
+     * What one housing is, for the evaluation: whether a cartridge in service filters, the flow it passes (in units of a train's rated
+     * bearing flow), what it lets of the large and the fine particles and the share of the oil's loss that remains behind it.
+     */
+    public record Stage(boolean effective, double capacity, double passLarge, double passFine, double lossFactor) {
+        public static final Stage OPEN = new Stage(false, Double.POSITIVE_INFINITY, 1, 1, 1);
     }
 
-    /** The answer of a filter graph: the flow its housings let through (in units of a train's rated bearing flow), the share of the large and fine particles that get past them, and how much dirt reaches each housing. */
-    public record FilterFlow(double capacity, double largePass, double finePass, int effective, Map<BlockPos, double[]> inflow) {
-        public static final FilterFlow NONE = new FilterFlow(Double.POSITIVE_INFINITY, 1, 1, 0, Map.of());
+    /**
+     * The answer of a filter graph: the flow its housings let through (in units of a train's rated bearing flow), the share of the large and
+     * fine particles that gets past them, the share of the oil's loss that remains, how many housings filter, and for each housing what
+     * reaches it: {the large share, the fine share, the share of the run's flow through it}.
+     */
+    public record FilterFlow(double capacity, double largePass, double finePass, double lossFactor, int effective, Map<BlockPos, double[]> inflow) {
+        public static final FilterFlow NONE = new FilterFlow(Double.POSITIVE_INFINITY, 1, 1, 1, 0, Map.of());
     }
 
     /** A run of one housing and nothing else: what it does is what the run does. */
     public static FilterFlow single(BlockPos housing, Stage stage) {
-        return new FilterFlow(stage.effective() ? stage.capacity() : Double.POSITIVE_INFINITY, stage.passLarge(), stage.passFine(), stage.effective() ? 1 : 0,
-                Map.of(housing.immutable(), new double[] {1, 1, 1}));
+        return new FilterFlow(stage.effective() ? stage.capacity() : Double.POSITIVE_INFINITY, stage.passLarge(), stage.passFine(), stage.lossFactor(),
+                stage.effective() ? 1 : 0, Map.of(housing.immutable(), new double[] {1, 1, 1}));
     }
 
-    /** {@code first} (a housing bolted on the tank) followed in series by the run {@code rest} (NONE: nothing after it). */
-    public static FilterFlow series(BlockPos housing, Stage first, FilterFlow rest) {
-        if (rest.inflow().isEmpty()) return single(housing, first);
-        Map<BlockPos, double[]> inflow = new HashMap<>();
-        for (var e : rest.inflow().entrySet()) {
-            var v = e.getValue();
-            inflow.put(e.getKey(), new double[] {v[0] * first.passLarge(), v[1] * first.passFine(), v[2]});
-        }
-        inflow.put(housing.immutable(), new double[] {1, 1, 1});
-        return new FilterFlow(Math.min(first.effective() ? first.capacity() : Double.POSITIVE_INFINITY, rest.capacity()), first.passLarge() * rest.largePass(),
-                first.passFine() * rest.finePass(), (first.effective() ? 1 : 0) + rest.effective(), inflow);
+    /** The run {@code rest} (NONE: nothing before it) followed, nearest the tank, by a housing bolted on the tank. */
+    public static FilterFlow thenBolted(FilterFlow rest, BlockPos housing, Stage last) {
+        if (rest.inflow().isEmpty()) return single(housing, last);
+        Map<BlockPos, double[]> inflow = new HashMap<>(rest.inflow());
+        inflow.put(housing.immutable(), new double[] {rest.largePass(), rest.finePass(), 1});
+        return new FilterFlow(Math.min(rest.capacity(), last.effective() ? last.capacity() : Double.POSITIVE_INFINITY), rest.largePass() * last.passLarge(),
+                rest.finePass() * last.passFine(), Math.min(rest.lossFactor(), last.lossFactor()), rest.effective() + (last.effective() ? 1 : 0), inflow);
     }
 
-    /** The filter graph of the run that leaves {@code face} of the equipment at {@code pos}: {@link FilterGraph#NONE} when nothing is piped there. Cached with the survey. */
+    private static long graphBuilds;
+
+    /** How many filter graphs have been built (tests: an unchanged run must not be walked again). */
+    public static long graphBuildCount() { return graphBuilds; }
+
+    /** The filter graph of the run that leaves the return port on {@code face} of the tank at {@code pos}: {@link FilterGraph#NONE} when nothing is piped there. Cached with the survey. */
     public static FilterGraph filterGraph(Level level, BlockPos pos, Direction face) {
         if (level == null || level.isClientSide()) return FilterGraph.NONE;
         survey(level, pos, face);
@@ -331,18 +343,13 @@ public final class OilLineNetwork {
         return entry.graph;
     }
 
-    private static long graphBuilds;
-
-    /** How many filter graphs have been built (tests: an unchanged run must not be walked again). */
-    public static long graphBuildCount() { return graphBuilds; }
-
     private static FilterGraph buildGraph(Level level, Key key) {
         BlockPos first = key.pos.relative(key.face);
         Direction firstEntered = key.face.getOpposite();
         var firstState = LoadedWorld.state(level, first);
         if (firstState == null || !acceptsLineOn(firstState, firstEntered)) return FilterGraph.NONE;
         var g = new GraphBuild();
-        int source = g.compFor(level, first, firstEntered);
+        int start = g.compFor(level, first, firstEntered);
         int guard = 0;
         while (!g.queue.isEmpty() && guard++ < 512) {
             var job = g.queue.poll();
@@ -368,55 +375,28 @@ public final class OilLineNetwork {
                             switch (conduit(ns)) {
                                 case PIPE -> g.join(n, comp, stack);
                                 case VALVE -> { if (ns.getValue(LubeOilValveBlock.OPEN)) g.join(n, comp, stack); }
-                                case FILTER -> {
-                                    var housing = (TurbineAuxBlock) ns.getBlock();
-                                    Direction in = housing.oilInFace(ns), out = housing.oilOutFace(ns);
-                                    if (d.getOpposite() == in) {
-                                        if (g.seenHousings.add(n.immutable())) {
-                                            int to = g.compFor(level, n.relative(out), out.getOpposite());
-                                            g.edges.add(new int[] {g.housings.size(), comp, to});
-                                            g.housings.add(n.immutable());
-                                        }
-                                    } else if (!g.seenHousings.contains(n)) {
-                                        // Entered by its outlet and not taken from its inlet (installed backwards): a plain conduit, the pipe beyond its inlet
-                                        // is part of this junction. (A housing already taken is an edge: its outlet side is the far end of it, not a way round.)
-                                        BlockPos beyond = n.relative(in);
-                                        var bs = LoadedWorld.state(level, beyond);
-                                        if (bs != null && acceptsLineOn(bs, out)) {
-                                            Conduit bc = conduit(bs);
-                                            if (bc == Conduit.PIPE || bc == Conduit.VALVE && bs.getValue(LubeOilValveBlock.OPEN)) g.join(beyond, comp, stack);
-                                        }
-                                    }
-                                }
-                                case NONE -> { if (!n.equals(key.pos) && roleAt(ns, d.getOpposite()) == Role.SECTION_SUPPLY) g.sinks.add(comp); }
+                                case FILTER -> g.housing(level, ns, n, d.getOpposite(), comp, stack);
+                                case NONE -> { if (!n.equals(key.pos) && roleAt(ns, d.getOpposite()) == Role.SECTION_DRAIN) g.sources.add(comp); }
                             }
                         }
                     }
                 }
-                case FILTER -> {
-                    var housing = (TurbineAuxBlock) s.getBlock();
-                    if (entered == housing.oilInFace(s) && g.seenHousings.add(cell.immutable())) {
-                        Direction out = housing.oilOutFace(s);
-                        int to = g.compFor(level, cell.relative(out), out.getOpposite());
-                        g.edges.add(new int[] {g.housings.size(), comp, to});
-                        g.housings.add(cell.immutable());
-                    }
-                }
-                case NONE -> { if (!cell.equals(key.pos) && roleAt(s, entered) == Role.SECTION_SUPPLY) g.sinks.add(comp); }
+                case FILTER -> g.housing(level, s, cell, entered, comp, null);
+                case NONE -> { if (!cell.equals(key.pos) && roleAt(s, entered) == Role.SECTION_DRAIN) g.sources.add(comp); }
             }
         }
         // The junctions that turned out to be one (two branches that rejoin) get one number each.
         Map<Integer, Integer> number = new HashMap<>();
-        int src = number.computeIfAbsent(g.find(source), k -> number.size());
+        int sink = number.computeIfAbsent(g.find(start), k -> number.size());
         List<FilterEdge> edges = new ArrayList<>();
         for (int[] e : g.edges) {
             int from = number.computeIfAbsent(g.find(e[1]), k -> number.size());
             int to = number.computeIfAbsent(g.find(e[2]), k -> number.size());
             edges.add(new FilterEdge(g.housings.get(e[0]), from, to));
         }
-        Set<Integer> sinks = new HashSet<>();
-        for (int c : g.sinks) sinks.add(number.computeIfAbsent(g.find(c), k -> number.size()));
-        return new FilterGraph(number.size(), List.copyOf(edges), Set.copyOf(sinks), src);
+        List<Integer> sources = new ArrayList<>();
+        for (int c : g.sources) sources.add(number.computeIfAbsent(g.find(c), k -> number.size()));
+        return new FilterGraph(number.size(), List.copyOf(edges), List.copyOf(sources), sink);
     }
 
     /** The working state of one graph walk: junctions (pipes and open valves joined together, other cells on their own) with a union-find to merge the ones that meet. */
@@ -424,7 +404,7 @@ public final class OilLineNetwork {
         final Map<BlockPos, Integer> pipeComp = new HashMap<>(), virtual = new HashMap<>();
         final List<int[]> edges = new ArrayList<>();
         final List<BlockPos> housings = new ArrayList<>();
-        final Set<Integer> sinks = new HashSet<>();
+        final List<Integer> sources = new ArrayList<>();
         final Set<BlockPos> seenHousings = new HashSet<>();
         final ArrayDeque<Object[]> queue = new ArrayDeque<>();   // {junction, start cell, entered face}
         final List<Integer> parent = new ArrayList<>();
@@ -437,8 +417,32 @@ public final class OilLineNetwork {
         /** A pipe or open valve at {@code n} joins the junction {@code comp}: new to it, it is flooded on; held by another junction, the two are one. */
         void join(BlockPos n, int comp, ArrayDeque<BlockPos> stack) {
             Integer held = pipeComp.putIfAbsent(n.immutable(), comp);
-            if (held == null) stack.add(n);
+            if (held == null) { if (stack != null) stack.add(n); }
             else if (find(held) != find(comp)) parent.set(find(held), find(comp));
+        }
+
+        /**
+         * A housing met on the face {@code touched} from the junction {@code comp} (the tank's side). Entered by its <b>outlet</b> it is a
+         * stage, an edge from the junction at its inlet; entered by its inlet it is installed backwards and the pipe beyond its outlet is
+         * part of this junction (unless it was already taken as a stage: then this is just its far end).
+         */
+        void housing(Level level, BlockState hs, BlockPos pos, Direction touched, int comp, ArrayDeque<BlockPos> stack) {
+            var housing = (TurbineAuxBlock) hs.getBlock();
+            Direction in = housing.oilInFace(hs), out = housing.oilOutFace(hs);
+            if (touched == out) {
+                if (seenHousings.add(pos.immutable())) {
+                    int from = compFor(level, pos.relative(in), out);
+                    edges.add(new int[] {housings.size(), from, comp});
+                    housings.add(pos.immutable());
+                }
+            } else if (touched == in && stack != null && seenHousings.add(pos.immutable())) {
+                BlockPos beyond = pos.relative(out);
+                var bs = LoadedWorld.state(level, beyond);
+                if (bs != null && acceptsLineOn(bs, in)) {
+                    Conduit bc = conduit(bs);
+                    if (bc == Conduit.PIPE || bc == Conduit.VALVE && bs.getValue(LubeOilValveBlock.OPEN)) join(beyond, comp, stack);
+                }
+            }
         }
 
         /** The junction a cell belongs to, made (and queued to be flooded) when it is new: pipes and open valves share junctions; anything else is its own point. */
@@ -458,15 +462,15 @@ public final class OilLineNetwork {
     }
 
     /**
-     * What the housings of a graph do now: {@code stages} says, per housing, whether it filters, how much flow it passes and what it lets of
-     * the large and the fine particles. The flow a run carries is the most that can go from its start to a bearing supply: the sum over parallel
-     * branches, limited by the tightest housing in each branch in series; the particles that get past are the flow-weighted share over those
-     * branches, the product of the housings along each. A housing that is not filtering (no cartridge, a full one) passes everything.
-     * {@code inflow} is, for every housing, the share of the large and of the fine particles that reaches it and the share of the run's flow that goes through it. With no housing in the run the
-     * answer is {@link FilterFlow#NONE}.
+     * What the housings of a graph do now: {@code stages} says, per housing, whether it filters and what it passes. The flow a run carries is
+     * the most that can go from the drains to the tank (a max-flow): the sum over parallel branches, limited by the tightest housing in each
+     * branch in series. The oil goes the way the housings point (from the sections' drains toward the tank), so the particles that get past
+     * are the flow-weighted share over the branches, the product of the housings along each; the share of the oil's loss that remains is
+     * likewise the mean over the branches of the best (lowest) housing along each. A housing that is not filtering (no cartridge, a full
+     * one) passes everything. With no housing in the run the answer is {@link FilterFlow#NONE}.
      */
     public static FilterFlow evaluate(FilterGraph graph, java.util.function.Function<BlockPos, Stage> stages) {
-        if (graph.edges.isEmpty() || graph.sinks.isEmpty()) return FilterFlow.NONE;
+        if (graph.edges.isEmpty() || graph.sources.isEmpty()) return FilterFlow.NONE;
         int n = graph.comps, m = graph.edges.size();
         double big = 1e9;
         double[] cap = new double[m];
@@ -477,51 +481,51 @@ public final class OilLineNetwork {
             if (st[i].effective()) effective++;
             cap[i] = Double.isInfinite(st[i].capacity()) ? big : st[i].capacity();
         }
-        // Max flow, source to a super sink, on the junction graph (a few nodes): Edmonds-Karp with residuals.
-        int sink = n;
+        // Max flow, drains to the tank (a super source feeds every drain junction), Edmonds-Karp with residuals on the few junctions.
+        int superSource = n, tank = graph.sink;
         double[][] res = new double[n + 1][n + 1];
         for (int i = 0; i < m; i++) { var e = graph.edges.get(i); res[e.from()][e.to()] += cap[i]; }
-        for (int s : graph.sinks) res[s][sink] += big;
+        for (int s : graph.sources) res[superSource][s] = big;
         double total = 0;
         for (int iter = 0; iter < 200; iter++) {
             int[] prev = new int[n + 1];
             java.util.Arrays.fill(prev, -1);
-            prev[graph.source] = graph.source;
+            prev[superSource] = superSource;
             var q = new ArrayDeque<Integer>();
-            q.add(graph.source);
-            while (!q.isEmpty() && prev[sink] < 0) {
+            q.add(superSource);
+            while (!q.isEmpty() && prev[tank] < 0) {
                 int u = q.poll();
                 for (int v = 0; v <= n; v++) if (prev[v] < 0 && res[u][v] > 1e-12) { prev[v] = u; q.add(v); }
             }
-            if (prev[sink] < 0) break;
+            if (prev[tank] < 0) break;
             double push = big;
-            for (int v = sink; v != graph.source; v = prev[v]) push = Math.min(push, res[prev[v]][v]);
-            for (int v = sink; v != graph.source; v = prev[v]) { res[prev[v]][v] -= push; res[v][prev[v]] += push; }
+            for (int v = tank; v != superSource; v = prev[v]) push = Math.min(push, res[prev[v]][v]);
+            for (int v = tank; v != superSource; v = prev[v]) { res[prev[v]][v] -= push; res[v][prev[v]] += push; }
             total += push;
         }
         double capacity = total >= big * 0.5 ? Double.POSITIVE_INFINITY : total;
-        // Particles: the shares that get past, junction by junction in the order the oil reaches them (each edge splits by what it can pass, a
-        // branch that passes more takes more), a junction taking the flow-weighted mean of what arrives.
+        // Particles, junction by junction in the order the oil reaches them (an edge splits by what it can pass: a branch that passes more
+        // takes more); a junction takes the flow-weighted mean of what arrives (the first arrival exactly, so a lone housing is exact).
         boolean[] reached = new boolean[n];
         var bfs = new ArrayDeque<Integer>();
-        reached[graph.source] = true;
-        bfs.add(graph.source);
+        double[] share = new double[n];
+        for (int s : graph.sources) { share[s] += 1.0 / graph.sources.size(); if (!reached[s]) { reached[s] = true; bfs.add(s); } }
         while (!bfs.isEmpty()) {
             int u = bfs.poll();
             for (var e : graph.edges) if (e.from() == u && !reached[e.to()]) { reached[e.to()] = true; bfs.add(e.to()); }
         }
         int[] indeg = new int[n];
         for (var e : graph.edges) if (reached[e.from()]) indeg[e.to()]++;
-        double[] outL = new double[n], outF = new double[n], outW = new double[n];
-        outL[graph.source] = 1; outF[graph.source] = 1;
+        double[] outL = new double[n], outF = new double[n], outLoss = new double[n], outW = new double[n], sumOut = new double[n];
+        java.util.Arrays.fill(outL, 1); java.util.Arrays.fill(outF, 1); java.util.Arrays.fill(outLoss, 1);
+        for (int i = 0; i < m; i++) if (reached[graph.edges.get(i).from()]) sumOut[graph.edges.get(i).from()] += Math.min(cap[i], 1.5);
         Map<BlockPos, double[]> inflow = new HashMap<>();
         var topo = new ArrayDeque<Integer>();
         boolean[] done = new boolean[n];
-        double[] share = new double[n], sumOut = new double[n];
-        share[graph.source] = 1;
-        for (int i = 0; i < m; i++) if (reached[graph.edges.get(i).from()]) sumOut[graph.edges.get(i).from()] += Math.min(cap[i], 1.5);
-        if (indeg[graph.source] == 0) topo.add(graph.source);
-        else { done[graph.source] = true; topo.add(graph.source); }   // a loop back into the start: take the start as it is
+        for (int s : new java.util.TreeSet<>(graph.sources)) if (indeg[s] == 0 && !done[s]) { done[s] = true; topo.add(s); }
+        if (topo.isEmpty()) for (int s : graph.sources) { done[s] = true; topo.add(s); }   // a loop through every drain: take them as they are
+        boolean[] first = new boolean[n];
+        java.util.Arrays.fill(first, true);
         while (!topo.isEmpty()) {
             int u = topo.poll();
             for (int i = 0; i < m; i++) {
@@ -532,24 +536,20 @@ public final class OilLineNetwork {
                 double through = sumOut[u] > 0 ? share[u] * w / sumOut[u] : 0;
                 inflow.put(e.housing(), new double[] {outL[u], outF[u], through});
                 share[to] += through;
-                double l = outL[u] * st[i].passLarge(), f = outF[u] * st[i].passFine();
+                double l = outL[u] * st[i].passLarge(), f = outF[u] * st[i].passFine(), loss = Math.min(outLoss[u], st[i].lossFactor());
                 double newW = outW[to] + w;
-                if (newW > 0) {
-                    outL[to] = (outL[to] * outW[to] + l * w) / newW;
-                    outF[to] = (outF[to] * outW[to] + f * w) / newW;
+                if (first[to]) { outL[to] = l; outF[to] = f; outLoss[to] = loss; first[to] = false; }
+                else if (newW > 0) {
+                    double r = w / newW;
+                    outL[to] += (l - outL[to]) * r;
+                    outF[to] += (f - outF[to]) * r;
+                    outLoss[to] += (loss - outLoss[to]) * r;
                 }
                 outW[to] = newW;
                 if (--indeg[to] == 0 && !done[to]) { done[to] = true; topo.add(to); }
             }
         }
-        double sl = 0, sf = 0, sw = 0;
-        for (int s : graph.sinks) {
-            if (!reached[s] || s == graph.source) continue;
-            double w = outW[s];
-            if (w <= 0) continue;
-            sl += outL[s] * w; sf += outF[s] * w; sw += w;
-        }
-        if (sw <= 0) return new FilterFlow(capacity, 1, 1, effective, inflow);
-        return new FilterFlow(capacity, sl / sw, sf / sw, effective, inflow);
+        if (!reached[tank] || first[tank]) return new FilterFlow(capacity, 1, 1, 1, effective, inflow);
+        return new FilterFlow(capacity, outL[tank], outF[tank], outLoss[tank], effective, inflow);
     }
 }

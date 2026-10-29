@@ -294,7 +294,7 @@ public final class TurbineAuxTest {
         Check.exactly(TurbineAux.FILTER_DP_FULL_PSI, TurbineAux.filterDpPsi(1, TurbineAux.GRADE_FINE), "all three open the bypass at the same pressure drop");
         // Flow: one fine housing cannot pass a train's rated need, two in parallel can; it falls as the element loads, and a full one passes all (unfiltered).
         double one = TurbineAux.filterFlowCapacity(TurbineAux.GRADE_FINE, 0);
-        Check.isTrue(one < 1.0 && 2 * one >= 1.0, "one fine housing passes under a whole train's rated flow (" + one + "), two in parallel pass it");
+        Check.isTrue(3 * one < 1.0 && 4 * one >= 1.0, "one fine housing passes a third of a whole train's rated flow (" + one + "): it takes four in parallel to pass it");
         Check.isTrue(TurbineAux.filterFlowCapacity(TurbineAux.GRADE_COARSE, 0) > 1.7, "a coarse one passes more than every pump together");
         double last = Double.POSITIVE_INFINITY;
         for (int i = 0; i <= 9; i++) {
@@ -303,6 +303,15 @@ public final class TurbineAuxTest {
             last = c;
         }
         Check.isTrue(Double.isInfinite(TurbineAux.filterFlowCapacity(TurbineAux.GRADE_FINE, 1)), "a full one opens its bypass and passes everything");
+        // The oil loss each grade leaves: standard is the old factor to the bit, coarse weaker, fine much stronger; none or bypassed is 1.
+        for (double load : new double[] {0, 0.5, 0.9999}) Check.exactly(TurbineAux.filterFactor(true, load), TurbineAux.filterFactor(true, load, TurbineAux.GRADE_STANDARD), "the standard grade's factor is the old one at " + load);
+        Check.exactly(0.1, TurbineAux.filterFactor(true, 0, TurbineAux.GRADE_STANDARD), "a tenth");
+        Check.exactly(0.2, TurbineAux.filterFactor(true, 0, TurbineAux.GRADE_COARSE), "coarse leaves 0.2");
+        Check.exactly(0.03, TurbineAux.filterFactor(true, 0, TurbineAux.GRADE_FINE), "fine leaves 0.03");
+        Check.exactly(1.0, TurbineAux.filterFactor(false, 0, TurbineAux.GRADE_FINE), "no cartridge: all of it");
+        Check.exactly(1.0, TurbineAux.filterFactor(true, 1, TurbineAux.GRADE_FINE), "a full one: all of it");
+        double lifeFine = TurbineAux.OIL_TANK_L / (TurbineAux.OIL_LEAK_L_PER_S * TurbineAux.OIL_FILTER_FACTORS[2]) / 3600;
+        Check.isTrue(lifeFine > 200 && lifeFine < 212, "a 20,000 L tank with a fine cartridge alone lasts about 8.6 days of running (" + lifeFine + " h)");
         // Life: coarse lasts 2.5 times as long, fine 0.7 times.
         double lc = 0, lf = 0;
         for (int i = 0; i < 21_600; i++) {

@@ -48,7 +48,7 @@ public class TurbineAuxScreen extends BwrScreen<TurbineAuxMenu> {
                 Layout.row("Oil temperature", () -> num(menu.oilC, 1), "C"),
                 Layout.row("Bearing oil flow", () -> Double.isNaN(menu.oilFlow) ? "-" : pct(menu.oilFlow) + " %" + (menu.flowVeryLow ? " very low" : menu.flowLow ? " low" : menu.flowLimited ? " held back" : ""))
                         .status(() -> menu.flowVeryLow ? Status.ALARM : menu.flowLow || menu.flowLimited ? Status.CAUTION : Status.NONE)
-                        .tip("The oil the pumps get to the bearings over what the speed needs: 100 % and over is good, under 90 % a low-flow alarm, 70 % or under a very-low one. A fine cartridge in the housing passes only 60 percent of a train's rated flow; two side by side pass 120."),
+                        .tip("The oil the pumps get to the bearings over what the speed needs: 100 % and over is good, under 90 % a low-flow alarm, 70 % or under a very-low one. A fine cartridge on the return line passes only 30 percent of a train's rated flow; it takes four side by side."),
                 Layout.row("Oil cleanliness", () -> pct(menu.cleanliness), "%")
                         .status(() -> menu.cleanliness > 0.4 ? Status.CAUTION : Status.NONE)
                         .tip("The particles in the oil; 20 % is the oil the plant has always run. A fine cartridge (or a conditioner) cleans it, a coarse cartridge alone lets it get dirty, and dirty oil wears the bearings and degrades faster."),

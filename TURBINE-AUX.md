@@ -21,7 +21,7 @@ annunciators and your computer. Skids have no ticker; the shaft train steps them
 | **Turbine Shaft-Driven Main Oil Pump** (`shaft_oil_pump`) | On the **free shaft end of the generator**, coupling (its back) toward the generator. It turns to face the right way when you place it there | Driven by the shaft: no oil at standstill, full delivery at 90 % of rated speed. It draws its oil from the Main Oil Tank of the same train |
 | **Generator Cooling Skid** (`generator_cooling_skid`) | Against the generator | **Stator water pumps** (FE on any face but the two flanges), a **hydrogen** charge for the casing, and the **coolers** (cooling water as on the oil tank) |
 | **Turning gear** | Built into the generator: a switch, no block | See below |
-| **Oil Filter Housing** (`oil_filter_housing`) | **Directly against a Main Oil Tank** (see Oil filtration below): its back on the tank, on any side of the tank; **or in-line in a Lube Oil Pipe run** on a tank's discharge | A **duplex** full-flow lube oil filter: **sides A and B**, one Oil Filter Cartridge each, and a **transfer valve** that picks the side in service so the other can be changed while the plant runs (below). It filters the tank's oil. It is not on the shaft train and needs no power |
+| **Oil Filter Housing** (`oil_filter_housing`) | **Directly against a Main Oil Tank** (see Oil filtration below): its back on the tank, on any side of the tank; **or in-line in a Lube Oil Pipe run on a tank's return line** (between the sections' bearing drains and the tank's return port; on a supply run it passes the oil and filters nothing) | A **duplex** full-flow lube oil filter: **sides A and B**, one Oil Filter Cartridge each, and a **transfer valve** that picks the side in service so the other can be changed while the plant runs (below). It filters the tank's oil. It is not on the shaft train and needs no power |
 | **Lube Oil Pipe** (`lube_oil_pipe`) | Between the oil ports of the equipment (see Lube oil piping below) | A brown, small-bore pipe: a network of its own that never joins a water or steam pipe. Crafted from iron nuggets and brown dye (6 pipes); **with Mekanism** steel nuggets (MEKANISM-RECIPES.md) |
 | **Lube Oil Valve** (`lube_oil_valve`) | In-line in a Lube Oil Pipe run | A quarter-turn ball valve with a **limit switch box** on top that shows open or shut. Crafted from 4 iron, a lever, redstone and 2 Lube Oil Pipes; **with Mekanism** steel, a basic circuit in place of the redstone |
 | **Lube Oil Conditioner** (`lube_oil_conditioner`) | Bolted against a Main Oil Tank, or piped to its suction outlet and fill connection (see Oil cleanup below) | A side-stream **centrifuge and vacuum dehydrator** on FE. Running, it cuts the oil's degradation to 30 %; with a clean filter cartridge too, a 20,000 L tank lasts about one refuelling cycle (8.5 days). Crafted from iron, glass, 2 Lube Oil Pipes, a hopper and redstone; **with Mekanism** steel and a basic circuit |
@@ -103,13 +103,15 @@ hold it), and it does not change the oil film, the bearing temperature or the fi
   its six neighbours in its oil step, never loading a chunk, so it survives any rebuilding.
 - **Flow axis.** The housing has an **inlet face** (the back, `TurbineAuxBlock.oilInFace`) and an **outlet face** (the front,
   `oilOutFace`), with a round flange on each in the model. The rule that decides which tank a housing serves is in **one place**
-  (`TurbineAuxBlockEntity.tank()`, with `oilFilter()` the tank's side of it). Bolted on a tank it is as described here; **in-line in a Lube
-  Oil Pipe run** (see Lube oil piping) the tank is the one whose discharge the run from the inlet leads back to, and the tank's filter is
-  the first housing entered by its inlet in the run leaving the tank's discharge. Direct contact comes first.
-- **The slots.** Right-click the housing with a cartridge to put one in the side in service when that is empty (with it full, open the
-  screen). Right-click with nothing on a side face to open its screen (two slots, A and B, a transfer button and the player's inventory;
-  shift-click works); the transfer valve is the **A/B selector switch on that screen**. **Hoppers and pipes may put a cartridge into an empty slot of
-  either side, on any face, and can take nothing out**: nothing is pulled out for you. Breaking the housing drops both cartridges with
+  (`TurbineAuxBlockEntity.tank()`, with `oilFilter()` the tank's side of it). Bolted on a tank it is as described here; **in-line on a
+  tank's return line** (see *Filters belong on the return line* below) the tank is the one whose **return** port the run from the housing's
+  outlet leads to, and the tank's filter is the housing nearest the tank, entered by its outlet face. Direct contact comes first. A housing on
+  a supply run (its pipes lead to a pump's discharge or a bearing supply), or put in backwards, serves no tank: its screen says "not on a return
+  line", `on_supply_line` is a signal and `onSupplyLine` a computer field.
+- **The slots.** Right-click the housing with a cartridge to put one in the side **out of service** when that is empty (the canister in service
+  is under pressure and is never opened, even empty: with the side out of service full, open the screen). Right-click with nothing on a side face to open its screen (two slots, A and B, a transfer button and the player's inventory;
+  shift-click works); the transfer valve is the **A/B selector switch on that screen**. **Hoppers and pipes may put a cartridge into the empty slot of the side
+  out of service, on any face, and can take nothing out**: nothing is pulled out for you. Breaking the housing drops both cartridges with
   their loads. Everything about the two sides is in *The duplex filter* below.
 - **No ticker.** The housing has none. The Main Oil Tank's own oil step, which the train calls once a tick, loads the cartridge by the
   oil that flowed.
@@ -136,10 +138,13 @@ puts one in service while the other is isolated and opened. The Oil Filter Housi
   it is focused). Nothing on the block itself is clicked: the lever on the model only shows the position. By **redstone**: power selects side B,
   losing it selects side A, and only a change of the power counts (the same convention as the Lube Oil Valve). By **signals** and
   **CC** (`selected_side`, `setSide("A"|"B")`, `transfer()`). Transferring to an empty side is allowed and runs the oil on the bypass.
-- **Right-click with a cartridge** puts it into the side in service when that is empty; with it full the housing says so and the
-  other side is filled from the screen (shift-click puts a cartridge into the side out of service first) or by a hopper.
-- **Hoppers and pipes** see the two slots, A and B, and may put a cartridge into an **empty slot of either side** (a slot in
-  service that is empty is on its bypass, one out of service is waiting) and **can take nothing out of either**.
+- **The side in service is locked completely.** Opening an in-service canister would spray oil everywhere, so by hand, from the screen
+  (the slot takes nothing, shift-click moves nothing into it) and from a hopper or pipe **even an empty side in service takes no cartridge** (it
+  is running on its bypass, which is the realistic reason to change over). **Right-click with a cartridge** fills the side out of service when it
+  is empty, otherwise the housing says so; the way to put the first cartridge into a new housing is to fill the other side and **throw the
+  selector** to it. Takes nothing out of either side by automation.
+- **Hoppers and pipes** see the two slots, A and B, and may put a cartridge into the **empty slot of the side out of service** and **take
+  nothing out of either**.
 - **Readings.** Everything the housing, the tank and the train read (`filter_life`, `filter_dp`, `filter_bypass`, the alarm, the
   screen's meter) is the side in service; the housing's signals and CC also give each side's cartridge, life, pressure drop and
   change-due, and the selected side.
@@ -152,13 +157,21 @@ puts one in service while the other is isolated and opened. The Oil Filter Housi
 
 Plants do not use one kind of element. A **coarse** element passes a lot of oil and catches only the big debris; a **fine** one catches
 nearly everything but passes less, so it goes **behind** a coarse one (the coarse stage takes the load that would fill the fine one) and
-a big train needs **two fine housings side by side**. The mod has three grades of the **Oil Filter Cartridge**, one item each:
+a big train needs **four fine housings side by side** (a fine element passes only 0.3 of a train's rated oil flow). The mod has three grades of the **Oil Filter Cartridge**, one item each:
 
 | Grade | Item | Band on the item | Captures (large / fine particles) | Passes at most (a train's rated flow = 1) | Clean pressure drop | Life against a standard one |
 | --- | --- | --- | --- | --- | --- | --- |
 | **Coarse** | `oil_filter_cartridge_coarse` | green | 90 % / 10 % | 3.0 (more than every pump together) | 1 psid | 2.5 times |
 | **Standard** | `oil_filter_cartridge` | none (as it always was) | 99 % / 65 % | no limit | 3 psid | 1 (6 h) |
-| **Fine** | `oil_filter_cartridge_fine` | blue | 99.9 % / 98 % | **0.6** clean, falling to 0.15 as it fills | 8 psid | 0.7 (4.2 h) |
+| **Fine** | `oil_filter_cartridge_fine` | blue | 99.9 % / 98 % | **0.3** clean, falling to 0.075 as it fills | 8 psid | 0.7 (4.2 h) |
+
+Each grade also leaves its **own share of the oil's loss** (`OIL_FILTER_FACTORS`, the clean cartridge in service): **coarse 0.2**, **standard
+0.1** (the cartridge as it always was, unchanged), **fine 0.03**. The owner's words: fine filters stretch the oil life a lot further, but cannot
+handle much flow, so it takes a lot of them to be effective. 0.03 is chosen so that a fine element alone is worth what a standard cartridge
+**and** a conditioner together are (a 20,000 L tank lasts 206 h, 8.6 days, of running: a fine element takes out the oxidation products and the
+particles that make the oil need replacing; the conditioner takes the water): with a conditioner too the fine arrangement lasts 680 h, **28
+days**, well beyond a fuel cycle. Coarse is 0.2 (five-fold), weaker than the standard. A full cartridge, an empty slot, or none leaves all of
+the loss (the bypass).
 
 **The standard cartridge, the default cleanliness and no cartridge are the plant exactly as it was**: its pressure drop, load rate, life,
 oil factor and (not) limiting the flow are the old laws to the bit, the oil sits at its default cleanliness and nothing below changes
@@ -186,8 +199,8 @@ vacuum dehydrator are good at fines and water and poor at big debris). It is sav
 **Dirty oil costs.** Only the **excess** over the default counts, so cleaner than the default earns nothing (a fine cartridge keeps the
 bearings no healthier than a standard one, it keeps the oil clean for a coarse one's worth less). Per unit of excess:
 
-- the oil **degrades faster**: the tank's loss is multiplied by `1 + 1.5 x excess` (a coarse-only train is at x1.56, about 40 hours for a
-  20,000 L tank instead of 62);
+- the oil **degrades faster**: the tank's loss is multiplied by `1 + 1.5 x excess` (a coarse-only train is at x1.56 on top of its weaker 0.2: about 20 hours for a
+  20,000 L tank, against 62 with a standard cartridge);
 - the bearings **wear**: `0.2 percent of shaft damage per hour at rated speed` per unit (`dirtyOilDamage`), none at standstill;
 - the shaft **vibrates** more: `2 mm/s` per unit at rated speed (`dirtyOilVibration`), on the turbine sections (the generator reads the
   worst of them).
@@ -197,45 +210,62 @@ The three numbers are small on purpose (a coarse-only train wears 0.075 percent 
 debris back in the oil (a feedback was considered and left out: it is a runaway the brief did not ask for; `cleanliness_step` has the
 term and a test pins it).
 
-**Staged filtration in the run.** The housings in a tank's discharge run are read as a small graph (cached with the run's survey,
-`OilLineNetwork.filterGraph`, rebuilt only when the run changes): the pipes and open valves join into junctions, each housing is an
-edge from the junction at its inlet to the one at its outlet, and the junctions that touch a bearing supply are the ends. Housings in a
-row are **in series**; branches that leave a junction and rejoin are **in parallel**; a shut valve in a branch takes that branch out.
-What each housing holds is read live every tick (`OilLineNetwork.evaluate`):
+**Filters belong on the return line.** The owner's loop is *pump (shaft-driven, AC or DC) -> bearings -> bearing drains -> **filters** -> oil
+tank -> back to the pump*: every pump's oil passes the bearings and drains back, so the filters are between the sections' drain ports and the
+tank's return port, and **all** the oil is filtered there, the shaft pump's included. A housing on a **supply** run (the discharge, or a header to
+a bearing supply) is a pipe: it passes the oil and filters nothing. A housing **bolted on the tank** counts as on the tank's return inlet
+(the last stage before the tank), so bolted setups and old saves behave exactly as they did. Nothing about the oil system on a train with no
+housing changes.
 
-- **flow**: the most that can go from the start to a bearing supply (a max-flow over the edges): the sum over parallel branches, limited
-  by the tightest housing in each branch in series. A housing with no cartridge, a full one (its bypass is open) or a standard one is a
-  pipe. The AC and DC pumps' delivery is **capped at that flow** (the shaft-driven pump has its own discharge and is not in the tank's
-  run). Nothing limiting reads as unlimited, so a plant with no fine cartridge in its run delivers what it did;
+**Staged filtration on the return line.** The housings in the run from a tank's return port are read as a small graph (cached with the
+run's survey, `OilLineNetwork.filterGraph`, rebuilt only when the run changes): the pipes and open valves join into junctions, each housing
+entered by its outlet face from the tank's side is an edge from the junction at its inlet (the sections' side) to the one at its outlet (the
+tank's side), the junctions that touch a bearing drain are the sources and the junction at the tank is the sink. Housings in a row are
+**in series**; branches that leave a junction and rejoin are **in parallel**; a shut valve in a branch takes that branch out; a housing
+entered by its inlet from the tank's side is backwards and a plain conduit. What each housing holds is read live every tick
+(`OilLineNetwork.evaluate`):
+
+- **flow**: the most that can go from the drains to the tank (a max-flow over the edges): the sum over parallel branches, limited by the
+  tightest housing in each branch in series. A housing with no cartridge, a full one (its bypass is open) or a standard one is a pipe.
+  **A return line that cannot pass the circulating flow backs up**, which is modelled as limiting it: the bearing oil flow is
+  `min(pump delivery, supply-run capacity, return-line capacity)`, the supply run never limiting (housings there are pipes), so it is the
+  smaller of what the pumps deliver and what the tanks' return lines pass (several tanks add; each section takes what the tanks its oil comes from
+  pass); the pressure, the film and the flow alarms follow. Nothing limiting reads as unlimited, so a plant with no fine cartridge on its
+  return line delivers what it did;
 - **particles**: the share of large and fine particles that gets past, and for each housing the share that **reaches** it (a fine one
   behind a coarse one sees a tenth of the large ones) and the **share of the flow** that goes through it (two equal branches carry half
   each), which together set how fast its cartridge loads: `loading = pressure x heat x (grade life) x (what it captures of what reaches
   it) x (how dirty the oil is) x (flow share)`, one for the first standard cartridge on its own in oil at the default;
-- a housing **bolted on the tank** is the first stage of the run; the housings piped after it are its next stages. A run with no
-  bearing supply on it, or a lone housing, is that housing (the old rule: the tank's first filter).
+- a housing **bolted on the tank** is the last stage of the run, nearest the tank; the housings piped before it are its earlier stages. A run
+  with no bearing drain on it, or a lone housing, is that housing (the old rule: the tank's first filter).
 
-**What the tank's oil loss does.** The oil loss filter factor is still the standard one (a tenth) whatever the grade: the best cartridge
-in service in the run sets it. The grades differ in what they catch and pass, not in the leak.
+**What the tank's oil loss does.** The share of the loss that remains is the grade's own (coarse 0.2, standard 0.1, fine 0.03): the **lowest on
+each way through the run** (the best stage counts; a coarse stage in front of a fine one is 0.03, not the product), and the flow-weighted
+**mean over branches in parallel** (a fine one next to an empty branch is the mean of 0.03 and 1). The oil life follows it.
 
 **An arrangement table** (a 20,000 L tank at rated speed, AC and DC pumps both delivering 1.15 of a train's rated flow, oil at 50 C and
-rated pressure; the cartridge lives are for a train that is not held back; "+ conditioner" is the 204 hour figure of the conditioner
-section divided by the same dirt factor):
+rated 25 psig; the cartridge lives are for a train that is not held back and are approximate; "+ conditioner" is the running conditioner
+(x 3.3, the 204 hour figure of the conditioner section for a standard cartridge); the housings are on the tank's return line):
 
-| Arrangement | Oil settles at | Oil life (filter only / + conditioner) | Extra wear, vibration | Run passes | Flow to the bearings | Cartridge lives |
-| --- | --- | --- | --- | --- | --- | --- |
-| No housing, or every cartridge out | 0.20 (default) | 62 h / 204 h | none | no limit | **115 %** good | none |
-| One standard | 0.20 | 62 h / 204 h | none | no limit | **115 %** good | standard 6 h |
-| One coarse | 0.575 | 40 h / 131 h | 0.075 %/h, +0.75 mm/s | 3.0 | **115 %** good | coarse 18 h |
-| One fine | 0.012 | 62 h / 204 h | none | 0.6 | **60 %** very low, held back | fine 4 h |
-| Two fine in parallel | 0.012 | 62 h / 204 h | none | 1.2 | **115 %** good | each fine 7.9 h |
-| Coarse then one fine | 0.010 | 62 h / 204 h | none | 0.6 | **60 %** very low, held back | coarse 18 h, fine 18 h |
-| Coarse then two fine in parallel | 0.010 | 62 h / 204 h | none | 1.2 | **115 %** good | coarse 18 h, each fine 36 h |
-| Standard then one fine | 0.004 | 62 h / 204 h | none | 0.6 | 60 % very low | standard 6 h, fine 66 h |
+| Arrangement | Oil settles at | Loss factor | Oil life, filter only / + conditioner | Extra wear, vibration | Return line passes | Flow to the bearings | Cartridge lives |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| No housing, or every cartridge out | 0.20 (default) | 1 | **6.2 h** / 20 h | none | no limit | 115 % good | none |
+| One standard | 0.20 | 0.1 | 62 h / 204 h (8.5 d) | none | no limit | 115 % good | standard 6 h |
+| One coarse | 0.575 | 0.2 | 20 h / 102 h | 0.075 %/h, +0.75 mm/s | 3.0 | 115 % good | coarse 18 h |
+| One fine | 0.012 | 0.03 | 206 h (8.6 d) / 680 h (28 d) | none | 0.3 | **30 %** very low, held back | fine 4 h |
+| 2 fine in parallel | 0.012 | 0.03 | 206 h / 680 h | none | 0.6 | **60 %** very low, held back | each fine 7.9 h |
+| 3 fine in parallel | 0.012 | 0.03 | 206 h / 680 h | none | 0.9 | **90 %**, on the edge of the low-flow alarm | each fine 12 h |
+| **4 fine in parallel** | 0.012 | 0.03 | **206 h (8.6 d) / 680 h (28 d)** | none | 1.2 | **115 %** good | each fine 16 h |
+| Coarse then one fine | 0.010 | 0.03 | 206 h / 680 h | none | 0.3 | **30 %** very low, held back | coarse 18 h, fine 18 h |
+| **Coarse then 4 fine in parallel** | 0.010 | 0.03 | **206 h / 680 h** | none | 1.2 | **115 %** good | coarse 18 h, each fine 73 h |
+| Standard then 4 fine in parallel | 0.004 | 0.03 | 206 h / 680 h | none | 1.2 | 115 % good | standard 6 h, each fine 263 h |
 
-A coarse cartridge alone is the arrangement that costs something, and a running conditioner makes it cost nothing (coarse then conditioner
-settles at 0.164, under the default): the conditioner takes the fines a coarse element lets by. **One fine housing on a whole train
-starves it** (a film of 0.6 puts a bearing near 330 C and wears it at 3.6 percent of the shaft's life a second once it is hot): that is
-what the low-flow alarm is for, and the cure is a second fine housing in parallel (or a coarse or standard cartridge in service).
+A coarse cartridge alone is the arrangement that costs something (the oil is dirty, so it wears, shakes and degrades 1.56 times as fast on top of
+its weaker 0.2), and a running conditioner makes the dirt cost nothing (coarse then conditioner settles at 0.164, under the default): the
+conditioner takes the fines a coarse element lets by. **One fine housing on a whole train starves it** (a film of 0.3 puts a bearing at the
+600 C ceiling and wears it at 3.6 percent of the shaft's life a second once it is hot): that is what the low-flow alarm is for, and the cure is
+more fine housings in parallel (four) or a coarse or standard cartridge in service. **The cost of the long life is housings and pipework**:
+four fine housings, each with its own valves, and a coarse stage in front so that they last.
 
 ### Old saves and what is unchanged
 
@@ -263,7 +293,7 @@ gas), taking a small stream out of the tank and returning it cleaned. The **Lube
   no train ticking does nothing.
 - **What it does.** Running (switched on, with the FE for the tick, the tank holding oil and oil able to pass: bolted on, or both runs
   open) it leaves **30 %** of the oil's degradation (`CONDITIONER_FACTOR` = 0.3026). The filter's own factor (a tenth with a clean
-  cartridge in service) is separate and **the two multiply**: the filter protects the bearings, the conditioner keeps the oil itself healthy.
+  standard cartridge in service; 0.2 coarse, 0.03 fine) is separate and **the two multiply**: the filter protects the bearings, the conditioner keeps the oil itself healthy.
   It does not change the header pressure, the film, the bearing temperature or the fires, and it does not slow the cartridge's loading
   (the cartridge keeps its modest factor and its six hours).
 - **Losing power or flow** (stopped, no FE, an empty tank, a shut valve or a cut run) **puts the oil back on the filter-only rate**,
@@ -294,7 +324,9 @@ usually gets refuelled every 7 to 10 days, so the oil would last that long; 8.5 
 | **a clean cartridge and the conditioner running** | **204 h (8.5 days)** |
 
   Hot oil degrades faster and a header held at more than rated pressure loses more, as the law has always said: with the AC pump also
-  on the header is at 30 psig and the same tank lasts 170 h (7.1 days), still inside a cycle.
+  on the header is at 30 psig and the same tank lasts 170 h (7.1 days), still inside a cycle. **The header pressure is not regulated**: the
+  pumps' pressures add (AC plus DC is 28.75 psig), the owner's decision ("that's just kind of logical"), so the conditioner is **tuned at 25
+  psig, 8.5 days**, and **with the AC pump also running it is about 7 days**. Nothing caps or regulates the pressure.
 - **Why 30 %.** A conditioner takes out what makes oil need replacing, but not the leak or the oil burned in the bearings, and it
   cannot make the oil last for ever; 30 % of the degradation with a filter's tenth is the 3 % that makes eight and a half days where a
   filter alone makes two and a half.
@@ -330,9 +362,11 @@ What it depends on, all of it already in the model:
 - the **pumps** that reach the section (the AC and DC pumps switched on and fed, the shaft pump by its speed law) and their **suction**:
   a tank below 5 % of its volume delivers less and less (`suction`), nothing from an empty one;
 - the **valves** in the supply (a shut valve cuts the pump off from the section);
-- the **filter housings** in the tank's discharge run: the cartridge in service passes only so much (a fine one 0.6, less as it loads),
+- the **filter housings on the tank's return line**: the cartridge in service passes only so much (a fine one 0.3, less as it loads),
   housings in series are limited by the tightest, housings in parallel add, a coarse or standard cartridge, an empty slot and a full
-  cartridge's open bypass do not limit (see *Cartridge grades*). The transfer valve picks which side is the stage.
+  cartridge's open bypass do not limit (see *Cartridge grades*), and a return line that cannot pass the circulating flow backs it up:
+  the flow is the smaller of what the pumps deliver and what the return line passes (housings on a supply run are pipes and do not limit).
+  The transfer valve picks which side is the stage.
 
 | Reading | Meaning |
 | --- | --- |
@@ -387,7 +421,7 @@ model change (`PipeJointModels` draws the flange on the pipe side).
 | | discharge | up | to the bearing header |
 | **Each turbine and generator section** (HP, LP, generator) | bearing **supply** | the west flank, floor row, middle of the casing | the header ends here |
 | | bearing **drain** | the east flank, floor row, middle of the casing | the return line starts here |
-| **Oil Filter Housing** | inlet / outlet | back / front | in-line, the oil enters by the inlet |
+| **Oil Filter Housing** | inlet / outlet | back / front | in-line on a **return line**, the oil enters by the inlet and leaves toward the tank (the outlet faces the tank); on a supply run it is a pipe |
 | **Lube Oil Valve** | two flanges | on the flow axis | in-line |
 
 "West" and "east" are the section's own, turned with it: the flanks are the two long sides of the casing. They are the flanks and not the
@@ -443,9 +477,10 @@ With neither it **delivers nothing**.
   several trains and a train can have several tanks; one tank shared between two trains takes the bearing heat of the train that steps it.
 - A train that has **no pump bolted on it, but is piped to one**, is governed by the oil system too (the bearing laws apply and the
   readings are live), the same as a train with a tank against it.
-- Direct contact also covers the **filter housing**: a housing bolted on a tank (any face) is that tank's filter first; failing that, the
-  first housing in-line in the run leaving the tank's discharge, entered by its inlet face, is.
-- A housing in the run installed **backwards** (entered by its outlet) is a plain conduit: it passes the oil and filters nothing.
+- Direct contact also covers the **filter housing**: a housing bolted on a tank (any face) is that tank's filter first (and counts as on its
+  return inlet); failing that, the housing nearest the tank in the run leaving its **return** port, entered by its outlet face, is.
+- A housing in the run installed **backwards** (its outlet away from the tank), or on a supply run, is a plain conduit: it passes the oil and
+  filters nothing.
 
 ### The Lube Oil Valve
 
@@ -589,10 +624,10 @@ reading was powered; its position is the block state. Nothing about piping is sa
 
 The oil piping pictures are saved by the pipe shots check (`:mod:runTurbineModelCheck -PbwrPipeShots=<label>`, `PipeShots`), in
 `run/turbineModelCheck/pipe-shots/<label>/` and copied to `art/oil-piping/`: `oil-room` and `oil-room-tank-and-filter` (the basement lube
-oil room), `oil-filter-in-line`, `oil-risers-south-flank` and `oil-risers-close` (the risers through the hall floor to the train),
+oil room), `oil-filter-in-return-line`, `oil-risers-south-flank` and `oil-risers-close` (the risers through the hall floor to the train),
 `oil-valves-open-and-shut`, `oil-valve-open-close-up` and `oil-valve-shut-close-up` (the limit switch box), `oil-water-steam-straights`,
-`oil-filter-train-coarse-and-two-fine` (a coarse housing and two
-fine ones in parallel, piped in the oil room).
+`oil-filter-train-coarse-and-four-fine` (a coarse housing and four
+fine ones in parallel on the tank's return line, piped in the oil room).
 
 ## Models and sources
 
@@ -620,7 +655,7 @@ the signals and the computer faces (`bwr_oil_filter`, the tank's summary); and t
 Since alpha.59 `OilPipingTests` (16 in namespace `bwroil`, plus one in `bwrmektier` for the recipes; `OilPipingCcChecks` is the computer face): every
 oil port is where it should be and no face is both a water flange and an oil port; a piped tank in another room feeds a train; a
 section whose drain is not piped back is not fed; a shut valve starves the bearings and they heat by the existing laws, opened again
-the oil is back; the valve by hand, redstone, signals and computers; the filter in-line (and backwards); a housing bolted on a tank as
+the oil is back; the valve by hand, redstone, signals and computers; the filter in-line on the return line (and backwards, and on the supply run where it filters nothing); a housing bolted on a tank as
 before; the shaft pump with no suction line delivers nothing, with one it delivers, a cut or shut line starves it, and with its tank on its
 train it needs no pipe; a tank bolted on the train and not piped feeds every section with the old law's exact numbers; a bolted tank
 that is then piped feeds only the sections its header reaches; a header reaching every section feeds every bearing; a train never
@@ -633,6 +668,7 @@ side A and keys are written only when set; hoppers fill an empty slot of either 
 the open lid; a running conditioner bolted on leaves 30 % (the conditioned law to the bit each tick, with the filter too 3 %, back to the
 filter-only rate with no FE or stopped, drawing its FE); piped to the tank's suction and fill it does the same and a shut valve in its suction run
 cuts it off; a 20,000 L tank with both lasts 190 to 220 h at 25 psig; signals, the six computer faces and the saves; the ports and recipes.
-`OilGradeTests` (9 in `bwroil`, plus a recipe test in `bwrmektier`): the standard cartridge and no cartridge leave the oil at its default cleanliness exactly, never hold the pumps back, read 100 % flow and save no new key; one fine housing in the discharge run holds a full train to 60 % (low and very low alarms, held back, the signals), a second fine housing in parallel clears it and each carries about half the load, loaded cartridges bring the alarm back and standard ones in the same housings do not limit; a fine cartridge bolted on the tank holds the integral header back too and the transfer valve to a coarse one clears it; a low tank level lowers the flow; a coarse housing in front of a fine one makes the fine cartridge load under a third as fast, the run passes the tightest housing and an unchanged run is not walked again; coarse alone raises the cleanliness, fine lowers it, a conditioner takes it under the default; dirty oil shakes the shaft, wears the bearings and degrades the oil faster; the three grades are cartridges that keep their grade and load in slots, saves, hoppers and a broken housing; the recipes of both grades in both installs; the conditioner's lamp is lit only while it runs.
+`OilGradeTests` (9 in `bwroil`, plus a recipe test in `bwrmektier`): the standard cartridge and no cartridge leave the oil at its default cleanliness exactly, never hold the pumps back, read 100 % flow and save no new key; one fine housing on the return line holds a full train to 30 % (low and very low alarms, held back, the signals), two pass 60 %, three 90 %, four clear it and each carries a quarter of the load, loaded cartridges bring the alarm back and standard ones in the same housings do not limit; a fine cartridge bolted on the tank holds even the shaft pump's oil back and the transfer valve to a coarse one clears it; each grade leaves its own share of the loss (0.2, 0.1, 0.03) and a full cartridge all of it; a low tank level lowers the flow; a coarse housing in front of a fine one makes the fine cartridge load under a third as fast, the run passes the tightest housing and an unchanged run is not walked again; coarse alone raises the cleanliness, fine lowers it, a conditioner takes it under the default; dirty oil shakes the shaft, wears the bearings and degrades the oil faster; the three grades are cartridges that keep their grade and load in slots, saves, hoppers and a broken housing; the recipes of both grades in both installs; the conditioner's lamp is lit only while it runs.
 The pipe shots (`-PbwrPipeShots`) check the oil fixtures on the client: a flange at each turbine port and none between pipes,
-brown paint, that the valve's open and shut states reach the client and draw differently, that the duplex housing's four states (lever at A or B, lid shut or open) all draw differently and show what the server set, that the conditioner's pipes join it to the tank, that its lit and dark states draw differently with only the lit one full bright, and that the oil room's filter train is a coarse housing and two fine ones in parallel passing 1.2.
+brown paint, that the valve's open and shut states reach the client and draw differently, that the duplex housing's four states (lever at A or B, lid shut or open) all draw differently and show what the server set, that the conditioner's pipes join it to the tank, that its lit and dark states draw differently with only the lit one full bright, and that the oil room's filter train, on the tank's return line, is a coarse housing and four fine ones in parallel passing 1.2.
+`OilConditioningTests` also pins the lock: by hand, from the screen and from a hopper the side in service takes nothing even when empty.

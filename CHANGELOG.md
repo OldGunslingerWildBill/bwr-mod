@@ -32,18 +32,18 @@
 - **Cartridge grades, staged filtration, bearing oil flow alarms and the conditioner's running lamp** (TURBINE-AUX.md, *Cartridge grades* and
   *Bearing oil flow*). The Oil Filter Cartridge comes in **three grades**: the existing one is now the **standard** grade (unchanged in every
   number, id and save), a **coarse** one with a green band (passes a lot of oil, catches the big debris, lasts 2.5 times as long) and a **fine** one
-  with a blue band (catches nearly everything, loads in 4.2 h and passes only **0.6** of a train's rated oil flow, less as it fills). Housings in a
-  Lube Oil Pipe run work **in series** (a coarse one in front protects a fine one behind it: it loads under a quarter as fast) and **in parallel**
-  (two fine housings side by side pass 1.2 and feed a whole train; one alone starves it); the run is read as a small cached graph, rebuilt only when
+  with a blue band (catches nearly everything and leaves **0.03** of the oil's loss, loads in 4.2 h and passes only **0.3** of a train's rated oil flow, less as it fills; coarse leaves 0.2, standard stays 0.1). **Filters now belong on the tank's return line**, between the bearing drains and the tank, so all the oil is filtered, the shaft pump's too; a housing on a supply run passes oil and filters nothing, and a return line that cannot pass the circulating flow limits it (a housing bolted on the tank counts as on its return inlet, so old setups behave as before). Housings on a
+  return line work **in series** (a coarse one in front protects a fine one behind it: it loads under a quarter as fast) and **in parallel**
+  (four fine housings side by side pass 1.2 and feed a whole train; one alone passes 0.3 and starves it); the run is read as a small cached graph, rebuilt only when
   it changes. The grades are rated like real elements (beta10(c) = 10, 100 and 1,000), and the oil has a **cleanliness** that settles where the
   stages leave it: a standard cartridge, none or a bypassed one is the default, exactly as before; **coarse alone lets it get dirtier** (the
-  oil degrades about 1.5 times as fast, the bearings wear 0.075 percent an hour and the shaft shakes 0.75 mm/s more), a **fine** one or a
+  oil degrades about 1.5 times as fast again, the bearings wear 0.075 percent an hour and the shaft shakes 0.75 mm/s more), a **fine** one or a
   **running conditioner** cleans it. The **bearing oil flow** (delivered over what the speed needs) is shown on the section, the tank and the
   housing screens and is `oil_flow` with `oil_flow_good` (100 % or more), `oil_flow_low_alarm` (under 90 %) and `oil_flow_very_low_alarm` (70 % or
   under), `oil_flow_restricted` and `oil_cleanliness`, ready for an annunciator like `oil_pressure_alarm`; computers read the same. It falls
   with a low tank, a shut valve, a loaded fine cartridge or a filter that cannot pass the flow. The Lube Oil Conditioner has a **green running
   lamp**, lit while it runs (block state `lit`, full bright with a labPBR emission map). Recipes for both new grades in both installs. Core
-  `TurbineAuxTest` 17 to 19; GameTests `OilGradeTests` (namespace `bwroil`).
+  `TurbineAuxTest` 17 to 19; GameTests `OilGradeTests` (namespace `bwroil`). The side of the duplex housing in service is locked completely: not even an empty one takes a cartridge by hand, screen or hopper (right-click fills the side out of service; throw the selector to put the first cartridge in service). The header pressure is not regulated: the pumps' pressures add, and the conditioner's 8.5 days is tuned at 25 psig (about 7 days with the AC pump also running).
 
 - **Lube oil piping: the Lube Oil Pipe, the Lube Oil Valve and oil ports on all the oil equipment** (TURBINE-AUX.md, *Lube oil piping*; PIPES.md;
   SIGNALS.md). A **Lube Oil Pipe** (small bore, **brown**, flanged; the `oil` model set that was waiting in `art/models/pipes/`) is a network of

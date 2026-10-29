@@ -146,16 +146,23 @@ public final class OilFilterTests {
             h.assertTrue(!housing.hasCartridge() && housing.filterBypass() && housing.filterFactor() == 1, "an empty slot is a bypass");
             double empty = lost(f, tank, 600);
             h.assertTrue(Math.abs(empty - bare) < bare * 0.02, "an empty housing loses what no housing does: " + empty + " against " + bare);
-            // By hand: a cartridge in hand goes into the empty slot, one at a time.
+            // By hand: a cartridge in hand goes into the empty side OUT of service, one at a time: the canister in service is under pressure and is
+            // never opened, even when it is empty (it keeps running on its bypass) - then the transfer valve is thrown to it.
             var player = h.makeMockPlayer(GameType.SURVIVAL);
             var stack = new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get(), 3);
             var hit = new BlockHitResult(Vec3.atCenterOf(housing.getBlockPos()), Direction.UP, housing.getBlockPos(), false);
             housing.getBlockState().useItemOn(stack, f.l, player, InteractionHand.MAIN_HAND, hit);
-            h.assertTrue(housing.hasCartridge() && stack.getCount() == 2 && housing.filterFactor() == TurbineAux.OIL_FILTER_FACTOR, "a cartridge in hand goes in and filters");
+            h.assertTrue(!housing.hasCartridge() && housing.hasCartridge(1) && stack.getCount() == 2 && housing.filterFactor() == 1,
+                    "a cartridge in hand is refused by the empty side in service: it fills the side out of service, and the oil still goes round the bypass");
             housing.getBlockState().useItemOn(stack, f.l, player, InteractionHand.MAIN_HAND, hit);
             h.assertTrue(stack.getCount() == 2, "with one in already a second is not taken");
+            housing.selectSide(true);
+            h.assertTrue(housing.hasCartridge() && housing.filterFactor() == TurbineAux.OIL_FILTER_FACTOR, "thrown over to it, it filters");
             double filtered = lost(f, tank, 600);
             h.assertTrue(filtered < bare * 0.13, "filtering: " + filtered + " against " + bare);
+            // Back to side A, as the rest of the test has it (A in service, B empty).
+            housing.selectSide(false);
+            housing.cartridgeSlot().setStackInSlot(1, ItemStack.EMPTY);
             // It fills; taken out it is a used cartridge that knows how full it is, and the oil goes round again.
             housing.cartridgeSlot().setStackInSlot(0, cartridge(0.9999));
             f.tick(f.gen, 100);
@@ -180,7 +187,9 @@ public final class OilFilterTests {
             h.assertTrue(pipe != null && pipe.extractItem(0, 1, false).isEmpty() && !pipe.insertItem(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()), false).isEmpty(),
                     "a pipe or hopper can take nothing out, and cannot add to a full slot");
             housing.cartridgeSlot().extractItem(0, 1, false);
-            h.assertTrue(pipe.insertItem(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()), false).isEmpty() && housing.hasCartridge(), "but it fills an empty one");
+            h.assertTrue(!pipe.insertItem(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()), false).isEmpty() && !housing.hasCartridge(),
+                    "an empty slot in service refuses it too: the canister in service is never opened");
+            h.assertTrue(pipe.insertItem(1, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()), false).isEmpty() && housing.hasCartridge(1), "but it fills an empty one out of service");
         });
     }
 

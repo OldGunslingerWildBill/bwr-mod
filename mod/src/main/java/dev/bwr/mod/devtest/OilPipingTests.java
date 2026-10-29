@@ -279,10 +279,10 @@ public final class OilPipingTests {
         });
     }
 
-    // ------------------------------------------------------------------ the filter in-line
+    // ------------------------------------------------------------------ the filter on the return line
 
-    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 400)
-    public static void theFilterWorksInLineInTheDischargeLine(GameTestHelper h) {
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 500)
+    public static void theFilterWorksInLineInTheReturnLineAndNotInTheSupplyLine(GameTestHelper h) {
         run(h, 84400, f -> {
             var tank = roomTank(f, 10_000);
             f.gen.rpm = 1500;
@@ -293,27 +293,43 @@ public final class OilPipingTests {
             f.tick(f.gen, 600, () -> feed(tank));
             double bare = before - tank.oilLitres();
             h.assertTrue(bare > 20 && tank.oilFilter() == null, "with no housing the piped tank loses oil at the old rate: " + bare);
-            // The housing in the discharge line: inlet toward the tank, outlet toward the header.
-            var housingPos = at(f, 3, 0, 8); // two cells down the line from the tank: not bolted on it
-            f.l.setBlock(housingPos, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.EAST), 3);
+            // The housing in the return line, between the generator's drain and the tank: the oil leaves it toward the tank (south), so it faces south.
+            var housingPos = at(f, -1, 0, 5);
+            f.l.setBlock(housingPos, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.SOUTH), 3);
             var housing = (TurbineAuxBlockEntity) f.l.getBlockEntity(housingPos);
             h.assertTrue(f.l.getBlockState(housingPos).getBlock() == BwrBlocks.OIL_FILTER_HOUSING.get() && housing.module() == null, "the housing stands in the line, bolted on nothing");
-            h.assertTrue(housing.tank() == tank && tank.oilFilter() == housing, "the housing in the line is the tank's filter and the tank is the housing's");
-            h.assertTrue(f.gen.aux().oilFed, "oil still passes through the housing to the header");
-            var cartridge = new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get());
-            housing.cartridgeSlot().setStackInSlot(0, cartridge);
+            h.assertTrue(housing.tank() == tank && tank.oilFilter() == housing && !housing.onSupplyLine(), "the housing on the return line is the tank's filter and the tank is the housing's");
+            h.assertTrue(f.gen.aux().oilFed, "oil still passes through the housing back to the tank");
+            housing.cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()));
             before = tank.oilLitres();
             f.tick(f.gen, 600, () -> feed(tank));
             double filtered = before - tank.oilLitres();
-            h.assertTrue(filtered > 0 && filtered < bare * 0.13, "through a clean cartridge in the line the loss is a tenth: " + filtered + " against " + bare);
+            h.assertTrue(filtered > 0 && filtered < bare * 0.13, "through a clean cartridge on the return line the loss is a tenth: " + filtered + " against " + bare);
             h.assertTrue(housing.filterLoad() > 0, "the cartridge loaded up by what flowed");
             h.assertTrue(f.gen.aux().filterHousing && f.gen.aux().oilFed, "the train reads the housing");
-            // Backwards in the line the housing is a plain conduit (the oil enters by its outlet): it filters nothing.
-            f.l.setBlock(housingPos, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.WEST), 3);
+            // Backwards in the line (its outlet toward the generator): a plain conduit, it filters nothing but still passes the oil.
+            f.l.setBlock(housingPos, Blocks.AIR.defaultBlockState(), 3);
+            f.l.setBlock(housingPos, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.NORTH), 3);
             var backwards = (TurbineAuxBlockEntity) f.l.getBlockEntity(housingPos);
             backwards.cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()));
-            h.assertTrue(tank.oilFilter() == null && f.gen.aux().oilFed, "a housing put in backwards filters nothing but still passes the oil");
+            h.assertTrue(tank.oilFilter() == null && backwards.tank() == null && f.gen.aux().oilFed, "a housing put in backwards filters nothing but still passes the oil: filter " + tank.oilFilter() + " tank " + backwards.tank() + " fed " + f.gen.aux().oilFed);
+            // The housing on the supply (discharge) run: it passes the oil and filters nothing; it says it is on a supply run.
+            f.l.setBlock(housingPos, OilLineNetworkPipe(f, housingPos), 3);
+            var supplyPos = at(f, 3, 0, 8);
+            f.l.setBlock(supplyPos, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.EAST), 3);
+            var onSupply = (TurbineAuxBlockEntity) f.l.getBlockEntity(supplyPos);
+            onSupply.cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()));
+            h.assertTrue(onSupply.tank() == null && tank.oilFilter() == null && onSupply.onSupplyLine() && f.gen.aux().oilFed, "a housing on the supply run serves no tank, says so, and passes the oil");
+            before = tank.oilLitres();
+            f.tick(f.gen, 600, () -> feed(tank));
+            double supplyLoss = before - tank.oilLitres();
+            h.assertTrue(supplyLoss > bare * 0.9 && onSupply.filterLoad() == 0, "and the loss is the unfiltered rate and the cartridge does not load: " + supplyLoss + " against " + bare);
+            h.assertTrue(SignalProviders.of(onSupply).read("on_supply_line").getAsDouble() == 1 && SignalProviders.of(onSupply).read("attached").getAsDouble() == 0, "the housing's signals say so");
         });
+    }
+
+    private static net.minecraft.world.level.block.state.BlockState OilLineNetworkPipe(TurbineAuxTests.Fx f, BlockPos pos) {
+        return BwrBlocks.LUBE_OIL_PIPE.get().stateWithConnections(f.l, pos);
     }
 
     @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
@@ -564,7 +580,7 @@ public final class OilPipingTests {
             long built = OilLineNetwork.buildCount();
             f.tick(f.gen, 200, () -> feed(tank));
             h.assertTrue(OilLineNetwork.buildCount() == built, "200 ticks with nothing changing build no survey: " + (OilLineNetwork.buildCount() - built));
-            h.assertTrue(OilLineNetwork.cached(f.l, tank.getBlockPos(), Direction.EAST) != null, "the tank's discharge survey is held");
+            h.assertTrue(OilLineNetwork.cached(f.l, tank.getBlockPos(), Direction.WEST) != null, "the tank's return survey is held (the filter housings are read from it)");
             valve(f, valvePos).setOpen(false);
             h.assertTrue(OilLineNetwork.cached(f.l, tank.getBlockPos(), Direction.EAST) == null, "toggling the valve invalidated it");
             f.tick(f.gen, 3, () -> feed(tank));

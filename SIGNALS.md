@@ -693,7 +693,7 @@ Block entity `PowerModuleBlockEntity`; CC peripheral `bwr_hp_turbine / bwr_lp_tu
 | `oil_flow` | Bearing oil flow: the oil delivered to this section over what its speed needs (1.0 is just enough; the AC pump alone at rated speed is 0.70; TURBINE-AUX.md, Bearing oil flow) | fraction | 0 to 1.5 | NUMBER |
 | `oil_flow_good` | Bearing oil flow 100 % or more |  | 0 to 1 | BOOLEAN |
 | `oil_flow_low_alarm`, `oil_flow_very_low_alarm` | Bearing oil flow under 90 % / 70 % or under, while the shaft turns (readings like `oil_pressure_alarm`; nothing trips) |  | 0 to 1 | BOOLEAN |
-| `oil_flow_restricted` | The filter housings in the tank's discharge run hold the pumps back (a fine cartridge passes only 0.6 of a train's rated flow; no signal without a tank) |  | 0 to 1 | BOOLEAN |
+| `oil_flow_restricted` | The filter housings on the tank's return line hold the circulating flow back (a fine cartridge passes only 0.3 of a train's rated flow; no signal without a tank) |  | 0 to 1 | BOOLEAN |
 | `oil_cleanliness` | Lube oil cleanliness, worst tank (a particulate index; 0.2 is the oil the plant has always run; dirtier oil wears, shakes and degrades; no signal without a tank) | fraction | 0 to 1 | NUMBER |
 | `fire` | Turbine fire (TURBINE-MAINTENANCE.md) |  | 0 to 1 | BOOLEAN |
 | `fire_fuel` | Fire fuel left (oil L, hydrogen kg) |  | 0 to 20000 | NUMBER |

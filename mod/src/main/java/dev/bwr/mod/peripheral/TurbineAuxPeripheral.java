@@ -113,6 +113,7 @@ public final class TurbineAuxPeripheral implements IPeripheral {
             case OIL_FILTER -> {
                 var tank = skid.tank();
                 m.put("attached", tank != null);
+                m.put("onSupplyLine", skid.onSupplyLine());
                 filterFields(m, skid);
                 if (tank != null) {
                     m.put("oilCleanliness", tank.cleanliness());

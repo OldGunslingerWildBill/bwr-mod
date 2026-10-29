@@ -629,7 +629,7 @@ public final class GuiScreenCheck {
         s.add(new Scenario("aux-oil-filter-a-in-service-b-used", i -> oilFilterDuplex(i, false, 0.38, 0.9)));
         // the lube oil conditioner (TURBINE-AUX.md): its own screen, running and without power
         // Cartridge grades and the bearing oil flow (TURBINE-AUX.md): a fine element holding the pumps back (very low flow), a coarse one with dirty oil, the tank's flow alarm.
-        s.add(new Scenario("aux-oil-filter-fine-restricted", i -> oilFilterGraded(i, dev.bwr.core.turbine.TurbineAux.GRADE_FINE, dev.bwr.core.turbine.TurbineAux.GRADE_COARSE, 0.6, 0.012, 0.6)));
+        s.add(new Scenario("aux-oil-filter-fine-restricted", i -> oilFilterGraded(i, dev.bwr.core.turbine.TurbineAux.GRADE_FINE, dev.bwr.core.turbine.TurbineAux.GRADE_COARSE, 0.3, 0.012, 0.3)));
         s.add(new Scenario("aux-oil-filter-coarse-dirty-oil", i -> oilFilterGraded(i, dev.bwr.core.turbine.TurbineAux.GRADE_COARSE, dev.bwr.core.turbine.TurbineAux.GRADE_FINE, 1.15, 0.575, 3.0)));
         s.add(new Scenario("aux-oil-tank-flow-low", i -> {
             var m = auxMenu(i, 0, false);
@@ -641,11 +641,11 @@ public final class GuiScreenCheck {
         }));
         s.add(new Scenario("aux-oil-tank-flow-very-low-held-back", i -> {
             var m = auxMenu(i, 0, false);
-            m.oilFlow = 0.6;
+            m.oilFlow = 0.3;
             m.flowLow = true;
             m.flowVeryLow = true;
             m.flowLimited = true;
-            m.filterCap = 0.6;
+            m.filterCap = 0.3;
             m.cleanliness = 0.012;
             m.filterGrade = dev.bwr.core.turbine.TurbineAux.GRADE_FINE;
             return new TurbineAuxScreen(m, i, t("Turbine Main Oil Tank"));
@@ -1388,7 +1388,7 @@ public final class GuiScreenCheck {
         m.flowCap = cap >= 3 ? -1 : cap;
         m.bearingFlow = bearingFlow;
         m.cleanliness = cleanliness;
-        m.flowLimited = cap < bearingFlow || cap <= 0.6;
+        m.flowLimited = cap < bearingFlow || cap <= 0.3;
         m.flowLow = bearingFlow < 0.9;
         m.flowVeryLow = bearingFlow <= 0.7;
         m.oilC = 49.6;

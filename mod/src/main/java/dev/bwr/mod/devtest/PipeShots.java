@@ -63,7 +63,7 @@ public final class PipeShots {
     /** The conditioner in the oil room, piped to the tank's suction outlet and fill connection. */
     private static final BlockPos CONDITIONER = new BlockPos(189, 114, 207);
     /** The lube oil room's tank, in the basement under the hall floor (the floor is y 119, the room y 113 to 118). */
-    private static final BlockPos OIL_TANK = new BlockPos(186, 115, 200), OIL_FILTER = new BlockPos(184, 115, 200), HEADER_VALVE = new BlockPos(187, 117, 197);
+    private static final BlockPos OIL_TANK = new BlockPos(186, 115, 200), OIL_FILTER = new BlockPos(188, 115, 200), HEADER_VALVE = new BlockPos(187, 117, 197);
 
     private record View(String name, Vec3 centre, Vec3 dir, double distance) {}
 
@@ -89,7 +89,7 @@ public final class PipeShots {
             // Lube oil (TURBINE-AUX.md): the basement room under the hall floor, the risers on the train's two flanks, the valve and the filter.
             new View("oil-room", new Vec3(196.0, 115.4, 200.5), new Vec3(0, .1, 1), 15),
             new View("oil-room-tank-and-filter", new Vec3(186.5, 115.8, 200.0), new Vec3(.3, .1, 1), 7),
-            new View("oil-filter-in-line", new Vec3(184.5, 115.5, 200.5), new Vec3(.2, .45, 1), 4.4),
+            new View("oil-filter-in-return-line", new Vec3(188.5, 115.5, 200.5), new Vec3(-.3, .5, 1), 4.4),
             new View("oil-risers-south-flank", new Vec3(199.5, 121.0, 203.5), new Vec3(-.3, .45, 1), 17),
             new View("oil-risers-close", new Vec3(190.5, 120.4, 202.5), new Vec3(-.7, .5, 1), 6),
             new View("oil-valves-open-and-shut", new Vec3(215.0, 120.6, 210.5), new Vec3(0, .5, 1), 6.5),
@@ -102,8 +102,8 @@ public final class PipeShots {
             new View("oil-filter-duplex-both", new Vec3(215.0, 120.6, 214.5), new Vec3(0, .6, 1), 4.2),
             new View("oil-conditioner-piped-to-tank", new Vec3(188.0, 115.4, 203.5), new Vec3(.05, .12, 1), 12.5),
             new View("oil-conditioner-close", new Vec3(189.5, 114.7, 207.5), new Vec3(.2, .05, 1), 3.4),
-            // The staged filter train: a coarse housing and two fine ones in parallel, and the three cartridge grades.
-            new View("oil-filter-train-coarse-and-two-fine", new Vec3(182.6, 115.4, 200.6), new Vec3(.1, .35, 1), 6.0),
+            // The staged filter train: a coarse housing and four fine ones in parallel on the return line, and the three cartridge grades.
+            new View("oil-filter-train-coarse-and-four-fine", new Vec3(189.5, 115.3, 200.5), new Vec3(.45, .4, 1), 8.0),
             new View("oil-filter-cartridge-grades", new Vec3(244.5, 121.0, 198.5), new Vec3(-.3, .5, 1), 4.5),
     };
     private static boolean started, built, requested;
@@ -397,19 +397,19 @@ public final class PipeShots {
         // The holes in the hall floor where the risers go through.
         int[][] holes = {{191, 197}, {200, 196}, {208, 197}, {191, 203}, {200, 204}, {208, 203}};
         for (var h : holes) l.setBlock(new BlockPos(h[0], 119, h[1]), Blocks.AIR.defaultBlockState(), 2);
-        // The tank: discharge on its west face (front), return on its east face (back); the filter housing in-line on the discharge.
+        // The tank: discharge on its west face (front), return on its east face (back); the filters go on the return line (below).
         l.setBlock(OIL_TANK, BwrBlocks.MAIN_OIL_TANK.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.WEST), 3);
         l.setBlock(OIL_FILTER, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.WEST), 3);
-        // Supply: the tank's discharge through the housing and up, then along the header under the train; risers to each section's north flank.
-        line(l, oil(), new BlockPos(185, 115, 200), new BlockPos(185, 115, 200));
-        // After the housing: a junction at x 183, two fine housings in parallel (x 182, z 200 and 201), the junction at x 181 and up to the header.
-        path(l, oil(), new BlockPos(183, 115, 201), new BlockPos(183, 115, 200));
-        path(l, oil(), new BlockPos(181, 115, 201), new BlockPos(181, 115, 200), new BlockPos(181, 117, 200), new BlockPos(181, 117, 197), new BlockPos(208, 117, 197));
+        // Supply: the tank's discharge up, then along the header under the train; risers to each section's north flank.
+        path(l, oil(), new BlockPos(185, 115, 200), new BlockPos(183, 115, 200), new BlockPos(183, 117, 200), new BlockPos(183, 117, 197), new BlockPos(208, 117, 197));
         path(l, oil(), new BlockPos(191, 120, 197), new BlockPos(191, 117, 197));
         path(l, oil(), new BlockPos(208, 120, 197), new BlockPos(208, 117, 197));
         path(l, oil(), new BlockPos(200, 120, 196), new BlockPos(200, 117, 196), new BlockPos(200, 117, 197));
-        // Drain: each section's south flank down to the header, back along it to the tank's return.
-        path(l, oil(), new BlockPos(187, 115, 200), new BlockPos(187, 115, 203), new BlockPos(208, 115, 203));
+        // Drain: each section's south flank down to the header, back along it to the tank's return, through the filter train: a coarse housing
+        // by the tank (x 188), then four fine housings in parallel (x 190, z 198 to 202 but 200) between the junction columns at x 189 and x 191.
+        line(l, oil(), new BlockPos(187, 115, 200), new BlockPos(187, 115, 200));
+        path(l, oil(), new BlockPos(189, 115, 198), new BlockPos(189, 115, 202));
+        path(l, oil(), new BlockPos(191, 115, 198), new BlockPos(191, 115, 203), new BlockPos(208, 115, 203));
         path(l, oil(), new BlockPos(191, 120, 203), new BlockPos(191, 115, 203));
         path(l, oil(), new BlockPos(208, 120, 203), new BlockPos(208, 115, 203));
         path(l, oil(), new BlockPos(200, 120, 204), new BlockPos(200, 115, 204), new BlockPos(200, 115, 203));
@@ -419,21 +419,22 @@ public final class PipeShots {
         // The pipes that were laid before their neighbours were there get their arms resolved again.
         for (var p : BlockPos.betweenClosed(180, 113, 192, 214, 121, 206))
             if (l.getBlockState(p).is(oil())) l.setBlock(p, state(oil(), l, p), 3);
-        // The staged filter train in the tank's discharge line: a coarse housing first, then two fine ones in parallel (B is open for a change on each).
+        // The staged filter train on the tank's return line: a coarse housing first, then four fine ones in parallel.
         ((TurbineAuxBlockEntity) l.getBlockEntity(OIL_FILTER)).cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE_COARSE.get()));
-        for (var fine : new BlockPos[] {new BlockPos(182, 115, 200), new BlockPos(182, 115, 201)}) {
+        for (int z : new int[] {198, 199, 201, 202}) {
+            var fine = new BlockPos(190, 115, z);
             l.setBlock(fine, BwrBlocks.OIL_FILTER_HOUSING.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.WEST), 3);
             ((TurbineAuxBlockEntity) l.getBlockEntity(fine)).cartridgeSlot().setStackInSlot(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE_FINE.get()));
         }
         for (var p : BlockPos.betweenClosed(180, 113, 192, 214, 121, 206))
             if (l.getBlockState(p).is(oil())) l.setBlock(p, state(oil(), l, p), 3);
         var stagedTank = (TurbineAuxBlockEntity) l.getBlockEntity(OIL_TANK);
-        var graph = dev.bwr.mod.piping.OilLineNetwork.filterGraph(l, OIL_TANK, Direction.WEST);
-        if (graph.edges.size() != 3 || graph.sinks.isEmpty())
-            throw new IllegalStateException("The oil room's filter train is not a coarse housing and two fine ones in parallel: " + graph.edges.size() + " housings, " + graph.sinks.size() + " supplies");
+        var graph = dev.bwr.mod.piping.OilLineNetwork.filterGraph(l, OIL_TANK, Direction.EAST);
+        if (graph.edges.size() != 5 || graph.sources.isEmpty())
+            throw new IllegalStateException("The oil room's filter train is not a coarse housing and four fine ones in parallel: " + graph.edges.size() + " housings, " + graph.sources.size() + " drains");
         var staged = stagedTank.filterTrain();
-        if (staged == null || staged.housings().size() != 3 || Math.abs(staged.flow().capacity() - 1.2) > 1e-9)
-            throw new IllegalStateException("The oil room's filter train should pass 1.2 of a train's rated flow (two fine in parallel): " + (staged == null ? "none" : staged.flow().capacity()));
+        if (staged == null || staged.housings().size() != 5 || Math.abs(staged.flow().capacity() - 1.2) > 1e-9)
+            throw new IllegalStateException("The oil room's filter train should pass 1.2 of a train's rated flow (four fine in parallel): " + (staged == null ? "none" : staged.flow().capacity()));
         // The conditioner, piped to the tank: oil from its suction outlet to the conditioner's inlet, cleaned oil from its outlet to the tank's fill connection.
         l.setBlock(CONDITIONER, BwrBlocks.LUBE_OIL_CONDITIONER.get().defaultBlockState().setValue(TurbineAuxBlock.FACING, Direction.EAST), 3);
         path(l, oil(), new BlockPos(186, 114, 200), new BlockPos(186, 114, 207), new BlockPos(188, 114, 207));
@@ -475,6 +476,7 @@ public final class PipeShots {
         requireJoined(l, new BlockPos(185, 115, 200), Direction.EAST);
         requireJoined(l, new BlockPos(185, 115, 200), Direction.WEST);
         requireJoined(l, new BlockPos(183, 115, 200), Direction.EAST);
+        requireJoined(l, new BlockPos(184, 115, 200), Direction.WEST);
         requireJoined(l, new BlockPos(187, 115, 200), Direction.WEST);
         requireJoined(l, HEADER_VALVE.west(), Direction.EAST);
         requireJoined(l, HEADER_VALVE.east(), Direction.WEST);

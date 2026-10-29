@@ -257,16 +257,17 @@ public class TurbineAuxBlock extends BaseEntityBlock {
     @Override protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                                          InteractionHand hand, BlockHitResult hit) {
         if (kind == Kind.OIL_FILTER && OilFilterCartridgeItem.isCartridge(stack)) {
-            // A cartridge in hand goes straight into an empty slot; with one in already the screen is how it is changed.
+            // A cartridge in hand goes into the side out of service when that is empty (the canister in service is under pressure and is never
+            // opened, even when it holds nothing); with that one full the screen is how it is changed.
             if (level.isClientSide()) return ItemInteractionResult.SUCCESS;
             if (!(level.getBlockEntity(pos) instanceof TurbineAuxBlockEntity be)) return ItemInteractionResult.FAIL;
-            if (be.hasCartridge()) {
-                player.displayClientMessage(BwrText.tr("status.bwr.turbine_aux.filter_in", "There is a cartridge in the housing already. Open it to change it."), true);
+            int off = 1 - be.sideInService();
+            if (be.hasCartridge(off)) {
+                player.displayClientMessage(BwrText.tr("status.bwr.turbine_aux.filter_in", "The side out of service holds a cartridge already. Open the housing to change it."), true);
                 return ItemInteractionResult.CONSUME;
             }
             var one = stack.copyWithCount(1);
-            // Into the side in service when it is empty (the housing was running on its bypass); the side out of service is filled from the screen or a hopper.
-            be.cartridgeSlot().insertItem(be.sideBInService() ? 1 : 0, one, false);
+            be.cartridgeSlot().insertItem(off, one, false);
             if (!player.getAbilities().instabuild) stack.shrink(1);
             level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 0.8F, 0.8F);
             return ItemInteractionResult.CONSUME;

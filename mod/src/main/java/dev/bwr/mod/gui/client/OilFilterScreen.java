@@ -83,12 +83,12 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
                         .tip("Open when the side in service has an empty slot or a full cartridge: the oil goes round the element."),
                 Layout.row("Element", this::element)
                         .status(() -> menu.cartridge && menu.flowLimited ? Status.CAUTION : Status.NONE)
-                        .tip("The grade of the cartridge in service and the flow it passes, as a share of what a whole train's bearings need at rated speed. A fine element passes 60 percent clean and less as it loads: one fine housing alone starves a train, two side by side do not. A coarse element passes more than every pump together."),
+                        .tip("The grade of the cartridge in service and the flow it passes, as a share of what a whole train's bearings need at rated speed. A fine element passes 30 percent clean and less as it loads: one fine housing alone starves a train, it takes four side by side. A coarse element passes more than every pump together."),
                 Layout.row("Bearing flow", () -> Double.isNaN(menu.bearingFlow) ? "-" : pct(menu.bearingFlow) + " %")
                         .status(() -> menu.flowVeryLow ? Status.ALARM : menu.flowLow ? Status.CAUTION : Status.NONE)
                         .tip("The oil delivered to the bearings of the train this tank serves, over what the speed needs. Under 90 % is a low-flow alarm (amber), 70 % or under a very-low one (red)."),
                 Layout.row("Oil loss", () -> pct(menu.factor), "%")
-                        .tip("The share of the tank's unfiltered oil loss that gets through: 10 % with a cartridge in service, 100 % (the old rate) with the side in service empty or full."),
+                        .tip("The share of the tank's unfiltered oil loss that gets through: 10 % with a standard cartridge in service, 20 % coarse, 3 % fine, 100 % (the old rate) with the side in service empty or full."),
                 Layout.row("Time left", this::hours)
                         .tip("The cartridge in service, at today's header pressure and oil temperature. Hot oil loads it faster."),
                 Layout.row("Standby", () -> side(!menu.sideB) + ": " + otherSide())
@@ -99,7 +99,9 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
                         .status(() -> !Double.isNaN(menu.cleanliness) && menu.cleanliness > 0.4 ? Status.CAUTION : Status.NONE)
                         .tip("The particles in the tank's oil; 20 % is the oil the plant has always run. Dirtier oil wears the bearings, shakes the shaft and degrades faster.")).compact();
 
-        var tank = Layout.note(() -> menu.attached ? "Serves a Main Oil Tank." : "Not on a Main Oil Tank: it filters nothing.").body()
+        var tank = Layout.note(() -> menu.attached ? "On a Main Oil Tank's return line." : menu.supplyLine
+                ? "Not on a return line: on a supply run it passes oil and filters nothing. Filters go between the bearing drains and the tank."
+                : "Not on a return line or a tank: it filters nothing.").body()
                 .status(() -> menu.attached ? Status.NONE : Status.CAUTION);
         return Layout.column(BwrStyle.SP2,
                 Layout.note("There is no oil filter here.").body().status(() -> Status.ALARM).showIf(() -> !menu.present),
@@ -196,7 +198,7 @@ public class OilFilterScreen extends BwrScreen<OilFilterMenu> {
         public List<Component> tooltipAt(int mouseX, int mouseY) {
             return contains(mouseX, mouseY)
                     ? List.of(Component.literal("Side A and side B, one Oil Filter Cartridge each. The cartridge in service cannot be taken out: throw the transfer valve first, "
-                            + "then change the other side. Put one in by hand, shift-click, or from a hopper or pipe into an empty slot. Taking one out gives back a used one that remembers how full it is."))
+                            + "then change the other side. Put one in by hand, shift-click, or from a hopper into the empty side out of service (the canister in service is never opened, even empty). Taking one out gives back a used one that remembers how full it is."))
                     : List.of();
         }
 

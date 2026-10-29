@@ -121,9 +121,22 @@ public final class TurbineAux {
         return load >= 1;
     }
 
-    /** The share of the unfiltered loss that remains: a tenth with a cartridge in service, all of it with none or with the bypass open. */
+    /** The share of the unfiltered loss that remains: a tenth with a (standard) cartridge in service, all of it with none or with the bypass open. */
     public static double filterFactor(boolean cartridge, double load) {
         return cartridge && !filterBypassOpen(load) ? OIL_FILTER_FACTOR : 1;
+    }
+
+    /**
+     * The share of the unfiltered loss that remains with a clean cartridge of a grade in service, by grade: <b>coarse 0.2</b> (a mesh that
+     * catches the big debris and little else, so it extends the oil's life five-fold), <b>standard 0.1</b> (the cartridge as it always
+     * was), <b>fine 0.03</b> (a 3 micrometre element takes out what oxidises and wears the oil, so a filtered charge lasts about 8.6 days
+     * of running with the fine element alone, as long as a standard cartridge and a conditioner together).
+     */
+    public static final double[] OIL_FILTER_FACTORS = {0.2, OIL_FILTER_FACTOR, 0.03};
+
+    /** The share of the unfiltered loss that remains with a cartridge of a grade in service: {@link #filterFactor(boolean, double)} for the standard grade, to the bit. */
+    public static double filterFactor(boolean cartridge, double load, int grade) {
+        return cartridge && !filterBypassOpen(load) ? OIL_FILTER_FACTORS[clampGrade(grade)] : 1;
     }
 
     /** The cartridge's new load after dt seconds: it fills with the pressure the pumps hold and faster with hot oil, as the oil's loss does. */
@@ -196,11 +209,11 @@ public final class TurbineAux {
     public static final double[] LIFE_FACTOR = {2.5, 1.0, 0.7};
     /**
      * The flow a clean element passes, in units of the flow the bearings need at rated speed (1.0 is a whole train's rated need): a coarse
-     * element passes more than any train asks for, a standard one is not limiting (as it never was), a fine one passes 0.6, so <b>one fine
-     * housing cannot feed a whole train</b> at rated speed and two in parallel (1.2) can. It falls as the element loads
+     * element passes more than any train asks for, a standard one is not limiting (as it never was), a fine one passes 0.3, so <b>one fine
+     * housing cannot feed a whole train</b> at rated speed and it takes four side by side (1.2) to pass what the pumps deliver. It falls as the element loads
      * ({@link #filterFlowCapacity}); a full element's bypass opens and passes everything, unfiltered.
      */
-    public static final double[] FLOW_CAPACITY = {3.0, Double.POSITIVE_INFINITY, 0.6};
+    public static final double[] FLOW_CAPACITY = {3.0, Double.POSITIVE_INFINITY, 0.3};
     /** The share of its clean capacity an element still passes when it is just short of full. */
     public static final double CAPACITY_AT_FULL = 0.25;
 

@@ -231,7 +231,7 @@ public final class OilConditioningTests {
     }
 
     @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 200)
-    public static void hoppersFillAnEmptySlotOnEitherSideAndTakeNothingOut(GameTestHelper h) {
+    public static void hoppersFillTheEmptySideOutOfServiceAndTakeNothingOut(GameTestHelper h) {
         run(h, 86400, f -> {
             var tank = train(f, 10_000);
             var housing = housing(f, tank);
@@ -239,10 +239,44 @@ public final class OilConditioningTests {
             h.assertTrue(pipe != null && pipe.getSlots() == 2, "two slots, A and B, for a hopper or a pipe");
             h.assertTrue(pipe.insertItem(1, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()), false).isEmpty() && housing.hasCartridge(1), "an empty slot takes a cartridge: B, out of service");
             h.assertTrue(pipe.insertItem(1, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()), false).getCount() == 1, "a full one does not");
-            h.assertTrue(pipe.insertItem(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()), false).isEmpty() && housing.hasCartridge(0), "an empty slot in service takes one too (it was on its bypass)");
+            h.assertTrue(!pipe.insertItem(0, new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get()), false).isEmpty() && !housing.hasCartridge(0) && !pipe.isItemValid(0, cartridge(0)),
+                    "an empty slot in service refuses one too: the canister in service is never opened");
+            housing.cartridgeSlot().setStackInSlot(0, cartridge(0));
             h.assertTrue(pipe.extractItem(0, 1, false).isEmpty() && pipe.extractItem(1, 1, false).isEmpty() && housing.hasCartridge(0) && housing.hasCartridge(1),
                     "and nothing is taken out of either side");
             h.assertTrue(!pipe.isItemValid(0, new ItemStack(BwrItems.TURBINE_OIL_DRUM.get())), "only a cartridge fits");
+        });
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwroil", batch = "oilbatch", timeoutTicks = 300)
+    public static void theSideInServiceIsNeverOpenedByHandScreenOrHopperEvenWhenEmpty(GameTestHelper h) {
+        run(h, 86450, f -> {
+            var tank = train(f, 10_000);
+            var housing = housing(f, tank);
+            var player = h.makeMockPlayer(GameType.SURVIVAL);
+            var menu = new OilFilterMenu(7, player.getInventory(), housing.getBlockPos());
+            h.assertTrue(!housing.hasCartridge(0) && !housing.hasCartridge(1), "both sides empty, A in service");
+            h.assertTrue(!menu.getSlot(0).mayPlace(cartridge(0)) && menu.getSlot(1).mayPlace(cartridge(0)), "the screen's slot in service takes nothing, the one out of service does");
+            player.getInventory().setItem(9, cartridge(0));
+            int index = 2;
+            h.assertTrue(!menu.quickMoveStack(player, index).isEmpty() && housing.hasCartridge(1) && !housing.hasCartridge(0), "shift-click puts it in the side out of service, never the one in service");
+            player.getInventory().setItem(10, cartridge(0));
+            h.assertTrue(menu.quickMoveStack(player, 3).isEmpty() && !housing.hasCartridge(0), "with that one full, shift-click leaves the one in service empty and moves nothing");
+            var pipe = f.l.getCapability(Capabilities.ItemHandler.BLOCK, housing.getBlockPos(), Direction.UP);
+            h.assertTrue(!pipe.insertItem(0, cartridge(0), false).isEmpty() && pipe.insertItem(0, cartridge(0), true).getCount() == 1, "a hopper cannot fill the empty side in service, even simulated");
+            // Thrown over, the roles swap: A is out of service and open, B (full) is in service and shut.
+            housing.selectSide(true);
+            h.assertTrue(pipe.insertItem(0, cartridge(0), false).isEmpty() && housing.hasCartridge(0) && !menu.getSlot(1).mayPlace(cartridge(0)), "thrown to B, A takes one and B takes none");
+            // By hand: a cartridge goes into the side out of service; with it full the housing says so and keeps it in hand.
+            var stack = new ItemStack(BwrItems.OIL_FILTER_CARTRIDGE.get(), 2);
+            var hit = new BlockHitResult(Vec3.atCenterOf(housing.getBlockPos()), Direction.UP, housing.getBlockPos(), false);
+            housing.getBlockState().useItemOn(stack, f.l, player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+            h.assertTrue(stack.getCount() == 2, "with the side out of service full a cartridge in hand is not taken");
+            housing.cartridgeSlot().setStackInSlot(0, ItemStack.EMPTY);
+            housing.selectSide(false);
+            housing.cartridgeSlot().setStackInSlot(1, ItemStack.EMPTY);
+            housing.getBlockState().useItemOn(stack, f.l, player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+            h.assertTrue(stack.getCount() == 1 && housing.hasCartridge(1) && !housing.hasCartridge(0), "and with both empty it goes into the side out of service");
         });
     }
 

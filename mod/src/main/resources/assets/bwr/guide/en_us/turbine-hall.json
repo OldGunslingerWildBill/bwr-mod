@@ -106,11 +106,11 @@
     {
       "title": "Oil filter and conditioner",
       "text": [
-        "The Oil Filter Housing is a duplex filter: sides A and B, one cartridge each; the A/B switch on its screen changes the other side while the plant runs. A clean standard cartridge cuts a pumped tank's 0.9 L/s oil loss to a tenth.",
+        "The Oil Filter Housing goes on the tank's return line, between the bearing drains and the tank. It is duplex: sides A and B, one cartridge each; the A/B switch on its screen changes the other side while the plant runs. A clean standard one cuts the oil loss to a tenth.",
         "",
-        "Coarse cartridges (green band) pass plenty of oil but let fine dirt through; fine ones (blue) pass only 60 % of a train's oil: put coarse ahead of fine, and fine ones side by side. Bearing oil flow under 90 % is a low-flow alarm.",
+        "Coarse cartridges (green band) pass plenty of oil but let fine dirt through; fine ones (blue) cut the loss to 3 % but pass only 30 % of a train's oil: put coarse ahead of fine, and four fine ones side by side. Oil flow under 90 % alarms.",
         "",
-        "A Lube Oil Conditioner cuts the degradation to 30 %: with both, 20,000 L lasts about 8.5 days."
+        "A Lube Oil Conditioner cuts the degradation to 30 %: with both, 20,000 L lasts 8.5 days."
       ],
       "icons": [
         "bwr:oil_filter_housing",

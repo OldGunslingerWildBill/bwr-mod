@@ -71,7 +71,7 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     private double cleanliness = TurbineAux.CLEANLINESS_DEFAULT;
     private FilterTrain train;
     private boolean flowLimited;
-    private double filterCapacity = Double.POSITIVE_INFINITY, trainLarge = 1, trainFine = 1;
+    private double filterCapacity = Double.POSITIVE_INFINITY, trainLarge = 1, trainFine = 1, lossFactor = 1;
 
     /** The Lube Oil Conditioner (null stuff on the other kinds): the start switch and what the last step found. */
     private boolean condOn, condRan;
@@ -139,6 +139,10 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     public double filterCapacity() { return filterCapacity; }
     /** Whether the housings held the pumps back this tick (their flow capacity is under what the pumps would deliver). */
     public boolean flowLimited() { return flowLimited; }
+    /** The train found the return line unable to pass the circulating flow of the pumps: it is backed up. */
+    void markFlowLimited() { flowLimited = true; }
+    /** The share of the oil's unfiltered loss that the filters on the return line left this tick (1 with none filtering). */
+    public double lossFactor() { return lossFactor; }
     /** What the housings let through of the large and the fine particles this tick. */
     public double trainLargePass() { return trainLarge; }
     public double trainFinePass() { return trainFine; }
@@ -205,19 +209,19 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
 
     private IItemHandler automation;
     /**
-     * What a hopper or a pipe sees: the two slots, A and B. It may put a cartridge into an <b>empty</b> slot, on either side (an empty
-     * slot in service is running on its bypass, an empty one out of service is waiting to be filled), and can take nothing out, so
-     * nothing pulls a cartridge in service or out of it.
+     * What a hopper or a pipe sees: the two slots, A and B. It may put a cartridge into the <b>empty</b> slot of the side <b>out of service</b>
+     * (the canister in service is under pressure: it is never opened, even when it is empty and running on its bypass) and can take nothing
+     * out, so nothing pulls a cartridge in service or out of it.
      */
     public IItemHandler cartridgeAutomation() {
         if (slot == null) return null;
         if (automation == null) automation = new IItemHandler() {
             public int getSlots() { return 2; }
             public ItemStack getStackInSlot(int i) { return slot.getStackInSlot(i); }
-            public ItemStack insertItem(int i, ItemStack s, boolean simulate) { return slot.getStackInSlot(i).isEmpty() ? slot.insertItem(i, s, simulate) : s; }
+            public ItemStack insertItem(int i, ItemStack s, boolean simulate) { return i != sideInService() && slot.getStackInSlot(i).isEmpty() ? slot.insertItem(i, s, simulate) : s; }
             public ItemStack extractItem(int i, int amount, boolean simulate) { return ItemStack.EMPTY; }
             public int getSlotLimit(int i) { return 1; }
-            public boolean isItemValid(int i, ItemStack s) { return slot.isItemValid(i, s); }
+            public boolean isItemValid(int i, ItemStack s) { return i != sideInService() && slot.isItemValid(i, s); }
         };
         return automation;
     }
@@ -287,7 +291,7 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     OilLineNetwork.Stage stage() {
         if (filterFactor() >= 1) return OilLineNetwork.Stage.OPEN;
         int g = grade();
-        return new OilLineNetwork.Stage(true, flowCapacity(), TurbineAux.passLarge(g), TurbineAux.passFine(g));
+        return new OilLineNetwork.Stage(true, flowCapacity(), TurbineAux.passLarge(g), TurbineAux.passFine(g), TurbineAux.filterFactor(true, filterLoad(), g));
     }
     /** How full the cartridge in service is, 0 to 1 (0 with none in). */
     public double filterLoad() { return filterLoad(sideInService()); }
@@ -300,7 +304,7 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     /** Whether a change of the side in service is due: a pressure drop at the change level, or oil going round. */
     public boolean filterChangeDue() { return filterChangeDue(sideInService()); }
     /** The share of the unfiltered oil loss that this housing lets through right now (only the side in service filters). */
-    public double filterFactor() { return TurbineAux.filterFactor(hasCartridge(), filterLoad()); }
+    public double filterFactor() { return TurbineAux.filterFactor(hasCartridge(), filterLoad(), grade()); }
 
     /** Hours the cartridge in service has left at the header pressure and oil temperature the tank holds now; infinite when nothing flows through it. */
     public double filterHoursLeft() {
@@ -312,10 +316,10 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     /**
      * <b>The one place that decides which Main Oil Tank a housing serves</b> (and {@link #oilFilter} is the one place a tank finds its
      * housing; everything else asks one of these two). In order: the tank bolted on its {@link TurbineAuxBlock#oilInFace inlet face} (the
-     * back); else the tank whose discharge the Lube Oil Pipe run from the inlet face leads back to (the housing is in-line in that tank's
-     * discharge line; the first tank the run joins, in the order the survey finds them); else the first tank against any other face in
-     * the order of {@link Direction#values()} (the old bolted-on rule, so a housing mounted against a tank by its side still works).
-     * The outlet face ({@link TurbineAuxBlock#oilOutFace}) is where the oil leaves toward the turbine train. Never loads a chunk.
+     * back); else the tank whose <b>return</b> port the Lube Oil Pipe run from the housing's outlet face leads to (the housing is on that
+     * tank's return line, between the bearing drains and the tank; the first tank the run joins, in the order the survey finds them); else the
+     * first tank against any other face in the order of {@link Direction#values()} (the old bolted-on rule). A housing on a supply run,
+     * or put in backwards, serves no tank: it passes oil and filters nothing. Never loads a chunk.
      */
     public TurbineAuxBlockEntity tank() {
         if (kind() == TurbineAuxBlock.Kind.CONDITIONER) return conditionerTank();
@@ -323,8 +327,8 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         var block = (TurbineAuxBlock) getBlockState().getBlock();
         var inlet = worldPosition.relative(block.oilInFace(getBlockState()));
         if (TurbineAuxBlock.tankAt(level, inlet) && LoadedWorld.blockEntity(level, inlet) instanceof TurbineAuxBlockEntity t && !t.isRemoved()) return t;
-        for (var e : OilLineNetwork.survey(level, worldPosition, block.oilInFace(getBlockState())).topo) {
-            if (e.role() == OilLineNetwork.Role.TANK_DISCHARGE && LoadedWorld.blockEntity(level, e.pos()) instanceof TurbineAuxBlockEntity t && !t.isRemoved()) return t;
+        for (var e : OilLineNetwork.survey(level, worldPosition, block.oilOutFace(getBlockState())).topo) {
+            if (e.role() == OilLineNetwork.Role.TANK_RETURN && LoadedWorld.blockEntity(level, e.pos()) instanceof TurbineAuxBlockEntity t && !t.isRemoved()) return t;
         }
         for (Direction d : Direction.values()) {
             var p = worldPosition.relative(d);
@@ -334,9 +338,22 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
     }
 
     /**
+     * Whether this housing is on a <b>supply</b> run (its pipes lead to a pump's discharge or a bearing supply) and not on a tank's return
+     * line: it passes the oil and filters nothing. For the housing's screen ("not on a return line") and its signal.
+     */
+    public boolean onSupplyLine() {
+        if (slot == null || level == null || tank() != null) return false;
+        var block = (TurbineAuxBlock) getBlockState().getBlock();
+        for (var face : new Direction[] {block.oilInFace(getBlockState()), block.oilOutFace(getBlockState())})
+            for (var e : OilLineNetwork.survey(level, worldPosition, face).topo)
+                if (e.role() == OilLineNetwork.Role.TANK_DISCHARGE || e.role() == OilLineNetwork.Role.PUMP_DISCHARGE || e.role() == OilLineNetwork.Role.SECTION_SUPPLY) return true;
+        return false;
+    }
+
+    /**
      * The housing this tank is fitted with, or null: first the first of those bolted against it that has this tank as theirs (in the order
-     * of {@link Direction#values()}: direct contact wins), then the first housing in-line in the Lube Oil Pipe run leaving its discharge
-     * port, entered by its inlet face (the nearest one; a second housing further along does not filter).
+     * of {@link Direction#values()}: direct contact wins), then the first housing on the tank's return line, the nearest to the tank
+     * (the Lube Oil Pipe run leaving its return port, a housing entered by its outlet face).
      */
     public TurbineAuxBlockEntity oilFilter() {
         if (kind() != TurbineAuxBlock.Kind.LUBE_OIL || level == null) return null;
@@ -346,20 +363,24 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
             if (s == null || !(s.getBlock() instanceof TurbineAuxBlock b) || b.kind() != TurbineAuxBlock.Kind.OIL_FILTER) continue;
             if (LoadedWorld.blockEntity(level, p) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && h.tank() == this) return h;
         }
-        for (var p : oilSurvey(OilLineNetwork.Role.TANK_DISCHARGE).filters) {
-            if (LoadedWorld.blockEntity(level, p) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && h.tank() == this) return h;
+        var face = ((TurbineAuxBlock) getBlockState().getBlock()).oilFaceOf(getBlockState(), OilLineNetwork.Role.TANK_RETURN);
+        if (face == null) return null;
+        for (var edge : OilLineNetwork.filterGraph(level, worldPosition, face).edges) {
+            if (LoadedWorld.blockEntity(level, edge.housing()) instanceof TurbineAuxBlockEntity h && !h.isRemoved()) return h;
         }
         return null;
     }
 
-    /** What the filter housings in a tank's discharge run do: who they are and what they let through (see {@link OilLineNetwork#evaluate}). */
+    /** What the filter housings on a tank's return line do: who they are and what they let through (see {@link OilLineNetwork#evaluate}). */
     public record FilterTrain(java.util.List<TurbineAuxBlockEntity> housings, OilLineNetwork.FilterFlow flow) {}
 
     /**
-     * The filter housings in this tank's discharge run, in series and in parallel (staged filtration, TURBINE-AUX.md): a housing bolted on the
-     * tank first, then the housings the Lube Oil Pipe run from the housing's outlet (or from the tank's discharge) joins, as the filter graph of
-     * that run says. A run with no bearing supply on it, or a lone housing, is that one housing: the tank's {@link #oilFilter}. Null on the
-     * other kinds; never loads a chunk.
+     * The filter housings on this tank's <b>return line</b>, in series and in parallel (staged filtration, TURBINE-AUX.md). Every pump's oil
+     * passes the bearings and drains back to the tank, so the return line is where all of it is filtered: the housings in the Lube Oil Pipe run
+     * from the tank's return port to the sections' drains, as the filter graph of that run says, and a housing bolted on the tank counts as the
+     * last stage on its return inlet (the old rule, so bolted setups and old saves behave as they always did). A housing on a supply run is a
+     * pipe. A run with no bearing drain on it, or a lone housing, is that one housing: the tank's {@link #oilFilter}. Null on the other
+     * kinds; never loads a chunk.
      */
     public FilterTrain filterTrain() {
         if (kind() != TurbineAuxBlock.Kind.LUBE_OIL || level == null) return null;
@@ -371,26 +392,19 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
             if (LoadedWorld.blockEntity(level, p) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && h.tank() == this) { bolted = h; break; }
         }
         OilLineNetwork.FilterGraph graph = OilLineNetwork.FilterGraph.NONE;
-        if (bolted != null) {
-            var bs = bolted.getBlockState();
-            graph = OilLineNetwork.filterGraph(level, bolted.worldPosition, ((TurbineAuxBlock) bs.getBlock()).oilOutFace(bs));
-        } else {
-            var face = ((TurbineAuxBlock) getBlockState().getBlock()).oilFaceOf(getBlockState(), OilLineNetwork.Role.TANK_DISCHARGE);
-            if (face != null) graph = OilLineNetwork.filterGraph(level, worldPosition, face);
-        }
+        var face = ((TurbineAuxBlock) getBlockState().getBlock()).oilFaceOf(getBlockState(), OilLineNetwork.Role.TANK_RETURN);
+        if (face != null) graph = OilLineNetwork.filterGraph(level, worldPosition, face);
         java.util.function.Function<BlockPos, OilLineNetwork.Stage> stages = pos ->
                 LoadedWorld.blockEntity(level, pos) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && h.slot != null ? h.stage() : OilLineNetwork.Stage.OPEN;
         var flow = OilLineNetwork.evaluate(graph, stages);
         var housings = new java.util.ArrayList<TurbineAuxBlockEntity>();
-        if (bolted != null) {
-            housings.add(bolted);
-            flow = OilLineNetwork.series(bolted.worldPosition, bolted.stage(), flow);
+        for (var pos : flow.inflow().keySet()) {
+            if (LoadedWorld.blockEntity(level, pos) instanceof TurbineAuxBlockEntity h && !h.isRemoved()) housings.add(h);
         }
-        if (!flow.inflow().isEmpty()) {
-            for (var pos : flow.inflow().keySet()) {
-                if (LoadedWorld.blockEntity(level, pos) instanceof TurbineAuxBlockEntity h && !h.isRemoved() && !housings.contains(h)) housings.add(h);
-            }
-        } else {
+        if (bolted != null && !housings.contains(bolted)) {
+            housings.add(bolted);
+            flow = OilLineNetwork.thenBolted(flow, bolted.worldPosition, bolted.stage());
+        } else if (housings.isEmpty()) {
             var first = oilFilter();
             if (first != null) { housings.add(first); flow = OilLineNetwork.single(first.worldPosition, first.stage()); }
         }
@@ -616,12 +630,12 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         if (acRan) acFe -= AC_PUMP_FE_PER_TICK;
         if (dcRan) dcFe -= DC_PUMP_FE_PER_TICK;
         double raw = ((acRan ? TurbineAux.AC_PUMP_FLOW : 0) + (dcRan ? TurbineAux.DC_PUMP_FLOW : 0)) * TurbineAux.suction(oilL);
-        // The housings in the discharge run pass what their cartridges can (a fine one passes 0.6 of a train's rated flow and less as it loads;
-        // a standard one, a coarse one, a full one, an empty slot and no housing at all do not limit): the pumps deliver no more than that.
+        // The housings on the return line pass what their cartridges can (a fine one 0.3 of a train's rated flow, less as it loads; a standard one,
+        // a coarse one, a full one, an empty slot and no housing do not limit): the train caps the circulating flow at that (TurbineAuxTrain).
         train = filterTrain();
         filterCapacity = train == null ? Double.POSITIVE_INFINITY : train.flow().capacity();
-        flowLimited = filterCapacity < raw;
-        pumpFlow = Math.min(raw, filterCapacity);
+        flowLimited = false;
+        pumpFlow = raw;
         return pumpFlow;
     }
 
@@ -636,19 +650,21 @@ public final class TurbineAuxBlockEntity extends BlockEntity {
         var tr = train != null ? train : filterTrain();
         train = null;
         if (oilL > 0) {
-            // A tank without a housing loses oil exactly as it always did; with one, the best cartridge in the run lets a tenth through (the
-            // standard factor: the grades differ in what they catch and pass, the oil's loss is the same).
+            // A tank without a housing loses oil exactly as it always did; with one, its cartridges leave the share of the loss their grade does.
             double loss;
             if (tr == null || tr.housings().isEmpty()) {
                 loss = TurbineAux.oilLossLitres(headerPsig, oilC, DT);
+                lossFactor = 1;
             } else {
-                double factor = 1;
                 for (var h : tr.housings()) {
                     var in = tr.flow().inflow().get(h.worldPosition);
                     double[] v = in == null ? new double[] {1, 1, 1} : in;
-                    factor = Math.min(factor, h.loadStep(headerPsig, oilC, DT, v[0], v[1], v[2], cleanliness));
+                    h.loadStep(headerPsig, oilC, DT, v[0], v[1], v[2], cleanliness);
                 }
-                loss = TurbineAux.oilLossLitres(headerPsig, oilC, DT, factor);
+                // The share of the loss that remains: each grade has its own (coarse 0.2, standard 0.1, fine 0.03), the best on each way through
+                // the run, the mean over the branches in parallel; 1 with nothing filtering.
+                loss = TurbineAux.oilLossLitres(headerPsig, oilC, DT, tr.flow().lossFactor());
+                lossFactor = tr.flow().lossFactor();
             }
             // Dirty oil degrades faster (nothing extra at its default cleanliness).
             double excess = dirtExcess();

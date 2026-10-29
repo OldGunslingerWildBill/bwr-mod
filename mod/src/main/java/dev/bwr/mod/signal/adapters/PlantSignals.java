@@ -241,7 +241,8 @@ final class PlantSignals {
 
     /** The Oil Filter Housing: readings only; the cartridge is changed by hand. */
     static final Schema<TurbineAuxBlockEntity> OIL_FILTER = new Schema<TurbineAuxBlockEntity>()
-            .bool("attached", "Serves a Main Oil Tank (bolted on it, or in-line in its discharge run)", be -> be.tank() != null)
+            .bool("attached", "Serves a Main Oil Tank (bolted on it, or on its return line)", be -> be.tank() != null)
+            .bool("on_supply_line", "On a supply run: it passes oil and filters nothing (filters belong on the tank's return line)", TurbineAuxBlockEntity::onSupplyLine)
             // The duplex filter (TURBINE-AUX.md): the transfer valve, and each side's cartridge. The readings without a side are the side in service.
             .level("selected_side", "Transfer valve: side in service (0 side A, 1 side B)", "side", 0, 1, TurbineAuxBlockEntity::sideInService)
             .bool("a_cartridge", "Side A holds a cartridge", be -> be.hasCartridge(0))
