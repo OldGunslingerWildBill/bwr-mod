@@ -23,8 +23,6 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-import java.util.Map;
-
 /**
  * Turbine lube oil filtration (TURBINE-AUX.md): the Oil Filter Housing against a Main Oil Tank and the cartridge in its slot. A
  * clean cartridge lets a tenth of the tank's oil loss through, it loads up with use, and when it is full (or the slot is empty) the
@@ -269,26 +267,7 @@ public final class OilFilterTests {
             h.assertTrue(ts.read("filter_housing").getAsDouble() == 1 && Math.abs(ts.read("filter_life").getAsDouble() - 0.2) < 0.001, "and the tank's");
 
             if (!net.neoforged.fml.ModList.get().isLoaded("computercraft")) return;
-            var l = h.getLevel();
-            var face = l.getCapability(dan200.computercraft.api.peripheral.PeripheralCapability.get(), housing.getBlockPos(), Direction.UP);
-            h.assertTrue(face != null && face.getType().equals("bwr_oil_filter"), "the housing has a peripheral");
-            for (Direction d : Direction.values())
-                h.assertTrue(l.getCapability(dan200.computercraft.api.peripheral.PeripheralCapability.get(), housing.getBlockPos(), d) != null, "a computer face on " + d);
-            var st = (Map<?, ?>) PeripheralTestCalls.call(face, "getStatus")[0];
-            for (String k : new String[] {"attached", "filterCartridge", "filterLife", "filterDpPsi", "filterBypass", "filterChangeDue"})
-                h.assertTrue(st.containsKey(k), "the housing status lacks " + k + ": " + st.keySet());
-            h.assertTrue(Boolean.TRUE.equals(st.get("attached")) && Boolean.TRUE.equals(st.get("filterCartridge")) && Boolean.FALSE.equals(st.get("filterBypass"))
-                    && Math.abs(((Number) st.get("filterLife")).doubleValue() - 0.2) < 0.001, "and it reads true: " + st);
-            boolean refused = false;
-            try { PeripheralTestCalls.call(face, "setAcPump", true); } catch (dan200.computercraft.api.lua.LuaException e) { refused = true; }
-            h.assertTrue(refused, "the face is read-only: it has no pump to switch");
-            var oil = l.getCapability(dan200.computercraft.api.peripheral.PeripheralCapability.get(), tank.getBlockPos(), Direction.UP);
-            var ts2 = (Map<?, ?>) PeripheralTestCalls.call(oil, "getStatus")[0];
-            h.assertTrue(Boolean.TRUE.equals(ts2.get("filterHousing")) && ts2.containsKey("filterLife") && ts2.containsKey("filterDpPsi") && ts2.containsKey("filterBypass"),
-                    "the tank's status carries the filter: " + ts2.keySet());
-            l.removeBlock(housing.getBlockPos(), false);
-            var ts3 = (Map<?, ?>) PeripheralTestCalls.call(oil, "getStatus")[0];
-            h.assertTrue(Boolean.FALSE.equals(ts3.get("filterHousing")) && !ts3.containsKey("filterLife"), "without a housing the tank reports none: " + ts3.keySet());
+            OilFilterCcChecks.verify(h, tank, housing);
         });
     }
 
