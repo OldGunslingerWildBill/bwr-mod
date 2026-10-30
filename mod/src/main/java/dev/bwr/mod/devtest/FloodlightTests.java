@@ -151,10 +151,18 @@ public final class FloodlightTests {
             } else if (maxTicks <= 0) {
                 helper.assertTrue(false, "timed out waiting for " + what);
             } else {
+                // A wait for the chunk system takes real time (IO threads): every poll that finds it unready lasts a real tick.
+                FixtureWait.pace(helper.getLevel());
                 waitFor(helper, ready, maxTicks - 5, what, then);
             }
         });
     }
+
+    /** Whether chunk {@code c} is completely loaded right now ({@code getChunkNow}; {@code hasChunk} is true from the ticket on). */
+    private static boolean loadedNow(ServerLevel level, ChunkPos c) {
+        return level.getChunkSource().getChunkNow(c.x, c.z) != null;
+    }
+
 
     // ---- helpers
 
@@ -624,7 +632,7 @@ public final class FloodlightTests {
                     helper.assertTrue(!level.hasChunk(b.x, b.z), "nothing loaded chunk B in the 20 ticks after the cleanup");
                     long restoredBefore = PendingLights.restoredTotal();
                     hold(level, b, true);
-                    waitFor(helper, () -> level.hasChunk(b.x, b.z), 600, "chunk B to load again", () ->
+                    waitFor(helper, () -> loadedNow(level, b), 600, "chunk B to load again", () ->
                     waitFor(helper, () -> !pending.contains(inB.iterator().next()), PendingLights.SWEEP_TICKS + 20, "the queue to run once B loaded", () -> {
                         for (BlockPos p : inB) {
                             helper.assertTrue(level.getBlockState(p).isAir(), "a queued light was removed when B loaded: " + p + " "
@@ -695,7 +703,7 @@ public final class FloodlightTests {
                 }
                 hold(level, a, true);
                 hold(level, b, true);
-                waitFor(helper, () -> level.hasChunk(a.x, a.z) && level.hasChunk(b.x, b.z)
+                waitFor(helper, () -> loadedNow(level, a) && loadedNow(level, b)
                         && level.getBlockEntity(lamp) instanceof BeamLampBlockEntity, 600, "the lamp's chunks to load again", () -> {
                     BeamLampBlockEntity back = (BeamLampBlockEntity) level.getBlockEntity(lamp);
                     helper.assertTrue(back != be, "the lamp is a fresh block entity, loaded from the save");
@@ -740,7 +748,9 @@ public final class FloodlightTests {
                     "a sweep of the queue did not load the chunk");
             helper.assertTrue(pending.contains(far), "the entry still waits");
             hold(level, c, true);
-            waitFor(helper, () -> level.hasChunk(c.x, c.z), 600, "the far chunk to load", () ->
+            // Wait for the chunk itself, not its ticket (hasChunk is true as soon as the ticket arrives): the queue reads only a
+            // chunk that is completely there, and on the first run in a world this one is generated first, in wall-clock time.
+            waitFor(helper, () -> loadedNow(level, c), 600, "the far chunk to load", () ->
                 waitFor(helper, () -> !pending.contains(far), PendingLights.SWEEP_TICKS + 20, "the queue to run", () -> {
                     helper.assertTrue(pending.sizeIn(c) == 0, "the chunk's entries are gone");
                     settle(helper, level, 0, () -> {

@@ -228,10 +228,11 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   bonnet with a bolted flange; its face flanges match the pipe's joint flanges, with the studs lined up with the pipe's machine
   flange. The thin 2 px stubs are gone. The pressure-drop gauge moved beside the outlet. Look only: the four states, the ports and
   the behaviour are unchanged. Pictures in `art/pipe-review/`.
-- **Fix: the floodlights' queue of lights to take back no longer finishes a chunk load on the server thread.** It took a chunk
-  as loaded when the chunk had a ticket (`hasChunk`), which is true as soon as the ticket arrives and while the chunk is still
-  being read, so its read of the cell then waited for the load (the GameTests' sync-load audit caught it). It now reads only a
-  chunk that is completely there and tries again next tick otherwise.
+- **Fix: the floodlights never finish a chunk load on the server thread.** The queue of lights to take back, a lamp's own
+  light list and its redstone check took a chunk as loaded when it had a ticket (`hasChunk`, `isLoaded`, `hasChunksAt`), which
+  is true as soon as the ticket arrives and while the chunk is still being read, so the read that followed waited for the load
+  (the GameTests' sync-load audit caught the queue doing it). They now read only a chunk that is completely there and treat
+  any other as unloaded: the queue tries again next tick, a lamp keeps the cell on its list or queues it, as for an unloaded one.
 
 ## Unreleased: held panel controls are let go when they are removed, and a relaunched player's controls work
 

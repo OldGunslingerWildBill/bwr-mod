@@ -138,9 +138,16 @@ public final class FloodlightAimTests {
             } else if (maxTicks <= 0) {
                 helper.assertTrue(false, "timed out waiting for " + what);
             } else {
+                // A wait for the chunk system takes real time (IO threads): every poll that finds it unready lasts a real tick.
+                FixtureWait.pace(helper.getLevel());
                 waitFor(helper, ready, maxTicks - 5, what, then);
             }
         });
+    }
+
+    /** Whether chunk {@code c} is completely loaded right now ({@code getChunkNow}; {@code hasChunk} is true from the ticket on). */
+    private static boolean loadedNow(ServerLevel level, ChunkPos c) {
+        return level.getChunkSource().getChunkNow(c.x, c.z) != null;
     }
 
     /** Waits until the light engine has nothing left to do (and at least 20 ticks), then runs {@code then}. */
@@ -1147,7 +1154,7 @@ public final class FloodlightAimTests {
                         "the far lights stay on the list while their chunk is out of sight");
                 helper.assertTrue(!level.hasChunk(f.x, f.z) && level.getChunkSource().getChunkNow(f.x, f.z) == null, "and planning did not load F");
                 hold(level, f, true);
-                waitFor(helper, () -> level.hasChunk(f.x, f.z), 1200, "chunk F to load again", () -> {
+                waitFor(helper, () -> loadedNow(level, f), 1200, "chunk F to load again", () -> {
                     be.reconcile();
                     for (BlockPos p : inF) {
                         helper.assertTrue(!level.getBlockState(p).is(Blocks.LIGHT), "with F back and the reach 40, the far light is taken: " + p);
@@ -1182,7 +1189,7 @@ public final class FloodlightAimTests {
                         helper.assertTrue(!level.hasChunk(f.x, f.z) && level.getChunkSource().getChunkNow(f.x, f.z) == null, "switching off did not load F");
                         long restored = PendingLights.restoredTotal();
                         hold(level, f, true);
-                        waitFor(helper, () -> level.hasChunk(f.x, f.z), 1200, "chunk F to load a third time", () ->
+                        waitFor(helper, () -> loadedNow(level, f), 1200, "chunk F to load a third time", () ->
                                 waitFor(helper, () -> !pending.contains(farAgain.iterator().next()), PendingLights.SWEEP_TICKS + 20, "the queue to run", () -> {
                                     for (BlockPos p : farAgain) {
                                         helper.assertTrue(!level.getBlockState(p).is(Blocks.LIGHT), "the queue removed the far light: " + p);

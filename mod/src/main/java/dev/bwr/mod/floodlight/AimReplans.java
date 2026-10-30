@@ -73,7 +73,7 @@ public final class AimReplans {
             for (long key : due) {
                 entry.getValue().remove(key);
                 BlockPos pos = BlockPos.of(key);
-                if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof BeamLampBlockEntity lamp) {
+                if (dev.bwr.mod.world.LoadedWorld.blockEntity(level, pos) instanceof BeamLampBlockEntity lamp) {
                     lamp.reconcile();
                 }
             }

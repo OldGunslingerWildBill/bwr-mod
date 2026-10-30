@@ -2,6 +2,7 @@ package dev.bwr.mod.floodlight;
 
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.world.AssemblyAccess;
+import dev.bwr.mod.world.LoadedWorld;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -231,11 +232,17 @@ public final class BeamLampBlockEntity extends BlockEntity {
 
     /**
      * Whether a redstone signal reaches {@code pos}, or null when that cannot be read without loading a chunk (reading a
-     * signal can look two blocks out: a wire's connections, a powered conductor's neighbours).
+     * signal can look two blocks out: a wire's connections, a powered conductor's neighbours). Every chunk within two
+     * blocks must be completely there ({@code getChunkNow}): {@code hasChunksAt} answers from ticket levels, which say
+     * "loaded" while a chunk is still being read, and the signal read would then finish that load on the server thread.
      */
     public static Boolean powered(ServerLevel level, BlockPos pos) {
-        if (!level.hasChunksAt(pos.getX() - 2, pos.getZ() - 2, pos.getX() + 2, pos.getZ() + 2)) {
-            return null;
+        for (int cx = (pos.getX() - 2) >> 4; cx <= (pos.getX() + 2) >> 4; cx++) {
+            for (int cz = (pos.getZ() - 2) >> 4; cz <= (pos.getZ() + 2) >> 4; cz++) {
+                if (level.getChunkSource().getChunkNow(cx, cz) == null) {
+                    return null;
+                }
+            }
         }
         return level.hasNeighborSignal(pos);
     }
@@ -252,7 +259,7 @@ public final class BeamLampBlockEntity extends BlockEntity {
      * not loaded, or when its power cannot be read without loading a neighbour chunk.
      */
     public void reconcile() {
-        if (!(level instanceof ServerLevel server) || isRemoved() || !server.isLoaded(worldPosition)) {
+        if (!(level instanceof ServerLevel server) || isRemoved() || !LoadedWorld.available(server, worldPosition)) {
             return;
         }
         BlockState state = getBlockState();
@@ -286,7 +293,9 @@ public final class BeamLampBlockEntity extends BlockEntity {
             var entry = it.next();
             long key = entry.getKey();
             BlockPos p = BlockPos.of(key);
-            if (!server.isLoaded(p)) {
+            // Read only a chunk that is completely there: isLoaded is true while a chunk is still being read.
+            BlockState now = LoadedWorld.state(server, p);
+            if (now == null) {
                 if (powered) {
                     // Still lit, but the cell cannot be seen: keep it on the list until its chunk is back.
                     continue;
@@ -296,7 +305,6 @@ public final class BeamLampBlockEntity extends BlockEntity {
                 changed = true;
                 continue;
             }
-            BlockState now = server.getBlockState(p);
             if (!now.is(Blocks.LIGHT)) {
                 // Someone replaced the light (a block placed, a piston, a bucket): it is not ours any more.
                 it.remove();
@@ -335,11 +343,11 @@ public final class BeamLampBlockEntity extends BlockEntity {
         if (level instanceof ServerLevel server) {
             for (var entry : lights.entrySet()) {
                 BlockPos p = BlockPos.of(entry.getKey());
-                if (!server.isLoaded(p)) {
+                BlockState now = LoadedWorld.state(server, p);
+                if (now == null) {
                     PendingLights.get(server).add(p, entry.getValue());
                     continue;
                 }
-                BlockState now = server.getBlockState(p);
                 if (now.is(Blocks.LIGHT)) {
                     restoreLoaded(server, p, now, entry.getValue());
                 }
@@ -363,10 +371,11 @@ public final class BeamLampBlockEntity extends BlockEntity {
      */
     private static int placeCell(ServerLevel server, long key, int lightLevel) {
         BlockPos p = BlockPos.of(key);
-        if (!server.isLoaded(p)) {
+        BlockState now = LoadedWorld.state(server, p);
+        if (now == null) {
             return -1;
         }
-        int kind = XenonBeam.kindOf(server.getBlockState(p));
+        int kind = XenonBeam.kindOf(now);
         if (kind < 0) {
             return -1;
         }
