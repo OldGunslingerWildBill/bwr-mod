@@ -9,6 +9,7 @@ for each set: models/block/pipes/<set>/connection_<mask>.obj/.json (the 64 conne
 (the flange the client adds against a machine), item, and materials.mtl. A set with `ship` writes into the mod's
 assets together with its blockstate and item model; the others (none today) go to
 art/models/pipes/<set>/resources/, laid out as mod/src/main/resources so they can be moved in as they are.
+The turbine_ports set (the turbine train's bearing oil ports, PIPES.md) is only its 24 port models.
 Polygons are written as they come from Blender (quads and triangles), with one flat normal per face.
 Standard library only.
 """
@@ -23,7 +24,8 @@ RES = os.path.join(ROOT, "mod", "src", "main", "resources")
 DIRS = ("down", "up", "north", "south", "west", "east")
 # Which block each shipped set draws.
 BLOCKS = {"water": "high_pressure_water_pipe", "steam": "pressurised_tube", "oil": "lube_oil_pipe"}
-PARTICLE = {"water": "bwr:block/pipes/painted_steel", "steam": "bwr:block/pipes/cladding", "oil": "bwr:block/pipes/painted_steel"}
+PARTICLE = {"water": "bwr:block/pipes/painted_steel", "steam": "bwr:block/pipes/cladding", "oil": "bwr:block/pipes/painted_steel",
+            "turbine_ports": "bwr:block/pipes/painted_steel"}
 OUTPUTS = {}
 
 
@@ -80,7 +82,7 @@ def model(set_name, part):
 def materials(mats):
     lines = []
     for name, m in sorted(mats.items()):
-        lines += ["newmtl " + name, "Kd 1 1 1", "map_Kd " + m["texture"]]
+        lines += ["newmtl " + name, "Kd " + " ".join("%g" % c for c in m.get("color", (1, 1, 1))), "map_Kd " + m["texture"]]
         if m["tint"] >= 0:
             lines.append("neoforge_TintIndex %d" % m["tint"])
         lines.append("")
@@ -100,6 +102,13 @@ def export(set_name):
                 assert all(-1e-6 <= c <= 1 + 1e-6 for c in p[:3]), (set_name, part, p)
         put(os.path.join(folder, part + ".obj"), obj(set_name, part, faces, data["materials"]))
         put(os.path.join(folder, part + ".json"), model(set_name, part))
+    if set_name == "turbine_ports":
+        # The turbine train's bearing oil ports: standalone models the client adds to the sections' port cells
+        # (piping/client/TurbineOilPortModels); no block of their own.
+        print("turbine_ports: %d parts, %s polygons -> %s" % (len(data["parts"]), ", ".join(
+            "%s %d" % (k, len(data["parts"][k + "_supply_west"])) for k in ("hp_turbine", "lp_turbine", "nuclear_generator")),
+            os.path.relpath(folder, ROOT)))
+        return
     # Every connection pattern needs both the tinted paint and plain metal (PumpModelCheck asserts it in game).
     for mask in range(64):
         tints = {data["materials"][f["m"]]["tint"] for f in data["parts"]["connection_%d" % mask]}

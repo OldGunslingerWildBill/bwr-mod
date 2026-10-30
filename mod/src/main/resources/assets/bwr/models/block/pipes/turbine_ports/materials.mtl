@@ -1,0 +1,11 @@
+newmtl oil_in
+Kd 0 0.2784 0.6706
+map_Kd bwr:block/pipes/painted_steel
+
+newmtl oil_out
+Kd 0.4353 0.2902 0.1804
+map_Kd bwr:block/pipes/painted_steel
+
+newmtl steel
+Kd 1 1 1
+map_Kd bwr:block/pipes/flange_steel

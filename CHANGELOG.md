@@ -218,6 +218,11 @@ What a turbine failure leaves behind, how bad it can get, and how it is put righ
   Built in headless Blender from one parameter set per pipe (`art/models/pipes/build_pipes.py`, `tools-export-pipes.py`,
   `tools-make-pipe-textures.py`, labPBR `_s` maps); the parameter set and models for a brown, flanged oil pipe wait in
   `art/models/pipes/oil/`. New client check `-PbwrPipeShots=<label>` (`art/pipe-remodel/`, before and after).
+- **The turbine sections' oil ports are drawn: cobalt blue in, brown out** (TURBINE-AUX.md, PIPES.md). Every HP, LP and generator
+  shows its bearing oil supply port (west flank, floor row, middle) as a cobalt blue flanged nozzle and its drain port (east flank)
+  as a brown one, a blanked flange the size of the Lube Oil Pipe's machine flange; a pipe run to it meets it as a flange pair. The
+  client adds them to exactly the cells and faces the oil network uses (`PowerModuleBlock.oilPortAt`), in every facing and with the
+  hood off. About 100 polygons a section. Look only. Pictures in `art/oil-ports/`.
 - **The duplex Oil Filter Housing's pipework is sized for its canisters** (TURBINE-AUX.md). Its inlet and outlet nozzles are as wide
   as the Lube Oil Pipe and reduce onto a valve chest between the canisters, collared to both; the changeover valve has a proper
   bonnet with a bolted flange; its face flanges match the pipe's joint flanges, with the studs lined up with the pipe's machine

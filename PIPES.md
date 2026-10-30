@@ -86,6 +86,25 @@ Straight runs, which are most of any plant, are open prisms with no faces on the
 seam and nothing hidden is drawn. The only boundary faces are the flanges' outer faces at machines, and those cull against
 full blocks (`automatic_culling`).
 
+## The turbine sections' oil ports
+
+Every HP turbine, LP turbine and generator section shows its two bearing oil ports (TURBINE-AUX.md, Piping): a short stub of Lube
+Oil Pipe bore out of the casing and a blanked flange the size of the pipe's machine flange (4.5/16 across, four studs at 45 degrees),
+painted **cobalt blue** (`#0047AB`) on the supply port (oil in, the section's west flank) and **brown** (`#6F4A2E`) on the drain port
+(oil out, the east flank). On the HP, whose flank there is its foundation plinth, the stub ends in a small terminal box on the plinth.
+
+- **Where:** `piping/client/TurbineOilPortModels` adds the port model to every cell state for which `PowerModuleBlock.oilPortAt`
+  names a port on a face: the same method the oil network uses, so drawing and plumbing cannot drift, and every blockstate of the
+  cell (each facing; the LP and HP with the hood off or burst open, whose floor row stays) gets it. Unassembled (compact) sections
+  have no ports and draw none; the item models show no casing and are unchanged.
+- **With a pipe:** the pipe draws its own steel machine flange against the painted one (PipeJointModels treats the section as a
+  machine), so a connected port reads as one flange pair, steel against blue or brown. Neither is skipped: they sit back to back on
+  the cell boundary and their blind faces hide each other.
+- **Meshes:** the `turbine_ports` set in `art/models/pipes/build_pipes.py` (`TURBINE_PORTS`: the depth from the cell face to the
+  casing, measured from the exported cells; re-measure if a casing is remodelled), 24 models (three sections, supply and drain,
+  four faces), written by `tools-export-pipes.py`. 50 polygons a port on the LP and generator, 55 on the HP (with its box): 100 to
+  110 a section, against the casings' 13,764 (HP), 12,060 (LP) and 4,482 (generator) polygons.
+
 ## The oil pipe
 
 The **Lube Oil Pipe** (`bwr:lube_oil_pipe`) carries turbine lube oil (TURBINE-AUX.md, *Lube oil piping*):

@@ -63,6 +63,8 @@ public final class PipeShots {
     /** The conditioner in the oil room, piped to the tank's suction outlet and fill connection. */
     private static final BlockPos CONDITIONER = new BlockPos(189, 114, 207);
     /** The lube oil room's tank, in the basement under the hall floor (the floor is y 119, the room y 113 to 118). */
+    /** A generator and an LP standing on their own east of the hall, facing east, with no oil piping: blanked ports; the LP's hood lifted. */
+    private static final BlockPos PORT_GEN = new BlockPos(246, 120, 172), PORT_LP = new BlockPos(264, 120, 172);
     private static final BlockPos OIL_TANK = new BlockPos(186, 115, 200), OIL_FILTER = new BlockPos(188, 115, 200), HEADER_VALVE = new BlockPos(187, 117, 197);
 
     private record View(String name, Vec3 centre, Vec3 dir, double distance) {}
@@ -105,6 +107,14 @@ public final class PipeShots {
             // The staged filter train: a coarse housing and four fine ones in parallel on the return line, and the three cartridge grades.
             new View("oil-filter-train-coarse-and-four-fine", new Vec3(189.5, 115.3, 200.5), new Vec3(.45, .4, 1), 8.0),
             new View("oil-filter-cartridge-grades", new Vec3(244.5, 121.0, 198.5), new Vec3(-.3, .5, 1), 4.5),
+            // The sections' bearing oil ports (cobalt blue supply on the west flank, brown drain on the east; the train faces east,
+            // so supply is north and drain south): the train piped from both flanks, a piped and a blanked port close up, and an
+            // LP with its hood lifted beside a generator, neither piped.
+            new View("oil-ports-train-supply-flank", new Vec3(200.0, 120.8, 199.0), new Vec3(-.15, .45, -1), 15),
+            new View("oil-ports-train-drain-flank", new Vec3(200.0, 120.8, 202.0), new Vec3(.1, .55, 1), 9),
+            new View("oil-port-close-piped", new Vec3(191.5, 120.5, 197.6), new Vec3(-.6, .55, -1), 3.2),
+            new View("oil-port-close-blanked", new Vec3(PORT_GEN.getX() + .5, 120.5, PORT_GEN.getZ() - 2.4), new Vec3(-.6, .55, -1), 3.2),
+            new View("oil-ports-lp-hood-lifted", new Vec3(PORT_LP.getX() + .5, 121.5, PORT_LP.getZ() + .5), new Vec3(.55, .65, 1), 13),
     };
     private static boolean started, built, requested;
     private static int age, joined, stage, shown;
@@ -251,6 +261,27 @@ public final class PipeShots {
 
     /** The lube oil fixtures: the flange at a turbine port, none between pipes, brown paint, and the valve's two states on the client. */
     private static void verifyOil(Minecraft mc) {
+        // Each section's oil port cells draw their port: the supply (cobalt blue) and the drain (brown) on the faces the oil network
+        // uses, and nothing on the cell beside them (TurbineOilPortModels).
+        for (var root : new BlockPos[]{PORT_GEN, PORT_LP}) {
+            var rootState = mc.level.getBlockState(root);
+            var section = (dev.bwr.mod.power.PowerModuleBlock) rootState.getBlock();
+            for (boolean supply : new boolean[]{true, false}) {
+                var cell = section.oilCell(root, rootState, supply);
+                var cellState = mc.level.getBlockState(cell);
+                var face = section.oilFace(rootState, supply);
+                var expected = supply ? dev.bwr.mod.piping.OilLineNetwork.Role.SECTION_SUPPLY : dev.bwr.mod.piping.OilLineNetwork.Role.SECTION_DRAIN;
+                if (section.oilPortAt(cellState, face) != expected)
+                    throw new IllegalStateException("No " + expected + " port on " + face + " of " + cell + ": " + cellState);
+                var model = mc.getBlockRenderer().getBlockModel(cellState);
+                if (!(model instanceof dev.bwr.mod.piping.client.TurbineOilPortModels.WithPorts withPorts) || withPorts.ports().size() != 1
+                        || withPorts.ports().get(0) != mc.getModelManager().getModel(dev.bwr.mod.piping.client.TurbineOilPortModels.port(section, supply, face)))
+                    throw new IllegalStateException("The " + expected + " port of " + section + " is not drawn on " + face + " of " + cell + ": " + model);
+                var beside = cell.relative(face.getClockWise());
+                if (mc.getBlockRenderer().getBlockModel(mc.level.getBlockState(beside)) instanceof dev.bwr.mod.piping.client.TurbineOilPortModels.WithPorts)
+                    throw new IllegalStateException("An oil port is drawn on a cell that has none: " + beside);
+            }
+        }
         var hpSupply = new BlockPos(191, 120, 197);
         var state = mc.level.getBlockState(hpSupply);
         if (!state.is(BwrBlocks.LUBE_OIL_PIPE.get())) throw new IllegalStateException("No oil pipe at the HP section's supply port: " + state);
@@ -368,6 +399,10 @@ public final class PipeShots {
         // Lube oil beside the water and steam runs, for the colour and the size of the pipe.
         line(l, oil(), new BlockPos(240, FY, 202), new BlockPos(249, FY, 202));
         oilFixtures(l);
+        for (var p : BlockPos.betweenClosed(236, 119, 162, 274, 119, 182))
+            l.setBlock(p, ((p.getX() >> 2) + (p.getZ() >> 2)) % 2 == 0 ? Blocks.POLISHED_ANDESITE.defaultBlockState() : Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+        PowerModuleRuntimeCheck.place(l, BwrBlocks.NUCLEAR_GENERATOR.get(), PORT_GEN, Direction.EAST);
+        PowerModuleRuntimeCheck.place(l, BwrBlocks.LP_TURBINE.get(), PORT_LP, Direction.EAST).setCoverOff(true);
         // An LPCS pump with its suction and discharge piped.
         var pump = BwrBlocks.LPCS_PUMP.get();
         var state = pump.placementState();

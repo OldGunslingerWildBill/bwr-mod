@@ -427,12 +427,17 @@ model change (`PipeJointModels` draws the flange on the pipe side).
 | | (cooling water flanges) | left and right | unchanged, and never an oil port |
 | **Shaft-Driven Main Oil Pump** | suction | down | needs a pipe to a tank's suction outlet (or, as before, a tank on its own train) |
 | | discharge | up | to the bearing header |
-| **Each turbine and generator section** (HP, LP, generator) | bearing **supply** | the west flank, floor row, middle of the casing | the header ends here |
-| | bearing **drain** | the east flank, floor row, middle of the casing | the return line starts here |
+| **Each turbine and generator section** (HP, LP, generator) | bearing **supply** | the west flank, floor row, middle of the casing: a **cobalt blue** flanged nozzle | the header ends here |
+| | bearing **drain** | the east flank, floor row, middle of the casing: a **brown** flanged nozzle | the return line starts here |
 | **Oil Filter Housing** | inlet / outlet | back / front | in-line on a **return line**, the oil enters by the inlet and leaves toward the tank (the outlet faces the tank); on a supply run it is a pipe |
 | **Lube Oil Valve** | two flanges | on the flow axis | in-line |
 
-"West" and "east" are the section's own, turned with it: the flanks are the two long sides of the casing. They are the flanks and not the
+"West" and "east" are the section's own, turned with it: the flanks are the two long sides of the casing. Each port is drawn on the
+casing as a short stub and a blanked flange the size of the Lube Oil Pipe's machine flange: **cobalt blue (`#0047AB`) for a supply
+(oil in), brown (`#6F4A2E`, the pipe's own colour) for a drain (oil out)**. A pipe run to it draws its own steel flange against it, so
+the joint reads as one flange pair. The client adds these to exactly the cells and faces `PowerModuleBlock.oilPortAt` names, so the
+picture and the plumbing cannot disagree (`piping/client/TurbineOilPortModels`; the meshes are the `turbine_ports` set in
+`art/models/pipes/build_pipes.py`, PIPES.md). They are the flanks and not the
 underside because an LP turbine has its condenser right under it. Pipe goes down from them through the floor to the basement.
 
 ### The flow model

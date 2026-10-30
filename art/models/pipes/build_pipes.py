@@ -59,13 +59,32 @@ PIPE_SETS = {
     'oil': dict(radius=2.5, sides=8, body='paint', joint='flange', joint_len=1, joint_flange_radius=4, cap='steel',
                 port_radius=4.5, port_len=1.5, port_studs=4, elbow_segments=4, ship=True, preview_tint=(0x6F, 0x4A, 0x2E)),
 }
-# Material name: (texture, tint index). The tinted ones take the block colour (service colour or dye).
+# Material name: (texture, tint index[, baked colour]). The tinted ones take the block colour (service colour or dye); a
+# baked colour is written as the material's Kd, for parts drawn on blocks that have no colour handler (the turbine oil ports).
 MATERIALS = {
     'paint': ('bwr:block/pipes/painted_steel', 0),
     'steel': ('bwr:block/pipes/flange_steel', -1),
     'cladding': ('bwr:block/pipes/cladding', -1),
     'band': ('bwr:block/pipes/service_band', 0),
+    'oil_in': ('bwr:block/pipes/painted_steel', -1, (0x00, 0x47, 0xAB)),    # cobalt blue: a bearing oil SUPPLY port
+    'oil_out': ('bwr:block/pipes/painted_steel', -1, (0x6F, 0x4A, 0x2E)),   # lube oil brown: a bearing oil DRAIN port
 }
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The bearing oil ports of the turbine train (TURBINE-AUX.md, Piping). PowerModuleBlock.oilPortAt says which cell and face
+# carry them (the floor row, the middle of each flank: supply west, drain east, turned with the section);
+# piping/client/TurbineOilPortModels adds these meshes to exactly those cells. Each is a blanked nozzle: a short stub of
+# Lube Oil Pipe bore out of the casing and a flange the size of the pipe's machine flange (oil port_radius, port_len, four
+# studs at 45 degrees), the stub and flange painted cobalt blue (supply) or brown (drain), steel nuts. A connected pipe draws
+# its own steel machine flange against it: one flange pair. The flange's outer face is a blind disc (it culls against a
+# full block).
+#   depth   how far the stub runs in from the cell face to reach the casing, measured from the cell models
+#           (tools-export-power-turbines.py output) at the port cells; None: no casing in the cell (the HP's flank
+#           is its foundation plinth there), so the stub ends in a small terminal box standing on the plinth.
+# Re-measure if the casings are remodelled.
+TURBINE_PORTS = {'hp_turbine': None, 'lp_turbine': .32, 'nuclear_generator': .30}
+HORIZONTAL = ('north', 'south', 'west', 'east')
+
 
 DIRS = [('down', (0, -1, 0)), ('up', (0, 1, 0)), ('north', (0, 0, -1)),
         ('south', (0, 0, 1)), ('west', (-1, 0, 0)), ('east', (1, 0, 0))]
@@ -326,7 +345,8 @@ class Builder:
         disc(part, self.ring(p, axis, 0, radius), self.s['cap'], Vector(outward))
 
     # -- machine flange and item --------------------------------------------------------------------------------------
-    def port(self, d):
+    def port(self, d, mat='steel'):
+        """The flange drawn against a machine (mat: its paint; the nuts stay steel)."""
         d = Vector(d)
         ax = axis_of(d)
         part = Part()
@@ -335,9 +355,9 @@ class Builder:
         face = C + d * .5
         back = face - d * thick
         outer_face, outer_back = self.ring(face, ax, 1, rf), self.ring(back, ax, 0, rf)
-        band(part, outer_back, outer_face, 'steel', local_v=True)
-        annulus(part, self.ring(back, ax, 0, self.r * .9), outer_back, 'steel', -d)
-        disc(part, outer_face, 'steel', d)
+        band(part, outer_back, outer_face, mat, local_v=True)
+        annulus(part, self.ring(back, ax, 0, self.r * .9), outer_back, mat, -d)
+        disc(part, outer_face, mat, d)
         # Studs and nuts on the back of the flange, between the pipe and the rim.
         e1, e2 = frame(ax)
         studs = self.s['port_studs']
@@ -376,7 +396,7 @@ def material(set_name, mat):
     if m:
         return m
     m = bpy.data.materials.new(name)
-    texture, tint = MATERIALS[mat]
+    texture, tint = MATERIALS[mat][:2]
     path = os.path.join(HERE, '..', '..', '..', 'mod', 'src', 'main', 'resources', 'assets', 'bwr', 'textures', 'block',
                         texture.split('/', 1)[1] + '.png')
     nodes, links = m.node_tree.nodes, m.node_tree.links
@@ -452,13 +472,67 @@ def snapshot(mesh):
     return out
 
 
+def material_info(m):
+    info = {'texture': MATERIALS[m][0], 'tint': MATERIALS[m][1]}
+    if len(MATERIALS[m]) > 2:
+        info['color'] = [round(c / 255, 4) for c in MATERIALS[m][2]]
+    return info
+
+
+def turbine_port(builder, kind, role, d):
+    """One section's oil port at world face d of its port cell (see TURBINE_PORTS)."""
+    d = Vector(d)
+    ax = axis_of(d)
+    paint = 'oil_in' if role == 'supply' else 'oil_out'
+    part = builder.port(d, mat=paint)
+    thick = builder.s['port_len'] / 16
+    face = C + d * .5
+    depth = TURBINE_PORTS[kind]
+    end = .62 if depth is None else depth
+    a, b = face - d * thick, face - d * end
+    band(part, builder.ring(a, ax, 0), builder.ring(b, ax, 1), paint)
+    disc(part, builder.ring(b, ax, 0), paint, -d)
+    if depth is None:
+        # A terminal box on the plinth where the stub turns down to the bearing header inside the foundation.
+        e1, e2 = frame(ax)
+        up = Vector((0, 1, 0))
+        side = e1 if abs(e1.dot(up)) < .5 else e2
+        box(part, face - d * .77 + up * (.505 - .5), (.15, .18, .2), (d.copy(), up, side), 'steel', skip=(1, -1))
+    return part
+
+
+def build_turbine_ports():
+    """The 24 port meshes (3 sections x supply/drain x 4 horizontal faces) into art/models/pipes/turbine_ports/mesh.json."""
+    builder = Builder('oil', PIPE_SETS['oil'])
+    scene = bpy.data.scenes.new('BWR | turbine oil ports')
+    parts = {}
+    for kind in TURBINE_PORTS:
+        for role in ('supply', 'drain'):
+            for name in HORIZONTAL:
+                parts['%s_%s_%s' % (kind, role, name)] = turbine_port(builder, kind, role, dict(DIRS)[name])
+    data = {'set': 'turbine_ports', 'spec': {'ship': True},
+            'materials': {m: material_info(m) for m in sorted({p[2] for part in parts.values() for p in part.polys})}, 'parts': {}}
+    for i, (name, part) in enumerate(parts.items()):
+        mesh = build_mesh('oil', 'turbine port ' + name, part)
+        obj = bpy.data.objects.new('turbine port ' + name, mesh)
+        obj.location = ((i % 8) * 1.6, -(i // 8) * 1.6, 0)
+        scene.collection.objects.link(obj)
+        data['parts'][name] = snapshot(mesh)
+    out = os.path.join(HERE, 'turbine_ports')
+    os.makedirs(out, exist_ok=True)
+    with open(os.path.join(out, 'mesh.json'), 'w', encoding='utf-8', newline='\n') as fh:
+        json.dump(data, fh, separators=(',', ':'))
+        fh.write('\n')
+    print('PIPES turbine ports: %s' % ', '.join('%s %d' % (k, len(data['parts'][k + '_supply_west'])) for k in TURBINE_PORTS))
+
+
 def build_set(set_name, spec):
     builder = Builder(set_name, spec)
     scene = bpy.data.scenes.new('BWR | pipes ' + set_name)
     parts = {'connection_%d' % m: builder.connection(m) for m in range(64)}
     parts.update({'port_' + name: builder.port(v) for name, v in DIRS})
     parts['item'] = builder.item()
-    data = {'set': set_name, 'spec': spec, 'materials': {m: {'texture': MATERIALS[m][0], 'tint': MATERIALS[m][1]}
+    data = {'set': set_name, 'spec': spec, 'materials': {m: material_info(m)
                                                           for m in sorted({p[2] for part in parts.values() for p in part.polys})},
             'parts': {}}
     for i, (name, part) in enumerate(parts.items()):
@@ -482,6 +556,7 @@ def build_set(set_name, spec):
 def main():
     for name, spec in PIPE_SETS.items():
         build_set(name, spec)
+    build_turbine_ports()
     # A factory-startup session: drop its default cube, light and camera, then save the whole file.
     default = bpy.data.scenes.get('Scene')
     if default is not None:
