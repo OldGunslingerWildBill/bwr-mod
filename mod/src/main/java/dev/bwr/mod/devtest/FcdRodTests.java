@@ -37,7 +37,7 @@ public final class FcdRodTests {
         return provider.read(key).orElse(Double.NaN);
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 200)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 200)
     public static void selectionIsReactorStateThatSavesAndOldSavesLoadWithNone(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 0, 9, 9, run -> {
             SignalProvider rp = provider(run);
@@ -68,7 +68,7 @@ public final class FcdRodTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 200)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 200)
     public static void unformedReactorHasNoSelection(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 1, 9, 9, run -> {
             SignalProvider rp = provider(run);
@@ -85,7 +85,7 @@ public final class FcdRodTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 500)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 500)
     public static void stepsMoveOnlyTheSelectedRodOneNotchAndHonourCrdPower(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 2, 9, 9, run -> {
             SignalProvider rp = provider(run);
@@ -135,7 +135,7 @@ public final class FcdRodTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 700)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 700)
     public static void continuousSteppingStartsOnOneStopsOnZeroAndNeverRunsAway(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 3, 9, 9, run -> {
             SignalProvider rp = provider(run);

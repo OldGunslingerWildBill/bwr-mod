@@ -6,7 +6,7 @@ import net.neoforged.neoforge.gametest.*;
 
 @GameTestHolder("bwr") @PrefixGameTestTemplate(false)
 public final class StartupDetectorLocationTests {
-    @GameTest(template="empty",batch="fcd",timeoutTicks=150)
+    @GameTest(template="empty",batch="fcd",timeoutTicks=FcdTestSupport.WAIT_TICKS+150)
     public static void coreDisplayAndSignalsShareStartupTubeLocations(GameTestHelper h) {
         FcdTestSupport.Run.start(h,175_520,0,15,15,run->{
             var locations=run.be.core().getStartupDetectorLocations();var display=run.be.coreMap().startupDetectors();

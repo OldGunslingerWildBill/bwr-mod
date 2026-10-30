@@ -166,7 +166,7 @@ public final class FcdIndicationTests {
 
     // ---- signals on a real formed core
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 100)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 100)
     public static void rodAndStringCoordinatesFromARealCore(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 0, 15, 15, run -> {
             SignalProvider rp = SignalProviders.of(run.be);
@@ -196,7 +196,7 @@ public final class FcdIndicationTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 100)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 100)
     public static void lprmReadoutsAreTheChambersOfTheCore(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 1, 15, 15, run -> {
             SignalProvider rp = SignalProviders.of(run.be);
@@ -225,7 +225,7 @@ public final class FcdIndicationTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 700)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 700)
     public static void rodFlagsFollowScramAccumulatorAndPosition(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 2, 9, 9, run -> {
             SignalProvider rp = SignalProviders.of(run.be);
@@ -255,7 +255,7 @@ public final class FcdIndicationTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 300)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 300)
     public static void driftIsARodAwayFromItsDemandThatNothingDrives(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 3, 9, 9, run -> {
             SignalProvider rp = SignalProviders.of(run.be);
@@ -274,7 +274,7 @@ public final class FcdIndicationTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 100)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 100)
     public static void unformedReactorReadsNoIndications(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 4, 9, 9, run -> {
             SignalProvider rp = SignalProviders.of(run.be);

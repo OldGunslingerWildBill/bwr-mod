@@ -547,14 +547,19 @@ public final class FloodlightTests {
         }
     }
 
-    /** Stone floor and air in one held chunk, a wall at local x {@code wallX} (or none). */
+    /**
+     * Stone floor and air in one held chunk, a wall at local x {@code wallX} (or none). Written without neighbour shape
+     * updates: a changed block on the chunk's edge would read (and so load) its neighbour in the next chunk, which on the
+     * first run in a world, where every block changes, loads chunks the tests check stay unloaded.
+     */
     private static void buildChunk(ServerLevel level, ChunkPos c, int wallX) {
+        int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 BlockPos floor = new BlockPos(c.getMinBlockX() + x, FLOOR, c.getMinBlockZ() + z);
-                level.setBlock(floor, Blocks.STONE.defaultBlockState(), 2);
+                level.setBlock(floor, Blocks.STONE.defaultBlockState(), flags);
                 for (int dy = 1; dy <= 10; dy++) {
-                    level.setBlock(floor.above(dy), x == wallX ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
+                    level.setBlock(floor.above(dy), x == wallX ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), flags);
                 }
             }
         }

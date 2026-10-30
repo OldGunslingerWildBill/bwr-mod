@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 @GameTestHolder("bwr") @PrefixGameTestTemplate(false)
 public final class RodLatchDriftIntegrationTests {
-    @GameTest(template="empty",batch="fcd",timeoutTicks=150)
+    @GameTest(template="empty",batch="fcd",timeoutTicks=FcdTestSupport.WAIT_TICKS+150)
     public static void passiveDriftSurvivesNetworkRefreshAndReload(GameTestHelper h) {
         FcdTestSupport.Run.start(h,175_680,0,9,9,run->{
             var core=run.be.core();var rods=run.be.rods();

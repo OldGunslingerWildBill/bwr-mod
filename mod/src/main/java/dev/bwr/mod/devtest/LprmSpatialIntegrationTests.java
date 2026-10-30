@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 @GameTestHolder("bwr") @PrefixGameTestTemplate(false)
 public final class LprmSpatialIntegrationTests {
-    @GameTest(template="empty",batch="fcd",timeoutTicks=150)
+    @GameTest(template="empty",batch="fcd",timeoutTicks=FcdTestSupport.WAIT_TICKS+150)
     public static void all39StringsHaveUniqueHardwareAndSave(GameTestHelper h) {
         FcdTestSupport.Run.start(h,175_360,0,15,15,run->{
             var core=run.be.core();var layout=core.getLprmLayout();var map=run.be.coreMap();
@@ -24,7 +24,7 @@ public final class LprmSpatialIntegrationTests {
             saved.remove("lprm");h.assertTrue(ReactorStateNbt.read(saved).lprmState().length==0,"legacy load not supported");
         });
     }
-    @GameTest(template="empty",batch="fcd",timeoutTicks=150)
+    @GameTest(template="empty",batch="fcd",timeoutTicks=FcdTestSupport.WAIT_TICKS+150)
     public static void reloadReconcilesOldDetectorGeometryWithCurrentVessel(GameTestHelper h) {
         FcdTestSupport.Run.start(h,175_360,1,15,15,run->{
             var core=run.be.core();var physical=core.getLprmLayout();

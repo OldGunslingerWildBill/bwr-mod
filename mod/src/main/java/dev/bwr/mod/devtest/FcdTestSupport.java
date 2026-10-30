@@ -24,6 +24,21 @@ final class FcdTestSupport {
     /** Interior height of every fixture reactor. */
     static final int HEIGHT = 8;
 
+    /**
+     * How many paced ticks ({@link FixtureWait#pace}: at least 50 ms each, the game's own rate) a {@link Run} waits for its
+     * chunks to tick block entities before it fails. Every test that uses the fixture adds this to its own timeout.
+     *
+     * <p>The wait is for the chunks' entities: a forced chunk is entity ticking at once, but its entities are read on the
+     * IO threads and handed back to the server thread one chunk at a time, in the order they were asked for. The 'fcd' batch
+     * forces about a thousand chunks within twenty ticks (46 fixtures of up to 25 chunks, besides the test structures), and
+     * a test only starts once its own structure's chunks are ready, so the tests that start last ask last and wait behind
+     * the whole batch: measured 43 to 70 polls for the last group of four on a passing run, nought for the first ones.
+     * The old bound of 80 sat just above that, and the last-started tests ({@code reloadReconcilesOldDetectorGeometryWith-
+     * CurrentVessel} most of all) failed whenever the machine was a little busier. The bound only has to catch a chunk that
+     * never comes, so it is five times the worst seen; a run that reaches it prints what each late chunk is waiting for.
+     */
+    static final int WAIT_TICKS = 400;
+
     /** The south-west-bottom corner of a fixture slot. */
     static BlockPos slot(int origin, int slot) {
         return new BlockPos(origin + slot * 64, 190, origin);
@@ -50,14 +65,37 @@ final class FcdTestSupport {
     static boolean ticking(ServerLevel level, BlockPos min, int width, int depth) {
         for (int x = (min.getX() - 20) >> 4; x <= (min.getX() + width + 20) >> 4; x++) {
             for (int z = (min.getZ() - 20) >> 4; z <= (min.getZ() + depth + 20) >> 4; z++) {
-                LevelChunk chunk = level.getChunkSource().getChunkNow(x, z);
-                if (chunk == null || !chunk.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING)
-                        || !level.areEntitiesLoaded(ChunkPos.asLong(x, z))) {
+                if (!ticking(level, x, z)) {
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    /** Whether block entities tick in chunk {@code x, z} (see {@link #ticking(ServerLevel, BlockPos, int, int)}). Loads nothing. */
+    static boolean ticking(ServerLevel level, int x, int z) {
+        LevelChunk chunk = level.getChunkSource().getChunkNow(x, z);
+        return chunk != null && chunk.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING)
+                && level.areEntitiesLoaded(ChunkPos.asLong(x, z));
+    }
+
+    /** The chunks {@link #ticking} is still waiting for, each with its ticket level, status and whether its entities are in. */
+    static String notTicking(ServerLevel level, BlockPos min, int width, int depth) {
+        StringBuilder out = new StringBuilder();
+        for (int x = (min.getX() - 20) >> 4; x <= (min.getX() + width + 20) >> 4; x++) {
+            for (int z = (min.getZ() - 20) >> 4; z <= (min.getZ() + depth + 20) >> 4; z++) {
+                if (!ticking(level, x, z)) {
+                    LevelChunk chunk = level.getChunkSource().getChunkNow(x, z);
+                    out.append(" [").append(x).append(',').append(z).append(" level ")
+                            .append(level.getChunkSource().chunkMap.getChunkDebugData(new ChunkPos(x, z)).replace('\n', ' ').replaceAll("\\u00a7.", ""))
+                            .append(" now ").append(chunk == null ? "not loaded" : chunk.getFullStatus())
+                            .append(", entities ").append(level.areEntitiesLoaded(ChunkPos.asLong(x, z)) ? "loaded" : "not loaded")
+                            .append(level.getForcedChunks().contains(ChunkPos.asLong(x, z)) ? ", forced]" : ", NOT forced]");
+                }
+            }
+        }
+        return out.toString();
     }
 
     /** Empties the reactor volume, the drive layer and the panel area. */
@@ -182,6 +220,7 @@ final class FcdTestSupport {
                           java.util.function.Consumer<Run> body) {
             Run run = new Run(helper, slot(origin, slot), width, depth);
             hold(run.level, run.min, width, depth, true);
+
             run.begin(2, 0, body);
         }
 
@@ -189,9 +228,12 @@ final class FcdTestSupport {
             helper.runAfterDelay(delay, () -> {
                 try {
                     if (!ticking(level, min, width, depth)) {
-                        // A loaded run has been seen to take 58 ticks; 80 still fails inside the default 100 tick timeout.
+                        // Waits behind every chunk the batch asked for before it (see WAIT_TICKS), which each test adds to its timeout.
+                        if (polls >= WAIT_TICKS) {
+                            helper.assertTrue(false, "fixture chunks never started ticking block entities (" + polls + " ticks):"
+                                    + notTicking(level, min, width, depth) + "; " + level.gatherChunkSourceStats());
+                        }
                         wait.notReady(level);
-                        helper.assertTrue(polls < 80, "fixture chunks never started ticking block entities");
                         begin(1, polls + 1, body);
                         return;
                     }

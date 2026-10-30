@@ -857,7 +857,7 @@ public final class PlantComputerTests {
 
     // ---- the built-in pages, on a real reactor
 
-    @GameTest(template = EMPTY, templateNamespace = "bwrplant", batch = "plant", timeoutTicks = 400)
+    @GameTest(template = EMPTY, templateNamespace = "bwrplant", batch = "plant", timeoutTicks = FcdTestSupport.WAIT_TICKS + 400)
     public static void theBuiltinPagesBindToTheReactorAndReadItsSignals(GameTestHelper helper) {
         FcdTestSupport.Run.start(helper, ORIGIN + 8_000, 0, 9, 9, run -> {
             run.wall(4, 3);
@@ -988,7 +988,7 @@ public final class PlantComputerTests {
 
     // ---- no plant actuation
 
-    @GameTest(template = EMPTY, templateNamespace = "bwrplant", batch = "plant", timeoutTicks = 400)
+    @GameTest(template = EMPTY, templateNamespace = "bwrplant", batch = "plant", timeoutTicks = FcdTestSupport.WAIT_TICKS + 400)
     public static void aPlantComputerCannotActOnThePlant(GameTestHelper helper) {
         FcdTestSupport.Run.start(helper, ORIGIN + 8_000, 1, 9, 9, run -> {
             run.wall(4, 3);

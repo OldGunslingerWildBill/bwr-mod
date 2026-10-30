@@ -105,17 +105,22 @@ public final class PendingLights extends SavedData {
     /**
      * Restores the waiting cells of every loaded chunk among {@code chunks} and drops their entries; returns how many lights it
      * removed. Cells of a chunk that is not loaded stay queued. Never loads a chunk.
+     *
+     * <p>A chunk counts as loaded only when the chunk object is there ({@code getChunkNow}). {@code hasChunk} answers from
+     * the ticket level, which says "loaded" as soon as a ticket arrives, while the chunk is still being read; a
+     * {@code getBlockState} then waits on the server thread for the load to finish.
      */
     public int process(ServerLevel level, Iterable<Long> chunks) {
         int removed = 0;
         for (long chunk : chunks) {
             Map<Long, Byte> cells = byChunk.get(chunk);
-            if (cells == null || !level.hasChunk(ChunkPos.getX(chunk), ChunkPos.getZ(chunk))) {
+            LevelChunk loaded = cells == null ? null : level.getChunkSource().getChunkNow(ChunkPos.getX(chunk), ChunkPos.getZ(chunk));
+            if (loaded == null) {
                 continue;
             }
             for (var entry : cells.entrySet()) {
                 BlockPos p = BlockPos.of(entry.getKey());
-                BlockState now = level.getBlockState(p);
+                BlockState now = loaded.getBlockState(p);
                 if (now.is(Blocks.LIGHT)) {
                     BeamLampBlockEntity.restoreLoaded(level, p, now, entry.getValue());
                     removed++;
@@ -169,7 +174,7 @@ public final class PendingLights extends SavedData {
             var chunks = new java.util.ArrayList<>(data.ready);
             data.ready.removeAll(chunks);
             for (long chunk : chunks) {
-                if (!level.hasChunk(ChunkPos.getX(chunk), ChunkPos.getZ(chunk))) {
+                if (level.getChunkSource().getChunkNow(ChunkPos.getX(chunk), ChunkPos.getZ(chunk)) == null) {
                     // Marked as it loaded, not full yet: look again next tick (an unload clears the mark).
                     data.ready.add(chunk);
                     anyReady = true;

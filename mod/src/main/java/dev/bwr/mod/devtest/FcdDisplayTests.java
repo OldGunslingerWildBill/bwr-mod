@@ -160,7 +160,7 @@ public final class FcdDisplayTests {
 
     // ---- placement and span, on a real wall
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 100)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 100)
     public static void spanOfEightBlocksOnlyForTheCoreDisplays(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 0, 9, 9, run -> {
             run.wall(8, 8);
@@ -188,7 +188,7 @@ public final class FcdDisplayTests {
 
     // ---- layout from a real formed core, and the three states
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 200)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 200)
     public static void layoutFromARealCoreMatchesItsRodsAndCoordinates(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 1, 15, 15, run -> {
             run.wall(6, 6);
@@ -218,7 +218,7 @@ public final class FcdDisplayTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 200)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 200)
     public static void spanRefusalNamesTheNeededSize(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 2, 15, 15, run -> {
             run.wall(8, 4);
@@ -257,7 +257,7 @@ public final class FcdDisplayTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 200)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 200)
     public static void configAndStyleRefusedWhenTheyDoNotFit(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 3, 15, 15, run -> {
             run.wall(6, 6);
@@ -294,7 +294,7 @@ public final class FcdDisplayTests {
         return PanelOps.configure(run.player, block.getBlockPos(), component.id(), edit);
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 200)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 200)
     public static void unboundUnformedAndOldSaves(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 4, 15, 15, run -> {
             run.wall(6, 6);
@@ -339,7 +339,7 @@ public final class FcdDisplayTests {
 
     // ---- the matrix
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 200)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 200)
     public static void matrixPressSelectsTheRodThroughTheOutputSink(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 5, 9, 9, run -> {
             run.wall(4, 4);
@@ -424,7 +424,7 @@ public final class FcdDisplayTests {
         return ((CoreDisplayData) new PanelComponent(1, type, 0, 0, Footprint.of(w, h), "T-1").data()).tileCells;
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 200)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 200)
     public static void switchingTheLookKeepsAChosenTileAndMovesADefaultOne(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 6, 9, 9, run -> {
             run.wall(8, 8);

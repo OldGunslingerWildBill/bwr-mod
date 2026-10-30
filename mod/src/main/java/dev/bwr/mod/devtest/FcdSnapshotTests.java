@@ -126,7 +126,7 @@ public final class FcdSnapshotTests {
 
     // ---- on a real core
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 500)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 500)
     public static void onePatchOnlyWhenSomethingChanged(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 0, 15, 15, run -> {
             run.wall(6, 6);
@@ -180,7 +180,7 @@ public final class FcdSnapshotTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 300)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 300)
     public static void matrixAndUnformedSnapshots(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 1, 15, 15, run -> {
             run.wall(4, 4);

@@ -28,7 +28,7 @@ public final class LocaChunkTests {
     static final int Z0 = 360_000;
     static final int Y = 195;
 
-    @GameTest(template = "empty", templateNamespace = "bwrtick", batch = "locachunk", timeoutTicks = 1800)
+    @GameTest(template = "empty", templateNamespace = "bwrtick", batch = "locachunk", timeoutTicks = 2400)
     public static void lineBreakInAnUnloadedChunkIsDeferred(GameTestHelper h) {
         var level = h.getLevel();
         ChunkLab lab = new ChunkLab(level);
@@ -63,7 +63,7 @@ public final class LocaChunkTests {
         java.util.function.BooleanSupplier broken = () -> reactor.get() != null && reactor.get().core() != null
                 && reactor.get().core().getBoundaryStress().isBroken(BoundaryComponent.FEEDWATER_LINE);
         java.util.function.IntSupplier breaks = () -> reactor.get() == null ? -1 : reactor.get().boundaryEffects().breaks().size();
-        Script script = new Script(h, 1800, () -> {
+        Script script = new Script(h, 2400, () -> {
         }, () -> {
             try {
                 clear.run();
@@ -72,8 +72,13 @@ public final class LocaChunkTests {
                 lab.close();
             }
         });
+        script.then(1, () -> lab.forceRect(cx0 - 1, row, cx0 + 4, row));
+        // A forced chunk is loaded at once but ticks its block entities only once its entities are back, which happens on
+        // the IO threads in wall-clock time; a fixed 40 ticks (20 ms on an idle test server) after building sometimes ended
+        // before the controller in chunk 0 had ticked at all, and the line it never surveyed read 0 cells.
+        script.awaitChunks(() -> "the line's chunks to tick block entities: " + lab.describe(cx0, row) + " / " + lab.describe(cx0 + 3, row), 400,
+                () -> java.util.stream.IntStream.rangeClosed(-1, 4).allMatch(c -> FcdTestSupport.ticking(level, cx0 + c, row)));
         script.then(1, () -> {
-            lab.forceRect(cx0 - 1, row, cx0 + 4, row);
             clear.run();
             try {
                 var be = CompactCoreRegressionTests.build(level, min, 5, 5, 8, false);

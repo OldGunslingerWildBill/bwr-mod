@@ -59,6 +59,8 @@ public final class FloodlightAimTests {
 
     private static final int BASE = 760_000;
     private static final int FLOOR = 100;
+    /** Fixture writes in the unloaded-chunk tests: tell the clients, no neighbour shape updates (see {@link #buildChunk}). */
+    private static final int BUILD_FLAGS = net.minecraft.world.level.block.Block.UPDATE_CLIENTS | net.minecraft.world.level.block.Block.UPDATE_KNOWN_SHAPE;
     private static final TicketType<ChunkPos> HOLD = TicketType.create("bwr_floodlight_aim_hold", Comparator.comparingLong(ChunkPos::toLong));
 
     /** A fixture box: x from {@code minDx} to {@code maxDx} and z from {@code minDz} to {@code maxDz} of the origin, {@code height} of air over the floor. */
@@ -1040,14 +1042,19 @@ public final class FloodlightAimTests {
         }
     }
 
-    /** Stone floor and air in one held chunk, 12 high, a wall at local x {@code wallX} (or none). */
+    /**
+     * Stone floor and air in one held chunk, 12 high, a wall at local x {@code wallX} (or none). Written without neighbour
+     * shape updates ({@link #BUILD_FLAGS}): a changed block on the chunk's edge would otherwise read its neighbour in the
+     * next chunk, and that read loads the chunk (a one-tick ticket at full level), so the first run in a world, where the
+     * area is still empty and every block changes, loaded the chunks the tests check stay unloaded.
+     */
     private static void buildChunk(ServerLevel level, ChunkPos c, int wallX) {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 BlockPos floor = new BlockPos(c.getMinBlockX() + x, FLOOR, c.getMinBlockZ() + z);
-                level.setBlock(floor, Blocks.STONE.defaultBlockState(), 2);
+                level.setBlock(floor, Blocks.STONE.defaultBlockState(), BUILD_FLAGS);
                 for (int dy = 1; dy <= 12; dy++) {
-                    level.setBlock(floor.above(dy), x == wallX ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
+                    level.setBlock(floor.above(dy), x == wallX ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), BUILD_FLAGS);
                 }
             }
         }

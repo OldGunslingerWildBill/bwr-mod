@@ -36,7 +36,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class AprmCalibrationTests {
     static final int ORIGIN = 175_840;
-    private static final int TIMEOUT = 700;
+    private static final int TIMEOUT = FcdTestSupport.WAIT_TICKS + 700;
     private static final int SETTLE_STEPS = 2400;
 
     private static double read(SignalProvider p, String key) {

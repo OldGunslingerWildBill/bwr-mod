@@ -186,7 +186,7 @@ public final class FcdLabelTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", batch = "fcd", timeoutTicks = 100)
+    @GameTest(template = "empty", batch = "fcd", timeoutTicks = FcdTestSupport.WAIT_TICKS + 100)
     public static void placedNameplateQueuesOnePatchForACcFieldChange(GameTestHelper h) {
         FcdTestSupport.Run.start(h, ORIGIN, 0, 9, 9, run -> {
             run.wall(4, 4);
