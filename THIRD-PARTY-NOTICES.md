@@ -80,6 +80,12 @@ models used in `art/models/panel/imported` were made by **nectariich** and suppl
 The control panel (`Control Panel_.obj`), back panel (`BWR Backpannel.obj`) and the 1 m and 2 m control
 desks (`Control Desk 1m.obj`, `Control Desk.obj`) were made by the project owner.
 
+## Sounds
+
+The shaft excursion sound (`turbine_excursion.ogg` and its `_distant` and `_muffled` variants, `mod/src/main/resources/assets/bwr/sounds`) is a
+recording supplied by the project owner (`Turbine_pure_v2`), converted by `tools-make-turbine-sounds.py`; see SOUND-CREDITS.md. Every other
+sound of the project is synthesised by its own tool from noise and sine waves.
+
 ## Previously published versions
 
 Through commit [`19a7424`](https://github.com/OldGunslingerWildBill/bwr-mod/tree/19a742408e2cd7ef8cee42a26157e8662daa340b),

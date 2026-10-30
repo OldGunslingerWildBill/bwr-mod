@@ -170,6 +170,7 @@ public final class TurbineExcursion {
                 BlockPos.containing(at).toShortString(), wreck == null ? "dropped as an item" : wreck.toShortString());
         TurbineEvents.post(new TurbineEvents.Excursion(level, root, origin, dir, at, energy, rpm, broken.size(), wreck));
         dev.bwr.mod.rumble.Rumble.impulse(level, at, energy * 10);
+        TurbineSounds.excursion(level, origin);
         return result;
     }
 

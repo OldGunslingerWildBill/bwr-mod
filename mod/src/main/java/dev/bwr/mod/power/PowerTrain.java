@@ -74,7 +74,7 @@ public final class PowerTrain {
         if(motorKJ>0)for(var g:generators)g.status=String.format(java.util.Locale.ROOT,"Motoring: the grid drives the shaft, %.1f MW reverse power",motorKJ*20/1000);
         TurbineAuxTrain.step(train,active,now);
         thrownAndShaking(train,active,now);
-        if(now%20==0&&start.getLevel() instanceof net.minecraft.server.level.ServerLevel server)TurbineFires.second(server,train,active);
+        if(now%20==0&&start.getLevel() instanceof net.minecraft.server.level.ServerLevel server){TurbineFires.second(server,train,active);TurbineSounds.whine(server,active);}
         // A mid-tick connection can include a half already processed. Couple it
         // once after the new half's step; never repeat steam or electrical work.
         if(active.size()!=train.size()) {

@@ -269,6 +269,95 @@ Four events on the NeoForge event bus (`dev.bwr.mod.power.TurbineEvents`), poste
 @SubscribeEvent public static void missile(TurbineEvents.Missile e) { /* e.level(), e.origin(), e.energyJ() */ }
 ```
 
+## Sounds
+
+An effect only: nothing is saved and the plant reads nothing back. All are played from the server (`dev.bwr.mod.power.TurbineSounds`; the two
+that carry for kilometres by `BlastSounds`), in the Blocks sound category, with subtitles. Every sound is **synthesised** from seeded noise and
+sine waves by `tools-make-turbine-sounds.py` (numpy, no recording, sample or downloaded audio) and encoded to mono 48 kHz Ogg Vorbis by a headless
+Blender through Audaspace, the way the rumbles are (RUMBLE.md), **except the shaft excursion, which is a recording supplied by the owner**
+(`Turbine_pure_v2`, 4.8 s), converted by the same tool (see *Making them*; SOUND-CREDITS.md, THIRD-PARTY-NOTICES.md).
+
+| Event | Files | Plays | Where | Carries |
+| --- | --- | --- | --- | --- |
+| `bwr:turbine_missile_bang` | `turbine_missile_bang.ogg` 1.9 s, `_distant`, `_muffled` | when a blade or disc is thrown (a disc at pitch 0.82, deeper) | at the wheel it left (`TurbineMissile.wheel`) | **3 km**, see below |
+| `bwr:turbine_missile_impact` | `turbine_missile_impact.ogg`, 1.4 s | when the piece stops in a block, a casing or the unbreakable more than 4 blocks from where it left (not when it ran out of range, the world or the loaded chunks) | where it stopped | vanilla, volume 5, 80 blocks |
+| `bwr:turbine_excursion` | `turbine_excursion.ogg` 4.8 s (the owner's recording), `_distant`, `_muffled` | when a rotor half breaks loose | its seat in the LP (`TurbineExcursion.seat`) | **10 km**, see below |
+| `bwr:turbine_overspeed_whine` | `turbine_overspeed_whine.ogg`, 1.6 s | once a second for each LP turning at 98 % of rated speed or more | the LP's shaft | pitch = speed / rated speed (1.0 at 1,500 rpm, 1.1 at the 1,650 rpm overspeed trip, 1.5 at the 2,250 rpm disc burst; the game limits 0.5 to 2); volume 0.1 at rated speed rising to 2.5 at 150 % (16 to 40 blocks) |
+| `bwr:turbine_fire_oil` | `turbine_fire_oil_a.ogg`, `_b.ogg`, 1.6 s each | as an oil fire lights, then once a second while the section burns | at the section | vanilla, volume 2.5, 40 blocks |
+| `bwr:turbine_fire_hydrogen` | `turbine_fire_hydrogen_a.ogg`, `_b.ogg`, 1.6 s each | as a hydrogen fire lights, then once a second while it burns | at the generator | vanilla, volume 2, 32 blocks |
+
+**The sounds.** *The bang* is a gunshot: a 0.6 ms broadband crack, a body and a low boom, then the ringing of a struck steel plate (ten
+inharmonic modes, each decaying over 0.06 to 0.5 s), three slapback echoes, a diffuse hall tail and a brief clatter of small pieces falling.
+*The impact* is the same family, smaller: a thud, a short clang and scattered debris. *The excursion* is the owner's recording. (The tool
+also holds a synthesised excursion, 9.6 s, as a fallback, `--synth-excursion`: a grinding screech on stick-slip, a big low boom, a rumble that
+pulses once a turn as the rotor rolls and slows, heavy blows on what it knocks through, a final thud and settling debris; it is not shipped.)
+*The whine* is the last stage's blade-passing frequency (25 Hz x 60 blades = 1.5 kHz) with its harmonics, as narrow bands of noise round a weak
+pure tone. *The oil fire* is a deep roar (60 to 600 Hz, fluttering), slow whoomphs and a crackle; *the hydrogen fire* is a 700 to 7,000 Hz jet
+over a 80 to 300 Hz roar, almost no crackle.
+
+### The bang and the excursion: kilometres, muffled by walls (`BlastSounds`)
+
+Vanilla sends a sound only to players within 16 x volume blocks and fades it linearly, and has no occlusion, so these two do not use it. When one
+happens the server works out, for **every player of that dimension inside its range** (3,000 blocks for the bang, **10,000 for the excursion**),
+what that player hears, and sends one small packet (`BlastSoundPayload`, about 50 bytes, server to client): the source, the **gain of each of three
+variants**, the delay and the pitch. The client plays the variants (`BlastSoundClient`, `BlastSoundInstance`) as sounds placed half a block from the
+listener toward the source in the listener's own frame, so vanilla's 16-block rolloff does not apply, and turned every tick toward the source: it
+pans with the head and with the player's movement. Nothing is saved, no chunk is loaded to work it out, and a dedicated server needs nothing
+more. (The network protocol version went from 26 to 27 for the new packet.)
+
+**Gain with distance.** Full out to 32 blocks (the excursion 48), then `(near / d) ^ 0.45` (a game-friendly law: about 2.7 dB a doubling where
+the real inverse-distance law is 6), and over the last 40 % of the range a smooth fade to nothing:
+
+| distance | 100 m | 500 m | 1 km | 2 km | 3 km | 5 km | 7 km | 8 km | 9 km | 10 km |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| bang | 0.60 | 0.29 | 0.21 | 0.14 | 0 | | | | | |
+| excursion | 0.72 | 0.35 | 0.26 | 0.19 | 0.16 | 0.12 | 0.09 | 0.05 | 0.015 | 0 |
+
+(Full volume near the turbine; the bang is 0.05 at 2.5 km, so faint at 3 km; the excursion is a very faint low thud approaching 10 km.)
+
+**Which variant: air and walls.** Each has three files: *clear*, *distant* (low-passed, air absorbs the highs) and *muffled* (low-passed hard, a
+deep thud with the highs gone). The three crossfade (their gains sum to the gain):
+
+- *Distance:* the clear file gives way to the distant one over 150 to 600 blocks, so **beyond about 500 m even the open air is the distant
+  variant**. From 50 % of the bang's range (1.5 km), and from **70 % of the excursion's (7 km)**, the distant file gives way to the muffled
+  one. The excursion's distant file is a gentle 2.4 kHz low-pass (the bang's is 1.1 kHz) so that **some of its character comes through at 6 to
+  8 km**; towards 10 km it becomes only a faint low thud (the muffled file, a 380 Hz low-pass).
+- *Walls:* the server casts **one ray** from the source to the listener's head and counts the solid blocks (`canOcclude`, once each, never the
+  turbine's own casing, nothing in the first 1.5 blocks); `n` blocks make the sound `1 - exp(-n / 3)` muffled (one block 28 %, three 63 %, six
+  86 %), which crossfades towards the muffled file at any distance and takes up to 40 % off the gain, so **indoors it is muffled but still really
+  good** (a player behind four blocks of stone hears about 70 % of the gain, mostly the muffled file).
+- *Cost and limits:* the ray is sampled every half block and only the cells of **chunks that are completely loaded** count
+  (`LoadedWorld.state`, which never loads or waits for a chunk); **an unloaded chunk is open air**. A ray longer than 192 blocks is traced only
+  for its **first 96 blocks from the source and its last 96 from the player** (the nearest walls at each end), so at most 386 samples a player
+  and one ray a player a blast. Walls in the middle of a long ray are not seen.
+
+**Delay.** Sound travels 343 blocks a second, so the client waits `distance / 343` s before it starts (client ticks: a paused game waits), at
+most **8 s** (reached at 2.7 km; the real delay at 10 km would be 29 s, which is not fun). The rumble and the shake (`Rumble.impulse`, RUMBLE.md)
+are **not** delayed: a shock in the ground reaches you before the sound in the air does, and the rumble's own law carries it as far as it carries.
+
+### The pseudo-loops and the vanilla sounds
+
+The whine and the fires are **one-shots played once a second**. A server cannot start a looping sound, and the client knows neither a turbine's
+speed nor whether a section burns (neither is synced). So each sample is 1.6 s, fades in and out over 0.6 s with equal-power curves, and is
+repeated every 20 ticks by a step that already runs once a second (`PowerTrain.tick`, `TurbineFires.second`): two copies overlap by 0.6 s and,
+being noise, add to a steady level. When the step stops calling (the fire is out, the shaft slowed, the section's chunk unloaded) the last
+copy fades away within 1.6 s. The whine's pitch is therefore set once a second, which follows a speed that changes over minutes closely enough;
+a looping sound that follows the speed continuously would need the speed synced to clients, which nothing does today. The fires have two
+variants each so a second of roar is not the same every time. These and the impact are vanilla `ServerLevel.playSound` sounds, whose range is
+16 x volume blocks. The old silent `turbine_whine` placeholder is untouched (it stays reserved and silent; `SoundClientCheck` checks it is).
+
+### Making them
+
+`py -3.13 tools-make-turbine-sounds.py --blender <blender.exe>` writes the synthesised files into `mod/src/main/resources/assets/bwr/sounds/`
+(the bang with its two variants, the impact, the whine and the fires; the variants are a zero-phase low-pass of the clear file, rescaled to
+85 % of its RMS; a file whose decoded peak would pass 0.98 is scaled and encoded again, since the codec overshoots a sharp attack).
+`--excursion-from <file>` converts a supplied recording (any file Audaspace reads) to `turbine_excursion.ogg` and its `_distant` and
+`_muffled` files: it mixes to mono, resamples to 48 kHz, strips silence from both ends (`--trim-db`, default -60), cuts to `--max-seconds` (12)
+with a fade-out, normalises the peak to -1 dBFS, makes the two low-passed variants and prints each one's length and peak (`--excursion-to` names
+the clear file; the others go beside it). The shipped excursion is the owner's `Turbine_pure_v2.mp3` through that step (4.837 s, peak 0.900;
+the original MP3 is not in the repository). `--synth-excursion` writes the synthesised fallback instead.
+`tools-audit-sounds.py --self-test` checks the definitions, subtitles, lengths and sizes.
+
 ## Saves and old worlds
 
 - An LP always writes `Blades` (two conditions); `BladesThrown`, `BladesOut` and `CoverOff` only when not the default. Any section writes
@@ -299,6 +388,10 @@ Four events on the NeoForge event bus (`dev.bwr.mod.power.TurbineEvents`), poste
 - A holed lower casing is patched for nothing when the hood goes back on; a rebuild costs one kit whatever the wreck.
 - The crane does not check what a load sweeps through on its way, only that the rails carry it over the turbine train.
 - Vacuum: the casing is opened without breaking the condenser vacuum, which is not modelled.
+- The bang is heard out to 3 km and the excursion out to 10 km, by players of the same dimension; a player further away hears nothing (the
+  rumble, RUMBLE.md, reaches further). The wall between a blast and a player is one ray, and only its first and last 96 blocks and only loaded
+  chunks are looked at; a wall in the middle of a long ray, or in an unloaded chunk, is not heard. The whine and the fires are samples repeated
+  once a second, not looping sounds that follow the speed or the fire continuously, because the client is told neither.
 
 ## Tests
 
@@ -330,6 +423,28 @@ burns beside the bearings, the pool burns 2 L/s, the fire saves and the signals 
 fire cost 4 % and a fire with no fuel left goes out; a blade thrown sideways cuts no line. `bwraux` `TurbineBearingFireTests` (2): a bearing
 run dry lights its oil in about a minute (200 L out of the tank), a running AC pump feeds the fire from the tank and water puts it out; a
 train with no oil has nothing to burn.
+
+Sounds (alpha.60): GameTests `bwrturbine` `TurbineSoundTests` (9). The bang and the excursion are checked through the packets `BlastSounds`
+sends to fake players placed in the world (never added to it), the rest through NeoForge's `PlayLevelSoundEvent` (posted by every
+`ServerLevel.playSound`: the sound, position, volume, pitch and range the game would send). A blade thrown level into bedrock sends the player
+in the hall one bang at its wheel (full gain, all clear, a tick of delay), a player 2 km away a faint, dull, delayed one, a player 3.2 km away
+nothing, and makes one vanilla impact at the bedrock more than 10 blocks away and nothing else; a burst disc bangs at pitch 0.82 and a
+fragment flying out of the world makes no impact; a shaft excursion sends the excursion at its seat (clear beside it; at 3.5 km the distant file
+only; at 9 km very faint and mostly muffled; nothing at 10.5 km; every delay capped at 8 s) and no vanilla sound; the gain law falls with
+distance for both, the variants sum to it, the bang is clearly heard at 1 km and faint near 3 km, the excursion still there at 7 km (the distant
+file, none of the muffled) and very faint at 9.5 km, 343 blocks a second capped at 8 s, more blocks more muffled; a player behind a four-block
+stone wall gets the muffled variant (quieter, still over 60 % of the gain) and one the same distance away in the open the clear one, the ray
+counting the wall and none of the turbine's casing; a player 2 km away in chunks nobody loaded is told, delayed by the sound's travel time and
+never the clear file, the loaded-chunk count and the player's chunk unchanged, the ray counting the wall in the loaded hall and nothing in the
+unloaded chunks (open air) and at most 386 samples; the whine of an LP at rated speed is once a second, at the shaft, subtle (pitch 1, volume
+under 0.15, 16 blocks), rises in pitch with the speed at 1,650, 1,800 and 1,950 rpm, is not played slow or on every tick, nor by the generator;
+an oil fire cut by a thrown blade roars as it lights and once for each second it burns, then stops when water puts it out; a hydrogen fire
+hisses at the generator the same way and stops when it burns off. Taking the `playSound` call out of `TurbineSounds` fails the six tests that
+cover the vanilla sounds (the bang, the excursion and the impact's packets and calls likewise: removing the `BlastSounds.play` calls fails
+the three blast tests). The client check `:mod:runRumbleClientCheck` (`RumbleClientCheck`) also decodes the new files with the game's
+decoder (mono 48 kHz, not silent, under the clip), checks the muffled and distant variants lose their highs in turn, and that the client holds a
+blast for its delay, plays its variants at the gains it was given and ignores a faint, unknown or placeless one.
+`tools-audit-sounds.py --self-test`: 14 corruptions of the placeholders and 10 of the synthesised files.
 
 Client check `-PbwrTurbineHallCheck` (`TurbineHallClientCheck`) saves the pictures in `art/turbine-hall/`.
 

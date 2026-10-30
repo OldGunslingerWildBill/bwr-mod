@@ -203,6 +203,7 @@ public final class TurbineMissile {
                 stop, BlockPos.containing(at).toShortString());
         TurbineEvents.post(new TurbineEvents.Missile(level, root, origin, dir, at, kind, energy, mass, speed, rpm, broken.size()));
         dev.bwr.mod.rumble.Rumble.impulse(level, origin, energy);
+        TurbineSounds.missile(level, kind, origin, at, stop);
         return result;
     }
 

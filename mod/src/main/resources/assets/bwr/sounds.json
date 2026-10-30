@@ -70,5 +70,45 @@
   "rumble_turbine": {
     "subtitle": "subtitle.bwr.rumble_turbine",
     "sounds": [{"name": "bwr:rumble_turbine", "stream": false}]
+  },
+  "turbine_missile_bang": {
+    "subtitle": "subtitle.bwr.turbine_missile_bang",
+    "sounds": [{"name": "bwr:turbine_missile_bang", "stream": false}]
+  },
+  "turbine_missile_bang_distant": {
+    "subtitle": "subtitle.bwr.turbine_missile_bang",
+    "sounds": [{"name": "bwr:turbine_missile_bang_distant", "stream": false}]
+  },
+  "turbine_missile_bang_muffled": {
+    "subtitle": "subtitle.bwr.turbine_missile_bang",
+    "sounds": [{"name": "bwr:turbine_missile_bang_muffled", "stream": false}]
+  },
+  "turbine_missile_impact": {
+    "subtitle": "subtitle.bwr.turbine_missile_impact",
+    "sounds": [{"name": "bwr:turbine_missile_impact", "stream": false}]
+  },
+  "turbine_excursion": {
+    "subtitle": "subtitle.bwr.turbine_excursion",
+    "sounds": [{"name": "bwr:turbine_excursion", "stream": false}]
+  },
+  "turbine_excursion_distant": {
+    "subtitle": "subtitle.bwr.turbine_excursion",
+    "sounds": [{"name": "bwr:turbine_excursion_distant", "stream": false}]
+  },
+  "turbine_excursion_muffled": {
+    "subtitle": "subtitle.bwr.turbine_excursion",
+    "sounds": [{"name": "bwr:turbine_excursion_muffled", "stream": false}]
+  },
+  "turbine_overspeed_whine": {
+    "subtitle": "subtitle.bwr.turbine_overspeed_whine",
+    "sounds": [{"name": "bwr:turbine_overspeed_whine", "stream": false}]
+  },
+  "turbine_fire_oil": {
+    "subtitle": "subtitle.bwr.turbine_fire_oil",
+    "sounds": [{"name": "bwr:turbine_fire_oil_a", "stream": false}, {"name": "bwr:turbine_fire_oil_b", "stream": false}]
+  },
+  "turbine_fire_hydrogen": {
+    "subtitle": "subtitle.bwr.turbine_fire_hydrogen",
+    "sounds": [{"name": "bwr:turbine_fire_hydrogen_a", "stream": false}, {"name": "bwr:turbine_fire_hydrogen_b", "stream": false}]
   }
 }

@@ -19,7 +19,26 @@ EXPECTED = frozenset((
 ))
 # Real (not silent) looping sounds, synthesised by tools-make-rumble-sounds.py (RUMBLE.md). They are audited apart from the silent
 # placeholders: the event, the subtitle and the file must exist, and the file must be a well-formed mono 48 kHz Vorbis stream.
-SYNTHESISED = frozenset(("rumble_pool", "rumble_turbine"))
+# event -> (its files, shortest and longest length in seconds, largest file in bytes). Every file must be a mono 48 kHz Vorbis stream.
+SYNTHESISED = {
+    "rumble_pool": (("rumble_pool",), 3.0, 8.0, 150_000),
+    "rumble_turbine": (("rumble_turbine",), 3.0, 8.0, 150_000),
+    # Turbine accident sounds (tools-make-turbine-sounds.py, TURBINE-MAINTENANCE.md "Sounds"): one-shots and the pseudo-loops the server
+    # repeats once a second (1.6 s each, so that two overlap). The fires have two variants each; the game picks one at random.
+    "turbine_missile_bang": (("turbine_missile_bang",), 1.0, 4.0, 80_000),
+    "turbine_missile_impact": (("turbine_missile_impact",), 0.5, 3.0, 60_000),
+    "turbine_missile_bang_distant": (("turbine_missile_bang_distant",), 1.0, 4.0, 80_000),
+    "turbine_missile_bang_muffled": (("turbine_missile_bang_muffled",), 1.0, 4.0, 80_000),
+    # The excursion is the owner's recording (tools-make-turbine-sounds.py --excursion-from; the synthesised one is the fallback, 9.6 s), 3 to 14 s.
+    "turbine_excursion": (("turbine_excursion",), 3.0, 14.0, 200_000),
+    "turbine_excursion_distant": (("turbine_excursion_distant",), 3.0, 14.0, 200_000),
+    "turbine_excursion_muffled": (("turbine_excursion_muffled",), 3.0, 14.0, 200_000),
+    "turbine_overspeed_whine": (("turbine_overspeed_whine",), 1.5, 1.7, 60_000),
+    "turbine_fire_oil": (("turbine_fire_oil_a", "turbine_fire_oil_b"), 1.5, 1.7, 60_000),
+    "turbine_fire_hydrogen": (("turbine_fire_hydrogen_a", "turbine_fire_hydrogen_b"), 1.5, 1.7, 60_000),
+}
+#: A synthesised file smaller than this cannot hold audible audio of its length (the silent placeholders are 4 kB); a cheap guard against a silent file.
+MIN_SYNTH_BYTES = 8_000
 SAMPLE_RATE = 48_000
 PCM_FRAMES = 12_000
 
@@ -187,6 +206,68 @@ def validate(definitions, language, files, credits):
     return problems, metadata
 
 
+def check_synthesised(name, definitions, language, files):
+    """Problems with one synthesised event: its definition (one entry per file, in order, each a distinct file), its subtitle, and each
+    file (a well-formed mono 48 kHz Vorbis stream of the right length and size, not too small to be audible)."""
+    names, shortest, longest, largest = SYNTHESISED[name]
+    problems = []
+    entry = definitions.get(name)
+    subtitle = "subtitle.bwr." + name.removesuffix("_distant").removesuffix("_muffled")  # the variants of a blast share its subtitle
+    if not isinstance(entry, dict) or entry.get("subtitle") != subtitle or not language.get(subtitle):
+        return [f"{name}: missing event or subtitle"]
+    sounds = entry.get("sounds")
+    listed = [s.get("name") if isinstance(s, dict) and s.get("type", "file") == "file" else s if isinstance(s, str) else None for s in sounds]         if isinstance(sounds, list) else None
+    if listed != ["bwr:" + file for file in names]:
+        problems.append(f"{name}: expected the files {['bwr:' + file for file in names]}, got {listed}")
+    for file in names:
+        data = files.get(file + ".ogg")
+        if data is None:
+            problems.append(f"{file}: missing {file}.ogg")
+            continue
+        try:
+            info = inspect_ogg(data)
+            if info["channels"] != 1 or info["sample_rate"] != SAMPLE_RATE or not shortest * SAMPLE_RATE <= info["frames"] <= longest * SAMPLE_RATE                     or not MIN_SYNTH_BYTES <= len(data) <= largest:
+                problems.append(f"{file}.ogg: expected a mono 48 kHz stream of {shortest} to {longest} s, {MIN_SYNTH_BYTES} to {largest} bytes, got {info}, {len(data)} bytes")
+        except (ValueError, struct.error, UnicodeError) as error:
+            problems.append(f"{file}.ogg: {error}")
+    return problems
+
+
+def synthesised_negative_checks(definitions, language, files):
+    """The synthesised checks must catch each corruption of a good set; returns how many cases were caught."""
+    good = {name: definitions[name] for name in SYNTHESISED}
+    cases = 0
+
+    def must_fail(label, name="turbine_fire_oil", defs=good, lang=language, fls=files):
+        nonlocal cases
+        if not check_synthesised(name, defs, lang, fls):
+            raise AssertionError("audit self-test missed " + label)
+        cases += 1
+    for name in SYNTHESISED:
+        if check_synthesised(name, good, language, files):
+            raise AssertionError(f"audit self-test: {name} should pass: {check_synthesised(name, good, language, files)}")
+    changed = copy.deepcopy(good)
+    del changed["turbine_fire_oil"]
+    must_fail("a missing synthesised event", defs=changed)
+    changed = copy.deepcopy(good)
+    changed["turbine_fire_oil"]["sounds"].pop()
+    must_fail("a missing variant in the definition", defs=changed)
+    changed = copy.deepcopy(good)
+    changed["turbine_fire_oil"]["sounds"].reverse()
+    must_fail("variants out of order", defs=changed)
+    changed = copy.deepcopy(good)
+    changed["turbine_fire_oil"]["sounds"][0] = {"name": "bwr:turbine_fire_hydrogen_a", "type": "file"}
+    must_fail("a variant that is another event's file", defs=changed)
+    must_fail("a missing subtitle", lang={k: v for k, v in language.items() if k != "subtitle.bwr.turbine_fire_oil"})
+    must_fail("a missing file", fls={k: v for k, v in files.items() if k != "turbine_fire_oil_b.ogg"})
+    must_fail("a truncated file", fls=dict(files, **{"turbine_fire_oil_a.ogg": files["turbine_fire_oil_a.ogg"][:-1]}))
+    must_fail("a file that is not Ogg", fls=dict(files, **{"turbine_fire_oil_a.ogg": b"not an Ogg stream" * 600}))
+    # a one-shot where a pseudo-loop belongs: the wrong length
+    must_fail("a wrong length", fls=dict(files, **{"turbine_fire_oil_a.ogg": files["turbine_excursion.ogg"]}))
+    must_fail("a silent placeholder in place of a sound", name="turbine_overspeed_whine", fls=dict(files, **{"turbine_overspeed_whine.ogg": files["turbine_whine.ogg"]}))
+    return cases
+
+
 def fix_checksums(data):
     """Used only by adversarial fixtures to isolate header checks from CRC checks."""
     changed = bytearray(data)
@@ -271,24 +352,19 @@ def main():
                  for p in (assets / "sounds").rglob("*.ogg")}
         credits = (args.credits or args.repo / "SOUND-CREDITS.md").read_text(encoding="utf-8-sig")
         synthesised = []
+        synth_definitions = {name: definitions.pop(name) for name in SYNTHESISED if name in definitions}
+        synth_files = {}
+        for name, (names, *_rest) in SYNTHESISED.items():
+            for file in names:
+                if file + ".ogg" in files:
+                    synth_files[file + ".ogg"] = files.pop(file + ".ogg")
         for name in sorted(SYNTHESISED):
-            entry = definitions.pop(name, None)
-            data = files.pop(name + ".ogg", None)
-            if not isinstance(entry, dict) or entry.get("subtitle") != "subtitle.bwr." + name or not language.get("subtitle.bwr." + name):
-                synthesised.append(f"{name}: missing event or subtitle")
-            elif data is None:
-                synthesised.append(f"{name}: missing {name}.ogg")
-            else:
-                try:
-                    info = inspect_ogg(data)
-                    if info["channels"] != 1 or info["sample_rate"] != SAMPLE_RATE or not 3 * SAMPLE_RATE <= info["frames"] <= 8 * SAMPLE_RATE or len(data) > 150_000:
-                        synthesised.append(f"{name}.ogg: expected a mono 48 kHz loop of 3 to 8 s under 150 kB, got {info}, {len(data)} bytes")
-                except (ValueError, struct.error, UnicodeError) as error:
-                    synthesised.append(f"{name}.ogg: {error}")
+            synthesised += check_synthesised(name, synth_definitions, language, synth_files)
         problems, metadata = validate(definitions, language, files, credits)
         problems += synthesised
         if args.self_test and not problems:
             print(f"Audit negative checks: {negative_checks(definitions, language, files, credits)} corruptions detected")
+            print(f"Synthesised audit negative checks: {synthesised_negative_checks(synth_definitions, language, dict(files, **synth_files))} corruptions detected")
         for problem in problems:
             print("ERROR:", problem)
         for name, info in metadata.items():

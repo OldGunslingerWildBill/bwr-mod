@@ -1,5 +1,40 @@
 # Changelog
 
+## Unreleased (alpha.60): turbine accident sounds
+
+- **Turbine accidents are loud now, for kilometres** (TURBINE-MAINTENANCE.md, *Sounds*). Until now a thrown blade, a burst disc and a shaft
+  excursion only shook the ground and threw particles, and a turbine fire made only the sound of the fire blocks. New sound events:
+  - **`bwr:turbine_missile_bang`**: a blade or disc thrown out through the casing bangs like a gunshot on steel (a sharp crack, a ringing
+    steel tail, echoes and a brief clatter of debris) at the wheel it left; a disc is deeper. **`bwr:turbine_excursion`**: the shaft
+    excursion, played at the LP as the rotor half tears out; **the owner's own recording** of a turbine failure. **`bwr:turbine_missile_impact`**: a
+    smaller metallic impact where the piece stops (more than 4 blocks from where it left; 80 blocks).
+  - **Heard across the map, muffled by walls.** Vanilla cannot carry a sound further than 16 x volume blocks and has no occlusion, so these two
+    are sent by the server to every player of the dimension in range, **3 km for the bang and 10 km for the excursion**, with the gain, the
+    variant and the delay worked out for each player: full and overwhelming beside the turbine, falling gently with distance (the bang 0.2 at
+    1 km and faint at 3; the excursion 0.26 at 1 km, 0.09 at 7 km, very faint approaching 10), arriving after the sound's travel time (343
+    blocks a second, at most 8 s). Each has a *clear*, a *distant* and a *muffled* file (low-passed: a deep thud with the highs gone); beyond
+    about 500 m even the open air is the distant one, and the excursion's distant one is gentler so some of its character comes through at 6
+    to 8 km before it fades to a low thud. **Indoors or behind walls** it is muffled but still really good: the server casts one ray to the
+    player's head and counts the solid blocks (loaded chunks only, an unloaded one is open air, never loaded to look; the nearest 96 blocks
+    at each end of a long ray). The client plays it as a sound placed toward the source (not cut off at 16 blocks) so it pans as you turn. The
+    rumble and the shake are not delayed (a shock in the ground arrives before the sound in the air).
+  - **`bwr:turbine_overspeed_whine`**: the last stage's whine, once a second for every LP at 98 % of rated speed or more, its pitch in
+    proportion to the shaft speed (the same at rated speed, 10 % higher at the overspeed trip, 50 % higher at the disc burst speed) and
+    its volume rising from subtle at rated speed to loud at 150 %.
+  - **`bwr:turbine_fire_oil`** and **`bwr:turbine_fire_hydrogen`**: a deep oil-fire roar and a hydrogen fire's hiss-roar at the burning
+    section, from the moment it lights until it goes out (two variants of each).
+  All have subtitles. They change nothing in the plant or in saves. The whine and the fires are samples of 1.6 s repeated once a second by steps
+  that already run once a second (no new ticker; a server cannot start a loop and the client is not told a turbine's speed or fire). The
+  silent `turbine_whine` placeholder is left as it was. The network protocol version is now 27 (one new server-to-client packet).
+- **Sound sources.** All the sounds are synthesised by the new `tools-make-turbine-sounds.py` (seeded noise and sine waves, no recorded or
+  downloaded audio), **except the excursion: the recording supplied by the owner (`Turbine_pure_v2`, 4.8 s)**, converted by the same tool
+  (`--excursion-from`: mono, 48 kHz, silence trimmed, peak at -1 dBFS, with its two low-passed variants; the MP3 itself is not in the
+  repository). The synthesised excursion is kept in the tool as a fallback (`--synth-excursion`) and is not shipped. Credits: SOUND-CREDITS.md,
+  THIRD-PARTY-NOTICES.md, README.
+- `tools-audit-sounds.py` audits the new events (their definitions, subtitles, files, lengths and sizes) with 10 more self-test corruptions.
+  GameTests `bwrturbine` `TurbineSoundTests` (9); the client check `:mod:runRumbleClientCheck` decodes the new files and exercises the client's
+  delay and variants.
+
 ## Unreleased (alpha.59): wrecked turbines, the shaft excursion and turbine fires
 
 - **Turbine oil filtration: the Oil Filter Housing and its cartridge** (TURBINE-AUX.md). A pumped Main Oil Tank lost about 0.9 L/s, so a

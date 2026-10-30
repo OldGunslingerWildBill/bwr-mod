@@ -7,6 +7,10 @@ import dev.bwr.core.rumble.RumbleLaw;
 import dev.bwr.core.rumble.RumbleShake;
 import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.client.VisualEffectsConfig;
+import dev.bwr.mod.power.BlastSoundPayload;
+import dev.bwr.mod.power.BlastSounds;
+import dev.bwr.mod.power.client.BlastSoundClient;
+import dev.bwr.mod.power.client.BlastSoundInstance;
 import dev.bwr.mod.rumble.RumblePayload;
 import dev.bwr.mod.rumble.client.RumbleClient;
 import dev.bwr.mod.rumble.client.RumbleSoundInstance;
@@ -120,6 +124,10 @@ public final class RumbleClientCheck {
                             "the loops did not stop when the state went");
                     require(seenPool != null && !mc.getSoundManager().isActive(seenPool), "the pool loop is still active in the sound engine");
                     require(RumbleClient.pool() == 0 || RumbleClient.pool() < RumbleClient.SILENT, "the smoothed intensity did not fall");
+                    stage = 6;
+                }
+                case 6 -> {
+                    blasts();
                     REPORT.addProperty("status", "PASS");
                     Files.writeString(output.resolve("results.json"), new GsonBuilder().setPrettyPrinting().create().toJson(REPORT), StandardCharsets.UTF_8);
                     LogUtils.getLogger().info("RUMBLE CLIENT COMPLETE: {}", REPORT);
@@ -135,6 +143,79 @@ public final class RumbleClientCheck {
             finished = true;
             throw failure;
         }
+    }
+
+    /**
+     * The turbine blast sounds (TURBINE-MAINTENANCE.md, "Sounds"): the six files decode with the game's decoder (mono 48 kHz, finite, loud
+     * enough), the muffled and distant variants have lost their highs (the first-difference energy, a cheap measure of the high end, falls
+     * from clear to distant to muffled), and the client holds a blast for its delay, then starts its variants at the gains it was given,
+     * none that are too faint to hear and none for a kind it does not know. (There is no world here, so a started instance stops at once.)
+     */
+    private static void blasts() throws Exception {
+        for (String blast : new String[]{"turbine_missile_bang", "turbine_excursion"}) {
+            double clear = highShare(decode(blast, 1.0, 14.0)), distant = highShare(decode(blast + "_distant", 1.0, 14.0)), muffled = highShare(decode(blast + "_muffled", 1.0, 14.0));
+            REPORT.addProperty(blast + "_high_share_clear_distant_muffled", String.format("%.4f %.4f %.4f", clear, distant, muffled));
+            require(clear > distant * 1.3 && distant > muffled * 1.3 && muffled < 0.5 * clear, blast + " variants lose their highs in turn: " + clear + " " + distant + " " + muffled);
+        }
+        for (String name : new String[]{"turbine_missile_impact", "turbine_overspeed_whine", "turbine_fire_oil_a", "turbine_fire_oil_b", "turbine_fire_hydrogen_a", "turbine_fire_hydrogen_b"}) {
+            decode(name, 0.5, 4.0);
+        }
+        BlastSoundClient.reset();
+        BlastSoundClient.accept(new BlastSoundPayload(BlastSounds.Kind.EXCURSION.ordinal(), 100, 70, 100, 0.5f, 0.25f, 0.1f, 5, 1.0f));
+        require(BlastSoundClient.waiting() == 1 && BlastSoundClient.started().isEmpty(), "a blast waits for its delay");
+        for (int i = 0; i < 4; i++) BlastSoundClient.advance();
+        require(BlastSoundClient.started().isEmpty(), "and is not played before it");
+        BlastSoundClient.advance();
+        var started = BlastSoundClient.started();
+        require(BlastSoundClient.waiting() == 0 && started.size() == 3, "it plays on the fifth tick, its three variants: " + started.size());
+        require(Math.abs(started.get(0).gain() - 0.5) < 1e-5 && Math.abs(started.get(1).gain() - 0.25) < 1e-5 && Math.abs(started.get(2).gain() - 0.1) < 1e-5,
+                "at the gains the server gave: " + started.stream().map(BlastSoundInstance::gain).toList());
+        BlastSoundClient.reset();
+        BlastSoundClient.accept(new BlastSoundPayload(BlastSounds.Kind.BANG.ordinal(), 0, 0, 0, 0.0f, 0.001f, 0.0f, 0, 0.82f));
+        BlastSoundClient.accept(new BlastSoundPayload(99, 0, 0, 0, 1f, 1f, 1f, 0, 1f));
+        BlastSoundClient.accept(new BlastSoundPayload(0, Double.NaN, 0, 0, 1f, 1f, 1f, 0, 1f));
+        BlastSoundClient.advance();
+        require(BlastSoundClient.started().isEmpty() && BlastSoundClient.waiting() == 0, "a blast too faint to hear, of an unknown kind, or at no place plays nothing");
+        BlastSoundClient.accept(new BlastSoundPayload(BlastSounds.Kind.BANG.ordinal(), 0, 0, 0, 1f, 0f, 0f, 400, 0.82f));
+        require(BlastSoundClient.waiting() == 1, "a blast waits");
+        BlastSoundClient.reset();
+        require(BlastSoundClient.waiting() == 0, "and is forgotten with the world");
+        REPORT.addProperty("blast_client", "PASS");
+    }
+
+    /** Decodes a sound of the mod with the game's decoder (mono 48 kHz, finite, not silent, the length in range). */
+    private static List<Float> decode(String name, double minSeconds, double maxSeconds) throws Exception {
+        var id = BwrMod.id("sounds/" + name + ".ogg");
+        List<Float> samples = new ArrayList<>();
+        try (var in = Minecraft.getInstance().getResourceManager().open(id); var decoded = new JOrbisAudioStream(in)) {
+            var format = decoded.getFormat();
+            require(format.getChannels() == 1 && format.getSampleRate() == SAMPLE_RATE, name + " format " + format);
+            int chunks = 0;
+            while (decoded.readChunk(s -> { if (samples.size() < SAMPLE_RATE * 30) samples.add(s); })) require(++chunks < 100_000, "unbounded decode");
+        }
+        int n = samples.size();
+        require(n >= SAMPLE_RATE * minSeconds && n <= SAMPLE_RATE * maxSeconds, name + " is " + n + " frames long");
+        double sum = 0, peak = 0;
+        for (float s : samples) {
+            require(Float.isFinite(s), name + " has a non-finite sample");
+            sum += (double) s * s;
+            peak = Math.max(peak, Math.abs(s));
+        }
+        double rms = Math.sqrt(sum / n);
+        require(rms > 0.04 && peak <= 1.0 && peak > 0.3, name + " rms " + rms + " peak " + peak);
+        REPORT.addProperty(name + "_ogg", String.format("%d frames, rms %.3f, peak %.3f", n, rms, peak));
+        return samples;
+    }
+
+    /** The energy of the first difference over the energy: small for a sound with few highs. */
+    private static double highShare(List<Float> x) {
+        double d = 0, e = 1e-12;
+        for (int i = 1; i < x.size(); i++) {
+            double v = x.get(i) - x.get(i - 1);
+            d += v * v;
+            e += (double) x.get(i) * x.get(i);
+        }
+        return d / e;
     }
 
     /** Decode a loop with the game's decoder and measure it. Returns a one-line summary. */

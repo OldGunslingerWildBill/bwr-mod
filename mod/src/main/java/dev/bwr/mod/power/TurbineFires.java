@@ -31,6 +31,10 @@ import java.util.List;
  * train's tanks into it, the section loses condition, real Minecraft fire is kept lit on the floor beside its bearings at both ends (a
  * place event per block, so a protection mod can refuse it; only into loaded air), and smoke rises over it. Water in or beside any of
  * those places puts it out; so does running out of fuel. Nothing puts it out for you and nothing stops a pump.
+ *
+ * <h2>The roar</h2>
+ * The same step plays the fire's sound ({@link TurbineSounds#fire}) at the section for the second to come, and once as the fire lights;
+ * a fire that goes out stops being played, so there is no ticker and nothing to stop.
  */
 public final class TurbineFires {
     private TurbineFires() {}
@@ -78,6 +82,7 @@ public final class TurbineFires {
                 kind == TurbineFire.Kind.HYDROGEN ? "kg" : "L");
         TurbineEvents.post(new TurbineEvents.Fire(level, m.getBlockPos(), kind, fuel));
         keepLit(level, m);
+        TurbineSounds.fire(level, m);
     }
 
     /** One second of every fire on the train's sections that this tick advances. */
@@ -110,6 +115,7 @@ public final class TurbineFires {
             }
             m.addShaftDamage(TurbineFire.damage(1));
             keepLit(level, m);
+            TurbineSounds.fire(level, m);
         }
     }
 

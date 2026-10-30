@@ -6,7 +6,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** Stable sound IDs with silent L4 assets. Playback and synthesized audio belong to Phase Q. */
+/** Stable sound IDs: silent L4 placeholders, the synthesised rumbles (RUMBLE.md) and the synthesised turbine accident sounds (TurbineSounds). */
 public final class BwrSounds {
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, BwrMod.MOD_ID);
 
@@ -29,6 +29,18 @@ public final class BwrSounds {
     /** Looping deep rumbles of the plant (RUMBLE.md): steam condensing in the pool, and a shaking turbine train. */
     public static final DeferredHolder<SoundEvent, SoundEvent> RUMBLE_POOL = register("rumble_pool");
     public static final DeferredHolder<SoundEvent, SoundEvent> RUMBLE_TURBINE = register("rumble_turbine");
+    /** Turbine accidents (TURBINE-MAINTENANCE.md, "Sounds"): synthesised by tools-make-turbine-sounds.py, played by TurbineSounds. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_MISSILE_BANG = register("turbine_missile_bang");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_MISSILE_IMPACT = register("turbine_missile_impact");
+    /** The distant (air-absorbed) and muffled (behind walls) variants of the two blasts that carry for kilometres, played by BlastSounds. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_MISSILE_BANG_DISTANT = register("turbine_missile_bang_distant");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_MISSILE_BANG_MUFFLED = register("turbine_missile_bang_muffled");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_EXCURSION = register("turbine_excursion");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_EXCURSION_DISTANT = register("turbine_excursion_distant");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_EXCURSION_MUFFLED = register("turbine_excursion_muffled");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_OVERSPEED_WHINE = register("turbine_overspeed_whine");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_FIRE_OIL = register("turbine_fire_oil");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TURBINE_FIRE_HYDROGEN = register("turbine_fire_hydrogen");
 
     private static DeferredHolder<SoundEvent, SoundEvent> register(String path) {
         return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(BwrMod.id(path)));
