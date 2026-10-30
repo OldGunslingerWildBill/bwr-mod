@@ -341,6 +341,10 @@ public final class PipeShots {
         var lp = PowerModuleRuntimeCheck.place(l, BwrBlocks.LP_TURBINE.get(), LP, Direction.EAST);
         PowerModuleRuntimeCheck.place(l, BwrBlocks.NUCLEAR_GENERATOR.get(), LP.east(8), Direction.EAST);
         turbineLines(l, hp, lp);
+        // A condensate line across the hall floor south of the steam rack (the water pipe in the turbine hall): a run, a tee
+        // and a riser.
+        path(l, water(), new BlockPos(205, LP.getY() + 1, 216), new BlockPos(176, LP.getY() + 1, 216), new BlockPos(176, LP.getY() + 4, 216));
+        line(l, water(), new BlockPos(190, LP.getY() + 1, 217), new BlockPos(190, LP.getY() + 1, 219));
 
         // The fixture slab.
         for (var p : BlockPos.betweenClosed(236, 119, 190, 284, 119, 238))

@@ -135,6 +135,17 @@ def lens_disc(scene, name, a, b, radius, mat, segments=16):
     return o
 
 
+def cone(scene, name, a, b, ra, rb, mat, segments=20):
+    """A solid frustum from radius ra at a to rb at b, capped at both ends (a pipe reducer)."""
+    a, b = Vector(a), Vector(b)
+    d, u, v = basis(b - a)
+    vs = [tuple(p + r * (math.cos(t * math.tau / segments) * u + math.sin(t * math.tau / segments) * v))
+          for p, r in ((a, ra), (b, rb)) for t in range(segments)]
+    fs = [tuple(range(segments - 1, -1, -1)), tuple(range(segments, 2 * segments))]
+    fs += [(i, (i + 1) % segments, (i + 1) % segments + segments, i + segments) for i in range(segments)]
+    return mesh_object(scene, name, vs, fs, mat)
+
+
 def box(scene, name, lo, hi, mat):
     x0, y0, z0 = lo
     x1, y1, z1 = hi
@@ -320,6 +331,20 @@ def oil_flange(scene, name, z, out):
         bolt(scene, name + ' stud ' + str(i), c - d * .12, c - d * .018, .014)
 
 
+def housing_flange(scene, name, z, out):
+    """The duplex filter's inlet or outlet nozzle flange on a block face, the mate of the Lube Oil Pipe's machine flange: the size of
+    the pipe's own joint flanges (4/16), its four studs lined up with the nuts of the pipe's flange (radius 3.5/16, at 45 degrees),
+    a gasket ring at the rim of the face."""
+    p, d = Vector((.5, .5, z)), Vector((0, 0, out))
+    sleeve(scene, name + ' flange', p - d * .105, p - d * .015, .25, .10, STEEL)
+    sleeve(scene, name + ' gasket', p - d * .015, p, .245, .20, DARK)
+    sleeve(scene, name + ' band', p - d * .085, p - d * .045, .257, .24, BROWN)
+    for i in range(4):
+        a = (i + .5) * math.tau / 4
+        c = p + .219 * Vector((math.cos(a), math.sin(a), 0))
+        bolt(scene, name + ' stud ' + str(i), c - d * .15, c - d * .005, .022)
+
+
 GREENBAND = material('in service band', (.04, .42, .14))
 LENSOFF = material('conditioner lamp lens off', (.008, .03, .015))
 LENSON = material('conditioner lamp lens on', (.02, .55, .10))
@@ -402,28 +427,41 @@ def filter_housing(label, side_a, off_open):
             box(scene, 'lid letter plate', (x - .085, .735, .395), (x + .085, .75, .605), DARK)
             letter_top(scene, ch, x, .5, .75, .02)
             cyl(scene, 'vent plug', (x + .106, .735, .5 + .044), (x + .106, .78, .5 + .044), .02, STEEL)
-    cyl(scene, 'inlet pipe', (.5, .5, .5), (.5, .5, .985), .06, BODY)
-    cyl(scene, 'outlet pipe', (.5, .5, .015), (.5, .5, .5), .06, BODY)
-    cyl(scene, 'cross connection', (.40, .5, .5), (.60, .5, .5), .04, STEEL)
-    # the transfer valve: body, stem, a quadrant plate with a stop at each end, and the lever pointing at the canister in service
-    sleeve(scene, 'changeover valve body', (.5, .5, .5), (.5, .66, .5), .05, 0, RED)
-    cyl(scene, 'quadrant plate', (.5, .66, .5), (.5, .675, .5), .09, STEEL)
+    # The pipework, sized for the canisters and the Lube Oil Pipe (5 px bore): an inlet and an outlet nozzle as wide as the pipe
+    # from the face flanges in past the canisters, a reducer down onto the valve chest that runs between the two canisters and is
+    # bolted to both (a collar on each side), the changeover valve's bonnet standing on the chest.
+    for z0, z1, zr, zc in ((.985, .70, .66, .655), (.015, .30, .34, .345)):
+        cyl(scene, 'nozzle', (.5, .5, z0), (.5, .5, z1), .156, BODY)
+        cone(scene, 'nozzle reducer', (.5, .5, z1), (.5, .5, zr), .156, .098, BODY)
+        sleeve(scene, 'nozzle weld collar', (.5, .5, (z0 + z1) / 2 - .02), (.5, .5, (z0 + z1) / 2 + .02), .166, .15, STEEL)
+    cyl(scene, 'valve chest', (.5, .5, .345), (.5, .5, .655), .098, BODY)
+    for x0, x1 in ((.388, .412), (.588, .612)):
+        cyl(scene, 'chest to canister collar', (x0, .5, .5), (x1, .5, .5), .085, STEEL)
+    # the transfer valve: a bonnet on the chest, its flange, a quadrant plate with a stop at each end, and the lever pointing at
+    # the canister in service
+    cyl(scene, 'changeover valve bonnet', (.5, .5, .5), (.5, .655, .5), .085, RED)
+    cyl(scene, 'changeover valve bonnet flange', (.5, .655, .5), (.5, .685, .5), .1, RED)
+    for i in range(4):
+        a = (i + .5) * math.tau / 4
+        bolt(scene, 'bonnet bolt', (.5 + .082 * math.cos(a), .685, .5 + .082 * math.sin(a)), (.5 + .082 * math.cos(a), .70, .5 + .082 * math.sin(a)), .012)
+    cyl(scene, 'quadrant plate', (.5, .685, .5), (.5, .70, .5), .07, STEEL)
     for yaw in (45, 135):
         a = math.radians(yaw)
-        bolt(scene, 'quadrant stop', (.5 + .075 * math.cos(a), .675, .5 - .075 * math.sin(a)), (.5 + .075 * math.cos(a), .72, .5 - .075 * math.sin(a)), .014)
-    cyl(scene, 'valve stem', (.5, .675, .5), (.5, .775, .5), .018, STEEL)
-    cyl(scene, 'lever boss', (.5, .745, .5), (.5, .795, .5), .034, STEEL)
+        bolt(scene, 'quadrant stop', (.5 + .06 * math.cos(a), .70, .5 - .06 * math.sin(a)), (.5 + .06 * math.cos(a), .745, .5 - .06 * math.sin(a)), .014)
+    cyl(scene, 'valve stem', (.5, .70, .5), (.5, .795, .5), .022, STEEL)
+    cyl(scene, 'lever boss', (.5, .765, .5), (.5, .815, .5), .038, STEEL)
     # A is at +X (left from the front): the lever leans forward and toward it; B is at -X. The two positions are 90 degrees apart.
     sign = 1 if side_a else -1
-    tip = (.5 + sign * .107, .78, .5 - .107)
-    yaw_box(scene, 'transfer lever', ((.5 + tip[0]) / 2, .775, (.5 + tip[2]) / 2), (.092, .014, .016), -sign * 45, RED)
-    cyl(scene, 'lever knob', (tip[0], .76, tip[2]), (tip[0], .835, tip[2]), .03, YELLOW)
-    box(scene, 'differential pressure gauge case', (.40, .60, .045), (.60, .80, .17), YELLOW)
-    cyl(scene, 'gauge dial glass', (.5, .70, .045), (.5, .70, .02), .075, GLASS)
-    cyl(scene, 'gauge impulse tube', (.5, .62, .17), (.5, .62, .46), .014, DARK)
+    tip = (.5 + sign * .107, .80, .5 - .107)
+    yaw_box(scene, 'transfer lever', ((.5 + tip[0]) / 2, .795, (.5 + tip[2]) / 2), (.092, .016, .018), -sign * 45, RED)
+    cyl(scene, 'lever knob', (tip[0], .78, tip[2]), (tip[0], .855, tip[2]), .03, YELLOW)
+    # the differential pressure gauge, beside the outlet flange on canister A's side, its impulse tube into canister A
+    box(scene, 'differential pressure gauge case', (.745, .665, .045), (.925, .845, .17), YELLOW)
+    cyl(scene, 'gauge dial glass', (.835, .755, .045), (.835, .755, .02), .068, GLASS)
+    cyl(scene, 'gauge impulse tube', (.80, .70, .17), (.80, .70, .37), .014, DARK)
     box(scene, 'name plate', (.44, .12, .045), (.56, .20, .052), YELLOW)
-    oil_flange(scene, 'inlet', 1.0, 1)
-    oil_flange(scene, 'outlet', 0.0, -1)
+    housing_flange(scene, 'inlet', 1.0, 1)
+    housing_flange(scene, 'outlet', 0.0, -1)
     export_scene(scene, 'oil_filter_housing_' + label + '.json', {'size': [1, 1, 1], 'controller': [0, 0, 0], 'ports': []})
     return scene
 

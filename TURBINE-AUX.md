@@ -640,8 +640,11 @@ fine ones in parallel on the tank's return line, piped in the oil room).
 ## Models and sources
 
 Four Blender models (headless): the oil tank (3,892 triangles), the generator cooling skid (5,628), the shaft-driven pump (2,056)
-and the oil filter housing (3,648: two canisters, a changeover valve, a pressure-drop gauge, and a flange with a brown band on each of
-its inlet and outlet faces), in `art/models/turbine_aux/` (`build_models.py`, `turbine_aux.blend`, the previews). The **Lube Oil Valve** (636 polygons a state: ball body,
+and the oil filter housing (4,828: two canisters; inlet and outlet nozzles as wide as the Lube Oil Pipe, each reducing onto a valve
+chest that runs between the canisters and is collared to both; the changeover valve's red bonnet standing on the chest with its
+bolted bonnet flange, quadrant and lever; a pressure-drop gauge beside the outlet; and on each of the inlet and outlet faces a
+flange the size of the pipe's own joint flanges, its four studs lined up with the pipe's machine flange, a gasket ring and a brown
+band. Until the alpha.59 review the pipework was thin, 2 px stubs and a 1.5 px cross connection, and the flanges smaller than the pipe), in `art/models/turbine_aux/` (`build_models.py`, `turbine_aux.blend`, the previews). The **Lube Oil Valve** (636 polygons a state: ball body,
 actuator, limit switch box with a green or red dome and a white bar, flanges at both ends) is `art/models/lube_oil_valve/build_models.py`
 (headless Blender) and `python tools-export-lube-oil-valve.py` (`--check` verifies); the **Lube Oil Pipe** models are the `oil` set of
 `art/models/pipes/build_pipes.py` (PIPES.md). `python tools-export-turbine-aux.py`

@@ -7,8 +7,7 @@
 Into mod/src/main/resources/assets/bwr/textures/block/pipes/, 32 x 32 each, all tiling in both directions:
   painted_steel   the paint coat of a bare pipe. Near white, so the block colour (tint index 0: the service colour or a
                   dye) gives the paint its colour. The water pipe and the (future) oil pipe use it.
-  weld            the girth weld at a butt joint: darker unpainted steel with a weld ripple across it.
-  flange_steel    machined flange and stud steel, also pipe caps.
+  flange_steel    machined flange and stud steel, the water pipe's joint collars and bands, and pipe caps.
   cladding        aluminium cladding over the steam pipe's lagging, mapped one block (one sheet) along its length:
                   rows 15 and 16 are the overlapping lap of the next sheet (a shadow line, then the lit edge), the
                   left columns the longitudinal lap at the underside. (The block boundary carries the service band.)
@@ -87,19 +86,6 @@ def painted_steel():
     return [[grey(208 + 4 * low[y][x] + 2.5 * fine[y][x]) for x in range(N)] for y in range(N)]
 
 
-def weld():
-    low, fine = noise(21, 8), grain(22)
-    px = []
-    for y in range(N):
-        row = []
-        for x in range(N):
-            # Weld ripples: overlapping crescents across the bead, every 4 texels around the pipe.
-            ripple = 9 * math.cos((x + 0.6 * abs((y % 4) - 1.5)) * math.pi / 2)
-            row.append(grey(146 + ripple + 6 * low[y][x] + 4 * fine[y][x], (1.0, 0.97, 0.92)))
-        px.append(row)
-    return px
-
-
 def flange_steel():
     low, fine = noise(31, 4), grain(32)
     return [[grey(150 + 6 * low[y][x] + 4 * fine[y][x], (0.98, 1.0, 1.02)) for x in range(N)] for y in range(N)]
@@ -144,7 +130,6 @@ def service_band():
 # name: (pixels, smoothness, F0)
 TEXTURES = {
     "painted_steel": (painted_steel, 120, 20),
-    "weld": (weld, 70, 230),
     "flange_steel": (flange_steel, 150, 230),
     "cladding": (cladding, 175, 232),
     "service_band": (service_band, 130, 20),

@@ -6,7 +6,3 @@ neoforge_TintIndex 0
 newmtl steel
 Kd 1 1 1
 map_Kd bwr:block/pipes/flange_steel
-
-newmtl weld
-Kd 1 1 1
-map_Kd bwr:block/pipes/weld

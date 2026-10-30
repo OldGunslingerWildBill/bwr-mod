@@ -36,9 +36,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 #   body           material of the pipe surface: 'paint' (tinted by the block colour) or 'cladding' (plain metal)
 #   joint          what marks each block boundary:
 #                    'ring'   a narrow ring of joint_mat straddling the boundary, joint_len wide on each side and standing
-#                             joint_raise proud of the pipe: an unpainted girth weld ('weld'), or a painted service band
-#                             over the cladding's joint ('band', tinted)
+#                             joint_raise proud of the pipe: a bare steel coupling collar ('steel'), or a painted service
+#                             band over the cladding's joint ('band', tinted)
 #                    'flange' a flange pair: one flange joint_len thick and joint_flange_radius across on each side
+#   mid_band       optional (width, raise, material): a band standing proud of the middle of every straight run
 #   cap            material of the cap that closes a dead end or the run of a capped tee
 #   port_*         the flange drawn against a machine: radius, thickness, stud count
 #   elbow_segments rings in a 90 degree bend (for cladding these are the gores of the elbow jacket)
@@ -46,9 +47,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 #   preview_tint   the block colour in Blender previews only (the game takes it from PipeColors or the dye)
 # ---------------------------------------------------------------------------------------------------------------------
 PIPE_SETS = {
-    # Painted carbon-steel high-pressure water: 8 px across as before, butt-welded every block, flanged to machines.
-    'water': dict(radius=4, sides=12, body='paint', joint='ring', joint_mat='weld', joint_len=1, joint_raise=.5, cap='steel',
-                  port_radius=6.5, port_len=2, port_studs=8, elbow_segments=6, ship=True, preview_tint=(0x5A, 0x9F, 0xCC)),
+    # Painted carbon-steel high-pressure water: 8 px across as before, 16-sided so it reads round, a chunky bare-steel coupling
+    # collar on every joint and a steel band across the middle of each straight; flanged to machines.
+    'water': dict(radius=4, sides=16, body='paint', joint='ring', joint_mat='steel', joint_len=1.5, joint_raise=1, cap='steel',
+                  mid_band=(1, .5, 'steel'), port_radius=6.5, port_len=2, port_studs=8, elbow_segments=6, ship=True,
+                  preview_tint=(0x5A, 0x9F, 0xCC)),
     # Main steam: thick lagging under aluminium cladding (12 px across); the amber service band sits on each sheet joint.
     'steam': dict(radius=6, sides=12, body='cladding', joint='ring', joint_mat='band', joint_len=1, joint_raise=0, cap='cladding',
                   port_radius=7.25, port_len=2, port_studs=8, elbow_segments=4, ship=True, preview_tint=(0xE8, 0xA4, 0x3B)),
@@ -59,7 +62,6 @@ PIPE_SETS = {
 # Material name: (texture, tint index). The tinted ones take the block colour (service colour or dye).
 MATERIALS = {
     'paint': ('bwr:block/pipes/painted_steel', 0),
-    'weld': ('bwr:block/pipes/weld', -1),
     'steel': ('bwr:block/pipes/flange_steel', -1),
     'cladding': ('bwr:block/pipes/cladding', -1),
     'band': ('bwr:block/pipes/service_band', 0),
@@ -282,6 +284,8 @@ class Builder:
             ax = pairs[0]
             self.straight(part, ax, 0.0, 1.0, True, True)
             branches = [d for d in active if not d[ax]]
+            if not branches and self.s.get('mid_band'):
+                self.mid_band(part, ax)
         elif active:
             # No straight run: the first arm runs on past the centre to a cap (a capped tee, or a dead end).
             run = sorted(active, key=lambda d: (RUN_AXES.index(axis_of(d)), -sum(d)))[0]
@@ -302,6 +306,18 @@ class Builder:
             # From just inside the run's centre line out to the face.
             self.straight(part, ax, .5 - d[ax] * 1e-3, face_t(d), False, True)
         return part
+
+    def mid_band(self, part, axis):
+        """A band round the middle of a straight, standing proud of the pipe, with a step at each edge."""
+        width, raise_, mat = self.s['mid_band']
+        rr = self.r + raise_ / 16
+        p0, p1 = C.copy(), C.copy()
+        p0[axis], p1[axis] = .5 - width / 32, .5 + width / 32
+        band(part, self.ring(p0, axis, 0, rr), self.ring(p1, axis, 1, rr), mat, local_v=True)
+        for p, sign in ((p0, -1), (p1, 1)):
+            d = Vector((0, 0, 0))
+            d[axis] = sign
+            annulus(part, self.ring(p, axis, 0), self.ring(p, axis, 0, rr), mat, d)
 
     def cap(self, part, axis, t, outward, raised=False):
         p = C.copy()
