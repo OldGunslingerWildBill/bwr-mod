@@ -118,7 +118,7 @@ public final class OilFilterTests {
             h.assertTrue(housing.filterDpPsi() > dp, "the pressure drop rose as it loaded: " + dp + " -> " + housing.filterDpPsi());
             h.assertTrue(f.gen.aux().filterHousing && Math.abs(f.gen.aux().filterLife - housing.filterLife()) < 1e-9, "the train reports it");
             // Nearly full: it fills, the bypass opens, and the oil goes round it at today's rate.
-            housing.cartridgeSlot().setStackInSlot(0, cartridge(0.9999));
+            housing.cartridgeSlot().setStackInSlot(0, cartridge(1 - 2.0 / TurbineAux.FILTER_LIFE_S)); // two seconds of life left
             f.tick(f.gen, 100);
             h.assertTrue(housing.filterBypass() && housing.filterLoad() >= 1 && housing.filterFactor() == 1, "full: the bypass is open");
             h.assertTrue(f.gen.aux().filterBypass && f.gen.aux().filterAlarm && Math.abs(housing.filterDpPsi() - TurbineAux.FILTER_DP_FULL_PSI) < 1e-9,
@@ -164,7 +164,7 @@ public final class OilFilterTests {
             housing.selectSide(false);
             housing.cartridgeSlot().setStackInSlot(1, ItemStack.EMPTY);
             // It fills; taken out it is a used cartridge that knows how full it is, and the oil goes round again.
-            housing.cartridgeSlot().setStackInSlot(0, cartridge(0.9999));
+            housing.cartridgeSlot().setStackInSlot(0, cartridge(1 - 2.0 / TurbineAux.FILTER_LIFE_S)); // two seconds of life left
             f.tick(f.gen, 100);
             var out = housing.cartridgeSlot().extractItem(0, 1, false);
             h.assertTrue(out.is(BwrItems.OIL_FILTER_CARTRIDGE.get()) && OilFilterCartridgeItem.load(out) >= 1 && !housing.hasCartridge(), "a spent cartridge comes out spent");

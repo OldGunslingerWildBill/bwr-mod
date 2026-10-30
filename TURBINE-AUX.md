@@ -76,7 +76,7 @@ pump discharge with a **side-stream conditioner** keeps the same charge in servi
 | Quantity | Value | Why |
 | --- | --- | --- |
 | Loss through a clean cartridge | **0.1 of the unfiltered loss** (`OIL_FILTER_FACTOR`) | "A lot longer", the owner's words: ten times. At rated pressure and 50 C a 1,000 L drum lasts **3.1 hours** instead of 18.5 minutes, and a full 20,000 L tank **62 hours** instead of 6.2 |
-| Cartridge life | **6 hours** at rated pressure and 50 C oil (`FILTER_LIFE_S`) | About two drums of filtered running (1,944 L), so one cartridge per two drums: a long session on one cartridge, a change at the same bench visit as a refill. The unfiltered loss over those six hours would have been 19,440 L |
+| Cartridge life | **30 hours** at rated pressure and 50 C oil, as the first stage on a plain train (`FILTER_LIFE_S`; it was 6 h) | The owner: the standard filter "at least over 24 or more", the coarse about 48 (below). About ten drums of filtered running (9,720 L), roughly half a charge of oil's filtered life (62 h): a change about twice per charge, at the same bench visit as a refill. The unfiltered loss over those thirty hours would have been 97,200 L |
 | What loads it | the header pressure (`pressure / 25 psig`) times `2^((oil C - 50) / 15)` for oil above 50 C | the same two terms as the oil's own loss: dirt comes with the flow, and hot oil oxidises faster. Oil at 65 C loads it twice as fast; a tank nobody pumps loads nothing |
 | Differential pressure | `3 + 17 x load^2` psid: 3 clean, 12 at 73 % full, **20 when full** | real elements are flat while clean and climb as they fill. A change is due at **12 psid** (a little over a quarter of the life left); the bypass valve opens at 20 |
 | Full, or the slot empty | the **bypass opens**: the factor is 1 | the oil goes round the element, so loss and degradation are **today's rate again**. A housing with no cartridge is the same as no housing |
@@ -161,9 +161,17 @@ a big train needs **four fine housings side by side** (a fine element passes onl
 
 | Grade | Item | Band on the item | Captures (large / fine particles) | Passes at most (a train's rated flow = 1) | Clean pressure drop | Life against a standard one |
 | --- | --- | --- | --- | --- | --- | --- |
-| **Coarse** | `oil_filter_cartridge_coarse` | green | 90 % / 10 % | 3.0 (more than every pump together) | 1 psid | 2.5 times |
-| **Standard** | `oil_filter_cartridge` | none (as it always was) | 99 % / 65 % | no limit | 3 psid | 1 (6 h) |
-| **Fine** | `oil_filter_cartridge_fine` | blue | 99.9 % / 98 % | **0.3** clean, falling to 0.075 as it fills | 8 psid | 0.7 (4.2 h) |
+| **Coarse** | `oil_filter_cartridge_coarse` | green | 90 % / 10 % | 3.0 (more than every pump together) | 1 psid | **48 h** (1.6 times) |
+| **Standard** | `oil_filter_cartridge` | none (as it always was) | 99 % / 65 % | no limit | 3 psid | **30 h** |
+| **Fine** | `oil_filter_cartridge_fine` | blue | 99.9 % / 98 % | **0.3** clean, falling to 0.075 as it fills | 8 psid | 0.7 of the standard's: about 20 h |
+
+**Cartridge lives** (the owner's: "the coarse filter should last about 48 hours and the standard filter at least over 24 or more"), at rated
+pressure and 50 C oil as the **first stage on a plain train**: standard **30 h** (`FILTER_LIFE_S` = 108,000 s), coarse **48 h**, fine **19.8 h**
+(0.7 of the standard's, the ratio kept: a fine element is a tight medium that fills faster than a standard one, and it still makes sense at
+30 h; it also catches slightly more of what reaches it, so it loads 6 percent faster, hence 19.8 and not 21). The coarse element catches
+less of what reaches it than the standard one (it holds 0.83 of its load), so its life factor is 1.6 x 0.83 = 1.33 and the 48 hours come out
+of the loading law (`TurbineAux.LIFE_FACTOR`, `COARSE_LIFE_RATIO`). Everything else is as it was: what each captures, the flow it passes, the
+loss factors, the loading with heat and pressure, and the protection of a fine element behind a coarse one (it still loads about 0.22 times as fast).
 
 Each grade also leaves its **own share of the oil's loss** (`OIL_FILTER_FACTORS`, the clean cartridge in service): **coarse 0.2**, **standard
 0.1** (the cartridge as it always was, unchanged), **fine 0.03**. The owner's words: fine filters stretch the oil life a lot further, but cannot
@@ -250,15 +258,15 @@ rated 25 psig; the cartridge lives are for a train that is not held back and are
 | Arrangement | Oil settles at | Loss factor | Oil life, filter only / + conditioner | Extra wear, vibration | Return line passes | Flow to the bearings | Cartridge lives |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | No housing, or every cartridge out | 0.20 (default) | 1 | **6.2 h** / 20 h | none | no limit | 115 % good | none |
-| One standard | 0.20 | 0.1 | 62 h / 204 h (8.5 d) | none | no limit | 115 % good | standard 6 h |
-| One coarse | 0.575 | 0.2 | 20 h / 102 h | 0.075 %/h, +0.75 mm/s | 3.0 | 115 % good | coarse 18 h |
-| One fine | 0.012 | 0.03 | 206 h (8.6 d) / 680 h (28 d) | none | 0.3 | **30 %** very low, held back | fine 4 h |
-| 2 fine in parallel | 0.012 | 0.03 | 206 h / 680 h | none | 0.6 | **60 %** very low, held back | each fine 7.9 h |
-| 3 fine in parallel | 0.012 | 0.03 | 206 h / 680 h | none | 0.9 | **90 %**, on the edge of the low-flow alarm | each fine 12 h |
-| **4 fine in parallel** | 0.012 | 0.03 | **206 h (8.6 d) / 680 h (28 d)** | none | 1.2 | **115 %** good | each fine 16 h |
-| Coarse then one fine | 0.010 | 0.03 | 206 h / 680 h | none | 0.3 | **30 %** very low, held back | coarse 18 h, fine 18 h |
-| **Coarse then 4 fine in parallel** | 0.010 | 0.03 | **206 h / 680 h** | none | 1.2 | **115 %** good | coarse 18 h, each fine 73 h |
-| Standard then 4 fine in parallel | 0.004 | 0.03 | 206 h / 680 h | none | 1.2 | 115 % good | standard 6 h, each fine 263 h |
+| One standard | 0.20 | 0.1 | 62 h / 204 h (8.5 d) | none | no limit | 115 % good | standard 30 h |
+| One coarse | 0.575 | 0.2 | 20 h / 102 h | 0.075 %/h, +0.75 mm/s | 3.0 | 115 % good | coarse 48 h |
+| One fine | 0.012 | 0.03 | 206 h (8.6 d) / 680 h (28 d) | none | 0.3 | **30 %** very low, held back | fine 20 h |
+| 2 fine in parallel | 0.012 | 0.03 | 206 h / 680 h | none | 0.6 | **60 %** very low, held back | each fine 40 h |
+| 3 fine in parallel | 0.012 | 0.03 | 206 h / 680 h | none | 0.9 | **90 %**, on the edge of the low-flow alarm | each fine 60 h |
+| **4 fine in parallel** | 0.012 | 0.03 | **206 h (8.6 d) / 680 h (28 d)** | none | 1.2 | **115 %** good | each fine 79 h |
+| Coarse then one fine | 0.010 | 0.03 | 206 h / 680 h | none | 0.3 | **30 %** very low, held back | coarse 48 h, fine 91 h |
+| **Coarse then 4 fine in parallel** | 0.010 | 0.03 | **206 h / 680 h** | none | 1.2 | **115 %** good | coarse 48 h, each fine 363 h |
+| Standard then 4 fine in parallel | 0.004 | 0.03 | 206 h / 680 h | none | 1.2 | 115 % good | standard 30 h, each fine 1,316 h |
 
 A coarse cartridge alone is the arrangement that costs something (the oil is dirty, so it wears, shakes and degrades 1.56 times as fast on top of
 its weaker 0.2), and a running conditioner makes the dirt cost nothing (coarse then conditioner settles at 0.164, under the default): the
@@ -295,7 +303,7 @@ gas), taking a small stream out of the tank and returning it cleaned. The **Lube
   open) it leaves **30 %** of the oil's degradation (`CONDITIONER_FACTOR` = 0.3026). The filter's own factor (a tenth with a clean
   standard cartridge in service; 0.2 coarse, 0.03 fine) is separate and **the two multiply**: the filter protects the bearings, the conditioner keeps the oil itself healthy.
   It does not change the header pressure, the film, the bearing temperature or the fires, and it does not slow the cartridge's loading
-  (the cartridge keeps its modest factor and its six hours).
+  (the cartridge keeps its modest factor and its thirty hours).
 - **Losing power or flow** (stopped, no FE, an empty tank, a shut valve or a cut run) **puts the oil back on the filter-only rate**,
   bit for bit: the tank's loss is the old law's times 1.0.
 - **No consumable.** A real coalescer element lasts about a year and is cheap, but a change every few hundred hours of play would be a

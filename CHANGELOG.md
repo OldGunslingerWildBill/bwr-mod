@@ -7,7 +7,7 @@
   conditioner keeps it in service for years. The new **Oil Filter Housing** (a duplex filter modelled in headless Blender, with an inlet
   face and an outlet face) bolts straight against a Main Oil Tank and has **one slot for an Oil Filter Cartridge**. A clean cartridge
   lets **a tenth** of the oil loss through: a drum lasts **3.1 hours** and a full tank **62 hours** at rated speed. The cartridge
-  lasts **6 hours** (faster with hot oil and pressure), its pressure drop climbs from 3 to 20 psid (a change is due at 12), and when it is
+  lasts **30 hours** at rated pressure and 50 C (faster with hot oil and pressure; it was 6 h before the owner asked for longer lives, 48 h for the coarse grade), its pressure drop climbs from 3 to 20 psid (a change is due at 12), and when it is
   full, or the slot is empty, the **bypass opens** and the oil is lost at today's rate. Taking it out gives back a used cartridge that
   remembers how full it is. Hoppers and pipes may fill an empty slot and take nothing out. Shown on the housing's screen, the oil tank's
   screen and the turbine card; signals `oil_filter_life`, `oil_filter_dp`, `oil_filter_bypass`, `oil_filter_alarm` (and the housing's and
@@ -31,8 +31,8 @@
 
 - **Cartridge grades, staged filtration, bearing oil flow alarms and the conditioner's running lamp** (TURBINE-AUX.md, *Cartridge grades* and
   *Bearing oil flow*). The Oil Filter Cartridge comes in **three grades**: the existing one is now the **standard** grade (unchanged in every
-  number, id and save), a **coarse** one with a green band (passes a lot of oil, catches the big debris, lasts 2.5 times as long) and a **fine** one
-  with a blue band (catches nearly everything and leaves **0.03** of the oil's loss, loads in 4.2 h and passes only **0.3** of a train's rated oil flow, less as it fills; coarse leaves 0.2, standard stays 0.1). **Filters now belong on the tank's return line**, between the bearing drains and the tank, so all the oil is filtered, the shaft pump's too; a housing on a supply run passes oil and filters nothing, and a return line that cannot pass the circulating flow limits it (a housing bolted on the tank counts as on its return inlet, so old setups behave as before). Housings on a
+  number, id and save), a **coarse** one with a green band (passes a lot of oil, catches the big debris, lasts 48 h, against the standard's 30) and a **fine** one
+  with a blue band (catches nearly everything and leaves **0.03** of the oil's loss, lasts about 20 h and passes only **0.3** of a train's rated oil flow, less as it fills; coarse leaves 0.2, standard stays 0.1). **Filters now belong on the tank's return line**, between the bearing drains and the tank, so all the oil is filtered, the shaft pump's too; a housing on a supply run passes oil and filters nothing, and a return line that cannot pass the circulating flow limits it (a housing bolted on the tank counts as on its return inlet, so old setups behave as before). Housings on a
   return line work **in series** (a coarse one in front protects a fine one behind it: it loads under a quarter as fast) and **in parallel**
   (four fine housings side by side pass 1.2 and feed a whole train; one alone passes 0.3 and starves it); the run is read as a small cached graph, rebuilt only when
   it changes. The grades are rated like real elements (beta10(c) = 10, 100 and 1,000), and the oil has a **cleanliness** that settles where the

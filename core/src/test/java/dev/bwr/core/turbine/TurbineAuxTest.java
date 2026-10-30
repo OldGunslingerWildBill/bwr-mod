@@ -218,19 +218,19 @@ public final class TurbineAuxTest {
         Check.isTrue(TurbineAux.filterDpPsi(0.8) > TurbineAux.FILTER_DP_CHANGE_PSI, "four fifths full is");
         Check.isFalse(TurbineAux.filterBypassOpen(0.999), "the bypass stays shut until the cartridge is full");
         Check.isTrue(TurbineAux.filterBypassOpen(1), "and opens when it is");
-        // Its life: six hours at rated pressure and 50 C; hot oil and a header at pressure fill it faster, an idle header not at all.
+        // Its life: thirty hours at rated pressure and 50 C; hot oil and a header at pressure fill it faster, an idle header not at all.
         double load = 0;
-        for (int i = 0; i < 21_600; i++) load = TurbineAux.filterLoadStep(load, 25, 50, 1);
-        Check.relative(1.0, load, 1e-9, "full after six hours at rated pressure and 50 C");
+        for (int i = 0; i < 108_000; i++) load = TurbineAux.filterLoadStep(load, 25, 50, 1);
+        Check.relative(1.0, load, 1e-9, "full after thirty hours at rated pressure and 50 C");
         double hot = 0;
-        for (int i = 0; i < 10_800; i++) hot = TurbineAux.filterLoadStep(hot, 25, 65, 1);
+        for (int i = 0; i < 54_000; i++) hot = TurbineAux.filterLoadStep(hot, 25, 65, 1);
         Check.relative(1.0, hot, 1e-9, "oil at 65 C fills it in half the time");
         Check.exactly(0.0, TurbineAux.filterLoadStep(0, 0, 80, 3600), "with no pressure on the header nothing flows through it");
         Check.exactly(1.0, TurbineAux.filterLoadStep(0.99999, 30, 100, 3600), "and the load stops at full");
         Check.exactly(0.3, TurbineAux.filterLoadStep(0.3, 25, 50, 0), "no time, no change");
-        Check.relative(21_600, TurbineAux.filterSecondsLeft(0, 25, 50), 1e-9, "a new cartridge has its six hours");
-        Check.relative(10_800, TurbineAux.filterSecondsLeft(0.5, 25, 50), 1e-9, "half used, half left");
-        Check.relative(5_400, TurbineAux.filterSecondsLeft(0.5, 25, 65), 1e-9, "and half that with oil 15 K hotter");
+        Check.relative(108_000, TurbineAux.filterSecondsLeft(0, 25, 50), 1e-9, "a new cartridge has its thirty hours");
+        Check.relative(54_000, TurbineAux.filterSecondsLeft(0.5, 25, 50), 1e-9, "half used, half left");
+        Check.relative(27_000, TurbineAux.filterSecondsLeft(0.5, 25, 65), 1e-9, "and half that with oil 15 K hotter");
         Check.isTrue(Double.isInfinite(TurbineAux.filterSecondsLeft(0.5, 0, 50)), "nothing flows with no pressure");
     }
 
@@ -312,14 +312,18 @@ public final class TurbineAuxTest {
         Check.exactly(1.0, TurbineAux.filterFactor(true, 1, TurbineAux.GRADE_FINE), "a full one: all of it");
         double lifeFine = TurbineAux.OIL_TANK_L / (TurbineAux.OIL_LEAK_L_PER_S * TurbineAux.OIL_FILTER_FACTORS[2]) / 3600;
         Check.isTrue(lifeFine > 200 && lifeFine < 212, "a 20,000 L tank with a fine cartridge alone lasts about 8.6 days of running (" + lifeFine + " h)");
-        // Life: coarse lasts 2.5 times as long, fine 0.7 times.
+        // Life: as the first stage on a plain train at rated pressure and 50 C the coarse element lasts 48 hours (the standard's 30), the fine one 0.7 times the standard's.
+        double firstStageCoarse = TurbineAux.FILTER_LIFE_S * TurbineAux.LIFE_FACTOR[TurbineAux.GRADE_COARSE] / TurbineAux.particleInflow(TurbineAux.GRADE_COARSE, 1, 1, TurbineAux.CLEANLINESS_DEFAULT);
+        Check.relative(48 * 3600, firstStageCoarse, 1e-9, "a coarse element lasts 48 hours as the first stage on a plain train");
+        Check.relative(30 * 3600, TurbineAux.FILTER_LIFE_S, 1e-12, "a standard one 30");
+        Check.relative(0.7 * 30 * 3600, TurbineAux.FILTER_LIFE_S * TurbineAux.LIFE_FACTOR[TurbineAux.GRADE_FINE], 1e-9, "a fine one keeps its 0.7 of the standard's: 21 hours of the same loading");
         double lc = 0, lf = 0;
-        for (int i = 0; i < 21_600; i++) {
+        for (int i = 0; i < (int) TurbineAux.FILTER_LIFE_S; i++) {
             lc = TurbineAux.filterLoadStep(lc, 25, 50, 1, TurbineAux.GRADE_COARSE, 1.0);
             lf = TurbineAux.filterLoadStep(lf, 25, 50, 1, TurbineAux.GRADE_FINE, 1.0);
         }
-        Check.relative(0.4, lc, 1e-9, "a coarse element is 40 percent full after the standard element's six hours");
-        Check.exactly(1.0, lf, "a fine one is full in 4.2 h");
+        Check.relative(1 / TurbineAux.LIFE_FACTOR[TurbineAux.GRADE_COARSE], lc, 1e-9, "a coarse element is 75 percent full after the standard element's thirty hours");
+        Check.exactly(1.0, lf, "a fine one is full by then");
     }
 
     public static void test18_theOilsCleanlinessStaysAtItsDefaultWithTheStandardCartridgeAndMovesWithTheGrade() {

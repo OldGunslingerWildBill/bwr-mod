@@ -262,13 +262,13 @@ public final class OilGradeTests {
             var ts = SignalProviders.of(tank);
             // The fine housing nearest the tank (z 6); the coarse one goes in front of it (z 5), the oil running south to the tank.
             var fine = housingAt(f, at(f, -1, 0, 6), TurbineAux.GRADE_FINE, 0);
-            f.tick(f.gen, 3000, () -> feed(tank));
+            f.tick(f.gen, 6000, () -> feed(tank));
             double alone = fine.filterLoad(0);
             h.assertTrue(alone > 0.0005, "the fine cartridge alone loaded: " + alone);
             fine.cartridgeSlot().setStackInSlot(0, cartridge(TurbineAux.GRADE_FINE, 0));
             var coarse = housingAt(f, at(f, -1, 0, 5), TurbineAux.GRADE_COARSE, 0);
             h.assertTrue(OilLineNetwork.filterGraph(f.l, tank.getBlockPos(), Direction.WEST).edges.size() == 2, "the graph of the return run holds both housings");
-            f.tick(f.gen, 3000, () -> feed(tank));
+            f.tick(f.gen, 6000, () -> feed(tank));
             double behind = fine.filterLoad(0);
             h.assertTrue(behind > 0 && behind < alone * 0.35, "behind a coarse one the fine cartridge loads under a third as fast: " + behind + " against " + alone);
             h.assertTrue(coarse.filterLoad(0) > 0, "and the coarse one takes the load: " + coarse.filterLoad(0));

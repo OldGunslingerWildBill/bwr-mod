@@ -105,8 +105,12 @@ public final class TurbineAux {
      * years instead of months, and the game's "loss" is that degradation plus the small leak, so a tenth is the ten-fold life.
      */
     public static final double OIL_FILTER_FACTOR = 0.1;
-    /** Seconds a cartridge lasts at the rated header pressure and 50 C oil, then it is full. Hot oil and pressure load it faster. */
-    public static final double FILTER_LIFE_S = 21_600;
+    /**
+     * Seconds a (standard) cartridge lasts at the rated header pressure and 50 C oil, as the first stage on a plain train, then it is full:
+     * thirty hours (the owner: "at least over 24 or more"). Hot oil and pressure load it faster. The coarse grade lasts 48 hours the same way
+     * ({@link #LIFE_FACTOR}), the fine one 0.7 times the standard's.
+     */
+    public static final double FILTER_LIFE_S = 108_000;
     /** Differential pressure across the cartridge, psi: clean, full (the bypass valve opens there), and the reading at which a change is due. */
     public static final double FILTER_DP_CLEAN_PSI = 3, FILTER_DP_FULL_PSI = 20, FILTER_DP_CHANGE_PSI = 12;
 
@@ -205,8 +209,14 @@ public final class TurbineAux {
     public static final double[] CAPTURE_FINE = {0.10, 0.65, 0.98};
     /** The pressure drop across a clean element at its design flow, psid, by grade (the full drop, where the bypass valve opens, is {@link #FILTER_DP_FULL_PSI}). */
     public static final double[] CLEAN_DP_PSI = {1, FILTER_DP_CLEAN_PSI, 8};
+    /**
+     * A coarse element lasts 48 hours against the standard's 30 (the owner's lives), 1.6 times as long, as the first stage on a plain train. It
+     * also catches less of what reaches it than the standard one (it holds {@link #particleInflow} 0.83 of the standard's load), so its own
+     * life factor in {@link #LIFE_FACTOR} is 1.6 x 0.83 = 1.33 and the 48 hours come out in the loading law.
+     */
+    public static final double COARSE_LIFE_RATIO = 48.0 / 30.0;
     /** How long an element lasts against the standard one at the same pressure and oil (a coarse element has a lot of room; a fine one fills fast). */
-    public static final double[] LIFE_FACTOR = {2.5, 1.0, 0.7};
+    public static final double[] LIFE_FACTOR = {TurbineAux.COARSE_LIFE_RATIO * TurbineAux.particleInflow(GRADE_COARSE, 1, 1, TurbineAux.CLEANLINESS_DEFAULT), 1.0, 0.7};
     /**
      * The flow a clean element passes, in units of the flow the bearings need at rated speed (1.0 is a whole train's rated need): a coarse
      * element passes more than any train asks for, a standard one is not limiting (as it never was), a fine one passes 0.3, so <b>one fine
