@@ -122,7 +122,7 @@
     {
       "title": "Lube oil piping",
       "text": [
-        "A Main Oil Tank bolted against the train feeds every bearing through the machine's own header. To put it in another room, run brown Lube Oil Pipe from its front (discharge) to each section's west flank (the supply port, the cobalt blue flange low in the middle of the flank), and from each section's east flank (the drain port, the brown flange) back to the tank's back (return).",
+        "A Main Oil Tank bolted against the train feeds every bearing through the machine's own header. To put it in another room, run brown Lube Oil Pipe from its front (discharge) to each section's west flank (supply: the cobalt blue flange), and from its east flank (drain: the brown flange) back to the tank's back (return).",
         "",
         "A pump whose discharge is piped feeds only the sections its header reaches. A Lube Oil Valve shuts a run: green dome, bar along the pipe is open; red, across, is shut. The shaft pump's suction is piped to the tank's underside."
       ],
