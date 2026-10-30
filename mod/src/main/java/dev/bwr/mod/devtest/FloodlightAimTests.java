@@ -258,7 +258,7 @@ public final class FloodlightAimTests {
      * of lights whose centre moves the right way (up for tilt, to the right for heading) by about half a block (30 tan 1 degree),
      * and five degrees moves it five times as far. Tilt and heading in single degrees are not rounded to the old 15 and 45 degree steps.
      */
-    @GameTest(template = "empty", timeoutTicks = 3000)
+    @GameTest(template = "empty", timeoutTicks = 3000, batch = "flaimhall")
     public static void aOneDegreeChangeOfAimMovesTheLitPool(GameTestHelper helper) {
         Box b = hall(0);
         onBox(helper, b, done -> {
@@ -341,7 +341,7 @@ public final class FloodlightAimTests {
      * lamp lights exactly the cells a lamp turned there with the old steps did. A save with degrees keeps them exactly, the reach too;
      * the default aim writes no new key; an aim on the old grid also writes the old keys.
      */
-    @GameTest(template = "empty", timeoutTicks = 3000)
+    @GameTest(template = "empty", timeoutTicks = 3000, batch = "flaimhall")
     public static void anOldSaveWithStepAimLoadsToTheSameAimAndLights(GameTestHelper helper) {
         Box b = hall(1);
         onBox(helper, b, done -> {
@@ -531,7 +531,7 @@ public final class FloodlightAimTests {
      * Fifteen commands in one tick move the head (the lamp's aim) at once and cost no plan; four ticks later there is exactly one plan,
      * for the last aim, and the lights are that plan's. A click every tick for twelve ticks costs at most four plans, not twelve.
      */
-    @GameTest(template = "empty", timeoutTicks = 3000)
+    @GameTest(template = "empty", timeoutTicks = 3000, batch = "flaimhall")
     public static void aBurstOfClicksMakesOneReplan(GameTestHelper helper) {
         Box b = hall(2);
         onBox(helper, b, done -> {
@@ -599,7 +599,7 @@ public final class FloodlightAimTests {
      * Re-aiming and changing the reach puts every old light back exactly: after each change every light in the box is on the lamp's
      * list and every listed cell is a light, and when the lamp goes off the box reads as it did before.
      */
-    @GameTest(template = "empty", timeoutTicks = 3000)
+    @GameTest(template = "empty", timeoutTicks = 3000, batch = "flaimhall")
     public static void reAimingAndChangingTheReachCleanUpExactly(GameTestHelper helper) {
         Box b = hall(3);
         onBox(helper, b, done -> {
