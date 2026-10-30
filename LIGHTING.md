@@ -244,8 +244,10 @@ is in `dev.bwr.mod.floodlight`, the tests are `FloodlightTests`, `FloodlightReac
   landed far away are cleaned up exactly like the others, through `PendingLights` when their chunk is unloaded.
 - **Pictures** (`-PbwrFloodlightClientCheck`, `floodlight-check/vanilla/`): `floodlight-far-wall-reach128` and `-reach32` (and
   `-wide`) show one floodlight on a 12-block tower, level, looking along a flat yard at a wall 123 blocks away at night, at
-  reach 128 (the wall is lit) and at reach 32 (it is dark). The aiming screen is in the screen check
-  (`GuiScreenCheck`: `floodlight-aim`, `-far`, `-limits`, `-waiting`).
+  reach 128 (the wall is lit) and at reach 32 (it is dark). The check ends with the screen over the real connection: the server
+  opens the floodlight's menu for the player, three clicks and a change of reach are made through the screen's own methods
+  (so as packets), and the server's lamp and the client's copy must both have the exact aim (`floodlight-aim-screen-open.png`).
+  The screen's layouts are in the screen check (`GuiScreenCheck`: `floodlight-aim`, `-far`, `-limits`, `-waiting`).
 - **Tests** (`FloodlightAimTests`): a one-degree change of tilt or heading moves the lit pool the right way by about half a
   block, and five degrees five times as far; the quick steps still move on the old grid; a save with step aim loads to the
   same aim and lights exactly the same cells, a save with degrees round-trips (client copy and beam direction too), defaults write
