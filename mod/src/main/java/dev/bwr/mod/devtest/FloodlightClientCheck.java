@@ -5,6 +5,8 @@ import dev.bwr.mod.floodlight.BeamLampBlockEntity;
 import dev.bwr.mod.floodlight.FacingBeamLampBlock;
 import dev.bwr.mod.floodlight.HpsFlatPanelBlock;
 import dev.bwr.mod.floodlight.XenonFloodlightBlock;
+import dev.bwr.mod.gui.FloodlightAimMenu;
+import dev.bwr.mod.gui.client.FloodlightAimScreen;
 import dev.bwr.mod.registry.BwrBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -46,11 +48,29 @@ public final class FloodlightClientCheck {
     private static final int Y = 120;
     private static final int IN = 40;
 
-    private record Stage(String name, boolean flood, boolean bay, boolean hps, Vec3 camera, Vec3 target, boolean big) {
+    private record Stage(String name, boolean flood, boolean bay, boolean hps, Vec3 camera, Vec3 target, boolean big, int farReach) {
         Stage(String name, boolean flood, boolean bay, boolean hps, Vec3 camera, Vec3 target) {
-            this(name, flood, bay, hps, camera, target, false);
+            this(name, flood, bay, hps, camera, target, false, 0);
+        }
+
+        Stage(String name, boolean flood, boolean bay, boolean hps, Vec3 camera, Vec3 target, boolean big) {
+            this(name, flood, bay, hps, camera, target, big, 0);
+        }
+
+        /** A stage in the far yard: the one floodlight on its tower, at this reach (blocks). */
+        static Stage far(String name, Vec3 camera, Vec3 target, int reach) {
+            return new Stage(name, false, false, false, camera, target, false, reach);
         }
     }
+
+    /**
+     * The far yard (the reach of the floodlight): a tower of iron blocks at x FX with a floodlight on top, 12 up, looking along a flat
+     * yard at a wall 123 blocks away (x FX + 123). The wall is 97 wide and 71 high so the whole pool of the beam (a circle 64 across at
+     * that distance) is on it.
+     */
+    private static final int FX = 400, FAR_WALL = 123;
+    private static final Vec3 FAR_CAMERA = new Vec3(FX - 9.5, Y + 17.0, 0.5), FAR_TARGET = new Vec3(FX + FAR_WALL, Y + 14.0, 0.5);
+    private static final Vec3 FAR_WIDE_CAMERA = new Vec3(FX - 24.5, Y + 30.0, 0.5), FAR_WIDE_TARGET = new Vec3(FX + FAR_WALL, Y + 13.0, 0.5);
 
     /** The big hall: its inside is x BX to BX + 79, z 1 to 56, y Y to Y + 23; the ceiling is Y + 24. */
     private static final int BX = 200, BW = 80, BD = 56, BH = 24;
@@ -80,6 +100,10 @@ public final class FloodlightClientCheck {
             new Stage("bighall-hps-panels-along-the-floor", false, false, true, BIG_END, BIG_END_TARGET, true),
             new Stage("bighall-high-bays-from-above", false, true, false, BIG_HIGH, BIG_HIGH_TARGET, true),
             new Stage("bighall-all-off", false, false, false, BIG_CORNER, BIG_CORNER_TARGET, true),
+            Stage.far("floodlight-far-wall-reach128", FAR_CAMERA, FAR_TARGET, 128),
+            Stage.far("floodlight-far-wall-reach128-wide", FAR_WIDE_CAMERA, FAR_WIDE_TARGET, 128),
+            Stage.far("floodlight-far-wall-reach32", FAR_CAMERA, FAR_TARGET, 32),
+            Stage.far("floodlight-far-wall-reach32-wide", FAR_WIDE_CAMERA, FAR_WIDE_TARGET, 32),
     };
 
     private static boolean started, requested, built;
@@ -92,19 +116,19 @@ public final class FloodlightClientCheck {
     }
 
     private static final List<Fixture> FLOODS = new ArrayList<>(), BAYS = new ArrayList<>(), PANELS = new ArrayList<>();
-    private static final List<Fixture> BIG_BAYS = new ArrayList<>(), BIG_PANELS = new ArrayList<>();
+    private static final List<Fixture> BIG_BAYS = new ArrayList<>(), BIG_PANELS = new ArrayList<>(), FARS = new ArrayList<>();
 
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post event) throws Exception {
         if (!Boolean.getBoolean("bwr.floodlightClientCheck")) return;
         Minecraft mc = Minecraft.getInstance();
-        if (++age > 6000) throw new IllegalStateException("Floodlight client check timed out at stage " + stage);
+        if (++age > 12000) throw new IllegalStateException("Floodlight client check timed out at stage " + stage);
         if (!started && mc.screen != null && mc.getOverlay() == null) {
             started = true;
             mc.options.pauseOnLostFocus = false;
             mc.options.guiScale().set(2);
             mc.options.enableVsync().set(false);
-            mc.options.renderDistance().set(8);
+            mc.options.renderDistance().set(12);
             mc.createWorldOpenFlows().createFreshLevel("bwr-floodlight-check-" + System.currentTimeMillis(),
                     new LevelSettings("Floodlight check", GameType.CREATIVE, false, Difficulty.PEACEFUL, true, new GameRules(),
                             WorldDataConfiguration.DEFAULT),
@@ -114,6 +138,10 @@ public final class FloodlightClientCheck {
         }
         if (mc.player == null || mc.level == null || mc.getSingleplayerServer() == null || ++joined < 100) return;
         RenderEnvironment.log("FloodlightClientCheck");
+        if (stage >= STAGES.length) {
+            aimRoundtrip(mc);
+            return;
+        }
         if (!requested) {
             requested = true;
             shown = 0;
@@ -132,7 +160,16 @@ public final class FloodlightClientCheck {
                     built = true;
                     buildHall(level);
                     buildBigHall(level);
+                    buildFarYard(level);
                 }
+                if (st.farReach() > 0) {
+                    for (Fixture f : FARS) {
+                        if (level.getBlockEntity(f.lamp()) instanceof BeamLampBlockEntity be) {
+                            be.setAim(0, 0, st.farReach());
+                        }
+                    }
+                }
+                switchAll(level, FARS, st.farReach() > 0);
                 switchAll(level, FLOODS, !st.big() && st.flood());
                 switchAll(level, BAYS, !st.big() && st.bay());
                 switchAll(level, PANELS, !st.big() && st.hps());
@@ -154,10 +191,21 @@ public final class FloodlightClientCheck {
         mc.player.setXRot((float) -Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z))));
         mc.player.yRotO = mc.player.getYRot();
         mc.player.xRotO = mc.player.getXRot();
-        BlockPos probe = st.big() ? BIG_BAYS.get(0).lamp() : FLOODS.isEmpty() ? BlockPos.ZERO : FLOODS.get(0).lamp();
+        BlockPos probe = st.farReach() > 0 ? FARS.get(0).lamp() : st.big() ? BIG_BAYS.get(0).lamp() : FLOODS.isEmpty() ? BlockPos.ZERO : FLOODS.get(0).lamp();
         boolean ready = mc.screen == null && Math.abs(mc.player.getY() - st.camera().y) < 0.5
                 && mc.level.getBlockEntity(probe) instanceof BeamLampBlockEntity lamp
-                && lamp.lit() == (st.big() ? st.bay() : st.flood());
+                && lamp.lit() == (st.farReach() > 0 || (st.big() ? st.bay() : st.flood()));
+        if (ready && st.farReach() > 0 && shown == 60) {
+            // The yard's chunks are all loaded by now: plan again, so the lights are in place in every chunk the beam reaches.
+            var server = mc.getSingleplayerServer();
+            server.execute(() -> {
+                for (Fixture f : FARS) {
+                    if (server.overworld().getBlockEntity(f.lamp()) instanceof BeamLampBlockEntity be) {
+                        be.reconcile();
+                    }
+                }
+            });
+        }
         if (ready && ++shown > 120) {
             String kind = RenderEnvironment.shaderPackInUse() ? "shaders" : "vanilla";
             var dir = mc.gameDirectory.toPath().resolve("floodlight-check").resolve(kind);
@@ -165,11 +213,76 @@ public final class FloodlightClientCheck {
             CheckShots.save(mc, dir.resolve(st.name() + ".png"));
             LogUtils.getLogger().info("FLOODLIGHT CLIENT PASS {} {}", kind, st.name());
             if (++stage == STAGES.length) {
-                LogUtils.getLogger().info("FLOODLIGHT CLIENT COMPLETE");
-                mc.stop();
+                roundtrip = 1;
             } else {
                 requested = false;
             }
+        }
+    }
+
+    private static int roundtrip, roundtripAge;
+
+    /**
+     * The last step: the aiming screen over the real connection. The server opens the floodlight's menu for the player; the screen
+     * (client) is clicked three times and the reach changed, through the same methods the buttons call; the commands go to the server as
+     * packets. Then the server's lamp must have the aim (3 degrees, -2 degrees, reach 100) and so must the client's copy of it (the head
+     * turns to the exact angle). A picture of the open screen is saved.
+     */
+    private static void aimRoundtrip(Minecraft mc) throws Exception {
+        var server = mc.getSingleplayerServer();
+        BlockPos lampPos = FARS.get(0).lamp();
+        roundtripAge++;
+        if (roundtrip == 1) {
+            var uuid = mc.player.getUUID();
+            server.execute(() -> {
+                var player = server.getPlayerList().getPlayer(uuid);
+                ServerLevel level = player.serverLevel();
+                if (level.getBlockEntity(lampPos) instanceof BeamLampBlockEntity be) {
+                    be.setAim(0, 0, 32);
+                    be.reconcile();
+                }
+                player.connection.teleport(lampPos.getX() - 2.5, lampPos.getY() + 0.5, lampPos.getZ() + 0.5, -90, 10);
+                FloodlightAimMenu.open(player, lampPos);
+            });
+            roundtrip = 2;
+            roundtripAge = 0;
+            return;
+        }
+        if (roundtrip == 2) {
+            if (mc.screen instanceof FloodlightAimScreen && mc.player.containerMenu instanceof FloodlightAimMenu m && m.present) {
+                m.aimTo(m.yaw + 1, m.pitch);
+                m.aimTo(m.yaw + 1, m.pitch);
+                m.aimTo(m.yaw + 1, m.pitch - 2);
+                m.reachTo(100);
+                roundtrip = 3;
+                roundtripAge = 0;
+            } else if (roundtripAge > 600) {
+                throw new IllegalStateException("The aiming screen never opened");
+            }
+            return;
+        }
+        if (roundtrip == 3 && roundtripAge > 60) {
+            int[] onServer = server.submit(() -> {
+                var be = (BeamLampBlockEntity) server.overworld().getBlockEntity(lampPos);
+                return new int[] {be.yawDegrees(), be.pitchDegrees(), be.reach()};
+            }).get(10, java.util.concurrent.TimeUnit.SECONDS);
+            var client = (BeamLampBlockEntity) mc.level.getBlockEntity(lampPos);
+            var m = (FloodlightAimMenu) mc.player.containerMenu;
+            LogUtils.getLogger().info("FLOODLIGHT CLIENT AIM ROUNDTRIP server {} client {} {} {} screen {} {} {}", java.util.Arrays.toString(onServer),
+                    client.yawDegrees(), client.pitchDegrees(), client.reach(), m.yaw, m.pitch, m.reach);
+            if (onServer[0] != 3 || onServer[1] != -2 || onServer[2] != 100) {
+                throw new IllegalStateException("The server's lamp did not take the aim from the screen: " + java.util.Arrays.toString(onServer));
+            }
+            if (client.yawDegrees() != 3 || client.pitchDegrees() != -2 || client.reach() != 100) {
+                throw new IllegalStateException("The client's lamp does not have the exact angles");
+            }
+            var dir = mc.gameDirectory.toPath().resolve("floodlight-check").resolve(RenderEnvironment.shaderPackInUse() ? "shaders" : "vanilla");
+            java.nio.file.Files.createDirectories(dir);
+            CheckShots.save(mc, dir.resolve("floodlight-aim-screen-open.png"));
+            LogUtils.getLogger().info("FLOODLIGHT CLIENT AIM ROUNDTRIP PASS");
+            LogUtils.getLogger().info("FLOODLIGHT CLIENT COMPLETE");
+            mc.stop();
+            roundtrip = 4;
         }
     }
 
@@ -314,6 +427,40 @@ public final class FloodlightClientCheck {
             bigWallPanel(level, new BlockPos(x, Y + 14, 1), Direction.SOUTH);
             bigWallPanel(level, new BlockPos(x, Y + 14, BD), Direction.NORTH);
         }
+    }
+
+    /** The far yard: a patterned floor 155 long, the wall 123 blocks off, and the floodlight on its 12-block tower (lever behind it). */
+    private static void buildFarYard(ServerLevel level) {
+        BlockState lightGrey = Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState();
+        for (int x = FX - 30; x <= FX + FAR_WALL + 1; x++) {
+            for (int z = -48; z <= 48; z++) {
+                for (int y = Y - 1; y <= Y + 70; y++) {
+                    BlockState s;
+                    if (x >= FX + FAR_WALL && y >= Y) {
+                        boolean band = (x == FX + FAR_WALL) && (y == Y + 20 || y == Y + 21);
+                        boolean grid = ((z + 48) % 8 == 0) || ((y - Y) % 8 == 0);
+                        s = band ? Blocks.YELLOW_CONCRETE.defaultBlockState() : grid ? Blocks.GRAY_CONCRETE.defaultBlockState() : lightGrey;
+                        if (x == FX + FAR_WALL + 1) {
+                            s = Blocks.GRAY_CONCRETE.defaultBlockState();
+                        }
+                    } else if (y == Y - 1) {
+                        s = ((x - FX) / 4 + z / 4) % 2 == 0 ? Blocks.POLISHED_ANDESITE.defaultBlockState() : Blocks.SMOOTH_STONE.defaultBlockState();
+                    } else {
+                        s = Blocks.AIR.defaultBlockState();
+                    }
+                    set(level, x, y, z, s);
+                }
+            }
+        }
+        for (int y = Y; y <= Y + 11; y++) {
+            set(level, FX, y, 0, Blocks.IRON_BLOCK.defaultBlockState());
+        }
+        BlockPos lamp = new BlockPos(FX, Y + 12, 0);
+        level.setBlock(lamp, BwrBlocks.XENON_FLOODLIGHT.get().defaultBlockState().setValue(XenonFloodlightBlock.FACING, Direction.EAST), 3);
+        BlockPos attached = new BlockPos(FX, Y + 11, 0);
+        FARS.add(new Fixture(lamp, attached, attached.west(), Blocks.LEVER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.WALL)
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACING, Direction.WEST)));
     }
 
     private static void bigFixed(ServerLevel level, Block block, int x, int y, int z) {

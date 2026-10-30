@@ -669,6 +669,10 @@ public final class GuiScreenCheck {
                         dev.bwr.mod.fabrication.FabricationCrafting.Outcome.SHORT, 0)));
         s.add(new Scenario("valve-control", i -> new TurbineValveScreen(valve(i, false), i, t("Turbine Control Valve"))));
         s.add(new Scenario("valve-stop", i -> new TurbineValveScreen(valve(i, true), i, t("Turbine Stop Valve"))));
+        s.add(new Scenario("floodlight-aim", i -> new FloodlightAimScreen(floodlight(i, 0, 0, 32, 41, true), i, t("Xenon Floodlight"))));
+        s.add(new Scenario("floodlight-aim-far", i -> new FloodlightAimScreen(floodlight(i, 237, -12, 128, 183, true), i, t("Xenon Floodlight"))));
+        s.add(new Scenario("floodlight-aim-limits", i -> new FloodlightAimScreen(floodlight(i, 359, -75, 8, 0, false), i, t("Xenon Floodlight"))));
+        s.add(new Scenario("floodlight-aim-waiting", i -> new FloodlightAimScreen(new FloodlightAimMenu(99, i, P), i, t("Xenon Floodlight"))));
         s.add(new Scenario("fabricator", i -> {
             var m = new FuelFabricatorMenu(99, i, P);
             m.present = true;
@@ -1457,6 +1461,17 @@ public final class GuiScreenCheck {
         m.electricMW = 1500;
         m.shaftFlow = 1;
         m.status = kind == 1 ? "On the generator shaft end" : "Attached";
+        return m;
+    }
+
+    private static FloodlightAimMenu floodlight(Inventory i, int yaw, int pitch, int reach, int lights, boolean lit) {
+        var m = new FloodlightAimMenu(99, i, P);
+        m.present = true;
+        m.lit = lit;
+        m.yaw = yaw;
+        m.pitch = pitch;
+        m.reach = reach;
+        m.lights = lights;
         return m;
     }
 

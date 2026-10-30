@@ -52,5 +52,6 @@ public final class BwrScreens {
         event.register(BwrMenus.RHR_HEAT_EXCHANGER.get(), RhrHeatExchangerScreen::new);
         event.register(BwrMenus.RWCU_UNIT.get(), RwcuUnitScreen::new);
         event.register(BwrMenus.FABRICATION_DESK.get(), FabricationDeskScreen::new);
+        event.register(BwrMenus.FLOODLIGHT_AIM.get(), FloodlightAimScreen::new);
     }
 }

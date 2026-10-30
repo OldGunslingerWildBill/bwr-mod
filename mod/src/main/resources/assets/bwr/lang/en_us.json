@@ -1343,7 +1343,7 @@
   "block.bwr.xenon_high_bay": "Xenon High-Bay",
   "message.bwr.xenon_floodlight.aim": "Aim: %s degrees of yaw, pitch %s degrees",
   "tooltip.bwr.xenon_floodlight.light": "Cold-white xenon arc, about 6000 K. Instant on. Lights the area its beam points at while it has a redstone signal.",
-  "tooltip.bwr.xenon_floodlight.use": "Right-click: turn it 45 degrees. Sneak-right-click: pitch it 15 degrees.",
+  "tooltip.bwr.xenon_floodlight.use": "Right-click with an empty hand: open the aiming screen (heading, tilt and reach). Sneak-right-click: tilt it 15 degrees.",
   "tooltip.bwr.xenon_high_bay.light": "Cold-white xenon arc, about 6000 K. Instant on. Lights a large room below it while it has a redstone signal.",
   "block.bwr.hps_flat_panel": "High-Pressure Sodium Flat Panel",
   "tooltip.bwr.hps_flat_panel.light": "Golden-white high-pressure sodium arc. Floods a wide area in front of it while it has a redstone signal; warms up over about 20 seconds.",

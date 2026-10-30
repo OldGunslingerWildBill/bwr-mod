@@ -134,19 +134,20 @@ six pictures and logs the light at each lamp.
 # Beam lamps (xenon floodlight, xenon high-bay, HPS flat panel)
 
 Three redstone lamps that throw light where their beam lands, by placing invisible vanilla `minecraft:light` blocks. Code
-is in `dev.bwr.mod.floodlight`, the tests are `FloodlightTests` and `FloodlightReachTests` (namespace `bwrfloodlight`,
-run with `-PbwrGameTestNamespaces=bwrfloodlight`), the pictures `FloodlightClientCheck` (`-PbwrFloodlightClientCheck`).
+is in `dev.bwr.mod.floodlight`, the tests are `FloodlightTests`, `FloodlightReachTests` and `FloodlightAimTests` (namespace
+`bwrfloodlight`, run with `-PbwrGameTestNamespaces=bwrfloodlight`), the pictures `FloodlightClientCheck`
+(`-PbwrFloodlightClientCheck`).
 
 | Block | Mount | Range | Main beam (full angle) | Spill zone (full angle) | Light |
 |---|---|---|---|---|---|
-| `bwr:xenon_floodlight` | stands on any block; aimable (45-degree yaw, pitch -75 to +30 in 15-degree steps) | 32 | 30 degrees | none | cold white, at once |
+| `bwr:xenon_floodlight` | stands on any block; aimable on a screen (heading 0 to 359 degrees, tilt -75 to +30, one degree at a time) | 32, or 8 to 128 as set | 30 degrees | none | cold white, at once |
 | `bwr:xenon_high_bay` | ceiling | 48 | 110 degrees | out to 160 degrees | cold white, at once |
 | `bwr:hps_flat_panel` | ceiling or wall | 40 | 120 degrees | out to 160 degrees | golden `#FFCE80`, warms 4/8/12/15 over about 20 s |
 
 - **Projection.** A fan of rays over the cone walks the grid to the first opaque block; the last free cell in front of it
-  (within 2.5 blocks) gets a light. A lamp with no spill zone (the floodlight) casts up to 2048 rays, thins the landing
-  cells to one per 2-block lattice box and widens the box up to 6 until the plan fits. A lamp places at most **256**
-  lights.
+  (within 2.5 blocks) gets a light. A lamp with no spill zone (the floodlight) casts up to 2048 rays (146 at its usual reach
+  of 32, 585 at 64, the 2048 at 128: the count grows with the square of the reach), thins the landing cells to one per
+  2-block lattice box and widens the box up to 6 until the plan fits. A lamp places at most **256** lights.
 - **Reach and spill (high-bay, HPS panel).** These two hang tens of blocks up over a big floor, so they reach 48 and 40
   blocks (the floor of a hall 30 up is lit out to 37 blocks from under the high-bay) and cast 1024 rays over 160 degrees,
   thicker towards the edge of the cone. The cells the rays outside the main beam land on are the **spill zone**: their
@@ -180,7 +181,79 @@ run with `-PbwrGameTestNamespaces=bwrfloodlight`), the pictures `FloodlightClien
 - **Levels are not saved.** The save is still `Lights` and `LightKinds` (cell and what it held). Which lights are spill
   is a property of the plan, so a lamp from an older save, whose lights were all level 15, is brought to the spill levels
   at its next re-plan, in place, with no light added or taken away.
-- **Timing.** No ticker: redstone re-plans at once; a lit lamp re-plans on its own scheduled tick every 5 s.
+- **Timing.** No ticker: redstone re-plans at once; a lit lamp re-plans on its own scheduled tick every 5 s (a floodlight set
+  to a reach over 32 blocks adds 0 to 39 ticks, by its position, so a yard of them does not re-plan in one tick); a change of
+  the floodlight's aim from its screen or a computer re-plans once, 4 ticks after the first change of a burst (below).
 - **Lenses.** Separate lens parts, full bright in vanilla (NeoForge face light data; the floodlight's head lens through its
   renderer), with labPBR `_s` maps (alpha 254 on the lit lenses) for shader packs.
-- **Computers.** A read-only `bwr_beam_lamp` peripheral (`getStatus()`); redstone is the only switch.
+- **Computers.** A `bwr_beam_lamp` peripheral on all three lamps. Redstone is the only switch. `getStatus()` gives `lit`,
+  `lightBlocks`, `yawDeg`, `pitchDeg` and `reach` (blocks) (and `yawDegrees` and `pitchDegrees`, the same two numbers under
+  their older names; the high-bay and the panel report yaw 0, pitch 0 and their fixed range as the reach). The floodlight
+  alone has **`setAim(yawDeg, pitchDeg)`** (yaw 0 to 359 from the way it faces, pitch -75 to +30, up is plus) and
+  **`setReach(blocks)`** (8 to 128). The values must be whole numbers in range or the call fails and nothing changes; on a
+  high-bay or a panel both calls fail ("Only the xenon floodlight can be aimed"). The head turns at once and the light follows
+  within 4 ticks (one re-plan for a run of calls).
+
+## The floodlight's aim and reach
+
+- **The aiming screen.** Right-click the floodlight with an empty hand (`FloodlightAimMenu`, `FloodlightAimScreen`, the mod's
+  usual menu and command packet). Three cards, each with a minus and a plus button: **Heading** (how far the lamp is turned
+  from the way it faces, 0 to 359 degrees, plus turns it to the right), **Tilt** (-75 to +30 degrees, plus is up) and **Reach**
+  (8 to 128 blocks, 32 is the usual). A click is one degree (one block of reach); with Shift held, 10 degrees (8 blocks).
+  The numbers change as you click, the head on the client turns to the exact angle at once (the block entity's update
+  tag carries `YawDeg` and `PitchDeg`), and the light follows. A card of the screen also shows whether the lamp is lit and
+  how many of its 256 light blocks are placed.
+- **Sneak-right-click** keeps its old job as a quick tilt: 15 degrees a click, from +30 round to -75, the aim on the action bar.
+  A plain right-click used to turn the lamp 45 degrees; it now opens the screen (the quick 45-degree turn is gone; the
+  screen's heading does that in any step).
+- **What the server checks** on every command: the player has this menu open and the lamp is in reach, the player is not a
+  spectator and may build there (`BeamLampBlockEntity.mayAim`, as before), at most 30 commands come in 20 ticks (the rest are
+  dropped), and the values are in range (yaw 0 to 359, pitch -75 to +30, reach 8 to 128). A command that fails any check does
+  nothing.
+- **One re-plan for a burst** (`AimReplans`). A command moves the head and the saved aim at once. The first change of a burst
+  starts a timer of 4 ticks; when it ends the lamp re-plans once, for the aim it has by then; a burst that goes on is cut
+  into re-plans 4 ticks apart, so a held button costs at most one plan in four ticks. The queue holds a lamp only between a
+  change and its re-plan (it is not a ticker per block, and the server tick does nothing while it is empty).
+- **Saves.** The aim is `YawDeg` (0 to 359), `PitchDeg` (-75 to +30) and `Reach` (8 to 128), each written only when it is not
+  the default (0, 0, 32). While the yaw is a multiple of 45 degrees and the pitch of 15 (from -75), the old keys `Yaw` and
+  `Pitch` (steps 0 to 7) are written too, so a world opened in an older build keeps the aim. A save that has only `Yaw` and
+  `Pitch` (every save made before) loads to the same aim: yaw is the step times 45, pitch is -75 plus the step times 15
+  (`Pitch` absent is step 5, level), and the reach is 32, so an existing floodlight lights exactly what it did.
+- **Long reach.** The planner is the one the floodlight always had, given the lamp's reach. A far wall 123 blocks away at
+  reach 128: 183 lights (129 of them on the wall), so the plan is
+  inside the cap with room to spare. Worked out from the lights (15 less a level a block), the pool within 20 blocks of its
+  middle reads 10 at its worst and 12.7 on average, and the light engine, read back, agrees: 15 at the middle, 10 at the
+  worst of the sampled cells.
+  The floor, at long reach: A floodlight 22 up, tilted 15 degrees down, reach 128: 246 lights, every floor cell
+  inside the cone within 100 blocks reads 10 or more (mean 13.1). The yard of the pictures (12 up, level, a wall at 123 blocks,
+  so floor and wall share the lights): 229 lights, 9 or more (mean 12.5), and the light engine reads the same. The usual reach
+  (10 up, tilted 30 down, reach 32): 53 lights, 13 or more. So the cap of 256 lights and the lattice (2 widening towards 6) hold at 128, and the planner
+  was left as it was. The far pool is lit more sparsely than a pool at 32 blocks (a light about every 3 to 4 blocks against 2),
+  and the reach does not make the cone any wider: the beam stays 30 degrees across, so the pool on a wall 120 blocks away is
+  about 64 blocks across.
+- **What a plan costs.** One re-plan of a lit floodlight that finds nothing to change (what the 5-second refresh costs), median of
+  40: **0.2 ms at reach 32, 1.6 ms at 64, 9.5 ms at 128** (7.2 to 13.6; with a wall at 123 blocks every one of the 2048
+  rays walks the whole way, about 190 cells each; at 32 and 64 the rays in the test find nothing to land on and the cost is
+  the walk alone). A **yard of 20 lit floodlights at reach 128**, all re-planned one after the other, takes **200 ms**
+  (167 to 230), 10 ms a lamp: that is what all twenty at once would cost, which the stagger avoids (twenty lamps fall on 18
+  different ticks, at most two in one: about 20 ms in the worst tick). `FloodlightAimTests` logs these
+  (`FLOODLIGHT AIM PLANCOST`, `FLOODLIGHT AIM FARWALL`, `FLOODLIGHT AIM FLOORPOOL`, `FLOODLIGHT AIM YARDFLOOR`).
+- **No chunk is loaded.** A ray stops at the first cell whose chunk is not loaded, as before (so a long beam stops at the edge
+  of the loaded area and lights nothing beyond it); a chunk that is full but not yet visible to the chunk source (it became
+  full this tick) now counts as not loaded too, so a plan never makes the game finish a chunk load on its stack. Lights that
+  landed far away are cleaned up exactly like the others, through `PendingLights` when their chunk is unloaded.
+- **Pictures** (`-PbwrFloodlightClientCheck`, `floodlight-check/vanilla/`): `floodlight-far-wall-reach128` and `-reach32` (and
+  `-wide`) show one floodlight on a 12-block tower, level, looking along a flat yard at a wall 123 blocks away at night, at
+  reach 128 (the wall is lit) and at reach 32 (it is dark). The check ends with the screen over the real connection: the server
+  opens the floodlight's menu for the player, three clicks and a change of reach are made through the screen's own methods
+  (so as packets), and the server's lamp and the client's copy must both have the exact aim (`floodlight-aim-screen-open.png`).
+  The screen's layouts are in the screen check (`GuiScreenCheck`: `floodlight-aim`, `-far`, `-limits`, `-waiting`).
+- **Tests** (`FloodlightAimTests`): a one-degree change of tilt or heading moves the lit pool the right way by about half a
+  block, and five degrees five times as far; the quick steps still move on the old grid; a save with step aim loads to the
+  same aim and lights exactly the same cells, a save with degrees round-trips (client copy and beam direction too), defaults write
+  nothing; the screen's commands (good ones, every kind of bad one, a player too far away, a spectator, a player who may not
+  build, a high-bay, a hundred commands in a tick, the window opening again); a burst of fifteen clicks costs one plan and a
+  click a tick for twelve ticks at most four; re-aiming and every change of reach put every light back exactly; reach 128
+  lights a wall 123 blocks away and 16, 32 and 64 do not (the light engine read back), the far pool and the floor pool are
+  covered; the cost; a long beam stops at an unloaded chunk and loads nothing; far lights are cleaned up exactly, through
+  the queue when their chunk is out; the computer face.
