@@ -136,6 +136,7 @@ public final class TurbineWreckTests {
             h.assertTrue(!fresh.contains("Wreck") && !fresh.contains("Fire") && !fresh.contains("Holes") && !fresh.contains("DiscBurst"),
                     "a sound section's save gains no new key");
             f.rpm(TurbineBlades.BURST_RPM + 10);
+            f.timeForAngleAlongAnAxisOfTheWheel(); // the release angle decides burst or holed; pin it so every run bursts
             f.tick(1);
             h.assertTrue(f.lp.wreck() == PowerModuleBlockEntity.WRECK_BURST && f.lp.wrecked() && f.lp.discBurst() && !f.lp.sheared(),
                     "the burst disc bursts the casing: " + f.lp.wreck());
@@ -320,6 +321,7 @@ public final class TurbineWreckTests {
         run(h, at(5), f -> {
             f.crane(16);
             f.rpm(TurbineBlades.BURST_RPM + 10);
+            f.timeForAngleAlongAnAxisOfTheWheel(); // the release angle decides burst or holed; pin it so every run bursts
             f.tick(1);
             h.assertTrue(f.lp.wrecked(), "the disc burst");
             f.rpm(0);
