@@ -6,6 +6,7 @@ import dev.bwr.mod.reactor.CavitySeal;
 import dev.bwr.mod.reactor.VesselAppearance;
 import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.text.BwrText;
+import dev.bwr.mod.world.BlockScan;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -127,7 +128,7 @@ public final class PlugSections {
 
     /** Flood-fills the section that contains the plug block {@code seed}. */
     public static Survey survey(Level level, BlockPos seed) {
-        if (!level.isLoaded(seed)) {
+        if (!BlockScan.readable(level, seed)) {
             return new Survey(null, unloadedProblem(), true);
         }
         if (tierOf(level.getBlockState(seed)) == 0) {
@@ -151,7 +152,7 @@ public final class PlugSections {
                 if (seen.contains(n)) {
                     continue;
                 }
-                if (!level.isLoaded(n)) {
+                if (!BlockScan.readable(level, n)) {
                     return new Survey(null, unloadedProblem(), true);
                 }
                 if (joined(state, d, level.getBlockState(n))) {
@@ -168,7 +169,7 @@ public final class PlugSections {
         for (BlockPos p : blocks) {
             tiers[tierOf(level.getBlockState(p)) - 1]++;
             BlockPos above = p.above();
-            if (level.isLoaded(above) && level.getBlockState(above).getBlock() instanceof CraneAnchorBlock) {
+            if (BlockScan.readable(level, above) && level.getBlockState(above).getBlock() instanceof CraneAnchorBlock) {
                 anchors.add(above);
             }
             minX = Math.min(minX, p.getX());
@@ -214,7 +215,7 @@ public final class PlugSections {
                     continue;
                 }
                 p.set(x, yLo, z);
-                if (!level.isLoaded(p)) {
+                if (!BlockScan.readable(level, p)) {
                     continue;
                 }
                 for (int y = yLo; y <= yHi; y++) {
@@ -269,7 +270,7 @@ public final class PlugSections {
             for (int z = zlo; z <= zhi; z++) {
                 for (int y = e.max().getY() + 1; y <= topY && y < e.max().getY() + 1 + CavitySeal.MAX_WELL_LAYERS; y++) {
                     p.set(x, y, z);
-                    if (!overWellColumn(e, x, y, z) || !level.isLoaded(p)) {
+                    if (!overWellColumn(e, x, y, z) || !BlockScan.readable(level, p)) {
                         continue;
                     }
                     if (level.getBlockState(p).getBlock() instanceof ShieldPlugConcreteBlock) {
@@ -301,7 +302,7 @@ public final class PlugSections {
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
         for (BlockPos c : cells) {
             p.set(c.getX() + delta.getX(), c.getY() + delta.getY(), c.getZ() + delta.getZ());
-            if (!level.isLoaded(p)) {
+            if (!BlockScan.readable(level, p)) {
                 return BwrText.tr("status.bwr.plug.place_unloaded", "The place at %s is in a chunk that is not loaded; the crane does not load chunks.", p.toShortString());
             }
             if (!level.getBlockState(p).isAir()) {
@@ -314,7 +315,7 @@ public final class PlugSections {
                 continue;
             }
             p.set(c.getX() + delta.getX(), c.getY() + delta.getY() - 1, c.getZ() + delta.getZ());
-            if (!level.isLoaded(p) || !level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)) {
+            if (!BlockScan.readable(level, p) || !level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)) {
                 return BwrText.tr("status.bwr.plug.place_no_floor", "There is no solid floor under the section at %s.", p.toShortString());
             }
         }

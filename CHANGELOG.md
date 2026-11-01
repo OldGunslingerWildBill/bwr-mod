@@ -34,6 +34,12 @@
 - `tools-audit-sounds.py` audits the new events (their definitions, subtitles, files, lengths and sizes) with 10 more self-test corruptions.
   GameTests `bwrturbine` `TurbineSoundTests` (9); the client check `:mod:runRumbleClientCheck` decodes the new files and exercises the client's
   delay and variants.
+- **Shield plug lifting no longer loads a chunk that is still loading.** The plug survey, the laydown checks, the plug section's own guard and the
+  crane's wait for a loaded world asked `Level.isLoaded`, which is true while a chunk is only on its way (it answers from the ticket level) and then
+  makes the next block read wait for the chunk and load it on the server thread. They now ask for the chunk object itself (`BlockScan.readable`),
+  so a section reaching into such a chunk is refused as "not loaded" and the crane waits, as for any unloaded chunk. The `bwrplug` GameTests wait
+  for their fixture chunks to be entity ticking instead of ten ticks (two intermittent failures: the crane waiting for a section entity in a chunk
+  that never became ready, and a chunk the test expected to be unloaded being loaded by the survey).
 
 ## Unreleased (alpha.59): wrecked turbines, the shaft excursion and turbine fires
 

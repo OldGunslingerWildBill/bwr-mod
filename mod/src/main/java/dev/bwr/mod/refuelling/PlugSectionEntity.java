@@ -1,6 +1,7 @@
 package dev.bwr.mod.refuelling;
 
 import dev.bwr.mod.registry.BwrEntities;
+import dev.bwr.mod.world.BlockScan;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -208,7 +209,7 @@ public class PlugSectionEntity extends Entity implements IEntityWithComplexSpawn
         }
         boolean allLoaded = true;
         for (Cell c : cells) {
-            allLoaded &= level.isLoaded(pickupMin.offset(c.x(), c.y(), c.z()));
+            allLoaded &= BlockScan.readable(level, pickupMin.offset(c.x(), c.y(), c.z()));
         }
         if (!allLoaded && !mustFinish) {
             return false;
@@ -250,7 +251,7 @@ public class PlugSectionEntity extends Entity implements IEntityWithComplexSpawn
     }
 
     private void guard(ServerLevel level) {
-        if (!level.isLoaded(cranePos)) {
+        if (!BlockScan.readable(level, cranePos)) {
             return;
         }
         BuildingCraneBlockEntity crane = level.getBlockEntity(cranePos) instanceof BuildingCraneBlockEntity c ? c : null;

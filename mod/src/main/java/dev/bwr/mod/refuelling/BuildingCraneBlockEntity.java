@@ -13,6 +13,7 @@ import dev.bwr.mod.reactor.VesselProfile;
 import dev.bwr.mod.reactor.VesselState;
 import dev.bwr.mod.registry.BwrBlockEntities;
 import dev.bwr.mod.text.BwrText;
+import dev.bwr.mod.world.BlockScan;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -1971,7 +1972,7 @@ public class BuildingCraneBlockEntity extends BlockEntity {
         if (turbineWork()) {
             return TurbineHallLifts.ready(this, server, move);
         }
-        if (site != null && site.reactorPos != null && !server.isLoaded(site.reactorPos)) {
+        if (site != null && site.reactorPos != null && !BlockScan.readable(server, site.reactorPos)) {
             return false;
         }
         if (gates.holding() && !gates.worldReady(server, tip(), busy() && legTo != null ? BridgeMotion.lerp(pos, legTo, elapsed + 1, duration) : null)) {
@@ -1983,12 +1984,12 @@ public class BuildingCraneBlockEntity extends BlockEntity {
             BlockPos at = here == null ? worldPosition : BlockPos.containing(here.x(), here.y() - plan.hookAboveBase(), here.z());
             if (!(server.getEntity(plugEntity) instanceof PlugSectionEntity)) {
                 // wait while its chunk or its entities are not loaded; with both loaded it is gone (handled by the tick)
-                return server.isLoaded(at) && server.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(at));
+                return BlockScan.readable(server, at) && server.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(at));
             }
             if (busy() && legTo != null) {
                 Point next = BridgeMotion.lerp(pos, legTo, elapsed + 1, duration);
-                if (!server.isLoaded(BlockPos.containing(next.x(), next.y() - plan.hookAboveBase(), next.z()))
-                        || !server.isLoaded(BlockPos.containing(next.x(), next.y(), next.z()))) {
+                if (!BlockScan.readable(server, BlockPos.containing(next.x(), next.y() - plan.hookAboveBase(), next.z()))
+                        || !BlockScan.readable(server, BlockPos.containing(next.x(), next.y(), next.z()))) {
                     return false;
                 }
             }

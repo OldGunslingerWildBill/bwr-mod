@@ -213,27 +213,71 @@ public final class PlugLiftTests {
     }
 
     /**
-     * Runs {@code body} ten ticks after the fixtures were built, then disposes them and succeeds. The wait matters: an entity added to a chunk that has only
-     * just been forced is not visible to the level until the chunk is entity-ticking, and the crane (rightly) waits for its section's entity.
+     * Runs {@code body} once every chunk the fixtures forced is entity ticking with its entities loaded (and at least ten ticks after the fixtures were
+     * built), then disposes them and succeeds. The wait matters: an entity added to a chunk that has only just been forced is not visible to the level
+     * until the chunk is entity-ticking, and the crane (rightly) waits for its section's entity. The body steps the crane without the level ticking, so
+     * a chunk that is not ready when it starts never becomes ready, and the crane waits for ever ("the crane never finished: TRANSIT").
+     *
+     * <p>A fixed ten ticks was not enough: the chunks' entities are read on the IO threads and handed back to the server thread in the order they were
+     * asked for, so on a busy run (the whole suite) a fixture forced behind the others still had most of its chunks pending after ten ticks (a probe at
+     * tick 10 found two of the 21 fixtures of this batch with 13 and 15 of their 20 chunks not ready, on a passing run). The wait is paced
+     * ({@link FixtureWait#pace}: at least 50 ms a tick, the game's own rate), because those loads finish in wall-clock time, not in ticks.
      */
     private static void later(GameTestHelper h, Body body, Rig... rigs) {
-        h.runAfterDelay(10, () -> {
-            try {
-                body.run();
-            } catch (RuntimeException | Error e) {
-                disposeAll(rigs);
-                throw e;
-            } catch (Exception e) {
-                disposeAll(rigs);
-                throw new IllegalStateException(e);
+        FixtureWait.Timer wait = FixtureWait.start("plug lift fixture chunks");
+        h.runAfterDelay(10, () -> whenTicking(h, body, rigs, wait));
+    }
+
+    private static void whenTicking(GameTestHelper h, Body body, Rig[] rigs, FixtureWait.Timer wait) {
+        try {
+            String pending = pendingChunks(rigs);
+            if (!pending.isEmpty()) {
+                if (wait.polls() >= WAIT_TICKS) {
+                    h.assertTrue(false, "the fixture chunks never became entity ticking (" + wait.polls() + " polls):" + pending);
+                }
+                wait.notReady(h.getLevel());
+                h.runAfterDelay(1, () -> whenTicking(h, body, rigs, wait));
+                return;
             }
+            wait.ready();
+            body.run();
+        } catch (RuntimeException | Error e) {
             disposeAll(rigs);
-            // let the chunks the fixtures forced unload before the server stops
-            h.runAfterDelay(SETTLE_TICKS, h::succeed);
-        });
+            throw e;
+        } catch (Exception e) {
+            disposeAll(rigs);
+            throw new IllegalStateException(e);
+        }
+        disposeAll(rigs);
+        // let the chunks the fixtures forced unload before the server stops
+        h.runAfterDelay(SETTLE_TICKS, h::succeed);
+    }
+
+    /** The chunks the rigs forced that are not yet entity ticking with their entities loaded, with what each is waiting for; empty when all are. */
+    private static String pendingChunks(Rig... rigs) {
+        StringBuilder out = new StringBuilder();
+        for (Rig r : rigs) {
+            for (int cx = (r.o.getX() - 24) >> 4; cx <= (r.o.getX() + 40) >> 4; cx++) {
+                for (int cz = (r.o.getZ() - 24) >> 4; cz <= (r.o.getZ() + 24) >> 4; cz++) {
+                    var chunk = r.level.getChunkSource().getChunkNow(cx, cz);
+                    boolean entities = r.level.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(cx, cz));
+                    if (chunk == null || !chunk.getFullStatus().isOrAfter(net.minecraft.server.level.FullChunkStatus.ENTITY_TICKING) || !entities) {
+                        out.append(" [").append(cx).append(',').append(cz).append(' ').append(chunk == null ? "not loaded" : chunk.getFullStatus())
+                                .append(", entities ").append(entities ? "loaded" : "not loaded").append(']');
+                    }
+                }
+            }
+        }
+        return out.toString();
     }
 
     private static final int SETTLE_TICKS = 60;
+
+    /**
+     * How many paced ticks {@link #later} waits for the fixture chunks before it fails. The tests of this batch force about four hundred chunks at once;
+     * the bound only has to catch a chunk that never comes, and every test adds it to its own timeout.
+     */
+    private static final int WAIT_TICKS = 400;
 
     private static void disposeAll(Rig... rigs) {
         for (Rig r : rigs) {
@@ -273,7 +317,7 @@ public final class PlugLiftTests {
     // 1. Anchors
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void craneAnchorsStandOnTheTopOfShieldPlugBlocksAndNothingElse(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(0));
         try {
@@ -316,7 +360,7 @@ public final class PlugLiftTests {
     // 2. Seams
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void aSeamSplitsAPlugIntoTwoSectionsAndTheMarkerTogglesAndClearsIt(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(1));
         try {
@@ -387,7 +431,7 @@ public final class PlugLiftTests {
     // 3 and 4. PLUG OFF and PLUG ON
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void plugOffLiftsExactlyOneSectionOffTheWellAndSetsItDownExactlyOnTheFloor(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(2));
         later(h, () -> {
@@ -444,7 +488,7 @@ public final class PlugLiftTests {
         }, r);
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void plugOnPutsTheSectionBackExactlyStateForState(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(3));
         later(h, () -> {
@@ -475,7 +519,7 @@ public final class PlugLiftTests {
     // 5 and 6. Capacity and the four anchors
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void aSectionOverTheCranesRatingIsRefusedAndASeamBringsItUnderIt(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(4));
         later(h, () -> {
@@ -507,7 +551,7 @@ public final class PlugLiftTests {
         }, r);
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void aTierThreeSectionOverTheRatingIsRefusedWhereTheSameSizeInTierOneIsTaken(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(16));
         Rig t = new Rig(h.getLevel(), at(17));
@@ -534,7 +578,7 @@ public final class PlugLiftTests {
         }, r, t);
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void sectionsOfTheSameSizeWeighDifferentlyByTierAndTheMassIsShownBeforeTheLift(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(18));
         later(h, () -> {
@@ -580,7 +624,7 @@ public final class PlugLiftTests {
         }, r);
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void aSectionNeedsExactlyFourAnchorsToBeLifted(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(5));
         later(h, () -> {
@@ -619,7 +663,7 @@ public final class PlugLiftTests {
     // 7. The head and the plug over the well
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void liftHeadIsRefusedWhileAPlugCoversTheWellAndAllowedOnceItIsOff(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(6));
         later(h, () -> {
@@ -661,7 +705,7 @@ public final class PlugLiftTests {
     // 8. The laydown
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void aLaydownThatIsNotClearIsRefusedAndNoBlockIsEverReplaced(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(7));
         later(h, () -> {
@@ -715,7 +759,7 @@ public final class PlugLiftTests {
     // 9. Saves and reloads
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void aSectionHangingFromTheHookSavesAndLoadsOnceWithEveryBlock(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(8));
         later(h, () -> {
@@ -775,7 +819,7 @@ public final class PlugLiftTests {
     // 10. A broken crane
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void aCraneOrRunwayBrokenUnderAHangingSectionLosesNoBlocks(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(9));
         Rig q = new Rig(h.getLevel(), at(10));
@@ -844,7 +888,7 @@ public final class PlugLiftTests {
     // 11. The head missile and the shielding
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 400)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 400 + WAIT_TICKS)
     public static void theHeadMissileAndTheShieldingSeeThePlugOnlyWhileItIsOnTheWell(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(13));
         later(h, () -> {
@@ -909,7 +953,7 @@ public final class PlugLiftTests {
         }, r);
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void aRadiationSourceBelowThePlugIsShieldedOnlyWhileTheSectionIsOnTheWell(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(14));
         later(h, () -> {
@@ -944,7 +988,7 @@ public final class PlugLiftTests {
     // ------------------------------------------------------------------------------------------------------------
 
     /** A position a program names in a chunk that is not loaded is refused as such; the crane never makes the server load or generate it. */
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void aPositionInAChunkThatIsNotLoadedIsRefusedAndNeverGenerated(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(19));
         later(h, () -> {
@@ -970,7 +1014,7 @@ public final class PlugLiftTests {
      * A laid-down section that reaches into a chunk that is not loaded cannot be surveyed, and that says nothing about whether it is still
      * there: PLUG ON refuses and keeps the record so the player can try again. A record whose section is really gone is still cleared.
      */
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void plugOnKeepsTheRecordWhenPartOfTheSectionIsInAChunkThatIsNotLoaded(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(20));
         later(h, () -> {
@@ -1021,7 +1065,7 @@ public final class PlugLiftTests {
     // 12. Old saves
     // ------------------------------------------------------------------------------------------------------------
 
-    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200)
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "plugs", timeoutTicks = 200 + WAIT_TICKS)
     public static void anOldCraneWithNoPlugDataLoadsAndAnIdleCraneWithAPlugWritesNoneAndTicksNothing(GameTestHelper h) throws Exception {
         Rig r = new Rig(h.getLevel(), at(15));
         later(h, () -> {
