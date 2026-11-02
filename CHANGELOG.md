@@ -2,6 +2,10 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **The canal gate lift never reads a chunk that is still loading.** As the plug lift does since this release, `CanalGateLift` (its survey,
+  its world-ready wait and its next-leg checks) asks `BlockScan.readable` (`getChunkNow`) instead of `isLoaded`, which is true while a chunk is
+  still being read and lets the next block read finish the load on the server thread.
+
 - **A lamp shining into a drained spent fuel pool no longer unforms it.** Since alpha.59 the high-bays and HPS panels reach 40 to 48 blocks, so a
   ceiling lamp over a pool lights its floor with `minecraft:light` blocks; the pool survey allowed only air, water and racks inside and said
   *Clear the pool interior at ...* about an invisible block. A light block now counts as empty (`BlockScan.clear`) to the pool, to the crane setting a plug section, a canal gate or a shaft wreck back down, and to a containment vent's discharge check.

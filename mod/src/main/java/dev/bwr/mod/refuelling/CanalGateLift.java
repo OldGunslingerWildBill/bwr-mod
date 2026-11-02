@@ -1,5 +1,6 @@
 package dev.bwr.mod.refuelling;
 
+import dev.bwr.mod.world.BlockScan;
 import dev.bwr.core.refuelling.BridgeMotion;
 import dev.bwr.core.refuelling.BridgeMotion.Point;
 import dev.bwr.core.refuelling.CraneMotion;
@@ -208,7 +209,7 @@ public final class CanalGateLift {
 
     /** The whole gate through any of its blocks. Reads only loaded blocks. */
     public static Survey survey(Level level, BlockPos any) {
-        if (!level.isLoaded(any)) {
+        if (!BlockScan.readable(level, any)) {
             return new Survey(null, unloaded(), true);
         }
         if (!isGate(level.getBlockState(any))) {
@@ -217,7 +218,7 @@ public final class CanalGateLift {
         BlockPos bottom = any;
         for (int n = 0; n < MAX_HEIGHT; n++) {
             BlockPos b = bottom.below();
-            if (!level.isLoaded(b)) {
+            if (!BlockScan.readable(level, b)) {
                 return new Survey(null, unloaded(), true);
             }
             if (!isGate(level.getBlockState(b))) {
@@ -229,7 +230,7 @@ public final class CanalGateLift {
         double mass = tonnes(level.getBlockState(bottom));
         while (height < MAX_HEIGHT) {
             BlockPos u = bottom.above(height);
-            if (!level.isLoaded(u)) {
+            if (!BlockScan.readable(level, u)) {
                 return new Survey(null, unloaded(), true);
             }
             BlockState s = level.getBlockState(u);
@@ -240,9 +241,9 @@ public final class CanalGateLift {
             height++;
         }
         BlockPos over = bottom.above(height);
-        BlockPos covered = !level.isLoaded(over) || dev.bwr.mod.world.BlockScan.clear(level.getBlockState(over)) ? null : over.immutable();
+        BlockPos covered = !BlockScan.readable(level, over) || BlockScan.clear(level.getBlockState(over)) ? null : over.immutable();
         BlockPos under = bottom.below();
-        boolean onStand = level.isLoaded(under) && level.getBlockState(under).getBlock() instanceof GateLaydownStandBlock;
+        boolean onStand = BlockScan.readable(level, under) && level.getBlockState(under).getBlock() instanceof GateLaydownStandBlock;
         Direction.Axis axis = level.getBlockState(bottom).getValue(TransferCanalBlock.AXIS);
         return new Survey(new Gate(bottom.immutable(), height, axis, mass, covered, onStand), null);
     }
@@ -268,7 +269,7 @@ public final class CanalGateLift {
                     continue;
                 }
                 p.set(x, yLo, z);
-                if (!level.isLoaded(p)) {
+                if (!BlockScan.readable(level, p)) {
                     continue;
                 }
                 boolean below = false;
@@ -388,7 +389,7 @@ public final class CanalGateLift {
     static Component homeProblem(Level level, BlockPos home, int height) {
         for (int i = 0; i < height; i++) {
             BlockPos p = home.above(i);
-            if (!level.isLoaded(p)) {
+            if (!BlockScan.readable(level, p)) {
                 return BwrText.tr("status.bwr.plug.place_unloaded", "The place at %s is in a chunk that is not loaded; the crane does not load chunks.", p.toShortString());
             }
             BlockState s = level.getBlockState(p);
@@ -844,7 +845,7 @@ public final class CanalGateLift {
             return false;
         }
         BlockPos at = tip == null ? BlockPos.ZERO : BlockPos.containing(tip.x(), tip.y() - plan.hookAboveBase(), tip.z());
-        return server.isLoaded(at) && server.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(at));
+        return BlockScan.readable(server, at) && server.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(at));
     }
 
     /** False while the crane must wait: the gate's entity is not loaded, or the next step of the hook would carry it into an unloaded chunk. */
@@ -854,11 +855,11 @@ public final class CanalGateLift {
         }
         if (!(server.getEntity(entity) instanceof PlugSectionEntity)) {
             BlockPos at = tip == null ? BlockPos.ZERO : BlockPos.containing(tip.x(), tip.y() - plan.hookAboveBase(), tip.z());
-            return server.isLoaded(at) && server.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(at));
+            return BlockScan.readable(server, at) && server.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(at));
         }
         if (next != null) {
-            return server.isLoaded(BlockPos.containing(next.x(), next.y() - plan.hookAboveBase(), next.z()))
-                    && server.isLoaded(BlockPos.containing(next.x(), next.y(), next.z()));
+            return BlockScan.readable(server, BlockPos.containing(next.x(), next.y() - plan.hookAboveBase(), next.z()))
+                    && BlockScan.readable(server, BlockPos.containing(next.x(), next.y(), next.z()));
         }
         return true;
     }
