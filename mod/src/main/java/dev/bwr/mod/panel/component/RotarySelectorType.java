@@ -12,10 +12,13 @@ import java.util.List;
  */
 public final class RotarySelectorType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 10), Footprint.of(12, 14),
-            // real sizes: a selector escutcheon, about 6 x 9 cm, and a larger 9 x 11 cm one
+            // real sizes: a selector escutcheon, about 6 x 9 cm, and a larger 9 x 11 cm one (both retired)
             Footprint.of(1, 2), Footprint.of(2, 3),
-            // twice the real escutcheon, where a new item starts
-            Footprint.of(2, 4));
+            // twice the real escutcheon
+            Footprint.of(2, 4),
+            // intermediate sizes; 4 x 6 is where a new item starts
+            Footprint.of(4, 6), Footprint.of(6, 8));
+    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 2), Footprint.of(2, 3));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(RotarySelectorData.TYPE, List.of(
             ConfigField.integer("Positions", "component.bwr.field.positions",
                     RotarySelectorData.MIN_POSITIONS, RotarySelectorData.MAX_POSITIONS),
@@ -29,13 +32,19 @@ public final class RotarySelectorType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 3;
+        return 5;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 4 x 6 ({@link ComponentType#realDefaultFootprint}). */
     @Override
     public Footprint realDefaultFootprint() {
-        return Footprint.of(2, 4);
+        return Footprint.of(4, 6);
+    }
+
+    /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
+    @Override
+    public java.util.Set<Footprint> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

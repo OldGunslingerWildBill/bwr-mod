@@ -266,11 +266,23 @@ final class PanelHardwareShowcase {
     private static void joysticks(ServerLevel level) {
         BlockPos a = block(WALL, 3, 0);
         for (int p = 0; p < JoystickData.POSITIONS; p++) {
-            PanelComponent j = defaultSize(level, a, p * 3, 0, ComponentTypes.JOYSTICK_SWITCH);
+            // (the retired 2 x 2, which an old panel still has; the new default is below)
+            PanelComponent j = put(level, a, p * 3, 0, ComponentTypes.JOYSTICK_SWITCH, Footprint.of(2, 2));
             ((JoystickData) j.data()).position = p;
             j.type().onLoaded(j);
             j.touch();
         }
+        // The new default, 6 x 6, in two positions, and the new 4 x 4 beside them.
+        for (int p = 0; p < 2; p++) {
+            PanelComponent j = defaultSize(level, a, p * 6, 6, ComponentTypes.JOYSTICK_SWITCH);
+            ((JoystickData) j.data()).position = p == 0 ? JoystickData.CENTRE : JoystickData.UP;
+            j.type().onLoaded(j);
+            j.touch();
+        }
+        PanelComponent four = put(level, a, 12, 6, ComponentTypes.JOYSTICK_SWITCH, Footprint.of(4, 4));
+        ((JoystickData) four.data()).position = JoystickData.RIGHT;
+        four.type().onLoaded(four);
+        four.touch();
         for (int p = 0; p < JoystickData.POSITIONS; p++) {
             PanelComponent j = put(level, a, p * 3, 4, ComponentTypes.JOYSTICK_SWITCH, Footprint.of(1, 1));
             ((JoystickData) j.data()).position = p;

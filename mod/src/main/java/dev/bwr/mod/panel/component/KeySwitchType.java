@@ -13,10 +13,13 @@ import java.util.List;
  */
 public final class KeySwitchType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10),
-            // real size: a keyed escutcheon, 3 x 4 in
+            // real size: a keyed escutcheon, 3 x 4 in (retired)
             Footprint.of(1, 2),
-            // twice the real escutcheon, where a new item starts
-            Footprint.of(2, 4));
+            // twice the real escutcheon
+            Footprint.of(2, 4),
+            // intermediate sizes; 3 x 4 is where a new item starts
+            Footprint.of(3, 4), Footprint.of(4, 6));
+    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 2));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(KeySwitchData.TYPE, List.of(
             ConfigField.bool("RequireKey", "component.bwr.field.require_key"),
             ConfigField.text("KeyCode", "component.bwr.field.key_code", KeySwitchData.MAX_CODE)));
@@ -28,13 +31,19 @@ public final class KeySwitchType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 2;
+        return 4;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 3 x 4 ({@link ComponentType#realDefaultFootprint}). */
     @Override
     public Footprint realDefaultFootprint() {
-        return Footprint.of(2, 4);
+        return Footprint.of(3, 4);
+    }
+
+    /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
+    @Override
+    public java.util.Set<Footprint> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

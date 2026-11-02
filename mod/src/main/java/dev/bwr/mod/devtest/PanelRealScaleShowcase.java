@@ -172,15 +172,19 @@ final class PanelRealScaleShowcase {
             PanelComponent seven = real(level, pos, 0, 4, ComponentTypes.SEVEN_SEGMENT_DISPLAY);
             reading(level, pos, seven, 1000 + 337 * (index % 7));
             real(level, pos, 8, 4, ComponentTypes.THUMBWHEEL);
+            // The setpoint knob starts at 4 x 4: two of those at the right, and the kept 2 x 2 beside the thumbwheel and in a row.
             for (int i = 0; i < 2; i++) {
-                real(level, pos, 14, 4 + i * 2, ComponentTypes.SETPOINT_KNOB);
+                put(level, pos, 14, 4 + i * 2, ComponentTypes.SETPOINT_KNOB, 2, 2);
             }
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 6; i++) {
                 PanelComponent graph = real(level, pos, i * 2, 8, ComponentTypes.BAR_GRAPH);
                 reading(level, pos, graph, 5 + (index * 13) % 90);
             }
-            for (int i = 0; i < 8; i++) {
-                real(level, pos, i * 2, 14, ComponentTypes.SETPOINT_KNOB);
+            for (int i = 0; i < 2; i++) {
+                real(level, pos, 12, 8 + i * 4, ComponentTypes.SETPOINT_KNOB);
+            }
+            for (int i = 0; i < 6; i++) {
+                put(level, pos, i * 2, 14, ComponentTypes.SETPOINT_KNOB, 2, 2);
             }
         }
     }
@@ -231,30 +235,31 @@ final class PanelRealScaleShowcase {
             }
             return;
         }
-        for (int i = 0; i < 8; i++) {
-            real(level, pos, i * 2, 0, ComponentTypes.ROTARY_SELECTOR);
+        // The selector starts at 4 x 6, the key switch at 3 x 4, the push-to-turn switch and the toggle at 4 x 4.
+        for (int i = 0; i < 4; i++) {
+            real(level, pos, i * 4, 0, ComponentTypes.ROTARY_SELECTOR);
         }
         for (int i = 0; i < 4; i++) {
-            real(level, pos, i * 2, 4, ComponentTypes.KEY_SWITCH);
+            real(level, pos, i * 3, 6, ComponentTypes.KEY_SWITCH);
         }
-        for (int i = 0; i < 8; i++) {
-            PanelComponent lamp = real(level, pos, 8 + (i % 4) * 2, 4 + (i / 4) * 2, ComponentTypes.LAMP);
+        for (int i = 0; i < 4; i++) {
+            PanelComponent lamp = real(level, pos, 12 + (i % 2) * 2, 6 + (i / 2) * 2, ComponentTypes.LAMP);
             LampData d = (LampData) lamp.data();
             d.color = (i + c) % 3 == 0 ? 0xE02020 : (i + c) % 3 == 1 ? 0x20C040 : 0xF0A000;
             reading(level, pos, lamp, (i + c) % 4 == 0 ? 0 : 1);
         }
-        for (int i = 0; i < 8; i++) {
-            PanelComponent button = real(level, pos, i * 2, 8, ComponentTypes.PUSHBUTTON);
-            PanelModelShowcase.look(button, PanelStyles.GE, i % 5 == 0 ? "mushroom" : i % 3 == 0 ? "extended" : "flush");
-        }
         for (int i = 0; i < 4; i++) {
-            real(level, pos, i * 2, 10, ComponentTypes.PUSH_TURN_SWITCH);
+            PanelComponent button = real(level, pos, i * 2, 10, ComponentTypes.PUSHBUTTON);
+            PanelModelShowcase.look(button, PanelStyles.GE, i % 5 == 0 ? "mushroom" : i % 3 == 0 ? "extended" : "flush");
         }
         for (int i = 0; i < 2; i++) {
             real(level, pos, 8 + i * 4, 10, ComponentTypes.RPS_TRIP);
         }
-        for (int i = 0; i < 8; i++) {
-            real(level, pos, i * 2, 12, ComponentTypes.TOGGLE_SWITCH);
+        for (int i = 0; i < 2; i++) {
+            real(level, pos, i * 4, 12, ComponentTypes.PUSH_TURN_SWITCH);
+        }
+        for (int i = 0; i < 2; i++) {
+            real(level, pos, 8 + i * 4, 12, ComponentTypes.TOGGLE_SWITCH);
         }
     }
 

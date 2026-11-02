@@ -12,8 +12,11 @@ import java.util.List;
  */
 public final class SetpointKnobType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 8), Footprint.of(12, 12),
-            // real sizes: a 2-1/4 in knob and a 4 in one
-            Footprint.of(1, 1), Footprint.of(2, 2));
+            // real sizes: a 2-1/4 in knob (retired) and a 4 in one
+            Footprint.of(1, 1), Footprint.of(2, 2),
+            // intermediate sizes; 4 x 4 is where a new item starts
+            Footprint.of(4, 4), Footprint.of(6, 6));
+    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 1));
     /** A click moves the knob by this many steps. */
     public static final double CLICK_STEPS = 5.0;
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(SetpointKnobData.TYPE, List.of(
@@ -27,13 +30,19 @@ public final class SetpointKnobType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 2;
+        return 4;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 4 x 4 ({@link ComponentType#realDefaultFootprint}). */
     @Override
     public Footprint realDefaultFootprint() {
-        return Footprint.of(2, 2);
+        return Footprint.of(4, 4);
+    }
+
+    /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
+    @Override
+    public java.util.Set<Footprint> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

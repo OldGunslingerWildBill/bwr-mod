@@ -94,11 +94,11 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Component | Sizes (cells) |
 | --- | --- |
 | Pushbutton | 6x6, 8x8, **real** 1x1 |
-| Toggle switch | 6x8, 8x10, **real** 1x1 |
-| Key switch | 6x8, 8x10, **real** 1x2 |
-| Rotary selector | 8x10, 12x14 (the extra rows hold the position name), **real** 1x2, 2x3 |
-| Setpoint knob | 8x8, 12x12, **real** 1x1, 2x2 (the 2x2 is the default) |
-| Control switch | 8x12 (the default), 12x16, **real** 1x2, 2x3 |
+| Toggle switch | 6x8, 8x10, 2x2, 4x4 (the default); retired 1x1 |
+| Key switch | 6x8, 8x10, 2x4, 3x4 (the default), 4x6; retired 1x2 |
+| Rotary selector | 8x10, 12x14 (the extra rows hold the position name), 2x4, 4x6 (the default), 6x8; retired 1x2, 2x3 |
+| Setpoint knob | 8x8, 12x12, 2x2, 4x4 (the default), 6x6; retired 1x1 |
+| Control switch | 8x12 (the default), 12x16, 6x9; retired 1x2, 2x3 |
 | Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits); **real** 1 cell wide per digit, 2 tall: 3x2 (3 digits), 1x2 to 8x2; **default** 6x4 (3 digits, 2 wide and 4 tall each) |
 | Lamp | 4x4, 6x6, **real** 1x1, **default** 2x2 |
 | Annunciator window | 12x8, 16x12, **real** 1x1, 2x2 (the 2x2 is the default) |
@@ -108,11 +108,11 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32, **real** 1x3, **default** 2x6; horizontal 16x6, 24x6, 24x8, 32x8, **real** 3x1, **default** 6x2 |
 | Bar gauge | 10x16 (one block tall), 8x16, 12x24, 16x32, **real** 1x3, **default** 2x6 |
 | RPS trip assembly | 16x8, 24x12, 32x16, **real** 2x1, **default** 4x2 |
-| Push-to-turn switch | 8x8, 12x12, 16x16, **real** 1x1, **default** 2x2 |
+| Push-to-turn switch | 8x8, 12x12, 16x16, 2x2, 4x4 (the default), 6x6; retired 1x1 |
 | Controller station (manual/auto) | 8x16, 12x24; the real tail, **twice real** first: 6x12 (new items start here), **real** 3x6, 4x8, **real** 2x4 |
 | Synchroscope | 12x16, 15x20, 20x26; **twice real** 6x8 (default), **real** 3x4, 4x6, **real** 2x3 |
 | Two-pen strip recorder | 16x16, 24x24, 32x32; **twice real** 6x6 (default), **real** 3x3, 4x4, **real** 2x2 |
-| Joystick bypass switch | 8x8, 12x12, 16x16; **twice real** 2x2 (default), **real** 1x1, 4x4 |
+| Joystick bypass switch | 4x4, 8x8, 12x12, 16x16, 6x6 (the default); retired 1x1, 2x2 |
 | LED rod pattern display | 51x51; **twice real** 34x34 (2 cells a rod, default), **real** 17x17 (1 cell a rod, the 185 rod core), **real** 26x26 (the biggest core) |
 | Plant computer (safety parameter display) | 64x48 (4 x 3 blocks, the default), 32x24, 32x32, 48x32, 48x48, 64x32, 64x64 |
 | Strip-chart recorder | 16x16, 24x16, 32x24 |
@@ -134,6 +134,17 @@ by side and found the 8x12 exactly the right size (the 12x16 is for other panels
 sizes and already placed components keep their dimensions; changing a placed switch's style does not resize its
 occupied panel area.
 
+**Switch sizes: retired and added.** The owner asked for more intermediate switches (6x6, or 4x4) and for the smallest ones to go. The
+switch parts (toggle, key switch, rotary selector, setpoint knob, control switch, push-to-turn, joystick bypass) now have a **retired**
+size or two in the table above, and a few new sizes. A retired size stays on the type's list at its index and nothing else changes for it:
+an item stack that holds it still places at that size, a placed component keeps its width and height through a save and a reload, and the
+item it drops holds the same index. It is only no longer offered: the size picker does not list it, right-clicking air does not cycle to
+it, and the picker's packet is refused for it (all of that is `Footprints.offered` / `Footprints.retired`, read from the
+`retiredFootprints()` of the type). The new sizes are appended to the end of the lists, so no stored index moved. A new item starts at the
+new default: toggle 4x4, key switch 3x4, rotary selector 4x6, setpoint knob 4x4, push-to-turn 4x4, joystick bypass 6x6 (the control switch stays
+8x12). The thumbwheel is unchanged. The "real size" notes below give the physical size the old defaults were doubled from; for these seven
+parts they no longer decide the default.
+
 #### Real sizes
 
 A real control board about 4 m wide holds dozens of instruments, but with the sizes above only a few fit: each part
@@ -148,15 +159,15 @@ chart, the nameplates and the mimic pieces are unchanged.
 | --- | --- | --- | --- |
 | Round dial | GE AB-40 meter cover 4.33 in (11 cm); 6 in round meter | model README (art/models/panel/meters); 6 in is an estimate | 2x2, 3x3; **4x4** |
 | Edgewise meter | GE Type 180, 6.04 x 2.29 in (15.3 x 5.8 cm) | model README (meters) | vertical 1x3, horizontal 3x1; **2x6**, **6x2** |
-| Control switch | breaker control escutcheon about 2.5 x 3.5 in (6 x 9 cm); the General Power target pistol model itself is 4.4 x 6.6 in (11 x 17 cm) | estimate; model README (ge_sb) | 1x2, 2x3; the default is **8x12** (see below) |
-| Key switch | keyed escutcheon 3 x 4 in (7.6 x 10 cm) | model README (ge_sb) | 1x2; **2x4** |
-| Rotary selector | GE selector plate 3.5 x 4.4 in (8.9 x 11 cm); oiltight knob plate 2 x 2.5 in | model README (ge_sb, oiltight) | 1x2, 2x3; **2x4** |
-| Setpoint knob | 2.25 in knob (5.7 cm); 4 in knob | model README (pushbuttons); 4 in is an estimate | 1x1, **2x2** |
-| Toggle switch | heavy duty toggle on its plate, about 6 cm | estimate | 1x1; **2x2** |
+| Control switch | breaker control escutcheon about 2.5 x 3.5 in (6 x 9 cm); the General Power target pistol model itself is 4.4 x 6.6 in (11 x 17 cm) | estimate; model README (ge_sb) | 1x2, 2x3 (both retired); the default is **8x12** (see below) |
+| Key switch | keyed escutcheon 3 x 4 in (7.6 x 10 cm) | model README (ge_sb) | 1x2 (retired); 2x4; the default is now **3x4** |
+| Rotary selector | GE selector plate 3.5 x 4.4 in (8.9 x 11 cm); oiltight knob plate 2 x 2.5 in | model README (ge_sb, oiltight) | 1x2, 2x3 (retired); 2x4; the default is now **4x6** |
+| Setpoint knob | 2.25 in knob (5.7 cm); 4 in knob | model README (pushbuttons); 4 in is an estimate | 1x1 (retired); 2x2; the default is now **4x4** |
+| Toggle switch | heavy duty toggle on its plate, about 6 cm | estimate | 1x1 (retired); 2x2; the default is now **4x4** |
 | Pushbutton | 30.5 mm oiltight operator, plate 2 in (5.1 cm) | model README (pushbuttons) | 1x1; **2x2** |
 | Lamp | 30.5 mm indicating light, 1.1 to 1.7 in (2.8 to 4.3 cm) | model README (pushbuttons, oiltight) | 1x1; **2x2** |
 | RPS trip assembly | the owner's CAD, 4.8 x 2.44 in (12.2 x 6.2 cm) | NEW-HARDWARE-SPEC.md | 2x1; **4x2** |
-| Push-to-turn switch | the owner's CAD, 2.3 x 2.2 in (5.8 x 5.6 cm) | NEW-HARDWARE-SPEC.md | 1x1; **2x2** |
+| Push-to-turn switch | the owner's CAD, 2.3 x 2.2 in (5.8 x 5.6 cm) | NEW-HARDWARE-SPEC.md | 1x1 (retired); 2x2; the default is now **4x4** |
 | Annunciator window | tile 2.8125 x 2.625 in (7.1 x 6.7 cm); a double size window | CR-PANELS-BWR-RESEARCH.md; the double size is not real | 1x1, **2x2** |
 | 7- and 16-segment display | a 4 digit panel meter window; each digit is made 1 x 2 cells (6 x 12.5 cm), larger than a real LED digit (about 1 x 1.4 cm) because a cell is the smallest step | estimate | 4x2 (4 digits), 1x2, 2x2, 3x2, 6x2, 8x2; **8x4** (4 digits) |
 | Thumbwheel | a real digit is under 1 cm wide; each digit is made 1 x 2 cells | estimate | 3x2 (3 digits), 1x2, 2x2, 4x2, 5x2, 6x2, 8x2; **6x4** (3 digits) |

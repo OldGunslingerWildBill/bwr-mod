@@ -23,8 +23,11 @@ import java.util.List;
  */
 public final class ControlSwitchType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(8, 12), Footprint.of(12, 16),
-            // real sizes: a breaker control switch escutcheon, about 6 x 9 cm, and the model's own 4.4 x 6.6 in
-            Footprint.of(1, 2), Footprint.of(2, 3));
+            // real sizes: a breaker control switch escutcheon, about 6 x 9 cm, and the model's own 4.4 x 6.6 in (both retired)
+            Footprint.of(1, 2), Footprint.of(2, 3),
+            // an intermediate size
+            Footprint.of(6, 9));
+    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 2), Footprint.of(2, 3));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(ControlSwitchData.TYPE, List.of(
             ConfigField.bool("Spring", "component.bwr.field.spring"),
             ConfigField.text("CloseText", "component.bwr.field.close_text", ControlSwitchData.MAX_TEXT),
@@ -42,7 +45,7 @@ public final class ControlSwitchType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 2;
+        return 3;
     }
 
     /**
@@ -53,6 +56,12 @@ public final class ControlSwitchType extends PanelInputType {
     @Override
     public Footprint realDefaultFootprint() {
         return FOOTPRINTS.get(0);
+    }
+
+    /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
+    @Override
+    public java.util.Set<Footprint> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

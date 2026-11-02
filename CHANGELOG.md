@@ -2,6 +2,15 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **More intermediate switch sizes, and the smallest ones retired** (CONTROL-PANELS.md, *Component sizes*). The owner asked for 6x6 or 4x4 switches
+  instead of 1x1 and 2x2 ones. Toggle switch: 4x4 added (new default; 1x1 retired). Key switch: 3x4 (new default) and 4x6 added, 1x2 retired.
+  Rotary selector: 4x6 (new default) and 6x8 added, 1x2 and 2x3 retired. Setpoint knob: 4x4 (new default) and 6x6 added, 1x1 retired. Control
+  switch: 6x9 added, 1x2 and 2x3 retired, default still 8x12. Push-to-turn: 4x4 (new default) and 6x6 added, 1x1 retired. Joystick bypass: 6x6
+  added and now the default, 1x1 and 2x2 retired. The thumbwheel is unchanged. A **retired** size stays on the type's list at its index (new
+  `Footprints` helper, read from `ComponentType.retiredFootprints()`), so an item stack that holds it still places at that size, a placed part keeps
+  its width and height through a save and reload and drops an item with the same index; it is only no longer offered: the size picker (Left Alt)
+  does not list it, right-clicking air does not cycle to it, and the picker's server side refuses it. New sizes are appended to the end of the
+  lists, so no stored index moved. New GameTests in `SwitchSizeTests`; `RealScaleTests` and `JoystickTests` use the new defaults and skip retired sizes.
 - **The suppression pool and relief valve rumble is stronger and shakes fast** (RUMBLE.md). The ground shake (pool, SRV discharge, blasts)
   was a slow 0.9 to 3.2 Hz sway of up to 6 degrees; it is now a **10 to 14 Hz tremor** (10.5 Hz far away, 13 Hz beside the source: small
   positional jitter and under a degree of angle, from the same smooth gradient noise, never a random number per frame) over a reduced
