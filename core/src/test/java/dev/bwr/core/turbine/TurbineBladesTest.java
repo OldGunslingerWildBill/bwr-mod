@@ -89,4 +89,35 @@ public final class TurbineBladesTest {
         Check.isTrue(TurbineBlades.imbalanceMmPerS(1, 1500) > TurbineAux.VIBRATION_DAMAGE_MM_S * 3, "a thrown blade shakes the train hard");
         Check.exactly(0.0, TurbineBlades.imbalanceMmPerS(0, 1500), "no imbalance without one");
     }
+
+    public static void test07_aBreakerClosedOnAStalledShaftMotorsItUpAndShakesItApart() {
+        double top = ShaftDynamics.RATED_RPM - TurbineBlades.SYNC_HOLD_RPM;
+        Check.exactly(0.0, TurbineBlades.destructRpm(top, 0.5), "a close at the bottom of the window has no destruct speed");
+        Check.exactly(0.0, TurbineBlades.destructRpm(1500, 0.5), "nor one at synchronous speed");
+        for (double close : new double[] {0, 300, 1000, 1469}) {
+            double lo = TurbineBlades.destructRpm(close, 0), hi = TurbineBlades.destructRpm(close, 1), mid = TurbineBlades.destructRpm(close, 0.5);
+            Check.isTrue(lo >= Math.max(1, close) - 1e-9 && lo < hi + 1e-9 && Math.abs(hi - top) < 1e-9 && mid > lo - 1e-9 && mid < hi + 1e-9,
+                    "the destruct speed runs from the close speed to the window: %.1f %.1f %.1f from %.0f", lo, mid, hi, close);
+        }
+        // the same 60 s ramp for a small train and a big one: the speed gained per second does not depend on the inertia
+        for (double inertia : new double[] {ShaftDynamics.REFERENCE_INERTIA * 0.1, ShaftDynamics.REFERENCE_INERTIA * 0.5, ShaftDynamics.REFERENCE_INERTIA * 3}) {
+            double rpm = 0, kj = 0, peak = 0;
+            int ticks = 0;
+            while (rpm < ShaftDynamics.RATED_RPM - 1e-9 && ticks < 5000) {
+                double drive = TurbineBlades.asyncDriveKJ(inertia, rpm, .05);
+                peak = Math.max(peak, drive);
+                kj += drive;
+                rpm = ShaftDynamics.rpm(inertia, ShaftDynamics.energyKJ(inertia, rpm) + drive);
+                ticks++;
+            }
+            Check.isTrue(ticks >= 1195 && ticks <= 1205, "0 to rated in about 60 s (%d ticks) for inertia %.2e", ticks, inertia);
+            Check.isTrue(Math.abs(kj - ShaftDynamics.energyKJ(inertia, ShaftDynamics.RATED_RPM)) < 1e-6 * kj, "the grid puts in the whole kinetic energy of the rotor");
+            Check.isTrue(peak * 20 / ShaftDynamics.energyKJ(inertia, ShaftDynamics.RATED_RPM) < 0.07, "the peak power is a few percent of the rotor energy a second");
+        }
+        Check.exactly(0.0, TurbineBlades.asyncDriveKJ(1e6, ShaftDynamics.RATED_RPM, .05), "no pull at rated speed");
+        Check.exactly(0.0, TurbineBlades.asyncVibrationMmPerS(500, 0), "no shaking with no destruct speed armed");
+        Check.isTrue(TurbineBlades.asyncVibrationMmPerS(300, 600) < TurbineBlades.asyncVibrationMmPerS(450, 600), "the shaking climbs with the speed");
+        Check.isTrue(TurbineBlades.asyncVibrationMmPerS(600, 600) > TurbineAux.VIBRATION_DAMAGE_MM_S * 5, "far over the alarm as the shaft arrives at its destruct speed");
+        Check.isTrue(TurbineBlades.asyncVibrationMmPerS(2000, 600) == TurbineBlades.asyncVibrationMmPerS(600, 600), "and no more past it");
+    }
 }

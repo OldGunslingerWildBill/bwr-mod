@@ -115,7 +115,14 @@ public final class TurbineAuxTrain {
         boolean genGov = required || train.stream().anyMatch(m -> m.block().generator() && !m.genCoolingSkids().isEmpty());
 
         if (!lubeGov && !bowGov && !genGov) {
-            for (var m : active) { m.setAux(LEGACY); m.vibration = 0; m.bearingC = TurbineAux.AMBIENT_C; }
+            // No auxiliaries to report it, but a grid driving the shaft up shakes it all the same (PowerTrain's motorShake).
+            double shake = 0;
+            for (var m : active) {
+                m.setAux(LEGACY); m.vibration = m.motorShake(); m.bearingC = TurbineAux.AMBIENT_C;
+                shake = Math.max(shake, m.vibration);
+                if (!m.block().generator()) m.addShaftDamage(TurbineAux.vibrationDamage(m.vibration, DT));
+            }
+            if (shake > 0) dev.bwr.mod.rumble.RumbleSources.turbine(active, shake, rpm, now);
             return;
         }
 
@@ -252,6 +259,9 @@ public final class TurbineAuxTrain {
             }
         }
 
+        // The shaking of a shaft the grid is driving up from a stalled close (PowerTrain), on top of a section's own.
+        double shake = 0;
+        for (var m : active) shake = Math.max(shake, m.motorShake());
         double maxVibration = 0;
         for (var m : active) {
             if (lubeGov) {
@@ -268,13 +278,17 @@ public final class TurbineAuxTrain {
                 m.advanceBow(rpm, rolling);
                 m.vibration = TurbineAux.vibrationMmPerS(m.bow(), rpm);
                 if (dirt > 0) m.vibration += TurbineAux.dirtyOilVibration(dirt, rpm);
+                m.vibration += shake;
                 m.addShaftDamage(TurbineAux.vibrationDamage(m.vibration, DT));
                 maxVibration = Math.max(maxVibration, m.vibration);
             } else if (!bowGov) {
-                m.vibration = 0;
+                m.vibration = m.block().generator() ? 0 : shake;
+                if (!m.block().generator()) m.addShaftDamage(TurbineAux.vibrationDamage(m.vibration, DT));
+                maxVibration = Math.max(maxVibration, m.vibration);
             }
         }
-        for (var m : active) if (m.block().generator()) m.vibration = bowGov ? maxVibration : 0;
+        maxVibration = Math.max(maxVibration, shake);
+        for (var m : active) if (m.block().generator()) m.vibration = maxVibration;
         r.vibration = maxVibration;
         dev.bwr.mod.rumble.RumbleSources.turbine(active, maxVibration, rpm, now);
         r.vibrationAlarm = maxVibration > ALARM_VIBRATION_MM_S;

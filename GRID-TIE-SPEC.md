@@ -286,7 +286,12 @@ indication; at damage 1, that generator accepts no further shaft work and create
 no new FE. Its existing FE remains extractable, so failure does not destroy stored
 energy. Other generators in the train continue according to their own condition.
 Neither damage nor failure opens the breaker, operates a valve, starts backup or
-resets itself. Replacement is the M repair mechanism; normal drops retain damage
+resets itself.
+
+A close below the sync window (a stalled or slow shaft) also lets the grid drive the
+train up like an induction motor (reverse power) until it reaches the window or
+shakes itself apart at a random destruct speed; see TURBINE-MAINTENANCE.md,
+"Closing on a stalled shaft". Opening the breaker first saves it. Replacement is the M repair mechanism; normal drops retain damage
 to prevent break/re-place repair. There is no mod command to clear damage.
 
 ### 4.3 Shaft dynamics — TODO-5 B6 is part of Phase M

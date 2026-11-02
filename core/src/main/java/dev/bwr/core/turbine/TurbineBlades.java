@@ -59,6 +59,42 @@ public final class TurbineBlades {
     /** How far from rated speed a closed generator is held in step by the grid, rpm (1 Hz of slip at four poles). */
     public static final double SYNC_HOLD_RPM = 30;
 
+    // ---- asynchronous motoring: a breaker closed on a stalled shaft
+    /** Time the grid takes to drive a stopped train up to rated speed as an induction motor, with no steam, s (any train size: the torque scales with its inertia). */
+    public static final double ASYNC_RAMP_S = 60;
+    /** The shaft vibration that shakes a train apart, mm/s: reached as the shaft arrives at its destruct speed. */
+    public static final double ASYNC_VIBRATION_MM_S = 45;
+    /** Time constant of the extra vibration dying away once the grid lets go of the shaft, s. */
+    public static final double ASYNC_SHAKE_TAU_S = 3;
+
+    /**
+     * The speed a shaft the grid drives up from a stalled breaker close comes apart at, rpm: {@code u} (0..1) of the way from the close
+     * speed to the bottom of the hold window. A close already in or over the window has none (0).
+     */
+    public static double destructRpm(double closeRpm, double u) {
+        double top = ShaftDynamics.RATED_RPM - SYNC_HOLD_RPM, lo = Math.max(0, finite(closeRpm));
+        if (lo >= top) return 0;
+        return Math.max(1, lo + Math.max(0, Math.min(1, finite(u))) * (top - lo));
+    }
+
+    /**
+     * What the grid adds to the shaft in dt seconds while it drives a stalled train as an induction motor, kJ. A constant accelerating torque
+     * T = J * w_rated / {@link #ASYNC_RAMP_S}, so the train gains w_rated / ramp of speed every second whatever its inertia J, and the
+     * energy is the kinetic energy at the new speed less that at the old (the power is torque times speed, so none of it at 0 rpm is no trap).
+     * The pull ends at rated speed.
+     */
+    public static double asyncDriveKJ(double inertia, double rpm, double dt) {
+        double now = Math.max(0, finite(rpm)), next = Math.min(ShaftDynamics.RATED_RPM, now + ShaftDynamics.RATED_RPM / ASYNC_RAMP_S * Math.max(0, dt));
+        return next <= now ? 0 : ShaftDynamics.energyKJ(inertia, next) - ShaftDynamics.energyKJ(inertia, now);
+    }
+
+    /** The shaking of a shaft the grid drives up toward its destruct speed, mm/s: with the square of how far along it is, {@link #ASYNC_VIBRATION_MM_S} on arrival. 0 with none armed. */
+    public static double asyncVibrationMmPerS(double rpm, double destructRpm) {
+        if (!(finite(destructRpm) > 0)) return 0;
+        double p = Math.min(1, Math.max(0, finite(rpm)) / destructRpm);
+        return ASYNC_VIBRATION_MM_S * p * p;
+    }
+
     // ---- out-of-phase closing
     /** Generator, transformer and system reactance in series, per unit, for the closing transient. */
     public static final double CLOSE_REACTANCE_PU = 0.35;

@@ -60,6 +60,13 @@ public class PowerModuleBlockEntity extends BlockEntity {
     private boolean hasCloseShock;
     private double closeAngle,closeTorquePu;
     long gridHeldTick=Long.MIN_VALUE;
+    /** The speed this generator's train comes apart at while the grid drives it up from a stalled breaker close (0: none armed); saved. */
+    private double destructRpm;
+    /** Ticks the grid has not held this generator while a destruct speed is armed (a loading world's tie takes a tick or two to say so); the extra shaking, mm/s. Not saved. */
+    int destructGrace;
+    /** The train shook itself apart (shakeApart): its rotors are seized and the grid cannot turn them again until the section is rebuilt; saved. */
+    private boolean seized;
+    double motorShake;
     // ---- a wrecked casing and a fire (TURBINE-MAINTENANCE.md). Absent from an old save; written only when not the default.
     /** How badly a turbine section is wrecked: a blade torn out through its casing, a burst casing, a rotor half broken loose. */
     public static final int WRECK_NONE=0,WRECK_HOLED=1,WRECK_BURST=2,WRECK_SHAFT_OUT=3;
@@ -174,7 +181,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
     }
     /** Rebuilds the section with a kit (the caller checked {@link #rebuildProblem}): casing, bearings, couplings and glands as new; the blade sections are the crane's. */
     public void rebuild(){
-        wreck=WRECK_NONE;discBurst=false;java.util.Arrays.fill(holes,Double.NaN);
+        wreck=WRECK_NONE;discBurst=false;seized=false;java.util.Arrays.fill(holes,Double.NaN);
         damage=0;bow=0;bearingC=TurbineAux.AMBIENT_C;
         setChanged();refreshOpen();syncMaintenance();
     }
@@ -210,6 +217,15 @@ public class PowerModuleBlockEntity extends BlockEntity {
     /** The breaker of a grid tie bound to this generator is closed this tick (the tie says so each tick it is closed). */
     public void markGridHeld(long now){gridHeldTick=now;}
     boolean gridHeld(long now){return gridHeldTick!=Long.MIN_VALUE&&gridHeldTick>=now-1&&gridHeldTick<=now;}
+    /** The breaker opened: the grid lets go of the shaft at once, and the destruct speed it was driving toward is gone. */
+    public void releaseGrid(){gridHeldTick=Long.MIN_VALUE;clearDestruct();}
+    public double destructRpm(){return destructRpm;}
+    /** Arms the speed this train comes apart at while motored up (a breaker closed on a stalled shaft, GridTieBlockEntity). */
+    public void armDestruct(double rpm){if(Double.isFinite(rpm)&&rpm>0){destructRpm=rpm;destructGrace=0;setChanged();}}
+    public boolean seized(){return seized;}
+    void seize(){if(!seized){seized=true;setChanged();}}
+    void clearDestruct(){if(destructRpm!=0){destructRpm=0;setChanged();}destructGrace=0;}
+    public double motorShake(){return motorShake;}
     /** Every loaded LP section of a level (the turbine hall crane's survey), server side. */
     public static synchronized Set<BlockPos> lpSections(Level level){var s=LP_SECTIONS.get(level);return s==null?Set.of():Set.copyOf(s);}
     private void rememberLp(){if(level!=null&&!level.isClientSide()&&!isRemoved()&&lp())synchronized(PowerModuleBlockEntity.class){LP_SECTIONS.computeIfAbsent(level,k->new HashSet<>()).add(worldPosition.immutable());}}
@@ -465,6 +481,8 @@ public class PowerModuleBlockEntity extends BlockEntity {
         if(hoodC>ambient+.01)t.putDouble("HoodC",hoodC);
         if(hasCloseShock){t.putDouble("CloseAngle",closeAngle);t.putDouble("ClosePu",closeTorquePu);}
         saveWreck(t);
+        if(destructRpm>0)t.putDouble("DestructRpm",destructRpm);
+        if(seized)t.putBoolean("Seized",true);
         if(burning()){t.putString("Fire",fire.name());t.putDouble("FireFuel",fireFuel);}
     }
     /** The wreck, the disc burst and the holes, only when not the default (TURBINE-MAINTENANCE.md). */
@@ -539,6 +557,7 @@ public class PowerModuleBlockEntity extends BlockEntity {
         hoodC=t.contains("HoodC")?Math.max(ambient,finite(t.getDouble("HoodC"),1000)):ambient;reverseMW=0;motoring=false;gridHeldTick=Long.MIN_VALUE;
         hasCloseShock=t.contains("CloseAngle");closeAngle=hasCloseShock?wrapped(t.getDouble("CloseAngle")):0;closeTorquePu=hasCloseShock?finite(t.getDouble("ClosePu"),100):0;
         loadWreck(t);
+        destructRpm=t.contains("DestructRpm")?finite(t.getDouble("DestructRpm"),ShaftDynamics.RATED_RPM):0;destructGrace=0;motorShake=0;seized=t.getBoolean("Seized");
         fire=TurbineFire.Kind.NONE;fireFuel=0;
         if(t.contains("Fire")){
             try{fire=TurbineFire.Kind.valueOf(t.getString("Fire"));}catch(IllegalArgumentException e){fire=TurbineFire.Kind.NONE;}

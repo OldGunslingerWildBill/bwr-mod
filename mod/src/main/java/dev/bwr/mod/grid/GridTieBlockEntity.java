@@ -88,9 +88,19 @@ public final class GridTieBlockEntity extends GridDevice {
         g.addShaftDamage(damage);
         // The same transient goes through the turbine sections of the train (TURBINE-MAINTENANCE.md); the generator's damage stays the law above.
         dev.bwr.mod.power.PowerTrain.closingShock(g,lastAngle,lastSlip);
+        // Closed on a stalled shaft the grid drives the train up like an induction motor (PowerTrain), and it shakes itself apart at a
+        // random speed between this one and the hold window; opening the breaker first saves it (TURBINE-MAINTENANCE.md).
+        double u=Double.isNaN(testDestructDraw)?level.getRandom().nextDouble():testDestructDraw;
+        double destruct=dev.bwr.core.turbine.TurbineBlades.destructRpm(g.rpm,u);
+        if(destruct>0)g.armDestruct(destruct);
         closed=true;setChanged();g.markGridHeld(level.getGameTime());return true;
     }
-    public void tripBreaker(){if(live())tickDevice();if(closed){closed=false;phase=0;setChanged();}}
+    /** Test hook: when finite, the 0..1 draw that picks the destruct speed of a close on a stalled shaft, in place of the level's random. */
+    public static volatile double testDestructDraw=Double.NaN;
+    public void tripBreaker(){
+        if(live())tickDevice();
+        if(closed){closed=false;phase=0;setChanged();var g=generator();if(g!=null)g.releaseGrid();}
+    }
     @Override public void tickDevice(){
         if(!live())return;long now=level.getGameTime();if(now==tick)return;
         if(tick!=Long.MIN_VALUE){

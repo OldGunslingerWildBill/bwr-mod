@@ -256,6 +256,7 @@ public final class TurbineMaintenanceTests {
     public static final class Listener {
         final List<TurbineEvents.Missile> missiles = new ArrayList<>();
         final List<TurbineEvents.Vibration> vibrations = new ArrayList<>();
+        final List<TurbineEvents.Excursion> excursions = new ArrayList<>();
 
         @SubscribeEvent
         public void missile(TurbineEvents.Missile e) {
@@ -265,6 +266,11 @@ public final class TurbineMaintenanceTests {
         @SubscribeEvent
         public void vibration(TurbineEvents.Vibration e) {
             vibrations.add(e);
+        }
+
+        @SubscribeEvent
+        public void excursion(TurbineEvents.Excursion e) {
+            excursions.add(e);
         }
     }
 
@@ -744,6 +750,168 @@ public final class TurbineMaintenanceTests {
     }
 
     // ------------------------------------------------------------------------------------------------ the stands
+
+    // ------------------------------------------------------------------------------------------------ closing on a stalled shaft
+
+    /**
+     * A tie bound to a stopped train, closed at a phase of 0: the bad-close law runs as always. The close's own damage to the LP is put back to
+     * nothing so the tests follow the motoring alone. {@code draw} is the 0..1 draw behind the destruct speed (the hook), NaN for the level's random.
+     */
+    private static void closeStopped(Hall f, double draw) {
+        f.tie();
+        f.setPhase(0);
+        GridTieBlockEntity.testDestructDraw = draw;
+        try {
+            if (!f.tie.closeBreaker()) throw new IllegalStateException("the close on a stopped train is allowed");
+        } finally {
+            GridTieBlockEntity.testDestructDraw = Double.NaN;
+        }
+        f.edit(f.lp, tag -> tag.putDouble("ShaftDamage", 0));
+        f.blades(0, 0);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aBreakerClosedOnAStoppedTrainMotorsItUpAsReversePower(GameTestHelper h) {
+        run(h, at(18), f -> {
+            h.assertTrue(f.gen.rpm == 0 && f.lp.rpm == 0, "a stopped train");
+            closeStopped(f, 0.9);
+            h.assertTrue(f.tie.lastCloseFault() && Math.abs(f.gen.damage() - Synchronizer.closingDamage(f.tie.lastAngle(), f.tie.lastSlip())) < 1e-9,
+                    "closing at standstill still costs the generator the bad-close law");
+            double destruct = f.gen.destructRpm();
+            h.assertTrue(Math.abs(destruct - TurbineBlades.destructRpm(0, 0.9)) < 1e-9 && destruct > 1200 && destruct < 1470, "a destruct speed was armed: " + destruct);
+            double inertia = f.lp.shaftInertia() + f.gen.shaftInertia(), lastRpm = 0, lastShake = 0;
+            for (int step = 1; step <= 5; step++) {
+                f.tick(100);
+                h.assertTrue(f.gen.rpm > lastRpm + 100 && f.lp.rpm == f.gen.rpm, "the grid drives the shaft up with no steam: " + f.gen.rpm);
+                h.assertTrue(f.gen.motoring && f.lp.motoring && f.gen.reverseMW > 0, "reverse power at " + f.gen.rpm + " rpm");
+                h.assertTrue(f.gen.electricMW == 0 && f.gen.status.startsWith("Motoring: the grid drives the stalled shaft up"), "the status says so: " + f.gen.status);
+                double expected = TurbineBlades.asyncDriveKJ(inertia, f.gen.rpm - 1.25, 0.05) * 20 / 1000;
+                h.assertTrue(Math.abs(f.gen.reverseMW - expected) < 0.03 * expected, "the reverse power is the grid's torque times the speed: " + f.gen.reverseMW + " vs " + expected);
+                h.assertTrue(f.lp.vibration > lastShake, "the shaking climbs: " + f.lp.vibration);
+                lastRpm = f.gen.rpm;
+                lastShake = f.lp.vibration;
+            }
+            h.assertTrue(lastRpm > 590 && lastRpm < 640, "25 s on, a little under 625 rpm (the ramp is 60 s to rated): " + lastRpm);
+            h.assertTrue(!f.lp.wrecked() && f.tie.closed(), "nothing has come apart yet; nothing opened the breaker");
+            // a stalled close is the only case: one in the window arms nothing
+            var g = new Hall(f.l, f.root);
+            g.rpm(ShaftDynamics.RATED_RPM);
+            g.tie();
+            g.setPhase(0);
+            h.assertTrue(g.tie.closeBreaker() && g.gen.destructRpm() == 0, "a close in the window arms no destruct speed");
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aTrainMotoredUpToItsDestructSpeedShakesItselfApart(GameTestHelper h) {
+        run(h, at(19), f -> {
+            var listener = new Listener();
+            NeoForge.EVENT_BUS.register(listener);
+            try {
+                closeStopped(f, 0.2);
+                double destruct = f.gen.destructRpm();
+                h.assertTrue(Math.abs(destruct - TurbineBlades.destructRpm(0, 0.2)) < 1e-9 && destruct > 250 && destruct < 330, "the destruct speed: " + destruct);
+                int ticks = 0;
+                double before = 0, peakShake = 0;
+                while (ticks < 600 && !f.lp.sheared()) {
+                    before = f.gen.rpm;
+                    f.tick(1);
+                    ticks++;
+                    if (!f.lp.sheared()) {
+                        peakShake = Math.max(peakShake, f.lp.vibration);
+                        h.assertTrue(f.gen.rpm < destruct, "not before the destruct speed: " + f.gen.rpm);
+                    }
+                }
+                h.assertTrue(f.lp.sheared() && f.lp.wreck() == PowerModuleBlockEntity.WRECK_SHAFT_OUT && f.lp.discBurst(),
+                        "the burst rotor broke loose: the shaft excursion, after " + ticks + " ticks");
+                h.assertTrue(ticks > 190 && ticks < 250, "at 25 rpm a second, about 235 ticks to " + destruct + " rpm: " + ticks);
+                h.assertTrue(before + 2 > destruct && peakShake > TurbineAux.VIBRATION_DAMAGE_MM_S * 3, "it came apart at the destruct speed, shaking hard: " + before + " rpm, " + peakShake + " mm/s");
+                h.assertTrue(listener.excursions.size() == 1 && !listener.missiles.isEmpty(), "the existing excursion and disc missile: " + listener.excursions.size() + " " + listener.missiles.size());
+                double alarm = 0;
+                for (var v : listener.vibrations) alarm = Math.max(alarm, v.mmPerS());
+                h.assertTrue(alarm > TurbineAux.VIBRATION_DAMAGE_MM_S, "the vibration event saw it: " + alarm);
+                h.assertTrue(f.gen.wreck() == PowerModuleBlockEntity.WRECK_NONE && f.gen.seized() && f.lp.seized() && f.gen.destructRpm() == 0 && f.gen.rpm == 0 && f.lp.rpm == 0,
+                        "every rotor stopped and seized, the destruct speed spent");
+                f.tick(100);
+                h.assertTrue(f.tie.closed() && !f.gen.motoring && f.gen.rpm == 0 && f.gen.reverseMW == 0, "the breaker is still closed but the grid cannot turn the seized rotors");
+                h.assertTrue(listener.excursions.size() == 1, "and it happens once");
+            } finally {
+                NeoForge.EVENT_BUS.unregister(listener);
+            }
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aTrainWithNoBladeSectionToBurstIsWreckedAtItsDestructSpeedToo(GameTestHelper h) {
+        run(h, at(20), f -> {
+            closeStopped(f, 0.1);
+            f.lp.takeBladeSection(0);
+            f.lp.takeBladeSection(1);
+            h.assertTrue(f.gen.destructRpm() > 100, "armed");
+            f.tick(400);
+            h.assertTrue(f.gen.seized() && f.lp.seized() && f.lp.wrecked() && !f.lp.sheared() && f.gen.destructRpm() == 0 && f.gen.shaftDamage() >= 1 && f.gen.rpm == 0,
+                    "with no blade section to burst, the sections are wrecked and the rotors seized: wreck " + f.lp.wreck());
+            f.tick(40);
+            h.assertTrue(!f.gen.motoring && f.gen.rpm == 0, "the seized train stays put");
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void openingTheBreakerBeforeTheDestructSpeedSavesTheTrain(GameTestHelper h) {
+        run(h, at(21), f -> {
+            var listener = new Listener();
+            NeoForge.EVENT_BUS.register(listener);
+            try {
+                closeStopped(f, 0.9);
+                double first = f.gen.destructRpm();
+                f.tick(300);
+                double atTrip = f.gen.rpm, shake = f.lp.vibration;
+                h.assertTrue(f.gen.motoring && atTrip > 350 && shake > 2, "motoring up: " + atTrip + " rpm, " + shake + " mm/s");
+                f.tie.tripBreaker();
+                h.assertTrue(f.gen.destructRpm() == 0 && !f.tie.closed(), "the destruct speed is gone with the breaker");
+                f.tick(1);
+                h.assertTrue(!f.gen.motoring && f.gen.reverseMW == 0 && !f.lp.motoring && f.gen.rpm < atTrip && f.gen.rpm > atTrip - 2, "no more reverse power; the shaft coasts: " + f.gen.rpm);
+                f.tick(400);
+                h.assertTrue(f.lp.vibration < 0.05 * shake, "the extra shaking died away: " + f.lp.vibration + " from " + shake);
+                h.assertTrue(!f.lp.wrecked() && !f.gen.seized() && listener.excursions.isEmpty() && f.gen.rpm > 0 && f.gen.rpm < atTrip, "nothing came apart; the shaft coasts: " + f.gen.rpm);
+                // a new close below the window arms a new destruct speed, drawn from the level's random between this speed and the window
+                double rpm = f.gen.rpm;
+                f.setPhase(0);
+                h.assertTrue(f.tie.closeBreaker(), "closed again");
+                double second = f.gen.destructRpm();
+                h.assertTrue(second >= rpm && second <= ShaftDynamics.RATED_RPM - TurbineBlades.SYNC_HOLD_RPM && second != first, "a new destruct speed between " + rpm + " and the window: " + second);
+                f.tick(40);
+                h.assertTrue(f.gen.motoring, "and the grid drives it up again");
+            } finally {
+                NeoForge.EVENT_BUS.unregister(listener);
+            }
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void theDestructSpeedSurvivesASaveAndTheTrainStillComesApartAtIt(GameTestHelper h) {
+        run(h, at(22), f -> {
+            closeStopped(f, 0.35);
+            f.tick(100);
+            double destruct = f.gen.destructRpm();
+            h.assertTrue(Math.abs(destruct - TurbineBlades.destructRpm(0, 0.35)) < 1e-9, "armed: " + destruct);
+            var tag = f.gen.saveWithoutMetadata(f.l.registryAccess());
+            h.assertTrue(tag.getDouble("DestructRpm") == destruct && !f.lp.saveWithoutMetadata(f.l.registryAccess()).contains("DestructRpm"), "saved on the generator only");
+            f.edit(f.gen, t -> {
+            });
+            h.assertTrue(f.gen.destructRpm() == destruct, "and loaded");
+            int ticks = 0;
+            double before = 0;
+            while (ticks < 400 && !f.lp.sheared()) {
+                before = f.gen.rpm;
+                f.tick(1);
+                ticks++;
+            }
+            h.assertTrue(f.lp.sheared() && before + 2 > destruct && before < destruct + 1e-9, "after the reload the grid took the train on to the same destruct speed: " + before + " vs " + destruct);
+            var after = f.gen.saveWithoutMetadata(f.l.registryAccess());
+            h.assertTrue(!after.contains("DestructRpm") && after.getBoolean("Seized"), "spent, and the seized rotor is saved");
+        });
+    }
 
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void theBladeStandIsAnItemHandlerAndDropsWhatItHolds(GameTestHelper h) {

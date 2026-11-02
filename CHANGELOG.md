@@ -2,6 +2,16 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **Closing a Grid Tie on a stalled shaft motors the train up, then shakes it apart** (TURBINE-MAINTENANCE.md, *Closing on a stalled shaft*;
+  GRID-TIE-SPEC.md 4.2). The owner asked for the real-life inadvertent energization: the grid drives the stopped machine like an induction
+  motor, "up to a random speed, then explode due to shaft vibration". A breaker closed below the hold window (1,470 rpm) now pulls the train
+  up at 25 rpm a second (0 to rated in 60 s, torque derived from the train's inertia so it scales with its size), shown as reverse power
+  (MW, "Motoring: the grid drives the stalled shaft up"). The close draws a random destruct speed between the close speed and the window
+  (saved on the generator) and the shaft vibration climbs toward 45 mm/s as it nears it, through the existing alarm, rumble and vibration
+  event; on arrival the worst LP disc bursts and the rotor breaks loose (the existing shaft excursion: bang, rotor half, fires, hydrogen), or
+  with no LP the sections are wrecked and the oil lines and hydrogen burn. The rotors are then seized until rebuilt. Opening the breaker
+  first stops the motoring and the shaking and clears the destruct speed. The bad-close damage law is unchanged. Core `TurbineBladesTest`
+  gains one test; five new `bwrturbine` GameTests in `TurbineMaintenanceTests`; the grid tests that close at standstill pin the draw.
 - **More intermediate switch sizes, and the smallest ones retired** (CONTROL-PANELS.md, *Component sizes*). The owner asked for 6x6 or 4x4 switches
   instead of 1x1 and 2x2 ones. Toggle switch: 4x4 added (new default; 1x1 retired). Key switch: 3x4 (new default) and 4x6 added, 1x2 retired.
   Rotary selector: 4x6 (new default) and 6x8 added, 1x2 and 2x3 retired. Setpoint knob: 4x4 (new default) and 6x6 added, 1x1 retired. Control

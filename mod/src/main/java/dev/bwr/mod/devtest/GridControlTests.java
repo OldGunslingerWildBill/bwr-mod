@@ -35,7 +35,7 @@ public final class GridControlTests {
                 use(player,basePos,true);use(player,tp,false);h.assertTrue(tie.meters().size()==1&&tie.meters().getFirst().id().equals(base.deviceId()),"linker failed explicit meter selection");
                 h.assertTrue(!tie.setMeters(List.of(basePos,basePos))&&tie.meters().size()==1,"duplicate selection partially mutated list");
                 h.assertTrue(!tie.setMeters(List.of(ROOT.above(100)))&&tie.meters().size()==1,"invalid selection partially mutated list");
-                var signals=SignalProviders.of(tie);h.assertTrue(signals!=null&&signals.command("fixed_mw",1)&&signals.command("close_breaker",1),"panel commands unavailable");
+                var signals=SignalProviders.of(tie);h.assertTrue(signals!=null&&signals.command("fixed_mw",1)&&GridTieTests.closeWithDraw(.999,()->signals.command("close_breaker",1)),"panel commands unavailable");
                 h.assertTrue(!signals.command("trip_breaker",Double.POSITIVE_INFINITY)&&tie.closed()&&!signals.command("demand_mode",.5)&&!signals.command("fixed_mw",Double.NaN),"invalid panel input accepted");
                 h.assertTrue(!SignalProviders.of(base).command("direction",6)&&SignalProviders.of(base).command("display_units",1),"meter command validation failed");
                 h.assertTrue(!tie.aggregateValid()&&!GridTelemetry.tie(tie).containsKey("mwError"),"warming history masquerades as valid");

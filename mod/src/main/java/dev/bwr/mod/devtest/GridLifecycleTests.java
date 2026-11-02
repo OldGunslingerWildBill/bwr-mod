@@ -32,7 +32,7 @@ public final class GridLifecycleTests {
                 h.assertTrue(oldCap.receiveEnergy(100,false)==0,"detached tie consumed FE");
                 var loaded=(GridTieBlockEntity)BlockEntity.loadStatic(tp,state,tag,l.registryAccess());l.setBlockEntity(loaded);loaded.onLoad();loaded.tickDevice();
                 h.assertTrue(loaded.curvePhase()==phase&&loaded.phase()==angle&&loaded.ledger().sampleTicks()==0,"offline phase/curve catch-up or stale history");
-                loaded.closeBreaker();((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(time+24001);loaded.tickDevice();
+                GridTieTests.closeWithDraw(.999,loaded::closeBreaker);((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(time+24001);loaded.tickDevice();
                 int transfer=gen.energy.extractEnergy(100,false);h.assertTrue(loaded.energy.receiveEnergy(transfer,false)==transfer,"reloaded tie could not consume real FE");
                 var genState=gen.getBlockState();var genTag=gen.saveWithFullMetadata(l.registryAccess());gen.onChunkUnloaded();l.removeBlockEntity(root);
                 h.assertTrue(loaded.closed()&&loaded.generator()==null&&loaded.energy.receiveEnergy(1,false)==0,"absent generator changed breaker or served binding");

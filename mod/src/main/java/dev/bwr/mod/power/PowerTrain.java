@@ -58,21 +58,35 @@ public final class PowerTrain {
         // Reverse power (TURBINE-MAINTENANCE.md): a generator whose grid tie breaker is closed, turning within 1 Hz of synchronous
         // speed, is held in step by the grid. When the steam does less work than the train's windage and friction, the grid makes up
         // the rest: the generator runs as a motor, delivers nothing and draws that power. Nothing opens the breaker for the player.
-        boolean held=connectedGenerator&&Math.abs(rpm-ShaftDynamics.RATED_RPM)<=TurbineBlades.SYNC_HOLD_RPM
-                &&generators.stream().anyMatch(g->g.gridHeld(now));
+        boolean gridOn=connectedGenerator&&generators.stream().anyMatch(g->g.gridHeld(now));
+        boolean held=gridOn&&Math.abs(rpm-ShaftDynamics.RATED_RPM)<=TurbineBlades.SYNC_HOLD_RPM;
+        // Below the hold window a closed breaker is a short on a stalled machine: the grid drives it up like an induction motor, a constant
+        // accelerating torque (TurbineBlades.asyncDriveKJ), until the shaft reaches the window or comes apart at its destruct speed.
+        boolean stalled=gridOn&&active.stream().noneMatch(PowerModuleBlockEntity::seized)&&rpm<ShaftDynamics.RATED_RPM-TurbineBlades.SYNC_HOLD_RPM;
         double lossNominal=ShaftDynamics.energyKJ(inertia,rpm)/ShaftDynamics.H_SECONDS*.005*.05;
-        double motorKJ=held&&work<lossNominal?lossNominal-work:0;
+        double asyncKJ=stalled?TurbineBlades.asyncDriveKJ(inertia,rpm,.05):0;
+        double motorKJ=(held&&work<lossNominal?lossNominal-work:0)+asyncKJ;
         var step=motorKJ>0?ShaftDynamics.step(inertia,rpm,work+motorKJ,0,.05):ShaftDynamics.step(inertia,rpm,work,request,.05);
         double remaining=step.generatorWorkKJ();
         for(var g:generators){double share=Math.min(remaining,g.workRoomKJ());g.generate(share);remaining-=share;}
         double motored=lossNominal>0?Math.min(1,motorKJ/lossNominal):0;
+        double destruct=0;
+        for(var g:generators){
+            if(g.destructRpm()<=0)continue;
+            // A destruct speed is armed while the grid holds the shaft; a loading world's tie takes a tick or two to say so, a lost one 2 s.
+            if(g.gridHeld(now))g.destructGrace=0;else if(++g.destructGrace>=40){g.clearDestruct();continue;}
+            destruct=Math.max(destruct,g.destructRpm());
+        }
+        double shake=TurbineBlades.asyncVibrationMmPerS(step.rpm(),destruct),shakeDecay=Math.exp(-.05/TurbineBlades.ASYNC_SHAKE_TAU_S);
         for(var m:active){m.rpm=step.rpm();m.trainMW=work*20/1000;
+            m.motorShake=Math.max(shake,m.motorShake*shakeDecay);
             m.trainLossKJ=step.lossKJ()+coupling.lossKJ();
             m.reverseMW=motorKJ*20/1000;m.motoring=motorKJ>0;
             m.addShaftDamage(ShaftDynamics.damage(m.shaftDamage(),m.rpm,.05)-m.shaftDamage());
             if(m.lp())blades(m,motored);}
-        if(motorKJ>0)for(var g:generators)g.status=String.format(java.util.Locale.ROOT,"Motoring: the grid drives the shaft, %.1f MW reverse power",motorKJ*20/1000);
+        if(motorKJ>0)for(var g:generators)g.status=String.format(java.util.Locale.ROOT,asyncKJ>0?"Motoring: the grid drives the stalled shaft up, %.1f MW reverse power":"Motoring: the grid drives the shaft, %.1f MW reverse power",motorKJ*20/1000);
         TurbineAuxTrain.step(train,active,now);
+        if(destruct>0&&step.rpm()>=destruct&&start.getLevel() instanceof net.minecraft.server.level.ServerLevel server)shakeApart(server,train);
         thrownAndShaking(train,active,now);
         if(now%20==0&&start.getLevel() instanceof net.minecraft.server.level.ServerLevel server){TurbineFires.second(server,train,active);TurbineSounds.whine(server,active);}
         // A mid-tick connection can include a half already processed. Couple it
@@ -82,6 +96,29 @@ public final class PowerTrain {
             for(var m:train){m.rpm=joined.rpm();m.trainLossKJ+=joined.lossKJ();m.setChanged();}
         }
         for(var m:active){m.pushOutputs();m.setChanged();}
+    }
+
+    /**
+     * The grid drove a stalled train up to its destruct speed: the shaking tears it apart. The worst case is reused as it stands: the worst
+     * LP flow's disc bursts ({@link #burst}) and the burst rotor breaks loose ({@link #excursion}: rotor half, bang, fires, hydrogen). With
+     * no LP section to do that (none, or its blade sections lifted out) every section is wrecked as the train comes apart, its oil lines cut and a
+     * generator's hydrogen burning, and the rotors grind to a stop. Every rotor is seized afterwards: the grid cannot turn them again until each section is rebuilt.
+     */
+    static void shakeApart(net.minecraft.server.level.ServerLevel server,List<PowerModuleBlockEntity> train){
+        for(var m:train){m.seize();if(m.block().generator())m.clearDestruct();}
+        for(var m:train)if(m.lp()&&!m.sheared()&&m.worstFlow()>=0){
+            burst(server,m,m.worstFlow(),Double.NaN);
+            excursion(server,m,-1);
+            return;
+        }
+        PowerModuleBlockEntity first=null;
+        for(var m:train){
+            m.addShaftDamage(1);
+            if(!m.block().generator()){m.wreckAtLeast(PowerModuleBlockEntity.WRECK_BURST);if(first==null)first=m;}
+            m.status="The train shook itself apart";m.rpm=0;m.motorShake=0;m.setChanged();
+        }
+        if(first!=null)TurbineFires.lineCut(server,first,train);
+        for(var m:train)if(m.block().generator())TurbineFires.hydrogen(server,m);
     }
 
     // ---- LP blade sections (TURBINE-MAINTENANCE.md)

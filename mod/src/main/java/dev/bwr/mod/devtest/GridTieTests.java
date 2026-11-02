@@ -17,6 +17,11 @@ import net.neoforged.neoforge.gametest.*;
 @PrefixGameTestTemplate(false)
 public final class GridTieTests {
     private static final BlockPos ROOT=new BlockPos(91000,245,91000);
+    /** A close at standstill with the destruct speed drawn near the top of its range (1468 rpm): these tests' few seconds never reach it. */
+    static boolean closeWithDraw(double draw,java.util.function.BooleanSupplier close){
+        GridTieBlockEntity.testDestructDraw=draw;
+        try{return close.getAsBoolean();}finally{GridTieBlockEntity.testDestructDraw=Double.NaN;}
+    }
     @GameTest(template="empty",timeoutTicks=200)
     public static void sharedAllowanceAndPureSimulation(GameTestHelper h) {
         var l=h.getLevel();var root=ROOT.east(128);var min=root.offset(-8,-2,-8);var max=root.offset(16,9,12);
@@ -28,7 +33,7 @@ public final class GridTieTests {
                 var gen=PowerModuleRuntimeCheck.place(l,BwrBlocks.NUCLEAR_GENERATOR.get(),root,Direction.EAST);
                 var pos=root.offset(12,0,0);l.setBlock(pos,BwrBlocks.GRID_TIE.get().defaultBlockState(),3);
                 var tie=(GridTieBlockEntity)l.getBlockEntity(pos);
-                h.assertTrue(tie.bindGenerator(root)&&tie.configure(new GridDemand(0,48000,0,0,0,20))&&tie.closeBreaker(),"tie setup failed");
+                h.assertTrue(tie.bindGenerator(root)&&tie.configure(new GridDemand(0,48000,0,0,0,20))&&closeWithDraw(.999,tie::closeBreaker),"tie setup failed");
                 // Deliberately close a stationary generator: the consequence is damage, not refusal.
                 h.assertTrue(tie.lastCloseFault()&&gen.failed(),"stationary close was protected");
                 ((net.minecraft.world.level.storage.ServerLevelData)l.getLevelData()).setGameTime(time+1);

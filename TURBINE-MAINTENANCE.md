@@ -29,7 +29,7 @@ its shaft counter and its two blade sections; HP sections and generators are unc
 |---|---|---|
 | **Wet steam** (unchanged) | the liquid over the design 0.1 % passed through, over 8,000 t (`PowerTurbine.erosionIncrement`) | both flows see the same steam, so both sections wear alike. On an HP section the wear stays in its one damage counter, as before |
 | **Out-of-phase close** | transient torque `T = 2 sin(delta / 2) / 0.35` per unit of rated torque; `delta` is the phase angle at the close, or the slip's equivalent on the grid tie's own scale (`10 deg x slip / 0.067 Hz`), at most 180 | 0.5 pu in the synchronising window, 2.9 pu at 60 deg, 4.0 at 90, **5.0 at 120**, 5.7 at 180. Above 2 pu: each LP blade section loses `0.12 (T - 2)^1.5` (0.35 at 90 deg, 0.61 at 120), every turbine section's shaft `0.06 (T - 2)`. Past **5.5 pu** (about 150 deg, or closing on a machine far off speed) with the shaft over half speed an LP disc and coupling let go: a disc missile. The generator's own damage is the grid tie's existing law, unchanged |
-| **Reverse power (motoring)** | a generator whose breaker is closed and that turns within 1 Hz (30 rpm) of synchronous speed is held in step by the grid. When the steam does less work than the train's windage and friction, the grid makes up the rest: the generator is a motor, delivers nothing and draws that power (shown as reverse power). The LP's exhaust hood heads for `base + 150 K x (rpm/1500)^3 x motored fraction` with a 90 s time constant; above **120 C** each blade section loses `5e-5` per second per kelvin over | at rated speed with no steam the hood passes 120 C in **about 90 s** and the blades fail after **about 9 minutes**. A train's reverse power is its windage: 3.75 MW for an LP and a generator, 7.5 MW for the reference 2 HP / 4 LP / 1 generator train |
+| **Reverse power (motoring)** | a generator whose breaker is closed and that turns within 1 Hz (30 rpm) of synchronous speed is held in step by the grid. When the steam does less work than the train's windage and friction, the grid makes up the rest: the generator is a motor, delivers nothing and draws that power (shown as reverse power). **Closed on a stalled shaft** (under the window) the grid drives the train up like an induction motor and the same reverse power is shown, until it comes apart (below). The LP's exhaust hood heads for `base + 150 K x (rpm/1500)^3 x motored fraction` with a 90 s time constant; above **120 C** each blade section loses `5e-5` per second per kelvin over | at rated speed with no steam the hood passes 120 C in **about 90 s** and the blades fail after **about 9 minutes**. A train's reverse power is its windage: 3.75 MW for an LP and a generator, 7.5 MW for the reference 2 HP / 4 LP / 1 generator train |
 | **Overspeed** | the shaft's existing law, 0.1 per second per unit over 110 % speed, also on the LP blade sections | at **150 % (2,250 rpm)** an LP last-stage disc bursts: a disc missile |
 
 The base of the hood temperature is the exhaust steam's temperature while steam flows, the hall's 25 C otherwise. A coasting shaft with
@@ -143,6 +143,31 @@ A failure leaves its mark on the casing as well as on the numbers. Each turbine 
 
 A burst casing's upper cells are open, the way a lifted hood's are (drawn by the renderer, walked into); an HP's too. The blade sections
 inside a burst LP are drawn stripped and bent. Nothing about the levels is automatic: nothing trips, the screens and computers read.
+
+## Closing on a stalled shaft (inadvertent energization)
+
+A breaker closed with the shaft **below the hold window** (under 1,470 rpm; at standstill, or any speed short of it) is a short on a stopped
+machine: the grid drives the train up like an induction motor. The bad-close law above is unchanged (it still damages the generator and the
+train); on top of it:
+
+- **The pull.** A constant accelerating torque `T = J w_rated / 60 s` (`TurbineBlades.asyncDriveKJ`), so every train, small or large, gains
+  **25 rpm a second** with no steam (0 to rated in 60 s) and the power the grid puts in scales with the train's inertia `J` (it is torque
+  times speed: nothing at 0 rpm, about 3 % of the rotor's energy a second at rated). Steam work still adds. It is shown as reverse power
+  (`reverseMW`, `motoring`), the generator's status reads "Motoring: the grid drives the stalled shaft up, X MW reverse power", and it
+  delivers nothing meanwhile. The pull ends at rated speed; once the shaft is in the window it is the held, synchronous case above. Over the
+  window (overspeed) nothing changes.
+- **The destruct speed.** At the close a random speed is drawn, uniformly between the close speed and 1,470 rpm, from the level's random, and
+  saved on the generator (`DestructRpm`). While the grid drives the shaft the extra shaft vibration grows with the square of how far along it
+  is, `45 mm/s x (rpm / destruct)^2`: over the 7.1 mm/s alarm at 40 % of the way, 45 mm/s on arrival. It is added to every section's own
+  vibration, so the screens, the alarm, the rumble and `TurbineEvents.Vibration` see it, and it costs the shaft by the existing vibration law.
+- **It comes apart.** At the destruct speed the shaking tears the train apart through the worst case as it stands: the worst LP flow's disc
+  bursts (disc missile, wreck, oil lines cut) and the burst rotor breaks loose (the shaft excursion below: rotor half, bang, fires, the
+  generator's hydrogen). No LP, or its blade sections lifted out: every section is wrecked "burst" and failed, the oil lines cut and the
+  hydrogen burning, with no missile. Either way every rotor is **seized** (`Seized`) and the grid cannot turn them again until each section is
+  rebuilt; the breaker stays closed, nothing opens it.
+- **Opening the breaker in time saves it.** Trip the tie before the destruct speed and the motoring stops, the destruct speed is gone, the extra
+  vibration dies away (time constant 3 s), nothing explodes, and the shaft coasts. A tie whose binding or generator is lost for 2 s clears it too.
+  Closing again below the window draws a new destruct speed between the shaft's present speed and the window.
 
 ## The shaft excursion (the worst case)
 
@@ -366,6 +391,8 @@ the original MP3 is not in the repository). `--synth-excursion` writes the synth
 - **An LP saved before this** has no `Blades`: its one damage counter (wet steam was the LP's only wear of its own) becomes the condition of
   both blade sections, at most 0.95, so an old failed LP reads as blades about to fail rather than throwing one the moment the world loads.
   HP sections and generators keep everything as it was. A turbine that was not damaged runs exactly as before.
+- **Closing on a stalled shaft** writes `DestructRpm` on the generator while a destruct speed is armed and `Seized` on every section the train
+  shook apart; neither is written otherwise, and an old world has neither.
 - The LP's cells gain a block state property `open`, false by default; old states load unchanged.
 - **Wrecks and fires** (alpha.59) are written only when set: `Wreck` (1 holed, 2 burst, 3 shaft out), `DiscBurst`, `Holes` (the release
   angles of the blades that tore out), `BrokenFlow`, `Fire` and `FireFuel` on a section; a Turbine Shaft Wreck writes `Source` and `Flow`.
@@ -395,7 +422,7 @@ the original MP3 is not in the repository). `--synth-excursion` writes the synth
 
 ## Tests
 
-Core `TurbineBladesTest` (6): the closing torque against the angle, motoring heating the hood until the blades fail in minutes, the
+Core `TurbineBladesTest` (7; the seventh is the stalled close: the destruct speed's range, the 60 s ramp for any inertia, the shaking): the closing torque against the angle, motoring heating the hood until the blades fail in minutes, the
 erosion law unchanged, overspeed and the burst speed, the missile's energy, the weights against the crane. GameTests `bwrturbine`
 (`TurbineMaintenanceTests`, `-PbwrGameTestNamespaces=bwrturbine`, 14 tests): an out-of-phase close damages the train by the law at 5, 30,
 60, 90 and 120 degrees (none near the window, the generator's own law unchanged); reverse power holds a closed generator at speed, draws

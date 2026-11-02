@@ -24,7 +24,9 @@
       "text": [
         "A generator left on the grid with too little steam is driven by the grid as a motor. The screen shows reverse power in MW.",
         "",
-        "With no steam doing the work, windage heats the LP's last stages. The exhaust hood passes 120 C in about a minute and a half, and the blades fail after about nine minutes. Open the breaker yourself: nothing does it for you."
+        "With no steam doing the work, windage heats the LP's last stages: the hood passes 120 C in about a minute and a half and the blades fail after about nine minutes. Open the breaker yourself.",
+        "",
+        "Close it on a stopped shaft and the grid spins the train up like a motor, about 25 rpm a second. At a random speed on the way, the shaking tears it apart like a burst rotor. Open the breaker first."
       ],
       "icons": [
         "bwr:nuclear_generator"

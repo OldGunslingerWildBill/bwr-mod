@@ -145,7 +145,7 @@ public class PowerModuleScreen extends BwrScreen<PowerModuleMenu> {
         var gridCard = Layout.card("Grid",
                 Layout.row("Reverse power", () -> menu.motoring ? num(menu.reverseMW, 1) : "none", () -> menu.motoring ? "MW" : "")
                         .status(() -> menu.motoring ? Status.ALARM : Status.NONE)
-                        .tip("Power the grid drives the train with when the steam does less work than its windage: the generator is motoring. Nothing opens the breaker for you."),
+                        .tip("Power the grid drives the train with when the steam does less work than its windage, or when the breaker was closed on a stalled shaft and the grid is motoring it up (it shakes itself apart at some speed on the way): the generator is motoring. Nothing opens the breaker for you."),
                 Layout.row("Last breaker close", () -> menu.hasClose ? num(menu.closeAngle, 1) + " deg" : "-", "")
                         .tip("The phase angle (or the slip's equivalent) at the last close of the generator breaker, and the torque it put through the shaft train."),
                 Layout.row("Closing torque", () -> menu.hasClose ? num(menu.closePu, 2) : "-", () -> menu.hasClose ? "x rated" : "")

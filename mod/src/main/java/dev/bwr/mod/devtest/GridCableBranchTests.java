@@ -29,7 +29,7 @@ public final class GridCableBranchTests {
         l.setBlock(p.east(2),BwrBlocks.GRID_TIE.get().defaultBlockState(),3);
         l.setBlock(p.above(),BwrBlocks.FUEL_FABRICATOR.get().defaultBlockState(),3);
         var tie=(GridTieBlockEntity)l.getBlockEntity(p.east(2));var meter=(FeMeterBlockEntity)l.getBlockEntity(p.east());
-        tie.bindGenerator(gen.getBlockPos());tie.configure(new dev.bwr.core.grid.GridDemand(0,1,0,0,1,200));tie.closeBreaker();
+        tie.bindGenerator(gen.getBlockPos());tie.configure(new dev.bwr.core.grid.GridDemand(0,1,0,0,1,200));GridTieTests.closeWithDraw(.999,tie::closeBreaker);
         var tag=gen.saveWithoutMetadata(l.registryAccess());tag.putDouble("Energy",10000);gen.loadWithComponents(tag,l.registryAccess());
         h.runAfterDelay(50,()->{
             var base=l.getCapability(Capabilities.EnergyStorage.BLOCK,p.above(),Direction.DOWN);var wire=l.getCapability(Capabilities.EnergyStorage.BLOCK,p,Direction.WEST);
