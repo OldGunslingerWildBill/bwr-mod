@@ -10,6 +10,13 @@
   saturation for the harmonics small speakers can play; the MP3 is not in the repository), made by `tools-make-rumble-sounds.py --pool-from`;
   the synthesised loop stays in the tool as `--synth-pool`. Credited in SOUND-CREDITS.md, THIRD-PARTY-NOTICES.md and the README. New core
   tests: the shake's dominant frequency is 10 to 14 Hz, and the tremor layer on its own.
+- **The mod's keys are in Options > Controls.** A new **Realistic BWR** category holds **Panel part: pick a size** (Left Alt, as before: hold it
+  and click with a panel part in hand) and **Mimic tape: switch mode** (hold it and scroll with the tape; now Right Shift, it was
+  sneak-scroll, and the game's own Sneak key would show red against it in Controls). They were fixed to the Alt key (read directly, so it
+  could not be changed, and some desktops take Alt-click for moving windows) and to the sneak state. They save in
+  `options.txt`, work only with their item in hand and change
+  nothing on the server. The tooltips name the key you set. Screen keys (Esc, Enter, Tab, the arrows, Shift-click for 10) stay fixed.
+  Checked by `KeybindClientCheck` (`-PbwrKeybindCheck`); see CONTROL-PANELS.md, *Keys*.
 
 - **The canal gate lift never reads a chunk that is still loading.** As the plug lift does since this release, `CanalGateLift` (its survey,
   its world-ready wait and its next-leg checks) asks `BlockScan.readable` (`getChunkNow`) instead of `isLoaded`, which is true while a chunk is

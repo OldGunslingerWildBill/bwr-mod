@@ -50,12 +50,28 @@ blocks and for item icons. Dark trim, kick plinths, hoods, screens, louvres and 
 The annunciator strip, canopy and vent are pictures of a window box and a grille, and keep their seafoam border in every
 finish. Colours are in `PanelFinish.java`; a new finish is one more enum value and one more loot table child per block.
 
+### Keys
+
+The mod's own keys are in **Options > Controls**, under **Realistic BWR**, and are saved in `options.txt` like any other key. Each
+works only with its item in a hand and no screen open, and the defaults are keys the game does not use.
+
+| Key (default) | Action |
+| --- | --- |
+| **Panel part: pick a size** (Left Alt) | Hold it and click with a panel part in hand to open the size picker |
+| **Mimic tape: switch mode** (Right Shift) | Hold it and scroll the wheel with the tape in hand to switch draw, erase and edit |
+
+Everything else on a panel uses the game's own keys, so rebind those in the same screen: **Use Item / Place Block** operates a control
+(hold it to hold a pushbutton or a spring-return switch in; hold it and scroll to turn a push-to-turn knob), and **Sneak** is the "sneak" of every sneak-click in this document (it is the player's sneak state, which the server also sees, so it
+is the game's Sneak key, or Toggle Sneak, and not a key of the mod). Inside the mod's screens the usual keys stay fixed: Esc closes,
+Enter confirms a text box, Tab and Shift+Tab move between fields, the arrow, Home, End and Page keys move through lists, sliders and
+maps, and Shift-click steps by 10 (or crafts a full batch) in the steppers and the Fabrication Desk.
+
 ### Component sizes
 
 A panel block face is a 16 x 16 grid of cells (one cell is 1/16 block, 6.25 cm). **The instruments and controls
 start at twice their real size** (see "Real sizes" below); the older, bigger sizes are one click away. Right-click air
 with the item (or sneak-click a panel) to cycle through the sizes **from the smallest to the biggest**, or
-**Alt+click** with the item in hand to open the size picker: a list of every size of that type with its size in
+**hold the size-picker key (Alt by default) and click** with the item in hand to open the size picker (see "Keys" below): a list of every size of that type with its size in
 cells, its real size in centimetres, an outline of the footprint and a marker on the current one; click a row to
 choose it (the list scrolls with the wheel and a scrollbar when it is long). A component may span up to 4 x 4
 blocks; the two core displays (below) are the exception and may span up to 8 x 8, because a 185-rod core is
@@ -703,7 +719,7 @@ cell grid); the points and lines drawn so far show live.
 
 ### Modes
 
-**Sneak and scroll** with the tape switches **draw**, **erase** and **edit** (the tooltip and the action bar name the mode; switching
+**Hold the mode key (Right Shift by default) and scroll** with the tape switches **draw**, **erase** and **edit** (the tooltip and the action bar name the mode; switching
 drops a half drawn path). **Erase** removes the path under the cursor (all its pieces). **Edit** works like editing a draw.io
 connector: **click a waypoint** (a clicked point; they show as white dots on the outlined path) to pick it up and **click again** where
 it should go (it may move into a neighbouring block of the wall); **sneak-click a waypoint** to remove it, **sneak-click the line** to
@@ -1034,7 +1050,7 @@ same wired network make that port read no signal; the wrench Networking screen s
 ## 6. Control hardware from the research gaps (CR-PANELS-BWR / PWR research, "Gaps")
 
 Five parts the two research reports found missing. All are drawn in code (no Blender model), start at **twice their real
-size** (the exact real size is the next size up in the list: right-click air with the item or Alt+click for the picker) and
+size** (the exact real size is the next size up in the list: right-click air with the item or hold the size-picker key and click for the picker) and
 **decide nothing**: outputs change only when a player operates a control, and displays only show what they are bound to.
 
 ### 6.1 Controller station (`bwr:controller_station`)
