@@ -2,6 +2,15 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **The Panel Wrench and the Networking Wrench never operate a block.** With either in a hand, a right-click on a valve, door, airlock, vault door,
+  pump, desk, machine controller, crane console, filter housing, fabrication desk or any other plant block no longer turns, toggles, opens or starts it
+  (a Lube Oil Valve stays as it is, a pump's, steam valve's or fabrication desk's screen stays shut, a desk's monitor does not flip, a beam lamp does not
+  open the aim screen). The tool's own action still runs: the Networking Wrench selects the device (sneak opens its Networking screen); the Panel Wrench
+  steps the finish of trim and furniture on a sneak-click. Before this the Networking Wrench held in the main hand already skipped the block, but the
+  Panel Wrench did not (a plain click still operated the block) and a tool in the off hand over an empty main hand reached the block. One shared check,
+  `BwrTools.holdsBwrTool(player)`, now covers both hands in the interaction event (`NetworkingWrenchEvents`), so every block and any block added later is
+  covered without its own code. Control panels and their parts keep their own handling. New `ToolBlockInteractionTests` (namespace `bwrtools`).
+
 - **The canal gate lift never reads a chunk that is still loading.** As the plug lift does since this release, `CanalGateLift` (its survey,
   its world-ready wait and its next-leg checks) asks `BlockScan.readable` (`getChunkNow`) instead of `isLoaded`, which is true while a chunk is
   still being read and lets the next block read finish the load on the server thread.
