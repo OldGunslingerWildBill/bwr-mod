@@ -34,6 +34,11 @@
   Panel Wrench did not (a plain click still operated the block) and a tool in the off hand over an empty main hand reached the block. One shared check,
   `BwrTools.holdsBwrTool(player)`, now covers both hands in the interaction event (`NetworkingWrenchEvents`), so every block and any block added later is
   covered without its own code. Control panels and their parts keep their own handling. New `ToolBlockInteractionTests` (namespace `bwrtools`).
+- **You can no longer be trapped in a containment airlock.** Standing in the chamber, you could click neither door: every cell of the
+  airlock had a full-block selection outline, so the ray from your eyes started inside the (invisible) chamber block and hit that instead of
+  the door in front of you (and a chamber click does nothing). The chamber now has no selection outline at all, and the cell of an *open*
+  leaf, and of an open vault door, is see-through for the player standing in it, so you can aim past it. Collision, the seal and the
+  interlock are unchanged: walls stay solid and the chamber walkable. The doors are still clicked on their own cells from either side.
 
 - **The canal gate lift never reads a chunk that is still loading.** As the plug lift does since this release, `CanalGateLift` (its survey,
   its world-ready wait and its next-leg checks) asks `BlockScan.readable` (`getChunkNow`) instead of `isLoaded`, which is true while a chunk is
