@@ -11,14 +11,15 @@ unchanged).
 
 ## What you get
 
-- **Sound.** Two looping sound events, `bwr:rumble_pool` (condensing steam: a 18-65 Hz body with irregular thumps that fall in pitch,
-  the chugging, and a crackle of collapsing bubbles) and `bwr:rumble_turbine` (a steady hum on the 25 Hz shaft frequency
-  (1,500 rpm) and its harmonics over a noise bed). Both are soft-saturated so the deep body also puts harmonics at 60 to 300 Hz,
+- **Sound.** Two looping sound events, `bwr:rumble_pool` (the suppression pool and relief valve discharge: **a recording supplied by the
+  owner**, a deep rumble of 7 s, almost all of it between 10 and 30 Hz) and `bwr:rumble_turbine` (synthesised: a steady hum on the 25 Hz
+  shaft frequency (1,500 rpm) and its harmonics over a noise bed). Both are soft-saturated so the deep body also puts harmonics at 60 to 300 Hz,
   which headphones and laptop speakers can play. Volume and pitch follow the intensity: a distant rumble is quieter and deeper.
   Close to the source the loop is placed a few blocks toward it (it pans as you turn your head); far away it has no direction.
   It plays in the **Ambient** sound category.
-- **Camera shake.** Smooth noise moves the drawn camera's yaw, pitch and roll and bobs its position. It never touches the
-  player's real look direction: aiming, picking and movement are unchanged.
+- **Camera shake.** Smooth noise moves the drawn camera's yaw, pitch and roll and bobs its position. The ground-borne rumble (pool,
+  blasts) is a **fast 10 to 14 Hz tremor** (small positional jitter plus about a degree of angle) over a reduced slow sway; a machine
+  shakes faster and rougher still. It never touches the player's real look direction: aiming, picking and movement are unchanged.
 - **Options** (client, `bwr-visuals.toml`): `screenShake` (0.0 to 1.0, default 1.0, 0 = off) and `rumbleVolume` (0.0 to 1.0,
   default 1.0, 0 = no rumble sound; on top of the game's Ambient slider).
 
@@ -78,23 +79,34 @@ volume = min(1, level ^ 0.8) * rumbleVolume
 pitch  = 0.70 + 0.30 * level              far = deeper
 ```
 
-**Camera motion at full strength (`shake = 1`, `screenShake = 1`)** is a hard shake. These are the largest values the noise can reach; in the client check, 20 seconds beside a strong source peaked at 4.2 degrees of roll and 0.13 blocks of bob, and the strongest 1.2 degrees between two 60 Hz frames:
+**Camera motion at full strength (`shake = 1`, `screenShake = 1`)** is a hard shake. The ground-borne rumble (pool, impacts) is two layers:
 
-| Axis | Amplitude |
-| --- | --- |
-| roll | 6 degrees |
-| pitch | 5 degrees |
-| yaw | 5 degrees |
-| up and down | 0.18 blocks |
-| sideways (x and z) | 0.09 blocks |
+| Axis | Slow sway (amplitude) | Fast tremor (amplitude) |
+| --- | --- | --- |
+| roll | 4.6 degrees | 0.9 degrees |
+| pitch | 2.6 degrees | 0.8 degrees |
+| yaw | 2.6 degrees | 0.7 degrees |
+| up and down | 0.10 blocks | 0.035 blocks |
+| sideways (x and z) | 0.05 blocks | 0.025 blocks |
 
-Beside one open SRV (10 blocks, `shake` 0.44) that is a 2.6 degree roll and half a degree more in the other axes; beside three or more it is
-more than 4 degrees; right at the bank of a large plant it is the full 6 degrees of roll and 5 of pitch and yaw. At the perception limit (the bank at
-8,000 blocks) it is 7 % of that: a **0.43 degree** slow sway, which is what "just able to feel it" means. `screenShake` multiplies all of it.
+The **tremor** is what is felt as shaking: on each axis a carrier of **10.5 Hz far away to 13 Hz beside the source** (the axes are spread over
+about 10.2 to 13.4 Hz), whose strength surges between 60 % and 100 % and whose phase wanders by about a radian, both by smooth gradient noise of time. Nearness raises the
+frequency by crossfading two fixed carriers (10.5 and 13 Hz) instead of by changing one carrier's frequency, because a carrier whose frequency follows a moving
+listener would jump by whole cycles between frames after the game has run for a while. Measured over 10 s at full strength, the motion's velocity spectrum peaks at
+**13.0 Hz** beside the source and **10.5 Hz** far off, with 87 % and 97 % of its power between 9.5 and 14.5 Hz (the slow sway moves the view most in
+displacement, at 1 to 2 Hz, but the tremor carries nearly all of the velocity and acceleration). The **sway** (0.9 Hz far away to 2.4 Hz beside the source, surging with the chugging)
+is kept so the view still rolls several degrees. The values above are what the noise is scaled by; the noise seldom reaches them. At full strength the roll peaks at 4.2 degrees in a minute,
+the pitch and yaw at 2.4, the bob at 0.095 blocks, and the roll moves at most 1.5 degrees (pitch and yaw 1.2) between two 60 Hz frames (the tremor alone at most 1.1).
 
-The motion is **gradient noise of time**, never a random number per frame: two octaves of smooth 1-D noise per axis. A ground source
-sways at 0.9 Hz far away to 3.2 Hz beside it, and its strength surges between about 55 % and 100 % every second or two (the chugging
-of condensing steam). A machine source moves faster (2.2 to 6 Hz) with a steady 9.5 Hz hum on top. Two sources never add to more than 1.25 of
+A machine (turbine) shake is unchanged: roll 6 degrees, pitch 5, yaw 5, 0.18 blocks up and down, 0.09 sideways, 2.2 to 6 Hz plus a 9.5 Hz hum.
+
+Beside one open SRV (10 blocks, `shake` 0.44) the ground shake peaks at a 1.7 degree roll, 1.0 degree of pitch and yaw and 0.04 blocks of bob, all of it
+a fast tremor of 13 Hz with the slow sway under it; with the bank of a large plant beside you it is the 4.2 degree roll. At the perception limit (the bank at
+8,000 blocks) it is 7 % of that: a **0.28 degree** tremor at 10.5 Hz, which is what "just able to feel it" means. `screenShake` multiplies all of it.
+
+The motion is **gradient noise of time**, never a random number per frame: two octaves of smooth 1-D noise per axis (the sway) and noise
+that sets the strength and phase of each tremor carrier. A ground source's slow sway is at 0.9 Hz far away to 2.4 Hz beside it, and its strength surges between about 55 % and 100 % every second or two (the chugging
+of condensing steam); the 10 to 14 Hz tremor rides on top of it. A machine source moves faster (2.2 to 6 Hz) with a steady 9.5 Hz hum on top. Two sources never add to more than 1.25 of
 the full shake. The camera position is moved with a reflective call to `Camera#setPosition`; if the game's mappings do not allow it
 the angles alone shake the view (the client check reports which).
 
@@ -129,16 +141,23 @@ The calls are safe from any server-thread code and cost a map write. The law and
 
 ## How the sound was made
 
-`tools-make-rumble-sounds.py` (numpy, seeded, no recordings or downloaded audio) generates both loops as 48 kHz mono and has a headless Blender
-encode them to Ogg Vorbis through Audaspace (`blender.exe -b --factory-startup`, never a scene of the running Blender). The waveforms are
-exactly periodic: noise is shaped in the frequency domain and transformed back, thumps are added modulo the loop, sines have a whole
-number of cycles. A dip in loudness at the seam hides the codec's start-up. `rumble_pool.ogg` is 6 s and 33 kB, `rumble_turbine.ogg` is 4 s
-and 23 kB. Both are about 85 % energy under 70 Hz, 15 % between 70 and 400 Hz, nothing above.
+**`rumble_turbine.ogg`** is synthesised: `tools-make-rumble-sounds.py` (numpy, seeded, no recordings or downloaded audio) generates it as 48 kHz mono and has a headless Blender
+encode it to Ogg Vorbis through Audaspace (`blender.exe -b --factory-startup`, never a scene of the running Blender). The waveform is
+exactly periodic: noise is shaped in the frequency domain and transformed back, sines have a whole number of cycles. A dip in loudness at the seam hides the codec's start-up.
+It is 4 s and 23 kB, about 85 % energy under 70 Hz, 15 % between 70 and 400 Hz, nothing above.
+
+**`rumble_pool.ogg`** is **the owner's recording** (a 21.9 s stereo MP3 of a deep rumble), converted by the same tool with `--pool-from <file>`: mono, 48 kHz, the steadiest 7 s of it
+(from 4.9 s; flattest loudness and the least bump at the seam), a 1 s equal-power crossfade of the section's tail into its head so that it loops without a step, a
+little soft saturation (drive 5, half the signal) for the 60 to 300 Hz harmonics that small speakers can play (the recording is 98 % between 10 and 70 Hz and 83 % between 10 and 30 Hz),
+a 600 Hz low-pass (4th order, zero phase on the circular loop; the recording has nothing above 400 Hz, so it is a guard that changes nothing), peak at -1 dBFS, Ogg Vorbis. It is 7 s and
+18 kB: 97 % of the energy between 10 and 70 Hz, 3 % between 70 and 400 Hz, nothing above. The MP3 is not in the repository. The synthesised pool loop (18-65 Hz body, thumps that fall in pitch, a crackle of
+bubbles; 6 s, 33 kB) is still in the tool as the fallback: `--synth-pool`.
 
 ## Tests
 
-- Core `RumbleLawTest` (6): the bank at 8,000 blocks, one valve's range, monotonic in power and distance, the turbine numbers, the maps, the
-  camera motion bounded and smooth.
+- Core `RumbleLawTest` (8): the bank at 8,000 blocks, one valve's range, monotonic in power and distance, the turbine numbers, the maps, the
+  camera motion bounded and smooth, the ground shake's dominant frequency (the velocity spectrum of 10 s of motion peaks between 10 and 14 Hz at full nearness and far away, higher near)
+  and the tremor layer alone (zero crossings of 10 to 14 Hz, about a degree, 0.04 blocks, under 1.25 degrees between two 60 Hz frames).
 - GameTests `bwrrumble` (`RumbleTests`, 11; `-PbwrGameTestNamespaces=bwrrumble`): the law; the real bank within 5 % of the limit at 8,000 blocks and delivered to a player there;
   one valve's range; zero when the sources stop (exactly one zero packet); other dimensions get nothing; packet rate (a steady source sends at
   most one a 40 ticks, a wobbling one at most four a second); cost with 64 players and 512 sources; impulses; the pool hook against the enthalpy it condenses, and

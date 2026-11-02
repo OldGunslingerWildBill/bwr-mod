@@ -109,4 +109,94 @@ public final class RumbleLawTest {
         RumbleShake.compute(0, 0, 1, 3, o);
         Check.exactly(0.0, o.maxAngleDeg() + o.maxMoveBlocks(), "no amplitude, no motion");
     }
+
+    /**
+     * What the ground shake feels like is its velocity and acceleration, not its displacement: a slow sway of several degrees moves the view far
+     * more than a tremor of a degree does, but the tremor is what is felt as shaking. This measures the Hann-windowed spectrum of the velocity
+     * (first difference) of the roll, pitch, yaw and bob of the whole motion, 10 s at 240 Hz, long after the start of the game, at full strength.
+     */
+    private static double[] velocitySpectrum(double nearness, double[] freqOut) {
+        var o = new RumbleShake.Offsets();
+        final double fs = 240;
+        final int n = 2400;
+        double[][] x = new double[4][n];
+        for (int i = 0; i < n; i++) {
+            RumbleShake.compute(1, 0, nearness, 3600 + i / fs, o);
+            x[0][i] = o.rollDeg;
+            x[1][i] = o.pitchDeg;
+            x[2][i] = o.yawDeg;
+            x[3][i] = o.y * (RumbleShake.TREMOR_ROLL_DEG / RumbleShake.TREMOR_BOB_Y); // a bob weighs like the angle it comes with
+        }
+        double[] power = new double[freqOut.length];
+        for (int k = 0; k < freqOut.length; k++) {
+            double f = freqOut[k], p = 0;
+            for (double[] axis : x) {
+                double re = 0, im = 0;
+                for (int i = 1; i < n; i++) {
+                    double w = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (n - 1));
+                    double v = (axis[i] - axis[i - 1]) * fs;
+                    re += w * v * Math.cos(2 * Math.PI * f * i / fs);
+                    im += w * v * Math.sin(2 * Math.PI * f * i / fs);
+                }
+                p += re * re + im * im;
+            }
+            power[k] = p;
+        }
+        return power;
+    }
+
+    public static void test07_groundShakeIsAFastTremorOfTenToFourteenHertz() {
+        double[] freqs = new double[390];
+        for (int k = 0; k < freqs.length; k++) freqs[k] = 0.5 + 0.1 * k; // 0.5 .. 39.4 Hz
+        double[] peaks = new double[2];
+        int idx = 0;
+        for (double nearness : new double[] {1.0, 0.0}) {
+            double[] power = velocitySpectrum(nearness, freqs);
+            double best = 0, bestHz = 0, total = 0, band = 0;
+            for (int k = 0; k < freqs.length; k++) {
+                total += power[k];
+                if (freqs[k] >= 9.5 && freqs[k] <= 14.5) band += power[k];
+                if (power[k] > best) { best = power[k]; bestHz = freqs[k]; }
+            }
+            Check.inRange(10.0, 14.0, bestHz, "dominant frequency of the felt (velocity) motion at nearness " + nearness + ", Hz");
+            Check.isTrue(band / total > 0.7, "only %.2f of the motion's velocity power is between 9.5 and 14.5 Hz at nearness %g", band / total, nearness);
+            Check.note("nearness %.0f: dominant %.1f Hz, %.0f %% of the velocity power in 9.5-14.5 Hz", nearness, bestHz, 100 * band / total);
+            peaks[idx++] = bestHz;
+        }
+        Check.isTrue(peaks[0] > peaks[1] + 1.0, "the tremor is faster near the source: %g Hz near, %g Hz far", peaks[0], peaks[1]);
+    }
+
+    public static void test08_tremorLayerHasTenToFourteenHertzZeroCrossingsAndStaysSmall() {
+        var o = new RumbleShake.Offsets();
+        for (double nearness : new double[] {1.0, 0.5, 0.0}) {
+            int crossings = 0;
+            double last = 0, maxStep = 0, maxAngle = 0, maxMove = 0;
+            final double fs = 240;
+            for (int i = 0; i < 2400; i++) {
+                o.clear();
+                RumbleShake.tremor(1, nearness, 100 + i / fs, o);
+                if (i > 0 && (o.rollDeg > 0) != (last > 0)) crossings++;
+                if (i > 0) maxStep = Math.max(maxStep, Math.abs(o.rollDeg - last));
+                last = o.rollDeg;
+                maxAngle = Math.max(maxAngle, o.maxAngleDeg());
+                maxMove = Math.max(maxMove, o.maxMoveBlocks());
+            }
+            double hz = crossings / 2.0 / 10.0;
+            // At 0.5 two carriers beat; the count is then somewhat higher or lower, but still between the two.
+            Check.inRange(9.5, 14.5, hz, "zero crossings of the tremor roll in 10 s, as Hz, at nearness " + nearness);
+            Check.isTrue(maxAngle <= 1.0 + 1e-9, "the tremor is about a degree of angle: %g", maxAngle);
+            Check.isTrue(maxMove <= 0.04 + 1e-9, "the tremor is small positional jitter: %g blocks", maxMove);
+            Check.note("tremor at nearness %.1f: %.1f Hz by zero crossings, up to %.2f degrees and %.3f blocks", nearness, hz, maxAngle, maxMove);
+        }
+        // Whole motion: the tremor adds at most about 1.1 degrees to the largest step between two 60 Hz frames.
+        double maxStep = 0, last = 0;
+        for (double t = 0; t < 60; t += 1.0 / 60) {
+            o.clear();
+            RumbleShake.tremor(1, 1, t, o);
+            if (t > 0) maxStep = Math.max(maxStep, Math.abs(o.rollDeg - last));
+            last = o.rollDeg;
+        }
+        Check.isTrue(maxStep < 1.25, "the tremor alone moved the roll %g degrees between two 60 Hz frames", maxStep);
+        Check.note("tremor alone: largest roll step between two 60 Hz frames %.2f degrees", maxStep);
+    }
 }

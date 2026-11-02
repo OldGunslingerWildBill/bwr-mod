@@ -2,6 +2,15 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **The suppression pool and relief valve rumble is stronger and shakes fast** (RUMBLE.md). The ground shake (pool, SRV discharge, blasts)
+  was a slow 0.9 to 3.2 Hz sway of up to 6 degrees; it is now a **10 to 14 Hz tremor** (10.5 Hz far away, 13 Hz beside the source: small
+  positional jitter and under a degree of angle, from the same smooth gradient noise, never a random number per frame) over a reduced
+  slow sway (4.6 degrees of roll). The view still moves at most 1.5 degrees between two 60 Hz frames, and the machine (turbine) shake is
+  unchanged. **`bwr:rumble_pool` is now the owner's recording** of a deep rumble (7 s, looped with an equal-power crossfade, a little
+  saturation for the harmonics small speakers can play; the MP3 is not in the repository), made by `tools-make-rumble-sounds.py --pool-from`;
+  the synthesised loop stays in the tool as `--synth-pool`. Credited in SOUND-CREDITS.md, THIRD-PARTY-NOTICES.md and the README. New core
+  tests: the shake's dominant frequency is 10 to 14 Hz, and the tremor layer on its own.
+
 - **The canal gate lift never reads a chunk that is still loading.** As the plug lift does since this release, `CanalGateLift` (its survey,
   its world-ready wait and its next-leg checks) asks `BlockScan.readable` (`getChunkNow`) instead of `isLoaded`, which is true while a chunk is
   still being read and lets the next block read finish the load on the server thread.

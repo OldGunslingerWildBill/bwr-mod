@@ -17,7 +17,7 @@ EXPECTED = frozenset((
     "turbine_whine", "steam_flow", "srv_lift", "msiv_slam", "scram_buzzer",
     "edg_start", "edg_run", "geiger_click",
 ))
-# Real (not silent) looping sounds, synthesised by tools-make-rumble-sounds.py (RUMBLE.md). They are audited apart from the silent
+# Real (not silent) looping sounds, made by tools-make-rumble-sounds.py (RUMBLE.md; the pool loop is the owner's recording). They are audited apart from the silent
 # placeholders: the event, the subtitle and the file must exist, and the file must be a well-formed mono 48 kHz Vorbis stream.
 # event -> (its files, shortest and longest length in seconds, largest file in bytes). Every file must be a mono 48 kHz Vorbis stream.
 SYNTHESISED = {

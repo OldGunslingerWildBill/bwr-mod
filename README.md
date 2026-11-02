@@ -334,6 +334,7 @@ Found a bug? Put it on the [issue tracker](https://github.com/OldGunslingerWildB
   bar gauge, the pushbutton and the RPS trip assembly. Thank you!
 - I made the control panel, the back panel and the 1 m and 2 m control desks myself.
 - Shaft excursion sound: recording supplied by the owner (Turbine_pure_v2).
+- Suppression pool rumble: recording supplied by the owner.
 - Reference data comes from the public Columbia Generating Station FSAR and NRC documents, cited in each
   doc. Manufacturer names are only there to show what inspired a model and don't mean anyone endorses
   this mod. More in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
