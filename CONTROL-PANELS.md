@@ -404,12 +404,30 @@ recessed toe-kick at the foot of the benchboard and console backs, a console fro
 ### Control desks (1 m and 2 m)
 
 Two small desks from the owner's Fusion models (`Control Desk 1m.obj`, `Control Desk.obj`, modelled in centimetres: one block is
-one metre): a level **operating top**, 0.75 m high (the height of the operator desks), 1 m wide and 0.375 m deep, behind it a riser up to a narrow
-shelf along the back (0.925 m high), and a front that falls away under the top to the floor (the operator's knee space). The desk stands against the
-back of its block, so the front half of the block is free. The shape is the owner's, except for the height: his top is 0.40 m, so the part below the top is stretched to 0.75 m (the top, the riser and the shelf keep his sizes; the shelf stands 0.175 m above the top); it is drawn plain on purpose, so you mount what
-you like on it. The mounting face is the top, a level plane with the normal straight up: **16 columns by 6 rows** of the usual 1/16
-block cells, row 0 at the back, rows running toward the operator (a part keeps its real size, as everywhere: a dial 4 x 4 fits,
-a 12 x 12 gauge does not). The cells that are not on the top (rows 6 to 15, the air in front of the desk) take nothing.
+one metre): a level **operating top**, 0.75 m high (the height of the operator desks), 1 m wide and 0.625 m deep, behind it a riser up to a narrow
+shelf along the back (1.10 m high), and under the top a knee space: the top overhangs it, with a thin lip at its front edge, and the knee
+front falls back from the underside to the floor. The desk stands against the back of its block, so the front quarter of the block is free.
+The shape is the owner's, with three changes: his top is 0.40 m, so the part below the top is stretched to 0.75 m; and since alpha.60, at the
+owner's request ("make the back of it about 2 times taller and make it overhang out a little bit, where your legs would be, so you have
+more usable space"), the riser and shelf stand 0.35 m above the top instead of his 0.175 m (the back reaches 0.10 into the block above, as a
+fence does), and the top reaches 0.25 m further out over the knee space (front edge 0.75 from the back of the block instead of 0.5; a
+1/16 block lip under it; the knee front is still his sloped line, cut off by the underside). It is drawn plain on purpose, so you mount what
+you like on it. The mounting face is the top, a level plane with the normal straight up: **16 columns by 10 rows** of the usual 1/16
+block cells, row 0 at the back (the foot of the riser), rows running toward the operator (a part keeps its real size, as everywhere: a
+dial 4 x 4 fits, a 12 x 12 gauge does not). The cells that are not on the top (rows 10 to 15, the air in front of the desk) take nothing.
+
+| | before alpha.60 | since alpha.60 |
+| --- | --- | --- |
+| top (`DESK_TOP`) | 0.75 up | 0.75 up |
+| back of the top, row 0 (`DESK_FACE_BACK`) | 0.125 from the back | 0.125 from the back |
+| front edge of the top (`DESK_FRONT`) | 0.5 | 0.75 (overhang, 1/16 lip under it) |
+| grid (`DESK_ROWS`) | 16 x 6 | 16 x 10 |
+| shelf along the back (`DESK_BACK_HEIGHT`) | 0.925 up (0.175 above the top) | 1.10 up (0.35 above the top) |
+| knee front | from the front edge (0.5, 0.75) to (0.2, 0) | the same line, from the underside (0.475, 0.6875) to (0.2, 0) |
+
+The **riser stays plain**, not a second mounting face: a panel block has exactly one mounting frame (one cell grid, one set of claims and
+one group per block), so a riser board would need a second grid in every desk block entity, claim and group, and it would sit on the
+same 16 columns as the top. Mount the indicators you want up high on a vertical board or a back panel behind the desk instead.
 
 | Block | Item | Size | Style |
 | --- | --- | --- | --- |
@@ -428,7 +446,10 @@ a 12 x 12 gauge does not). The cells that are not on the top (rows 6 to 15, the 
   2 m desk together.
 * **Recipes.** 1 m desk: a console over a vertical board over an iron ingot (the frame). 2 m desk: two 1 m desks with an iron
   ingot between them as the joining bar. Full table under "Control-room recipes" below.
-* **Saves.** New blocks only: no existing block, state or saved value changed.
+* **Saves.** The remodel moved nothing that was mounted: the rows count from the riser, which did not move, so rows 0 to 5 are where
+  they were and the four new rows 6 to 9 are the overhang in front of them. A desk from an older save loads with every part on the same
+  cells, in the same place (`ControlDeskTests.aDeskSavedBeforeTheOverhangLoadsWithEveryPartWhereItWas` loads a 1 m and a 2 m desk saved in
+  the old form). No block, state or saved value changed.
 
 ### Control-room recipes
 
@@ -817,7 +838,7 @@ shape, the vertical board.)
 The control desks are placed as a run, like the others: a 1 m desk is one block and one item; a 2 m desk is two blocks placed by one
 item (its right half, as the operator sees it, is the block whose item pays; the left half is placed to the operator's left and
 costs nothing), both halves facing the way the board faces. A run of desks is one panel group, so a part can span the seams. A
-desk's face is 16 cells per block by 6 deep (the top), so the cells beyond 6 take nothing in a template either. Four blocks is
+desk's face is 16 cells per block by 10 deep (the top), so the cells beyond 10 take nothing in a template either. Four blocks is
 the width of the other shapes; it is two 2 m desks or four 1 m ones. The header strip and canopy, the chamfer corners, the
 plinths and the end caps are not blueprint shapes (no frame kind for them); place those by hand.
 
@@ -849,7 +870,7 @@ left out; the other boards still load. `tools-generate-boards.py` writes the eig
 
 * **frames** are runs of panel blocks. `kind` is `duplex` (one item per column: surfaces `board` 2 blocks tall, `header`,
   `bench`), `vertical`, `benchboard`, `console`, `back_panel`, `desk` (1 m control desks, one block each, one row) or `desk_wide` (2 m
-  control desks: `columns` counts desks, two blocks each, one row; the item places both halves) (surface `face`; a desk's face is 6 cells deep). `at` is `[right, up, forward]` in blocks from the
+  control desks: `columns` counts desks, two blocks each, one row; the item places both halves) (surface `face`; a desk's face is 10 cells deep). `at` is `[right, up, forward]` in blocks from the
   board's origin (right of the operator, up, toward the operator); for a duplex it is the bench of the left column, for the
   rest the top left block (rows go down, on a benchboard also toward the operator). A surface is named `<frame>.<part>`, for
   example `main.bench`; its cells are 16 per block, x to the operator's right and y down. Frames may not share a block, a group

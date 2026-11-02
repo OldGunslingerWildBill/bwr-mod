@@ -403,7 +403,7 @@ public final class PanelTrimTests {
                 case CHAMFER_BENCH -> "chamfer_bench";
             };
             PanelGeometry.Frame frame = PanelGeometry.frame(type, Direction.NORTH);
-            int rows = PanelGeometry.rows(type); // 16, except the 6 rows of a desk top
+            int rows = PanelGeometry.rows(type); // 16, except the 10 rows of a desk top
             double[][] expected = {
                     {frame.x(0, 0, 0), frame.y(0, 0, 0), frame.z(0, 0, 0)},
                     {frame.x(16, 0, 0), frame.y(16, 0, 0), frame.z(16, 0, 0)},

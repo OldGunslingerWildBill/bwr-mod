@@ -10,25 +10,44 @@ THE OWNER'S MODELS are one constant cross-section extruded 1 m (Control Desk 1m)
 762 triangles, no UVs, one material (Steel - Satin). Units are centimetres (the "1m" desk is 100 wide): one block is
 one metre, as in every other model of the mod. As usual for the owner's Fusion exports OBJ Z is real up and OBJ -Y is
 real forward (toward the operator); rendering the file headless shows the sloped underside, where the operator's knees
-go, on the -Y side. PROFILE is the cross-section as (forward m, up m), with forward 0 the back of the desk:
+go, on the -Y side. His cross-section (OWNER below, once stretched) as (forward m, up m), forward 0 the back of the desk:
 
-    the flat back at forward 0, 0.925 up; the narrow shelf along the back from 0 to 0.075 at 0.925; the riser down to
+    the flat back at forward 0, 0.925 up (stretched); the narrow shelf along the back from 0 to 0.075 at 0.925; the riser down to
     (0.125, 0.75); the flat top, the operating surface, from 0.125 to 0.5 forward at 0.75; the sloped front falling from
     the front edge (0.5, 0.75) back under the desk to (0.2, 0), the knee space; the floor from 0.2 back to 0.
 
 THE HEIGHT. The owner's desk top is 0.40 m, low next to the operator desks (0.75 m, ROOM-FURNITURE.md), and the owner
 chose "stretch to desk height": the part below the top is stretched vertically from 0.40 to 0.75 (the sloped front steeper:
-it still runs from the front edge of the top down to the floor); everything at or above the top is the owner's, unchanged
-in size (the riser and the shelf stay 0.175 above the top). STRETCH below maps the owner's z (cm).
+it still runs from the front edge of the owner's top down to the floor). STRETCH below maps the owner's z (cm).
 
 (The owner's file has extra collinear points on the long edges and the riser; they are dropped, the shape is the same.)
 
+THE REMODEL (alpha.60, the owner's request: "make the back of it about 2 times taller and make it overhang out a little
+bit, where your legs would be, so you have more usable space"). --verify-source still checks SOURCE_PROFILE, the owner's
+drawing, against his two files; PROFILE is then that drawing, stretched as above and changed on purpose in two places:
+
+    the riser and the shelf rise twice as far above the top, 0.35 instead of 0.175 (RISER), so the back is 1.10 up and the
+    riser, still from the foot (0.125, 0.75) to the front of the shelf (0.075, 1.10), stands steeper (8 degrees off
+    vertical, was 16); the shelf keeps its 0.075 depth;
+
+    the top overhangs the knee space: its front edge goes from 0.5 to 0.75 forward (FACE_FRONT), so it is 0.625 deep, 10
+    cells; under the overhang a lip (LIP, 1/16 block) drops at the front edge, the underside runs back from it to the
+    owner's sloped knee front, and that slope is his line (from (0.5, 0.75) down to (0.2, 0)) up to the underside, so the
+    knee space is cut back exactly as before and the top simply reaches further out over it.
+
+The rows of the grid count from the foot of the riser (row 0 at 0.125 forward, as before), so rows 0 to 5 are where they
+always were and the four new rows 6 to 9 are the overhang: a part mounted on an older desk stays where it was.
+
+The riser is left plain: a block has one mounting frame in the panel system, so a second face there would need a second
+grid in every block entity, claim and group; see CONTROL-PANELS.md.
+
 THE BLOCK. One desk is one block wide, standing against the back of its block, so the top (the mounting face) is a
-16 x 6 cell grid, 0.375 block deep, level, 0.75 up. The 2 m desk is the same block twice side by side; the model of each
-half is the one 1 m model, and an item model shows both. The mounting face is the only 'face' polygon, exactly the
-corners PanelGeometry puts the grid on (checked here and by PanelTrimTests). The rest of the desk takes the paint
-(riser, tint index 0), the bezel (shelf top, ends: tint index 1), the back (service door side) and the dark kick (the
-sloped front and the floor; no tint), so it takes the paint finishes like the other bodies.
+16 x 10 cell grid, 0.625 block deep, level, 0.75 up; the back reaches 0.10 into the block above, as a fence does. The 2 m
+desk is the same block twice side by side; the model of each half is the one 1 m model, and an item model shows both. The
+mounting face is the only 'face' polygon, exactly the corners PanelGeometry puts the grid on (checked here and by
+PanelTrimTests). The rest of the desk takes the paint (riser, tint index 0), the bezel (shelf top, the front lip, the ends:
+tint index 1), the back (service door side) and the dark kick (the sloped front, the underside of the overhang and the
+floor; no tint), so it takes the paint finishes like the other bodies.
 
 Authoring frame (as build_trim.py): facing=north, the operator at -Z; local lx to the operator's right, y up, f from the
 back of the block (0) toward the operator (1); world() maps that to block space (1 - lx, y, 1 - f).
@@ -55,7 +74,12 @@ SOURCE_PROFILE = [(-30.0, 40.0), (7.5, 40.0), (12.5, 57.5), (20.0, 57.5), (20.0,
 BACK_Y = 20.0
 SOURCE_TOP = 40.0                  # cm, the owner's top height
 TOP = 0.75                         # the stretched top: the height of the operator desks
-SHELF = TOP + 0.175                # the back shelf: 17.5 cm above the top, as drawn
+RISER = 0.35                       # the back shelf above the top: twice the owner's 17.5 cm (the remodel)
+SHELF = TOP + RISER                # 1.10
+FACE_BACK = 0.125                  # forward of the back edge of the top (the foot of the riser), as drawn
+FACE_FRONT = 0.75                  # forward of the front edge of the top: the overhang (the owner's is 0.5)
+LIP = 0.0625                       # the front lip under the overhang, one pixel
+UNDER = TOP - LIP                  # the underside of the overhang
 
 
 def stretch(z):
@@ -63,18 +87,27 @@ def stretch(z):
     return z / SOURCE_TOP * TOP if z <= SOURCE_TOP else TOP + (z - SOURCE_TOP) / 100.0
 
 
-PROFILE = [((BACK_Y - y) / 100.0, stretch(z)) for y, z in SOURCE_PROFILE]
-FACE_BACK = 0.125      # forward of the back edge of the top (the foot of the riser)
-FACE_FRONT = 0.5       # forward of the front edge of the top
+OWNER = [((BACK_Y - y) / 100.0, stretch(z)) for y, z in SOURCE_PROFILE]
+# the owner's (stretched) points: front-top (0.5, 0.75), riser foot, riser head, back-top, back-foot, knee foot (0.2, 0)
+OWNER_FRONT, KNEE_FOOT = OWNER[0][0], OWNER[5][0]
+assert (abs(OWNER_FRONT - 0.5) < 1e-9 and abs(OWNER[1][0] - FACE_BACK) < 1e-9 and abs(OWNER[2][1] - (TOP + 0.175)) < 1e-9
+        and abs(KNEE_FOOT - 0.2) < 1e-9), OWNER
+KNEE_TOP = KNEE_FOOT + (OWNER_FRONT - KNEE_FOOT) * UNDER / TOP   # the owner's knee slope where it meets the underside
+# The remodelled loop, the same way round: front-top, riser foot, riser head, back-top, back-foot, knee foot, the top of
+# the knee slope under the overhang, the foot of the lip.
+PROFILE = [(FACE_FRONT, TOP), (FACE_BACK, TOP), (OWNER[2][0], SHELF), (0.0, SHELF), (0.0, 0.0), (KNEE_FOOT, 0.0),
+           (KNEE_TOP, UNDER), (FACE_FRONT, UNDER)]
 
-# The two ends of the extrusion: the cross-section is concave at the foot of the riser, so each end is two convex quads.
-END_QUADS = [[(0.0, 0.0), (0.2, 0.0), (FACE_FRONT, TOP), (FACE_BACK, TOP)],
-             [(0.0, 0.0), (FACE_BACK, TOP), (0.075, SHELF), (0.0, SHELF)]]
+# The two ends of the extrusion: the cross-section is concave at the foot of the riser and at the top of the knee slope,
+# so each end is three convex quads.
+END_QUADS = [[(0.0, 0.0), (KNEE_FOOT, 0.0), (KNEE_TOP, UNDER), (FACE_BACK, TOP)],
+             [(KNEE_TOP, UNDER), (FACE_FRONT, UNDER), (FACE_FRONT, TOP), (FACE_BACK, TOP)],
+             [(0.0, 0.0), (FACE_BACK, TOP), (OWNER[2][0], SHELF), (0.0, SHELF)]]
 
 MATERIALS = ["face", "paint", "bezel", "back", "kick", "cheek", "hood", "apron", "cabinet", "annunciator",
              "annunciator_lit", "vent"]
 
-# The mounting face as PanelGeometry puts the grid on it: (lx, y, f) of grid cells (0,0), (16,0), (16,6), (0,6).
+# The mounting face as PanelGeometry puts the grid on it: (lx, y, f) of grid cells (0,0), (16,0), (16,10), (0,10).
 FRAME_CORNERS = [(0, TOP, FACE_BACK), (1, TOP, FACE_BACK), (1, TOP, FACE_FRONT), (0, TOP, FACE_FRONT)]
 
 EPS = 1e-9
@@ -143,6 +176,12 @@ def world(p):
     return (1.0 - lx, y, 1.0 - f)
 
 
+def tv(y):
+    """A height as a texture v: the back is 1.10 high, so the heights are squeezed into the one texture (0..1); a uv
+    past 1 would read the next sprite of the atlas."""
+    return y / max(1.0, SHELF)
+
+
 def polygons(shift=0.0, left_end=True, right_end=True):
     """One block of desk with its left edge at lx = shift: (material, [local (lx, y, f)], [uv], outward direction)."""
     lx1 = 1.0
@@ -160,8 +199,12 @@ def polygons(shift=0.0, left_end=True, right_end=True):
             mat = "back"
         elif abs(a[1]) < EPS and abs(b[1]) < EPS:
             mat = "kick"           # the floor
+        elif abs(a[1] - b[1]) < EPS and a[1] < TOP:
+            mat = "kick"           # the underside of the overhang, in its own shadow
         elif abs(a[1] - b[1]) < EPS:
             mat = "bezel"          # the top of the back shelf
+        elif abs(a[0] - FACE_FRONT) < EPS and abs(b[0] - FACE_FRONT) < EPS:
+            mat = "bezel"          # the front lip of the overhang
         elif b[1] > a[1] and b[0] > a[0]:
             mat = "kick"           # the sloped front, in the shadow of the overhang
         else:
@@ -175,11 +218,11 @@ def polygons(shift=0.0, left_end=True, right_end=True):
         elif abs(dy) < EPS:
             uv = [(0.0, a[0]), (lx1, a[0]), (lx1, b[0]), (0.0, b[0])]
         else:
-            uv = [(0.0, a[1]), (lx1, a[1]), (lx1, b[1]), (0.0, b[1])]
+            uv = [(0.0, tv(a[1])), (lx1, tv(a[1])), (lx1, tv(b[1])), (0.0, tv(b[1]))]
         polys.append((mat, pts, uv, out))
     for lx, out, wanted in ((shift, (-1.0, 0.0, 0.0), left_end), (shift + lx1, (1.0, 0.0, 0.0), right_end)):
         for quad in END_QUADS if wanted else []:
-            polys.append(("bezel", [(lx, y, f) for f, y in quad], [(f, y) for f, y in quad], out))
+            polys.append(("bezel", [(lx, y, f) for f, y in quad], [(f, tv(y)) for f, y in quad], out))
     return polys
 
 
@@ -321,7 +364,7 @@ def preview(materials, polys):
     scene.camera = cam
     cam.data.type = "ORTHO"
     cam.data.ortho_scale = 3.2
-    centre = Vector((1.0, -0.25, 0.3))                  # Blender +Y is the operator's side (block -Z)
+    centre = Vector((1.0, -0.6, 0.55))                  # Blender +Y is the operator's side (block -Z)
     for view, direction in (("front34", (-0.7, 1.0, 0.6)), ("side", (-1.0, 0.0, 0.0)), ("top", (0.0, 0.05, 1.0))):
         d = Vector(direction).normalized()
         cam.location = centre + d * 20.0
@@ -340,8 +383,8 @@ def main():
     check_face(one)
     report = {"desk": export(to_mesh("desk", one, materials), "desk")}
     # the item models are centred on the middle of their cube (the gui and hand transforms turn them about it): the
-    # desk is 0.925 high and stands at the back of its block, so lower it and bring it forward to the centre
-    centre = (0.0, 0.5 - SHELF / 2.0, -(0.75 - 0.5))
+    # desk is SHELF high and FACE_FRONT deep at the back of its block (z 1 - FACE_FRONT .. 1), so bring its middle there
+    centre = (0.0, 0.5 - SHELF / 2.0, FACE_FRONT / 2.0 - 0.5)
     report["desk_item"] = export(to_mesh("desk_item", one, materials, centre), "desk_item")
     # the 2 m desk: both blocks, centred on the item's block (x -0.5 .. 1.5)
     two = [(mat, [(lx - 0.5, y, f) for lx, y, f in pts], uv)

@@ -47,7 +47,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
- * The owner's two control desks ({@link PanelType#DESK}): the level top as a mounting frame 16 cells wide and 6 deep,
+ * The owner's two control desks ({@link PanelType#DESK}): the level top as a mounting frame 16 cells wide and 10 deep,
  * the outline that holds it, placing the 1 m desk and the two-block 2 m desk ({@link DeskPanelBlock}) through the real
  * item for every facing, refusal when the second block is taken, breaking either half (one drop, every mounted
  * component dropped, the finish kept), mounting on both halves and across the seam through the real player path, which
@@ -191,15 +191,16 @@ public final class ControlDeskTests {
     // ---- the frame
 
     @GameTest(template = "empty")
-    public static void deskFrameIsALevelTopSixRowsDeepStandingAtTheBackOfTheBlock(GameTestHelper h) {
+    public static void deskFrameIsALevelTopTenRowsDeepStandingAtTheBackOfTheBlock(GameTestHelper h) {
         // North-facing, the operator at -Z: the grid starts at the foot of the riser (0.125 from the back of the block, so
-        // z = 0.875) and runs 6 cells, 0.375 block, toward the operator to the front edge of the top (z = 0.5), 0.75 up.
+        // z = 0.875) and runs 10 cells, 0.625 block, toward the operator to the front edge of the overhanging top
+        // (z = 0.25), 0.75 up.
         PanelGeometry.Frame north = PanelGeometry.frame(PanelType.DESK, Direction.NORTH);
         check(h, near(north.x(0, 0, 0), 1.0) && near(north.y(0, 0, 0), 0.75) && near(north.z(0, 0, 0), 0.875),
                 "cell (0,0) is the operator's left corner of the back edge of the top: " + north.x(0, 0, 0) + ","
                         + north.y(0, 0, 0) + "," + north.z(0, 0, 0));
-        check(h, near(north.x(16, 6, 0), 0.0) && near(north.y(16, 6, 0), 0.75) && near(north.z(16, 6, 0), 0.5),
-                "cell (16,6) is the right corner of the front edge");
+        check(h, near(north.x(16, 10, 0), 0.0) && near(north.y(16, 10, 0), 0.75) && near(north.z(16, 10, 0), 0.25),
+                "cell (16,10) is the right corner of the front edge");
         for (Direction facing : Direction.Plane.HORIZONTAL) {
             PanelGeometry.Frame f = PanelGeometry.frame(PanelType.DESK, facing);
             check(h, near(f.nx, 0) && near(f.ny, 1) && near(f.nz, 0), facing + ": the top is level, the normal straight up");
@@ -208,20 +209,22 @@ public final class ControlDeskTests {
             check(h, near(f.downX, facing.getStepX()) && near(f.downY, 0) && near(f.downZ, facing.getStepZ()), facing + ": rows run toward the operator");
             Direction right = facing.getCounterClockWise();
             check(h, near(f.rightX, right.getStepX()) && near(f.rightZ, right.getStepZ()), facing + ": columns run to the operator's right");
-            // the front edge (row 6) of the middle column is on the middle of the block; the back edge 0.375 behind it
-            check(h, near(f.x(8, 6, 0), 0.5) && near(f.z(8, 6, 0), 0.5), facing + ": the front edge of the top is at the block's middle");
+            // the front edge (row 10) of the middle column is a quarter block in front of the middle of the block; the
+            // back edge (row 0) is where it always was, 0.375 behind the middle
+            check(h, near(f.x(8, 10, 0), 0.5 + facing.getStepX() * 0.25) && near(f.z(8, 10, 0), 0.5 + facing.getStepZ() * 0.25),
+                    facing + ": the front edge of the top is a quarter block in front of the block's middle");
             check(h, near(f.x(8, 0, 0), 0.5 - facing.getStepX() * 0.375) && near(f.z(8, 0, 0), 0.5 - facing.getStepZ() * 0.375),
-                    facing + ": the back edge of the top is 0.375 behind the front edge");
+                    facing + ": the back edge of the top is 0.375 behind the block's middle");
         }
         check(h, !PanelType.DESK.hasRows() && PanelType.DESK.hasColumns(), "a desk is a single row that joins sideways");
         check(h, PanelType.DESK.nextRow(BlockPos.ZERO, Direction.NORTH) == null && PanelType.DESK.previousRow(BlockPos.ZERO, Direction.NORTH) == null,
                 "no block lies further down or up the face");
         for (int cy = 0; cy < 16; cy++) {
             for (int cx = 0; cx < 16; cx++) {
-                check(h, PanelGeometry.cellUsable(PanelType.DESK, cx, cy) == (cy < 6), "cell " + cx + "," + cy + " of a desk");
+                check(h, PanelGeometry.cellUsable(PanelType.DESK, cx, cy) == (cy < 10), "cell " + cx + "," + cy + " of a desk");
             }
         }
-        check(h, PanelGeometry.rows(PanelType.DESK) == 6 && PanelGeometry.rows(PanelType.VERTICAL) == 16, "rows of the grid");
+        check(h, PanelGeometry.rows(PanelType.DESK) == 10 && PanelGeometry.rows(PanelType.VERTICAL) == 16, "rows of the grid");
         h.succeed();
     }
 
@@ -232,8 +235,8 @@ public final class ControlDeskTests {
             PanelGeometry.Frame f = PanelGeometry.frame(PanelType.DESK, facing);
             var shape = PanelGeometry.shape(PanelType.DESK, facing);
             check(h, near(shape.max(Direction.Axis.Y), PanelGeometry.DESK_BACK_HEIGHT) && !shape.isEmpty(),
-                    facing + ": the outline reaches the shelf at the back, 0.925 up");
-            for (double[] probe : new double[][] {{0.5, 0.5}, {8, 3}, {15.5, 5.5}, {2, 5}, {14, 0.25}}) {
+                    facing + ": the outline reaches the shelf at the back, 1.1 up");
+            for (double[] probe : new double[][] {{0.5, 0.5}, {8, 3}, {15.5, 5.5}, {2, 5}, {14, 0.25}, {8, 7.5}, {0.5, 9.5}, {15.5, 9.75}}) {
                 Vec3 point = new Vec3(f.x(probe[0], probe[1], 0), f.y(probe[0], probe[1], 0), f.z(probe[0], probe[1], 0));
                 // from straight above and from the operator's side, 30 degrees up
                 for (double lean : new double[] {0.0, 1.0}) {
@@ -378,7 +381,7 @@ public final class ControlDeskTests {
     // ---- mounting
 
     @GameTest(template = "empty", timeoutTicks = 400)
-    public static void componentsMountOnTheTopThroughThePlayerPathAndNotBeyondItsSixRows(GameTestHelper h) {
+    public static void componentsMountOnTheTopThroughThePlayerPathAndNotBeyondItsTenRows(GameTestHelper h) {
         fixture(h, 4, (level, floor) -> {
             FakePlayer player = player(level, "DeskMount", GameType.SURVIVAL);
             Direction facing = Direction.EAST;
@@ -397,14 +400,15 @@ public final class ControlDeskTests {
             PanelComponent across = mountDirect(level, left, 12, 3, 8, 2, ComponentTypes.LAMP);
             check(h, across != null && be(level, at).claimAt(3, 3) != null && be(level, at).claimAt(3, 3).id() == across.id()
                     && be(level, at).claimAt(3, 3).owner().equals(left), "the part does not reach the next block");
-            // six rows only: row 6 and 7 are the front edge and the air, a part cannot stand there or hang off the edge
-            expect(h, verdict(level, left, 0, 5, 2, 2), PanelGroup.Result.BLOCKED, "a part over the front edge of the top");
-            expect(h, verdict(level, left, 0, 6, 2, 2), PanelGroup.Result.BLOCKED, "a part beyond the front edge of the top");
-            expect(h, verdict(level, left, 0, 10, 2, 2), PanelGroup.Result.BLOCKED, "a part in row 10");
+            // ten rows only: row 10 and on are the air in front of the overhang, a part cannot stand there or hang off the edge
+            expect(h, verdict(level, left, 0, 9, 2, 2), PanelGroup.Result.BLOCKED, "a part over the front edge of the top");
+            expect(h, verdict(level, left, 0, 10, 2, 2), PanelGroup.Result.BLOCKED, "a part beyond the front edge of the top");
+            expect(h, verdict(level, left, 0, 12, 2, 2), PanelGroup.Result.BLOCKED, "a part in row 12");
             expect(h, verdict(level, left, 4, 4, 2, 2), PanelGroup.Result.OK, "a part wholly on the top, rows 4 and 5");
+            expect(h, verdict(level, left, 4, 8, 2, 2), PanelGroup.Result.OK, "a part wholly on the overhang, rows 8 and 9");
             expect(h, verdict(level, left, 0, 4, 2, 14), PanelGroup.Result.BLOCKED, "a part reaching past the front edge toward the next row, which a desk has none of");
             expect(h, verdict(level, left, 0, 0, 12, 12), PanelGroup.Result.BLOCKED, "a 12 x 12 gauge is deeper than the top");
-            check(h, leftPanel.cellsUsable(0, 0, 16, 6) && !leftPanel.cellsUsable(0, 0, 16, 7), "usable cells of a block entity");
+            check(h, leftPanel.cellsUsable(0, 0, 16, 10) && !leftPanel.cellsUsable(0, 0, 16, 11), "usable cells of a block entity");
         });
     }
 
@@ -418,7 +422,7 @@ public final class ControlDeskTests {
                 check(h, placeDesk(player, at, facing), "desk not placed");
                 PanelBlockEntity panel = be(level, at);
                 PanelGeometry.Frame f = PanelGeometry.frame(PanelType.DESK, facing);
-                for (int[] want : new int[][] {{0, 0}, {8, 3}, {15, 5}, {4, 4}}) {
+                for (int[] want : new int[][] {{0, 0}, {8, 3}, {15, 5}, {4, 4}, {8, 7}, {0, 9}, {15, 9}}) {
                     Vec3 target = new Vec3(at.getX() + f.x(want[0] + 0.5, want[1] + 0.5, 0), at.getY() + f.y(want[0] + 0.5, want[1] + 0.5, 0),
                             at.getZ() + f.z(want[0] + 0.5, want[1] + 0.5, 0));
                     // standing in front of the desk, looking down at the top from about a metre out and 0.9 up
@@ -549,5 +553,110 @@ public final class ControlDeskTests {
             check(h, copy.claimAt(0, 1) != null && copy.claimAt(0, 1).owner().equals(DeskHalf.LEFT.at(at, facing)),
                     "the right half's reservation for the part over the seam survives its save");
         });
+    }
+
+    // ---- the remodel (alpha.60): the top overhangs the knee space, four rows deeper, the rows counted from the riser
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void theFourRowsOfTheOverhangTakePartsThroughThePlayerPath(GameTestHelper h) {
+        fixture(h, 9, (level, floor) -> {
+            FakePlayer player = player(level, "DeskOverhang", GameType.SURVIVAL);
+            BlockPos at = floor.above();
+            for (Direction facing : Direction.Plane.HORIZONTAL) {
+                clear(level, floor);
+                check(h, placeDesk(player, at, facing), "desk not placed facing " + facing);
+                PanelBlockEntity panel = be(level, at);
+                // the real player path: a 4 x 4 lamp (the item's first size) filling the new rows 6 to 9 exactly
+                expect(h, mount(player, at, facing, BwrItems.LAMP.get(), at, 8, 6), PanelGroup.Result.OK, facing + ": a lamp on rows 6 to 9");
+                check(h, panel.claimAt(8, 6) != null && panel.claimAt(11, 9) != null && panel.claimAt(8, 6).id() == panel.claimAt(11, 9).id(),
+                        facing + ": the lamp does not hold rows 6 to 9");
+                check(h, player.getMainHandItem().isEmpty(), facing + ": the lamp item was not used up");
+                // a real-size dial gauge in the new rows beside it, a part in the old rows behind it, and nothing past row 9
+                PanelComponent dial = mountDirect(level, at, 2, 6, 4, 4, ComponentTypes.DIAL_GAUGE);
+                check(h, dial != null && panel.claimAt(5, 9) != null && panel.claimAt(5, 9).id() == dial.id(), facing + ": no dial on rows 6 to 9");
+                check(h, mountDirect(level, at, 8, 2, 4, 4, ComponentTypes.DIAL_GAUGE) != null, facing + ": no dial right behind the lamp, rows 2 to 5");
+                expect(h, verdict(level, at, 0, 7, 2, 4), PanelGroup.Result.BLOCKED, facing + ": a part hanging off the front of the overhang");
+                // the new cells lie on the top over the knee space: level with the old rows, in front of the old front
+                // edge (the middle of the block) and short of the new one, a quarter block further out
+                PanelGeometry.Frame f = PanelGeometry.frame(PanelType.DESK, facing);
+                double out = (f.x(8, 9.5, 0) - 0.5) * facing.getStepX() + (f.z(8, 9.5, 0) - 0.5) * facing.getStepZ();
+                check(h, near(f.y(8, 9.5, 0), 0.75) && out > 0.0 && out < 0.25, facing + ": row 9 is " + out + " in front of the middle");
+            }
+        });
+    }
+
+    /**
+     * A 1 m desk's block entity as a build before the remodel saved it, when the top was six rows deep: three parts, the
+     * dial reaching the old front edge (rows 2 to 5). The save format did not change; the test proves the parts keep their
+     * cells and therefore their places.
+     */
+    private static final String OLD_ONE_METRE = "{bwr_panel:{Version:1,NextId:4,Components:["
+            + "{Id:1,Type:\"bwr:lamp\",X:2,Y:0,W:2,H:2,Label:\"\",Data:{}},"
+            + "{Id:2,Type:\"bwr:dial_gauge\",X:6,Y:2,W:4,H:4,Label:\"\",Data:{}},"
+            + "{Id:3,Type:\"bwr:lamp\",X:14,Y:4,W:2,H:2,Label:\"\",Data:{}}],Claims:[]}}";
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void aDeskSavedBeforeTheOverhangLoadsWithEveryPartWhereItWas(GameTestHelper h) {
+        fixture(h, 10, (level, floor) -> {
+            var registries = level.registryAccess();
+            FakePlayer player = player(level, "DeskOldSave", GameType.SURVIVAL);
+            BlockPos one = floor.above();
+            check(h, placeDesk(player, one, Direction.NORTH), "1 m desk not placed");
+            PanelBlockEntity panel = be(level, one);
+            panel.loadWithComponents(snbt(OLD_ONE_METRE), registries);
+            PanelGeometry.Frame north = PanelGeometry.frame(PanelType.DESK, Direction.NORTH);
+            // id, x, y, w, h as saved
+            int[][] saved = {{1, 2, 0, 2, 2}, {2, 6, 2, 4, 4}, {3, 14, 4, 2, 2}};
+            check(h, panel.owned().size() == 3, "the old desk loaded " + panel.owned().size() + " of its 3 parts");
+            for (int[] want : saved) {
+                PanelComponent part = panel.owned().stream().filter(c -> c.id() == want[0]).findFirst().orElse(null);
+                check(h, part != null && part.type() != null && part.x() == want[1] && part.y() == want[2] && part.w() == want[3]
+                        && part.h() == want[4], "part " + want[0] + " moved or changed: " + (part == null ? null : part.save()));
+                check(h, panel.claimAt(want[1], want[2]) != null && panel.claimAt(want[1], want[2]).id() == want[0]
+                        && panel.claimAt(want[1] + want[3] - 1, want[2] + want[4] - 1).id() == want[0], "part " + want[0] + " lost its cells");
+                check(h, panel.cellsUsable(want[1], want[2], want[1] + want[3], want[2] + want[4]), "part " + want[0] + " is no longer on the top");
+                // where its corners are in the block, by the old desk's numbers (facing north: x = 1 - cx / 16, 0.75 up,
+                // z = 0.875 - cy / 16, row 0 at the foot of the riser 0.125 from the back)
+                for (int[] corner : new int[][] {{want[1], want[2]}, {want[1] + want[3], want[2] + want[4]}}) {
+                    check(h, near(north.x(corner[0], corner[1], 0), 1.0 - corner[0] / 16.0) && near(north.y(corner[0], corner[1], 0), 0.75)
+                                    && near(north.z(corner[0], corner[1], 0), 0.875 - corner[1] / 16.0),
+                            "part " + want[0] + ": cell corner " + corner[0] + "," + corner[1] + " moved to " + north.x(corner[0], corner[1], 0)
+                                    + "," + north.y(corner[0], corner[1], 0) + "," + north.z(corner[0], corner[1], 0));
+                }
+            }
+            CompoundTag resaved = panel.saveWithoutMetadata(registries);
+            PanelBlockEntity reloaded = new PanelBlockEntity(one, level.getBlockState(one));
+            reloaded.loadWithComponents(resaved, registries);
+            check(h, reloaded.savePanel(false).equals(panel.savePanel(false)), "the loaded old desk does not save as it loads");
+            // the new rows in front of the old parts are free: a dial right in front of the old one
+            expect(h, verdict(level, one, 6, 6, 4, 4), PanelGroup.Result.OK, "the new rows in front of the old dial");
+
+            // a 2 m desk facing east, its left half owning a lamp over the seam and the right half holding its reservation
+            clear(level, floor);
+            BlockPos at = floor.above();
+            check(h, placeWide(player, at, Direction.EAST), "2 m desk not placed");
+            BlockPos left = DeskHalf.LEFT.at(at, Direction.EAST);
+            be(level, left).loadWithComponents(snbt("{bwr_panel:{Version:1,NextId:2,Components:["
+                    + "{Id:1,Type:\"bwr:lamp\",X:12,Y:1,W:8,H:2,Label:\"\",Data:{}}],Claims:[]}}"), registries);
+            be(level, at).loadWithComponents(snbt("{bwr_panel:{Version:1,NextId:1,Components:[],Claims:[{Ox:" + left.getX() + ",Oy:"
+                    + left.getY() + ",Oz:" + left.getZ() + ",Id:1,X0:0,Y0:1,X1:4,Y1:3}]}}"), registries);
+            PanelComponent across = be(level, left).owned().isEmpty() ? null : be(level, left).owned().get(0);
+            check(h, across != null && across.x() == 12 && across.y() == 1 && across.w() == 8 && across.h() == 2, "the part over the seam moved");
+            check(h, be(level, at).claimAt(3, 2) != null && be(level, at).claimAt(3, 2).owner().equals(left) && be(level, at).claimAt(4, 1) == null,
+                    "the right half's reservation moved");
+            PanelGeometry.Frame east = PanelGeometry.frame(PanelType.DESK, Direction.EAST);
+            // facing east the back of the block is west: x = 0.125 + cy / 16, z = 1 - cx / 16
+            check(h, near(east.x(12, 1, 0), 0.125 + 1 / 16.0) && near(east.z(12, 1, 0), 1.0 - 12 / 16.0) && near(east.y(12, 1, 0), 0.75),
+                    "facing east, the part's corner moved to " + east.x(12, 1, 0) + "," + east.z(12, 1, 0));
+            expect(h, verdict(level, left, 12, 6, 8, 4), PanelGroup.Result.OK, "the new rows across the seam, in front of the old part");
+        });
+    }
+
+    private static CompoundTag snbt(String text) {
+        try {
+            return net.minecraft.nbt.TagParser.parseTag(text);
+        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+            throw new IllegalArgumentException(text, e);
+        }
     }
 }

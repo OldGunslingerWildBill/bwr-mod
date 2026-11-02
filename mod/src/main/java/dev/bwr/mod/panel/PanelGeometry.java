@@ -53,20 +53,28 @@ public final class PanelGeometry {
     public static final double DUPLEX_HEADER_REACH = 0.5;
 
     /**
-     * The control desks (the owner's two Fusion desks, 1 block = 1 m, models in centimetres, the part below the top stretched to the 0.75 m of the operator desks): the desk stands against the
-     * back of its block and is {@link #DESK_FRONT} deep; the level top, the operating surface, is {@link #DESK_TOP} up
-     * and runs from the foot of the riser ({@link #DESK_FACE_BACK} forward) to the front edge, so the grid is
-     * {@link #DESK_ROWS} rows deep (0.375 block = 6 cells). Behind it the riser climbs to the shelf along the back, which
-     * is {@link #DESK_BACK_HEIGHT} up. Below the front edge the desk is cut back, to {@link #DESK_FOOT} forward at the
-     * floor, for the operator's knees.
+     * The control desks (the owner's two Fusion desks, 1 block = 1 m, models in centimetres, the part below the top
+     * stretched to the 0.75 m of the operator desks, remodelled in alpha.60 with a back twice as tall and a top that
+     * overhangs the knee space; art/models/control_desk/build_desk.py): the desk stands against the back of its block and
+     * is {@link #DESK_FRONT} deep; the level top, the operating surface, is {@link #DESK_TOP} up and runs from the foot of
+     * the riser ({@link #DESK_FACE_BACK} forward) to the front edge, so the grid is {@link #DESK_ROWS} rows deep (0.625
+     * block = 10 cells). Rows count from the riser, so the four rows the overhang added (6 to 9) are in front of the six
+     * the desk always had, which did not move. Behind the top the riser climbs to the shelf along the back, which is
+     * {@link #DESK_BACK_HEIGHT} up (0.10 into the block above, as a fence). Under the front edge a {@link #DESK_LIP} lip
+     * drops, the underside of the overhang runs back to the knee front, and the knee front falls on the owner's line, from
+     * {@link #DESK_KNEE_TOP} forward at the height of the top to {@link #DESK_FOOT} forward at the floor.
      */
     public static final double DESK_TOP = 0.75;
     public static final double DESK_FACE_BACK = 0.125;
-    public static final double DESK_FRONT = 0.5;
-    public static final double DESK_BACK_HEIGHT = 0.925;
+    public static final double DESK_FRONT = 0.75;
+    public static final double DESK_BACK_HEIGHT = 1.1;
     public static final double DESK_SHELF = 0.075;
     public static final double DESK_FOOT = 0.2;
-    public static final int DESK_ROWS = 6;
+    /** Where the knee front's line (the owner's sloped front) would meet the height of the top; the overhang hides its top. */
+    public static final double DESK_KNEE_TOP = 0.5;
+    /** The front lip under the overhang: the underside of the top is this far below it. */
+    public static final double DESK_LIP = 0.0625;
+    public static final int DESK_ROWS = 10;
 
     /**
      * The angled trim blocks (see {@link PanelType#HEADER_TILT} and the chamfers). The header panel is the vertical
@@ -320,15 +328,18 @@ public final class PanelGeometry {
             case CHAMFER_BENCH -> shape = dev.bwr.mod.panel.trim.TrimGeometry.shape(
                     dev.bwr.mod.panel.trim.TrimPiece.CORNER_BENCH_CHAMFER, facing, true);
             case DESK -> {
-                // The solid under the top: the front falls from the foot to the top edge, in slices that reach the
-                // slope at their tops, so a ray to the face always finds it; then the riser and shelf behind the face.
+                // The solid under the overhang: the knee front falls from the underside to the foot, in slices that
+                // reach the slope at their tops; then the top itself, a slab as thick as the lip over the whole face,
+                // so a ray to the face always finds it; then the riser and shelf behind the face.
+                double under = DESK_TOP - DESK_LIP;
                 for (int k = 0; k < 8; k++) {
-                    double top = DESK_TOP * (k + 1) / 8.0;
+                    double top = under * (k + 1) / 8.0;
                     shape = Shapes.join(shape,
-                            box(facing, 0, DESK_TOP * k / 8.0, 0, 1, top,
-                                    DESK_FOOT + (DESK_FRONT - DESK_FOOT) * top / DESK_TOP),
+                            box(facing, 0, under * k / 8.0, 0, 1, top,
+                                    DESK_FOOT + (DESK_KNEE_TOP - DESK_FOOT) * top / DESK_TOP),
                             BooleanOp.OR);
                 }
+                shape = Shapes.join(shape, box(facing, 0, under, 0, 1, DESK_TOP, DESK_FRONT), BooleanOp.OR);
                 shape = Shapes.join(shape, box(facing, 0, DESK_TOP, 0, 1, DESK_BACK_HEIGHT, DESK_FACE_BACK), BooleanOp.OR);
             }
             case DUPLEX_BOARD -> shape = box(facing, 0, 0, DUPLEX_SLAB_REAR, 1, 1, 1);
@@ -370,7 +381,7 @@ public final class PanelGeometry {
      * on a facet that is smaller than it:
      * <ul>
      *   <li>{@link PanelType#CHAMFER_VERTICAL}: the facet is 11.31 cells wide, so columns 0 to 10;</li>
-     *   <li>{@link PanelType#DESK}: the level top is {@link #DESK_ROWS} rows deep, so rows 0 to 5;</li>
+     *   <li>{@link PanelType#DESK}: the level top is {@link #DESK_ROWS} rows deep, so rows 0 to 9;</li>
      *   <li>{@link PanelType#CHAMFER_BENCH}: the facet is a triangle that narrows from 22.6 cells at the top to a point
      *       at the bottom, so a cell is usable when both its lower corners are on the triangle.</li>
      * </ul>
@@ -390,7 +401,7 @@ public final class PanelGeometry {
         };
     }
 
-    /** How many rows of the 16-cell grid of a block of this style are mounting surface: all 16, but 6 on a desk top. */
+    /** How many rows of the 16-cell grid of a block of this style are mounting surface: all 16, but 10 on a desk top. */
     public static int rows(PanelType type) {
         return type == PanelType.DESK ? DESK_ROWS : GRID;
     }
