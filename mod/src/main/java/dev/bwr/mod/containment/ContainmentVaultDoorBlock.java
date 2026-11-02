@@ -93,7 +93,10 @@ public final class ContainmentVaultDoorBlock extends BaseEntityBlock {
         for(int i=1;i<size*size;i++)level.setBlock(cell(root,state.getValue(FACING),i),state.setValue(CELL,i),Block.UPDATE_ALL);
         ContainmentControllerRegistry.changed(level,root);
     }
-    @Override protected VoxelShape getShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){return Shapes.block();}
+    /** The whole block, except for whoever stands in the opening of an open door: their own cell must not catch their clicks. */
+    @Override protected VoxelShape getShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){
+        return ContainmentDoorShapes.outline(!state.getValue(SEALED)&&!state.getValue(HELD),pos,context);
+    }
     @Override protected VoxelShape getCollisionShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){
         return state.getValue(SEALED)||state.getValue(HELD)?Shapes.block():Shapes.empty();
     }

@@ -96,7 +96,14 @@ public final class ContainmentAirlockBlock extends BaseEntityBlock {
     @Override protected void tick(BlockState state,net.minecraft.server.level.ServerLevel level,BlockPos pos,net.minecraft.util.RandomSource random){
         if(state.getValue(CELL)==0&&level.getBlockEntity(pos) instanceof ContainmentAirlockBlockEntity owner)owner.settle();
     }
-    @Override protected VoxelShape getShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){return Shapes.block();}
+    /**
+     * The leaves are picked out as whole blocks, except for whoever stands in an open one. The chamber has no outline at
+     * all: nothing in it answers a click (see useWithoutItem), and a player standing in it would otherwise have the
+     * ray from the eye start inside a selectable block and hit that block instead of the door they are facing.
+     */
+    @Override protected VoxelShape getShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){
+        return state.getValue(CELL)/2==1?Shapes.empty():ContainmentDoorShapes.outline(!blocks(state),pos,context);
+    }
     @Override protected InteractionResult useWithoutItem(BlockState state,Level level,BlockPos pos,Player player,BlockHitResult hit){
         if(level.isClientSide())return InteractionResult.SUCCESS;
         var owner=owner(level,pos,state);if(owner==null)return InteractionResult.PASS;
