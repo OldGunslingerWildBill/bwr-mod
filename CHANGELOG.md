@@ -45,7 +45,7 @@
   its front edge, so the mounting grid is **16 x 10 cells instead of 16 x 6** (`PanelGeometry.DESK_FRONT`, `DESK_BACK_HEIGHT`, `DESK_ROWS`,
   new `DESK_LIP` and `DESK_KNEE_TOP`). The knee front is still the owner's sloped line, now cut off by the underside of the overhang. Models
   (block, both item models), the outline and collision shape and the grid are rebuilt for every facing by `build_desk.py`, which still checks
-  the owner's profile against his two files (`--verify-source`) and documents the two changes on top of it. The riser stays plain, not a
+  the owner's profile against their two files (`--verify-source`) and documents the two changes on top of it. The riser stays plain, not a
   second mounting face: a panel block has one mounting grid. **Old saves:** the rows count from the riser, which did not move, so every part
   on an existing desk stays on its cells and in its place, and the four new rows are in front of them (a new GameTest loads a 1 m and a 2 m
   desk saved in the old form, another mounts parts on the new rows through the player path).

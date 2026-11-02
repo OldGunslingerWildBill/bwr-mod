@@ -64,13 +64,8 @@ public final class PanelOps {
      * the operate packet anyway is refused by {@link #toolRefusesOperate}.
      */
     public static boolean holdsTool(net.minecraft.world.entity.player.Player player) {
-        for (InteractionHand hand : InteractionHand.values()) {
-            ItemStack stack = player.getItemInHand(hand);
-            if (stack.getItem() instanceof PanelWrenchItem || LinkTools.isTool(stack)) {
-                return true;
-            }
-        }
-        return false;
+        // the two wrenches (BwrTools, the rule for every block) plus the Panel Linker, a panel-only tool
+        return BwrTools.holdsBwrTool(player) || !LinkTools.held(player).isEmpty();
     }
 
     /**

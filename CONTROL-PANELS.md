@@ -407,11 +407,11 @@ Two small desks from the owner's Fusion models (`Control Desk 1m.obj`, `Control 
 one metre): a level **operating top**, 0.75 m high (the height of the operator desks), 1 m wide and 0.625 m deep, behind it a riser up to a narrow
 shelf along the back (1.10 m high), and under the top a knee space: the top overhangs it, with a thin lip at its front edge, and the knee
 front falls back from the underside to the floor. The desk stands against the back of its block, so the front quarter of the block is free.
-The shape is the owner's, with three changes: his top is 0.40 m, so the part below the top is stretched to 0.75 m; and since alpha.60, at the
+The shape is the owner's, with three changes: their top is 0.40 m, so the part below the top is stretched to 0.75 m; and since alpha.60, at the
 owner's request ("make the back of it about 2 times taller and make it overhang out a little bit, where your legs would be, so you have
-more usable space"), the riser and shelf stand 0.35 m above the top instead of his 0.175 m (the back reaches 0.10 into the block above, as a
+more usable space"), the riser and shelf stand 0.35 m above the top instead of their 0.175 m (the back reaches 0.10 into the block above, as a
 fence does), and the top reaches 0.25 m further out over the knee space (front edge 0.75 from the back of the block instead of 0.5; a
-1/16 block lip under it; the knee front is still his sloped line, cut off by the underside). It is drawn plain on purpose, so you mount what
+1/16 block lip under it; the knee front is still their sloped line, cut off by the underside). It is drawn plain on purpose, so you mount what
 you like on it. The mounting face is the top, a level plane with the normal straight up: **16 columns by 10 rows** of the usual 1/16
 block cells, row 0 at the back (the foot of the riser), rows running toward the operator (a part keeps its real size, as everywhere: a
 dial 4 x 4 fits, a 12 x 12 gauge does not). The cells that are not on the top (rows 10 to 15, the air in front of the desk) take nothing.
