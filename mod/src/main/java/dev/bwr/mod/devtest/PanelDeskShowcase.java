@@ -146,10 +146,11 @@ final class PanelDeskShowcase {
                 lamp(level, pos, i * 2, 2, c + i);
             }
         }
+        // (the selectors and the key switch at their kept 2 x 4: the desk picture is about the desk, and the room is fixed)
         for (int i = 0; i < 2; i++) {
-            real(level, pos, 8 + i * 2, 2, ComponentTypes.ROTARY_SELECTOR);
+            sized(level, pos, 8 + i * 2, 2, ComponentTypes.ROTARY_SELECTOR, 2, 4);
         }
-        real(level, pos, 12, 2, ComponentTypes.KEY_SWITCH);
+        sized(level, pos, 12, 2, ComponentTypes.KEY_SWITCH, 2, 4);
         lamp(level, pos, 14, 2, c);
         if (seam == 1) {
             PanelComponent strip = real(level, pos, 14, 4, ComponentTypes.EDGEWISE_GAUGE_HORIZONTAL);

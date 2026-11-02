@@ -111,13 +111,17 @@ public final class ComponentItem extends Item {
         return current;
     }
 
-    /** The footprint indices this item offers, smallest to biggest (what the size picker lists). */
+    /** The footprint indices this item offers, smallest to biggest (what the size picker lists): not the retired ones. */
     public int[] sizes() {
-        return java.util.Arrays.stream(type().sizeOrder()).filter(this::allows).toArray();
+        return java.util.Arrays.stream(Footprints.offered(type())).filter(this::inVariants).toArray();
     }
 
-    /** Whether this item may be set to footprint index {@code index} (a limited item, like a DX1000, only to its own). */
+    /** Whether this item may be set to footprint index {@code index}: not retired, and (a limited item, like a DX1000) one of its own. */
     private boolean allows(int index) {
+        return inVariants(index) && !Footprints.retired(type(), index);
+    }
+
+    private boolean inVariants(int index) {
         if (variants == null) {
             return true;
         }

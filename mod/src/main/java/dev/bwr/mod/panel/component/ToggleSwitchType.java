@@ -11,10 +11,13 @@ import java.util.List;
  */
 public final class ToggleSwitchType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 8), Footprint.of(8, 10),
-            // real size: a heavy duty toggle on its plate, about 6 cm
+            // real size: a heavy duty toggle on its plate, about 6 cm (retired)
             Footprint.of(1, 1),
-            // twice the real toggle, where a new item starts
-            Footprint.of(2, 2));
+            // twice the real toggle
+            Footprint.of(2, 2),
+            // an intermediate size, where a new item starts
+            Footprint.of(4, 4));
+    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 1));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.color("Color", "component.bwr.field.lever_color"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("state"));
@@ -25,13 +28,19 @@ public final class ToggleSwitchType extends PanelInputType {
 
     @Override
     public int realSizes() {
-        return 2;
+        return 3;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 4 x 4 ({@link ComponentType#realDefaultFootprint}). */
     @Override
     public Footprint realDefaultFootprint() {
-        return Footprint.of(2, 2);
+        return Footprint.of(4, 4);
+    }
+
+    /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
+    @Override
+    public java.util.Set<Footprint> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

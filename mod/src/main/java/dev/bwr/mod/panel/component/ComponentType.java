@@ -87,6 +87,15 @@ public abstract class ComponentType {
     public abstract List<Footprint> footprints();
 
     /**
+     * Footprints that are still on the list, so that the indices stored in item stacks and the sizes saved in panels keep
+     * their meaning, but are no longer offered: out of the size picker and of the cycling of the item (see {@link Footprints}).
+     * An old stack that holds one still places at that size. Nothing is retired by default.
+     */
+    public java.util.Set<Footprint> retiredFootprints() {
+        return java.util.Set.of();
+    }
+
+    /**
      * How many of the LAST footprints in {@link #footprints()} are real sizes (what the part measures on a real
      * board, rounded to whole cells; see CONTROL-PANELS.md). The first of them is where a new, unconfigured item
      * starts; the rest are the other real sizes. 0 for a type that has no real size (recorders, displays, mimic

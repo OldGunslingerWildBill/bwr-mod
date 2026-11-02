@@ -62,9 +62,9 @@ public final class JoystickTests {
                 "outputs: " + out);
         helper.assertTrue(type.isInteractive() && type.holdable(), "operated, and held for the spring return");
         List<Footprint> sizes = type.footprints();
-        helper.assertTrue(type.realSizes() == 3 && sizes.get(type.realDefaultIndex()).equals(Footprint.of(2, 2))
-                && sizes.contains(Footprint.of(1, 1)) && sizes.contains(Footprint.of(4, 4)),
-                "a new item starts at twice the real size, 2 x 2, with the exact 1 x 1 listed: " + sizes);
+        helper.assertTrue(type.realSizes() == 4 && sizes.get(type.realDefaultIndex()).equals(Footprint.of(6, 6))
+                && sizes.contains(Footprint.of(1, 1)) && sizes.contains(Footprint.of(2, 2)) && sizes.contains(Footprint.of(4, 4)),
+                "a new item starts at 6 x 6, with the retired 1 x 1 and 2 x 2 still listed: " + sizes);
         helper.succeed();
     }
 
@@ -79,7 +79,7 @@ public final class JoystickTests {
                 && JoystickType.positionAt(0.9, 0.8) == JoystickData.RIGHT && JoystickType.positionAt(0.8, 0.9) == JoystickData.DOWN
                 && JoystickType.positionAt(0.0, 0.0) == JoystickData.UP, "a corner goes to the nearer axis, up and down winning a tie");
         ComponentType type = ComponentTypes.JOYSTICK_SWITCH;
-        for (Footprint size : List.of(Footprint.of(1, 1), Footprint.of(2, 2), Footprint.of(8, 8), Footprint.of(16, 16))) {
+        for (Footprint size : List.of(Footprint.of(1, 1), Footprint.of(2, 2), Footprint.of(6, 6), Footprint.of(8, 8), Footprint.of(16, 16))) {
             PanelComponent probe = new PanelComponent(1, type, 0, 0, size, "JS-1");
             helper.assertTrue(type.clickValue(probe, size.w() * 0.5, size.h() * 0.1) == 1 + JoystickData.UP
                     && type.clickValue(probe, size.w() * 0.5, size.h() * 0.5) == 1 + JoystickData.CENTRE
