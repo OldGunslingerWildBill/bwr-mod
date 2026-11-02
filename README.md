@@ -173,7 +173,7 @@ plant, to redstone or to CC:Tweaked. A control only does something when somebody
 
 - Vertical boards, benchboards, consoles, back panels and 1 m and 2 m control desks, in five paint
   colours, plus relay cabinets, operator desks and wall displays. [ROOM-FURNITURE.md](ROOM-FURNITURE.md)
-- Instruments come in at twice real size, and real size is one Alt+click away.
+- Instruments come in at twice real size, and real size is one click away with the size-picker key (Alt by default) held.
 - Dials, edgewise meters, bar gauges, control switches that spring back to normal, key switches, the
   guarded RPS trip, annunciators, controller stations with PID, a synchroscope, recorders, displays, a
   full core display, mimic tape, and a plant computer you program in Lua.

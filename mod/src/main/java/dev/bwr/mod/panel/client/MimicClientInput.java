@@ -1,6 +1,7 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.client.BwrKeys;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelGeometry;
 import dev.bwr.mod.panel.mimic.MimicPayloads;
@@ -21,7 +22,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Client input for the mimic tape: a click on a panel face sends the exact cursor in cells (the server snaps it and
- * decides, see {@code MimicOps}); the air and other blocks go the vanilla way and finish the path being drawn; sneak
+ * decides, see {@code MimicOps}); the air and other blocks go the vanilla way and finish the path being drawn; the mode key
  * and scroll switch the mode (draw, erase, edit) instead of the hotbar slot.
  */
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
@@ -94,12 +95,12 @@ public final class MimicClientInput {
         event.setCanceled(true);
     }
 
-    /** Sneak-scroll with the tape switches draw, erase and edit instead of the hotbar. */
+    /** The mode key (Right Shift by default) + scroll with the tape switches draw, erase and edit instead of the hotbar. */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onScroll(InputEvent.MouseScrollingEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.screen != null || event.getScrollDeltaY() == 0.0
-                || !minecraft.player.isShiftKeyDown() || tape(minecraft).isEmpty()) {
+                || !BwrKeys.MIMIC_MODE.isDown() || tape(minecraft).isEmpty()) {
             return;
         }
         PacketDistributor.sendToServer(new MimicPayloads.Mode(event.getScrollDeltaY() > 0 ? 1 : -1, tapeInOffHand(minecraft)));

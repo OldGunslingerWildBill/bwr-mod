@@ -105,7 +105,7 @@ public final class MimicTapeItem extends Item {
                 .withStyle(ChatFormatting.AQUA));
         tooltip.add(Component.translatable("tooltip.bwr.mimic_tape.draw").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.bwr.mimic_tape.finish").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.bwr.mimic_tape.modes").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.bwr.mimic_tape.modes", Component.keybind("key.bwr.mimic_mode")).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.bwr.mimic_tape.edit").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.bwr.mimic_tape.cost").withStyle(ChatFormatting.DARK_GRAY));
     }

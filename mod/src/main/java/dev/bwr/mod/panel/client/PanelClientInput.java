@@ -1,6 +1,7 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.client.BwrKeys;
 import dev.bwr.mod.panel.PanelBlock;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelGeometry;
@@ -15,7 +16,6 @@ import dev.bwr.mod.panel.net.PanelPayloads;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -83,10 +83,10 @@ public final class PanelClientInput {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player != null && minecraft.screen == null && Screen.hasAltDown()
+        if (minecraft.player != null && minecraft.screen == null && BwrKeys.SIZE_PICKER.isDown()
                 && minecraft.player.getItemInHand(event.getHand()).getItem() instanceof ComponentItem item
                 && item.type() != null && item.sizes().length > 1) {
-            // Alt+click with a component item, on a panel or in the air: pick its size from a list.
+            // Size-picker key (Alt by default) + click with a component item, on a panel or in the air: pick its size from a list.
             PanelClientHooks.openSizePicker(event.getHand() == InteractionHand.OFF_HAND);
             event.setCanceled(true);
             event.setSwingHand(false);

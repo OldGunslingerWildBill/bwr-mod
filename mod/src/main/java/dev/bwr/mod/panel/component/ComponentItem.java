@@ -179,7 +179,7 @@ public final class ComponentItem extends Item {
             tooltip.add(Component.translatable("tooltip.bwr.panel.footprint", footprint.w(), footprint.h())
                     .withStyle(ChatFormatting.GRAY));
             if (type().footprints().size() > 1 && (variants == null || variants.length > 1)) {
-                tooltip.add(Component.translatable("tooltip.bwr.panel.footprint_hint").withStyle(ChatFormatting.DARK_GRAY));
+                tooltip.add(Component.translatable("tooltip.bwr.panel.footprint_hint", Component.keybind("key.bwr.size_picker")).withStyle(ChatFormatting.DARK_GRAY));
             }
         }
     }

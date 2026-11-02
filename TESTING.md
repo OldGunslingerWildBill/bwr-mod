@@ -529,6 +529,7 @@ The client checks that put the hardware added after C1 on screen, run under the 
 | vessel head entity (in flight, landed, held), shield plug tiers | `-PbwrAccidentBlastCheck` (stage `10-shield-plug-tiers`: vanilla concrete and the three tiers side by side) | `accident-blast-client-check/` (10) |
 | plant computer screens | `-PbwrPanelClientCheck -PbwrPanelClientStages=plant-` | `panel-client-check/` (8) |
 | area radiation monitor, survey meter HUD | `-PbwrRadiationClientCheck` | `radiation-client-check/` (3) |
+| mod keys (Options > Controls): registered, defaults, size picker and tape mode follow the mapping, options.txt | `-PbwrKeybindCheck` | log only (`KEYBIND CLIENT CHECK PASS`) |
 | containment vault doors and airlock | `-PbwrContainmentClientCheck` | `containment-client-check/` (8) |
 | uranium ore | `-PbwrUraniumClientCheck` | `uranium-check/` (4) |
 

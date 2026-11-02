@@ -195,6 +195,8 @@ neoForge {
             if (project.hasProperty('bwrNetworkingClientCheck')) jvmArguments.add('-Dbwr.networkingClientCheck=true')
             if (project.hasProperty('bwrRwcuClientCheck')) jvmArguments.add('-Dbwr.rwcuClientCheck=true')
             if (project.hasProperty('bwrRadiationClientCheck')) jvmArguments.add('-Dbwr.radiationClientCheck=true')
+            // The mod's keys in Options > Controls: registered, defaults, size picker and tape mode follow the mapping, options.txt (KeybindClientCheck).
+            if (project.hasProperty('bwrKeybindCheck')) jvmArguments.add('-Dbwr.keybindClientCheck=true')
             if (project.hasProperty('bwrFurnitureClientCheck')) jvmArguments.add('-Dbwr.furnitureClientCheck=true')
             if (project.hasProperty('bwrLampClientCheck')) jvmArguments.add('-Dbwr.lampClientCheck=true')
             if (project.hasProperty('bwrBoardClientCheck')) jvmArguments.add('-Dbwr.boardClientCheck=true')
