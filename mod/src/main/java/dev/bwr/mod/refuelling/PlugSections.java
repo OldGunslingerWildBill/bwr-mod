@@ -305,7 +305,7 @@ public final class PlugSections {
             if (!BlockScan.readable(level, p)) {
                 return BwrText.tr("status.bwr.plug.place_unloaded", "The place at %s is in a chunk that is not loaded; the crane does not load chunks.", p.toShortString());
             }
-            if (!level.getBlockState(p).isAir()) {
+            if (!BlockScan.clear(level.getBlockState(p))) {
                 return BwrText.tr("status.bwr.plug.place_occupied", "The place for the section is not clear: there is a block at %s. The crane never replaces a block.",
                         p.toShortString());
             }

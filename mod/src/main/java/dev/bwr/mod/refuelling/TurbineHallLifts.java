@@ -464,7 +464,7 @@ final class TurbineHallLifts {
             case SHAFT_WRECK -> {
                 // only ever back where it lay (the console broken under it)
                 net.minecraft.world.level.block.state.BlockState here = dev.bwr.mod.world.LoadedWorld.state(level, to.at());
-                if (TurbineLoadItem.isBladeSection(load) && here != null && here.isAir()) {
+                if (TurbineLoadItem.isBladeSection(load) && here != null && dev.bwr.mod.world.BlockScan.clear(here)) {
                     placed = level.setBlock(to.at(), dev.bwr.mod.registry.BwrBlocks.TURBINE_SHAFT_WRECK.get().defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
                 }
             }

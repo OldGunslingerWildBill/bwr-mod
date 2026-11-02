@@ -65,6 +65,14 @@ public final class BlockScan {
         return mayStillBe(level, old, block) ? old : null;
     }
 
+    /**
+     * Whether a cell counts as empty to a survey or a placement: air, or a light block (a beam lamp's, or a player's), which a
+     * lamp puts wherever its beam lands and takes back when anything else goes there.
+     */
+    public static boolean clear(BlockState state) {
+        return state.isAir() || state.is(net.minecraft.world.level.block.Blocks.LIGHT);
+    }
+
     /** Whether the chunk holding {@code pos} can be read right now (complete and loaded). Never loads a chunk. */
     public static boolean readable(Level level, BlockPos pos) {
         return level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) != null;

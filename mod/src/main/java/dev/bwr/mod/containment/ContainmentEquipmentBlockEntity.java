@@ -59,7 +59,7 @@ public final class ContainmentEquipmentBlockEntity extends BlockEntity {
                     && ContainmentPenetrationBlock.axial(state, facing)
                     && level.getBlockEntity(next) instanceof ContainmentPenetrationBlockEntity valve
                     && valve.position() > 0) continue;
-            return state.isAir() && !room.encloses(next);
+            return dev.bwr.mod.world.BlockScan.clear(state) && !room.encloses(next);
         }
         return false;
     }

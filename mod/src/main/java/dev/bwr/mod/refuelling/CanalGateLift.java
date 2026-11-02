@@ -240,7 +240,7 @@ public final class CanalGateLift {
             height++;
         }
         BlockPos over = bottom.above(height);
-        BlockPos covered = !level.isLoaded(over) || level.getBlockState(over).isAir() ? null : over.immutable();
+        BlockPos covered = !level.isLoaded(over) || dev.bwr.mod.world.BlockScan.clear(level.getBlockState(over)) ? null : over.immutable();
         BlockPos under = bottom.below();
         boolean onStand = level.isLoaded(under) && level.getBlockState(under).getBlock() instanceof GateLaydownStandBlock;
         Direction.Axis axis = level.getBlockState(bottom).getValue(TransferCanalBlock.AXIS);
