@@ -207,8 +207,8 @@ public class PanelBlock extends BaseEntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
                                                BlockHitResult hit) {
-        if (!(level.getBlockEntity(pos) instanceof PanelBlockEntity be)) {
-            return InteractionResult.PASS;
+        if (!(level.getBlockEntity(pos) instanceof PanelBlockEntity be) || PanelOps.holdsTool(player)) {
+            return InteractionResult.PASS; // a tool in either hand: the click is the tool's, it never operates the control
         }
         // Hit location comes from the vanilla ray cast against the block's outline; recompute the cell from the
         // view ray against the true mounting plane instead.

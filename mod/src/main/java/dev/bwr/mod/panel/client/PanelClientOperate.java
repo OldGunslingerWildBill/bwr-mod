@@ -4,7 +4,7 @@ import dev.bwr.mod.BwrMod;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelGeometry;
 import dev.bwr.mod.panel.PanelGroup;
-import dev.bwr.mod.panel.PanelWrenchItem;
+import dev.bwr.mod.panel.PanelOps;
 import dev.bwr.mod.panel.component.ComponentItem;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.OperateAction;
@@ -121,7 +121,7 @@ public final class PanelClientOperate {
         }
         Minecraft minecraft = Minecraft.getInstance();
         ItemStack stack = minecraft.player == null ? ItemStack.EMPTY : minecraft.player.getItemInHand(event.getHand());
-        if (stack.getItem() instanceof ComponentItem || stack.getItem() instanceof PanelWrenchItem
+        if (stack.getItem() instanceof ComponentItem || holdsTool(minecraft)
                 || stack.getItem() instanceof dev.bwr.mod.panel.mimic.MimicTapeItem || !aim(minecraft)) {
             return;
         }
@@ -157,7 +157,7 @@ public final class PanelClientOperate {
     @SubscribeEvent
     public static void onScroll(InputEvent.MouseScrollingEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (event.getScrollDeltaY() == 0.0 || !aim(minecraft) || !AIM.component.type().scrollable()) {
+        if (event.getScrollDeltaY() == 0.0 || holdsTool(minecraft) || !aim(minecraft) || !AIM.component.type().scrollable()) {
             return;
         }
         int notches = event.getScrollDeltaY() > 0 ? 1 : -1;
@@ -170,7 +170,8 @@ public final class PanelClientOperate {
     public static void onTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         boolean down = minecraft.options.keyUse.isDown();
-        if (heldOwner != null && (!down || minecraft.screen != null || minecraft.level == null)) {
+        if (heldOwner != null && (!down || minecraft.screen != null || minecraft.level == null || holdsTool(minecraft))) {
+            // (a tool taken up mid-hold lets go too: its clicks no longer reach the control, so nothing would keep it alive)
             releaseHeld(minecraft);
         } else if (heldOwner != null && !(aim(minecraft) && AIM.owner.getBlockPos().equals(heldOwner) && AIM.component.id() == heldId)) {
             // The crosshair slid off the held control (onto bare panel, another block or the sky) with the key still down: the
@@ -179,6 +180,11 @@ public final class PanelClientOperate {
             releaseHeld(minecraft);
         }
         useWasDown = down;
+    }
+
+    /** A panel tool (wrench, Networking Wrench, linker) in either hand: clicks and scrolls are the tool's, never the control's. */
+    private static boolean holdsTool(Minecraft minecraft) {
+        return minecraft.player != null && PanelOps.holdsTool(minecraft.player);
     }
 
     /** Sends RELEASE for the control held down and forgets it. */
