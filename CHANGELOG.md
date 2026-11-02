@@ -2,6 +2,17 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **The control desks (1 m and 2 m) are roomier: a back twice as tall and a top that overhangs the knee space** (CONTROL-PANELS.md,
+  *Control desks*; the owner's request). The riser and the shelf along the back now stand 0.35 above the top instead of 0.175 (the back is
+  1.10 up, reaching 0.10 into the block above like a fence), and the top reaches from 0.5 to 0.75 out over the knee space, with a thin lip at
+  its front edge, so the mounting grid is **16 x 10 cells instead of 16 x 6** (`PanelGeometry.DESK_FRONT`, `DESK_BACK_HEIGHT`, `DESK_ROWS`,
+  new `DESK_LIP` and `DESK_KNEE_TOP`). The knee front is still the owner's sloped line, now cut off by the underside of the overhang. Models
+  (block, both item models), the outline and collision shape and the grid are rebuilt for every facing by `build_desk.py`, which still checks
+  the owner's profile against his two files (`--verify-source`) and documents the two changes on top of it. The riser stays plain, not a
+  second mounting face: a panel block has one mounting grid. **Old saves:** the rows count from the riser, which did not move, so every part
+  on an existing desk stays on its cells and in its place, and the four new rows are in front of them (a new GameTest loads a 1 m and a 2 m
+  desk saved in the old form, another mounts parts on the new rows through the player path).
+
 - **The canal gate lift never reads a chunk that is still loading.** As the plug lift does since this release, `CanalGateLift` (its survey,
   its world-ready wait and its next-leg checks) asks `BlockScan.readable` (`getChunkNow`) instead of `isLoaded`, which is true while a chunk is
   still being read and lets the next block read finish the load on the server thread.

@@ -43,7 +43,7 @@ public record BoardTemplate(ResourceLocation id, String title, String descriptio
         BENCHBOARD("benchboard"),
         CONSOLE("console"),
         BACK_PANEL("back_panel"),
-        /** A run of 1 m control desks, one block each, one row (surface: face, 16 cells per block by 6 deep). */
+        /** A run of 1 m control desks, one block each, one row (surface: face, 16 cells per block by 10 deep). */
         DESK("desk"),
         /** A run of 2 m control desks: {@code columns} desks, two blocks each (the item places both halves). */
         DESK_WIDE("desk_wide");

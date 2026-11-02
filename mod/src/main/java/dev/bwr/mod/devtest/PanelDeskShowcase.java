@@ -114,10 +114,11 @@ final class PanelDeskShowcase {
             {"RECIRC A", "TRIP"}, {"RFP A", "TRIP"}, {"HPCS", "INITIATED"}, {"APRM", "UPSCALE"}, {"TURB", "TRIP"}};
 
     /**
-     * One 16 x 6 block of desk, filled: a row of annunciator windows, then dials, selectors, a key switch, lamps and
-     * buttons. {@code seam} 1 is the left block of a pair and puts a horizontal edgewise meter across the seam (6 columns,
-     * 2 rows, the last 4 columns on the block to the operator's right); {@code seam} 2 is that block, with lamps where its
-     * first dial would be.
+     * One 16 x 10 block of desk, filled: a row of annunciator windows, then dials, selectors, a key switch, lamps and
+     * buttons on the six rows the desk always had, and on the four rows of the overhang (6 to 9) a row of control switches,
+     * pushbuttons and their lamps. {@code seam} 1 is the left block of a pair and puts a horizontal edgewise meter across
+     * the seam (6 columns, 2 rows, the last 4 columns on the block to the operator's right); {@code seam} 2 is that block,
+     * with lamps where its first dial would be.
      */
     private static void loadBlock(ServerLevel level, BlockPos pos, int c, int seam) {
         for (int i = 0; i < 8; i++) {
@@ -156,6 +157,20 @@ final class PanelDeskShowcase {
         } else {
             lamp(level, pos, 14, 4, c + 1);
         }
+        // the overhang: four control switches (2 x 3, real size) and four pushbuttons with a lamp in front of each
+        for (int i = 0; i < 4; i++) {
+            sized(level, pos, i * 2, 6, ComponentTypes.CONTROL_SWITCH, 2, 3);
+            sized(level, pos, 8 + i * 2, 6, ComponentTypes.PUSHBUTTON, 2, 2);
+            lamp(level, pos, 8 + i * 2, 8, c + i);
+        }
+    }
+
+    private static void sized(ServerLevel level, BlockPos pos, int cx, int cy, ComponentType type, int w, int h) {
+        if (PanelOps.placeDirect(level, pos, cx, cy, type, Footprint.of(w, h)) == null) {
+            throw new AssertionError("Desk showcase: placement refused " + type.id() + " " + w + "x" + h + " at " + pos + " " + cx + "," + cy);
+        }
+        mounted++;
+        index++;
     }
 
     private static void lamp(ServerLevel level, BlockPos pos, int cx, int cy, int n) {

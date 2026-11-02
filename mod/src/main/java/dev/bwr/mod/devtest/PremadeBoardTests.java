@@ -154,16 +154,16 @@ public final class PremadeBoardTests {
     // ---- the shipped templates
 
     @GameTest(template = "empty")
-    public static void deskFramesAreOneRowSixCellsDeepAndCostTheDeskItems(GameTestHelper h) {
-        // the parser: a desk frame is a single row whose face is 16 cells per block by 6 deep
+    public static void deskFramesAreOneRowTenCellsDeepAndCostTheDeskItems(GameTestHelper h) {
+        // the parser: a desk frame is a single row whose face is 16 cells per block by 10 deep
         BoardTemplateParser.Result one = parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":4}],"
-                + "\"components\":[{\"on\":\"a.face\",\"type\":\"bwr:lamp\",\"size\":[2,2],\"at\":[62,4]}]}");
+                + "\"components\":[{\"on\":\"a.face\",\"type\":\"bwr:lamp\",\"size\":[2,2],\"at\":[62,8]}]}");
         check(h, one.ok(), "a desk with a lamp on its last cell: " + one.problems());
         BoardTemplate.Surface face = one.template().surface("a.face");
-        check(h, face.width() == 64 && face.height() == 6 && face.panelType() == dev.bwr.mod.panel.PanelType.DESK,
-                "a 4 desk face is 64 x 6 cells: " + face);
+        check(h, face.width() == 64 && face.height() == 10 && face.panelType() == dev.bwr.mod.panel.PanelType.DESK,
+                "a 4 desk face is 64 x 10 cells: " + face);
         check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":2}],\"components\":["
-                + "{\"on\":\"a.face\",\"type\":\"bwr:lamp\",\"size\":[2,2],\"at\":[4,5]}]}"), "not inside"), "the air in front of the desk takes nothing");
+                + "{\"on\":\"a.face\",\"type\":\"bwr:lamp\",\"size\":[2,2],\"at\":[4,9]}]}"), "not inside"), "the air in front of the desk takes nothing");
         check(h, mentions(parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk\",\"columns\":2,\"rows\":2}]}"), "one row"),
                 "a desk has one row");
         BoardTemplateParser.Result wide = parse("{\"format\":1,\"frames\":[{\"id\":\"a\",\"kind\":\"desk_wide\",\"columns\":2}]}");
