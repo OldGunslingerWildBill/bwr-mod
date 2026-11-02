@@ -28,11 +28,18 @@ public final class EdgewiseGaugeType extends ComponentType {
                         // real size: a 6 in GE Type 180 edgewise meter, 2.3 x 6.1 in
                         Footprint.of(1, 3),
                         // twice the real size, where a new item starts
-                        Footprint.of(2, 6))
+                        Footprint.of(2, 6),
+                        // alpha.60 size table: 3x8
+                        Footprint.of(3, 8))
                 : List.of(Footprint.of(16, 6), Footprint.of(24, 6), Footprint.of(24, 8), Footprint.of(32, 8),
                         Footprint.of(3, 1),
-                        Footprint.of(6, 2));
+                        Footprint.of(6, 2),
+                        // alpha.60 size table: 3x8 turned on its side
+                        Footprint.of(8, 3));
     }
+
+    /** Retired: the real size, 1x3 (3x1 turned on its side), index 4 on both lists. 2x6 / 6x2 stays and is where a new item starts. */
+    private static final java.util.Set<Integer> RETIRED = java.util.Set.of(4);
 
     public boolean vertical() {
         return vertical;
@@ -47,6 +54,18 @@ public final class EdgewiseGaugeType extends ComponentType {
     @Override
     public Footprint realDefaultFootprint() {
         return vertical ? Footprint.of(2, 6) : Footprint.of(6, 2);
+    }
+
+    /** Sizes added after the real sizes (the alpha.60 size table); see {@link ComponentType#appendedSizes()}. */
+    @Override
+    public int appendedSizes() {
+        return 1;
+    }
+
+    /** Retired sizes, by index into the list: still placeable from an old stack or a saved part, no longer offered ({@link Footprints}). */
+    @Override
+    public java.util.Set<Integer> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

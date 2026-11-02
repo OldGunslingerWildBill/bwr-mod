@@ -111,17 +111,20 @@ public final class ComponentItem extends Item {
         return current;
     }
 
-    /** The footprint indices this item offers, smallest to biggest (what the size picker lists): not the retired ones. */
+    /** The footprint indices this item offers, smallest to biggest (what the size picker lists); retired sizes are left out ({@link Footprints}). */
     public int[] sizes() {
-        return java.util.Arrays.stream(Footprints.offered(type())).filter(this::inVariants).toArray();
+        return java.util.Arrays.stream(Footprints.offered(type())).filter(this::allows).toArray();
     }
 
-    /** Whether this item may be set to footprint index {@code index}: not retired, and (a limited item, like a DX1000) one of its own. */
+    /**
+     * Whether this item may be set to footprint index {@code index}: not a retired size ({@link Footprints}), and for a
+     * limited item (a DX1000) only one of its own. Setting and cycling go through this; {@link #variant} does not, so a
+     * stack that already holds a retired index still places that size.
+     */
     private boolean allows(int index) {
-        return inVariants(index) && !Footprints.retired(type(), index);
-    }
-
-    private boolean inVariants(int index) {
+        if (Footprints.isRetired(type(), index)) {
+            return false;
+        }
         if (variants == null) {
             return true;
         }
@@ -167,7 +170,7 @@ public final class ComponentItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         ComponentType type = type();
-        if (type == null || type.footprints().size() < 2 || (variants != null && variants.length < 2)) {
+        if (type == null || sizes().length < 2) {
             return InteractionResultHolder.pass(stack);
         }
         if (!level.isClientSide()) {
@@ -182,7 +185,7 @@ public final class ComponentItem extends Item {
         if (footprint != null) {
             tooltip.add(Component.translatable("tooltip.bwr.panel.footprint", footprint.w(), footprint.h())
                     .withStyle(ChatFormatting.GRAY));
-            if (type().footprints().size() > 1 && (variants == null || variants.length > 1)) {
+            if (sizes().length > 1) {
                 tooltip.add(Component.translatable("tooltip.bwr.panel.footprint_hint", Component.keybind("key.bwr.size_picker")).withStyle(ChatFormatting.DARK_GRAY));
             }
         }

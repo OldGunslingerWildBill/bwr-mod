@@ -17,7 +17,7 @@ public final class ToggleSwitchType extends PanelInputType {
             Footprint.of(2, 2),
             // an intermediate size, where a new item starts
             Footprint.of(4, 4));
-    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 1));
+    private static final java.util.Set<Integer> RETIRED = Footprints.indices(FOOTPRINTS, Footprint.of(1, 1));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.color("Color", "component.bwr.field.lever_color"));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("state"));
@@ -39,7 +39,7 @@ public final class ToggleSwitchType extends PanelInputType {
 
     /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
     @Override
-    public java.util.Set<Footprint> retiredFootprints() {
+    public java.util.Set<Integer> retiredFootprints() {
         return RETIRED;
     }
 

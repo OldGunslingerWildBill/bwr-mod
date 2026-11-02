@@ -19,7 +19,7 @@ public final class KeySwitchType extends PanelInputType {
             Footprint.of(2, 4),
             // intermediate sizes; 3 x 4 is where a new item starts
             Footprint.of(3, 4), Footprint.of(4, 6));
-    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 2));
+    private static final java.util.Set<Integer> RETIRED = Footprints.indices(FOOTPRINTS, Footprint.of(1, 2));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(KeySwitchData.TYPE, List.of(
             ConfigField.bool("RequireKey", "component.bwr.field.require_key"),
             ConfigField.text("KeyCode", "component.bwr.field.key_code", KeySwitchData.MAX_CODE)));
@@ -42,7 +42,7 @@ public final class KeySwitchType extends PanelInputType {
 
     /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
     @Override
-    public java.util.Set<Footprint> retiredFootprints() {
+    public java.util.Set<Integer> retiredFootprints() {
         return RETIRED;
     }
 

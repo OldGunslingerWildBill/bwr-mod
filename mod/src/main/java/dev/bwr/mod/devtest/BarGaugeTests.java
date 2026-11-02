@@ -536,11 +536,13 @@ public final class BarGaugeTests {
     public static void theBarGaugeHasARealSizeAtTheEndOfItsList(GameTestHelper helper) {
         ComponentType type = ComponentTypes.BAR_GAUGE;
         List<Footprint> sizes = type.footprints();
-        helper.assertTrue(sizes.size() == 6 && type.realSizes() == 2, "four old sizes and two real ones: " + sizes);
+        helper.assertTrue(sizes.size() == 7 && type.realSizes() == 2 && type.appendedSizes() == 1,
+                "four old sizes, two real ones and the 4 x 16 of the alpha.60 size table: " + sizes);
         helper.assertTrue(sizes.subList(0, 4).equals(List.of(Footprint.of(10, 16), Footprint.of(8, 16), Footprint.of(12, 24),
                 Footprint.of(16, 32))), "the old sizes keep their indices: " + sizes);
-        helper.assertTrue(sizes.get(4).equals(Footprint.of(1, 3)) && sizes.get(5).equals(Footprint.of(2, 6)) && type.realDefaultIndex() == 5,
-                "the real size is 1 x 3, the default twice it, both last");
+        helper.assertTrue(sizes.get(4).equals(Footprint.of(1, 3)) && sizes.get(5).equals(Footprint.of(2, 6)) && type.realDefaultIndex() == 5
+                && sizes.get(6).equals(Footprint.of(4, 16)),
+                "the real size is 1 x 3 (retired), the default twice it, then the 4 x 16");
         helper.assertTrue(ComponentItem.footprint(new net.minecraft.world.item.ItemStack(BwrItems.BAR_GAUGE.get())).equals(Footprint.of(2, 6)),
                 "a new bar gauge item places the doubled real size");
         helper.assertTrue(type.designSide() == 8, "its caption is in proportion from the smallest big size (8 cells): " + type.designSide());

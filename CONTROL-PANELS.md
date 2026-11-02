@@ -79,7 +79,8 @@ maps, and Shift-click steps by 10 (or crafts a full batch) in the steppers and t
 ### Component sizes
 
 A panel block face is a 16 x 16 grid of cells (one cell is 1/16 block, 6.25 cm). **The instruments and controls
-start at twice their real size** (see "Real sizes" below); the older, bigger sizes are one click away. Right-click air
+start at twice their real size** (see "Real sizes" below), except where the size table below gives a new default (the pushbutton,
+lamp, annunciator window, annunciator control module and RPS trip, since alpha.60); the older, bigger sizes are one click away. Right-click air
 with the item (or sneak-click a panel) to cycle through the sizes **from the smallest to the biggest**, or
 **hold the size-picker key (Alt by default) and click** with the item in hand to open the size picker (see "Keys" below): a list of every size of that type with its size in
 cells, its real size in centimetres, an outline of the footprint and a marker on the current one; click a row to
@@ -88,26 +89,34 @@ blocks; the two core displays (below) are the exception and may span up to 8 x 8
 96 cells across.
 
 The table below lists the sizes in the order of the lists in the game files (the real sizes, which were added last,
-are at the end of each row and marked **real**); a new item starts at the first real size, an item you already
+are at the end of each row and marked **real**); a new item starts at the size marked **default**, an item you already
 hold with a size chosen keeps it, and a component already on a panel keeps the size it was placed at.
+
+**Retired sizes (alpha.60).** The buttons, lamps and indicators have a new size table. A size that is *retired* is no
+longer offered: it is left out of the size picker and out of right-click cycling (and the picker refuses it if a client
+asks for it), but it stays on the type's list, so an item stack that already holds it places that size, and a part already
+on a panel keeps its size, loads at it and drops an item with the same size. Retired sizes are in the table below in
+~~strikethrough~~ and **new** sizes (appended to the end of the lists) in bold. The mechanism is `Footprints` (one helper,
+`Footprints.offered(type)` is the list the picker and the cycle use) over each type's `retiredFootprints()`; the switches
+use the same one.
 
 | Component | Sizes (cells) |
 | --- | --- |
-| Pushbutton | 6x6, 8x8, **real** 1x1 |
+| Pushbutton | 6x6, 8x8, ~~1x1~~, ~~2x2~~, **new** 3x3, 4x4 (**default**) |
 | Toggle switch | 6x8, 8x10, 2x2, 4x4 (the default); retired 1x1 |
 | Key switch | 6x8, 8x10, 2x4, 3x4 (the default), 4x6; retired 1x2 |
 | Rotary selector | 8x10, 12x14 (the extra rows hold the position name), 2x4, 4x6 (the default), 6x8; retired 1x2, 2x3 |
 | Setpoint knob | 8x8, 12x12, 2x2, 4x4 (the default), 6x6; retired 1x1 |
 | Control switch | 8x12 (the default), 12x16, 6x9; retired 1x2, 2x3 |
 | Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits); **real** 1 cell wide per digit, 2 tall: 3x2 (3 digits), 1x2 to 8x2; **default** 6x4 (3 digits, 2 wide and 4 tall each) |
-| Lamp | 4x4, 6x6, **real** 1x1, **default** 2x2 |
-| Annunciator window | 12x8, 16x12, **real** 1x1, 2x2 (the 2x2 is the default) |
-| Annunciator control module | 24x6, **real** 2x1, 4x2 (the 4x2 is the default) |
-| Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells; **real** 1x3, 3x1, 1x6, 6x1 (two segments per cell), **default** 2x6 |
-| Round dial | 12x12, 16x16, 20x20, 24x24, 32x32, **real** 2x2, 3x3, **default** 4x4 |
-| Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32, **real** 1x3, **default** 2x6; horizontal 16x6, 24x6, 24x8, 32x8, **real** 3x1, **default** 6x2 |
-| Bar gauge | 10x16 (one block tall), 8x16, 12x24, 16x32, **real** 1x3, **default** 2x6 |
-| RPS trip assembly | 16x8, 24x12, 32x16, **real** 2x1, **default** 4x2 |
+| Lamp | 4x4, 6x6, ~~1x1~~, 2x2 (kept for packed indicator strips), **new** 3x3 (**default**) |
+| Annunciator window | 12x8, 16x12, ~~1x1~~, ~~2x2~~, **new** 8x6 (**default**), 8x8 |
+| Annunciator control module | 24x6, ~~2x1~~, ~~4x2~~, **new** 16x4, 32x8 (**default**) |
+| Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells; ~~1x3~~, ~~3x1~~, ~~1x6~~, ~~6x1~~, 2x6 (**default**), **new** 6x2 |
+| Round dial | 12x12, 16x16, 20x20, 24x24, 32x32, ~~2x2~~, ~~3x3~~, 4x4 (**default**), **new** 6x6, 8x8 |
+| Edgewise meter | vertical 6x16, 6x24, 8x24, 8x32, ~~1x3~~, 2x6 (**default**), **new** 3x8; horizontal 16x6, 24x6, 24x8, 32x8, ~~3x1~~, 6x2 (**default**), **new** 8x3 |
+| Bar gauge | 10x16 (one block tall), 8x16, 12x24, 16x32, ~~1x3~~, 2x6 (**default**), **new** 4x16 |
+| RPS trip assembly | 16x8, 24x12, 32x16, ~~2x1~~, ~~4x2~~, **new** 8x4, 12x6 (**default**) |
 | Push-to-turn switch | 8x8, 12x12, 16x16, 2x2, 4x4 (the default), 6x6; retired 1x1 |
 | Controller station (manual/auto) | 8x16, 12x24; the real tail, **twice real** first: 6x12 (new items start here), **real** 3x6, 4x8, **real** 2x4 |
 | Synchroscope | 12x16, 15x20, 20x26; **twice real** 6x8 (default), **real** 3x4, 4x6, **real** 2x3 |
@@ -117,7 +126,7 @@ hold with a size chosen keeps it, and a component already on a panel keeps the s
 | Plant computer (safety parameter display) | 64x48 (4 x 3 blocks, the default), 32x24, 32x32, 48x32, 48x48, 64x32, 64x64 |
 | Strip-chart recorder | 16x16, 24x16, 32x24 |
 | Paperless recorder | DX1000 16x16 (one block, the default), 12, 20, 24; DX2000 32x32 (2 x 2, twice a DX1000), 40, 48; all square |
-| 7- and 16-segment display | 5 cells wide per digit, 8 tall: 20x8 (4 digits), 1 to 12 digits; **real** 1 cell wide per digit, 2 tall: 4x2 (4 digits), 1x2 to 8x2; **default** 8x4 (4 digits, 2 wide and 4 tall each) |
+| 7- and 16-segment display | 5 cells wide per digit, 8 tall: 20x8 (4 digits), 1 to 12 digits; 2 cells wide per digit, 4 tall: 8x4 (4 digits, **default**); ~~1 cell wide per digit, 2 tall: 4x2 (4 digits), 1x2 to 8x2~~; **new** 6 tall (3 cells a digit): 9x6 (3 digits), 12x6, 18x6; **new** 4 tall: 6x4 (3 digits), 12x4 |
 | Character LCD | 3 cells wide per character, 4 tall per row: 48x8 (16 x 2), 1 to 4 rows of 8 to 20 characters |
 | Graphic display | 32x32 (2 x 2 blocks), 16x16, 48x48, 64x64 and rectangles; 2 pixels per cell |
 | Mimic line | 3 cells thick: 16x3, 8x3, 4x3, 3x3, 32x3, 64x3 and vertical; corners and tees 6x6 to 16x16 |
@@ -146,6 +155,11 @@ new default: toggle 4x4, key switch 3x4, rotary selector 4x6, setpoint knob 4x4,
 parts they no longer decide the default.
 
 #### Real sizes
+
+(This section is the history of the real sizes. Since alpha.60 the buttons, lamps and indicators follow the size table above: the
+exact real sizes of the pushbutton, lamp, annunciator window, annunciator control module, RPS trip, bar graph, dial, edgewise meter,
+bar gauge and the 2 tall segment display are retired, and the defaults of the pushbutton, lamp, annunciator window, control module and
+RPS trip are the new ones, not twice the real size.)
 
 A real control board about 4 m wide holds dozens of instruments, but with the sizes above only a few fit: each part
 was five to ten times its real size. The instruments and controls below now have a real size, rounded to whole cells
@@ -206,7 +220,7 @@ red one, and dim when off. The legend is up to **four lines** (Engraved line 1 t
 are saved only when used), each centred, one scale for all (`AnnunciatorLayout`). Not done: the row and column labels
 of the decorative header strip.
 
-**Annunciator control module** (`annunciator_control`, 2x1 real, 24x6 and 4x2 also): ACK, RESET, SILENCE and TEST
+**Annunciator control module** (`annunciator_control`; 24x6, 16x4 and 32x8, the default; 2x1 and 4x2 are retired): ACK, RESET, SILENCE and TEST
 pushbuttons in one part. Each output (`ack`, `reset`, `silence`, `test`) is 1 while held, like a pushbutton, and only
 one button is held at a time; the quarter of the face a click lands on picks the button. ACK and RESET do what a
 pushbutton with that role does (`AnnunciatorGroups`, once per press, for the module's **Annunciator group**), nothing

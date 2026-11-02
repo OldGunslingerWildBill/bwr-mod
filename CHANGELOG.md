@@ -11,6 +11,21 @@
   its width and height through a save and reload and drops an item with the same index; it is only no longer offered: the size picker (Left Alt)
   does not list it, right-clicking air does not cycle to it, and the picker's server side refuses it. New sizes are appended to the end of the
   lists, so no stored index moved. New GameTests in `SwitchSizeTests`; `RealScaleTests` and `JoystickTests` use the new defaults and skip retired sizes.
+- **New size table for the buttons, lamps and indicators** (CONTROL-PANELS.md, "Component sizes"). The tiny real sizes are **retired**
+  and a handful of better sizes are added, with new defaults. Pushbutton: 1x1 and 2x2 retired, 3x3 and 4x4 added, a new one is 4x4.
+  Lamp: 1x1 retired (2x2 stays for packed indicator strips), 3x3 added and the default. Annunciator window: 1x1 and 2x2 retired,
+  8x6 (default) and 8x8 added. Annunciator ACK / RESET / SILENCE module: 2x1 and 4x2 retired, 16x4 and 32x8 (default) added. RPS trip:
+  2x1 and 4x2 retired, 8x4 and 12x6 (default) added. Bar graph: the one-thick sizes (1x3, 3x1, 1x6, 6x1) retired, 6x2 added (2x6 stays
+  the default). Segment display: the 2 tall digit family retired, 6 tall (9x6, 12x6, 18x6) and 4 tall (6x4, 12x4) added, 8x4 stays the
+  default. Round dial: 2x2 and 3x3 retired, 6x6 and 8x8 added (4x4 default). Edgewise meter: 1x3 / 3x1 retired, 3x8 / 8x3 added.
+  Bar gauge: 1x3 retired, 4x16 added. A retired size is left out of the size picker (Left Alt) and out of right-click cycling, and the
+  picker's server side refuses it; it stays on the type's list, so **items you already hold, parts already on panels, premade boards
+  and saved worlds keep working at their size**. New sizes are appended, so no stored index moves. One shared helper, `Footprints`,
+  does the filtering (`Footprints.offered`), over a per-type `retiredFootprints()`. New tests: `IndicatorSizeTableTests` (the table,
+  the picker and the cycle skip retired sizes, an old stack with a retired index still places that size, a saved retired part loads
+  and keeps its size, the new sizes place and a new item starts at the new default); `RealScaleTests` and the size lines of
+  `AnnunciatorBoxTests`, `BarGaugeTests` and `GaugeScaleGuardTests` follow the new defaults and skip retired sizes. A new client-check
+  board, `indsizes-*`, shows the new sizes.
 - **The suppression pool and relief valve rumble is stronger and shakes fast** (RUMBLE.md). The ground shake (pool, SRV discharge, blasts)
   was a slow 0.9 to 3.2 Hz sway of up to 6 degrees; it is now a **10 to 14 Hz tremor** (10.5 Hz far away, 13 Hz beside the source: small
   positional jitter and under a degree of angle, from the same smooth gradient noise, never a random number per frame) over a reduced

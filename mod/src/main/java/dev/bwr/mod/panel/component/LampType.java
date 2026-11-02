@@ -14,8 +14,12 @@ public final class LampType extends ComponentType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(4, 4), Footprint.of(6, 6),
             // real size: a 30.5 mm indicating light
             Footprint.of(1, 1),
-            // twice the real light, where a new item starts
-            Footprint.of(2, 2));
+            // twice the real light, kept for packed indicator strips
+            Footprint.of(2, 2),
+            // alpha.60 size table: 3x3, where a new item starts
+            Footprint.of(3, 3));
+    /** Retired: the real size (1x1). */
+    private static final java.util.Set<Integer> RETIRED = java.util.Set.of(2);
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(LampData.TYPE, List.of(
             ConfigField.color("Color", "component.bwr.field.color"),
             ConfigField.choice("Flash", "component.bwr.field.flash", LampData.FLASH_MODES)));
@@ -30,10 +34,22 @@ public final class LampType extends ComponentType {
         return 2;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 3x3 (alpha.60 size table). */
     @Override
     public Footprint realDefaultFootprint() {
-        return Footprint.of(2, 2);
+        return Footprint.of(3, 3);
+    }
+
+    /** Sizes added after the real sizes (the alpha.60 size table); see {@link ComponentType#appendedSizes()}. */
+    @Override
+    public int appendedSizes() {
+        return 1;
+    }
+
+    /** Retired sizes, by index into {@link #FOOTPRINTS}: still placeable from an old stack or a saved part, no longer offered ({@link Footprints}). */
+    @Override
+    public java.util.Set<Integer> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

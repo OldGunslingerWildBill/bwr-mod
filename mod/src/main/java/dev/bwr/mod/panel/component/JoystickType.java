@@ -26,7 +26,7 @@ public final class JoystickType extends PanelInputType {
             // 6 cm) is 1 x 1, so 2 x 2 is its double; a 4 in one is 2 x 2, doubled 4 x 4. The 1 x 1 and the 2 x 2 are retired;
             // the 6 x 6 is an intermediate size and where a new item starts.
             Footprint.of(2, 2), Footprint.of(1, 1), Footprint.of(4, 4), Footprint.of(6, 6));
-    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 1), Footprint.of(2, 2));
+    private static final java.util.Set<Integer> RETIRED = Footprints.indices(FOOTPRINTS, Footprint.of(1, 1), Footprint.of(2, 2));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.bool("Spring", "component.bwr.field.joystick_spring"),
             ConfigField.text("LegendUp", "component.bwr.field.legend_up", JoystickData.MAX_LEGEND),
@@ -56,7 +56,7 @@ public final class JoystickType extends PanelInputType {
 
     /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
     @Override
-    public java.util.Set<Footprint> retiredFootprints() {
+    public java.util.Set<Integer> retiredFootprints() {
         return RETIRED;
     }
 

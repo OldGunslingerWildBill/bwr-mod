@@ -27,7 +27,7 @@ public final class ControlSwitchType extends PanelInputType {
             Footprint.of(1, 2), Footprint.of(2, 3),
             // an intermediate size
             Footprint.of(6, 9));
-    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 2), Footprint.of(2, 3));
+    private static final java.util.Set<Integer> RETIRED = Footprints.indices(FOOTPRINTS, Footprint.of(1, 2), Footprint.of(2, 3));
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(ControlSwitchData.TYPE, List.of(
             ConfigField.bool("Spring", "component.bwr.field.spring"),
             ConfigField.text("CloseText", "component.bwr.field.close_text", ControlSwitchData.MAX_TEXT),
@@ -60,7 +60,7 @@ public final class ControlSwitchType extends PanelInputType {
 
     /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
     @Override
-    public java.util.Set<Footprint> retiredFootprints() {
+    public java.util.Set<Integer> retiredFootprints() {
         return RETIRED;
     }
 

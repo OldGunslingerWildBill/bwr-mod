@@ -513,7 +513,7 @@ public final class GaugeScaleGuardTests {
     static List<String> captionFailures(Probe probe) {
         List<String> failures = new ArrayList<>();
         ComponentType type = probe.type();
-        int firstReal = type.footprints().size() - type.realSizes();
+        int firstReal = type.firstRealIndex();
         for (Footprint size : sizes(probe)) {
             boolean real = type.footprints().indexOf(size) >= firstReal && type.realSizes() > 0;
             float factor = GaugeScale.captionFactor(size.w(), size.h(), type.designSide());

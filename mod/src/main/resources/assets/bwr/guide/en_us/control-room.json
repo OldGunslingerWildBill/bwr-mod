@@ -60,7 +60,7 @@
     {
       "title": "Real-size parts and the size picker",
       "text": [
-        "Most instruments start at twice real size so they are easy to read. Exact real size is one pick away. Right-click the air with a part item to cycle through its sizes, smallest to biggest, or hold the size-picker key (Alt by default; Options > Controls > Realistic BWR) and click with the item in hand to open the size picker: a list of every size in cells and centimetres, with an outline of the footprint and a marker on the current one. Click a row to choose it.",
+        "Every part starts at a size that is easy to read and use. Right-click the air with a part item to cycle through its sizes, smallest to biggest, or hold the size-picker key (Alt by default; Options > Controls > Realistic BWR) and click with the item in hand to open the size picker: a list of every size in cells and centimetres, with an outline of the footprint and a marker on the current one. Click a row to choose it.",
         "",
         "One cell is 1/16 of a block (6.25 cm). A part already on a panel keeps its size, so pick the size before you place it."
       ],

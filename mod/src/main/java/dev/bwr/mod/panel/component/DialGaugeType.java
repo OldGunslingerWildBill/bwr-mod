@@ -18,7 +18,11 @@ public final class DialGaugeType extends ComponentType {
             // real sizes: a 4-1/4 in and a 6 in switchboard meter
             Footprint.of(2, 2), Footprint.of(3, 3),
             // twice the real 4-1/4 in meter, where a new item starts
-            Footprint.of(4, 4));
+            Footprint.of(4, 4),
+            // alpha.60 size table: 6x6 and 8x8
+            Footprint.of(6, 6), Footprint.of(8, 8));
+    /** Retired: the real sizes 2x2 and 3x3 (4x4 stays, and is where a new item starts). */
+    private static final java.util.Set<Integer> RETIRED = java.util.Set.of(5, 6);
     private static final List<ConfigField> SCHEMA = GaugeData.schema(ID_PATH);
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("value"));
 
@@ -31,10 +35,22 @@ public final class DialGaugeType extends ComponentType {
         return 3;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 4x4 (unchanged). */
     @Override
     public Footprint realDefaultFootprint() {
         return Footprint.of(4, 4);
+    }
+
+    /** Sizes added after the real sizes (the alpha.60 size table); see {@link ComponentType#appendedSizes()}. */
+    @Override
+    public int appendedSizes() {
+        return 2;
+    }
+
+    /** Retired sizes, by index into {@link #FOOTPRINTS}: still placeable from an old stack or a saved part, no longer offered ({@link Footprints}). */
+    @Override
+    public java.util.Set<Integer> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

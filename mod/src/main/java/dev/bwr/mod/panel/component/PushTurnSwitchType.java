@@ -32,7 +32,7 @@ public final class PushTurnSwitchType extends PanelInputType {
             Footprint.of(2, 2),
             // intermediate sizes; 4 x 4 is where a new item starts
             Footprint.of(4, 4), Footprint.of(6, 6));
-    private static final java.util.Set<Footprint> RETIRED = java.util.Set.of(Footprint.of(1, 1));
+    private static final java.util.Set<Integer> RETIRED = Footprints.indices(FOOTPRINTS, Footprint.of(1, 1));
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.bool("Spring", "component.bwr.field.spring_return"),
             ConfigField.text("Legend1", "component.bwr.field.legend_1", PushTurnData.MAX_LEGEND),
@@ -56,7 +56,7 @@ public final class PushTurnSwitchType extends PanelInputType {
 
     /** Retired sizes stay on the list (stored indices and saved panels keep their size) but are not offered: {@link Footprints}. */
     @Override
-    public java.util.Set<Footprint> retiredFootprints() {
+    public java.util.Set<Integer> retiredFootprints() {
         return RETIRED;
     }
 

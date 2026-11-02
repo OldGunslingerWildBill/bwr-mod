@@ -103,7 +103,7 @@ public final class SwitchSizeTests {
             Set<Footprint> expected = new HashSet<>(row.kept());
             expected.addAll(row.added());
             h.assertTrue(offered.equals(expected), name + " offers " + offered + ", expected " + expected);
-            h.assertTrue(row.type().retiredFootprints().equals(new HashSet<>(row.retired())),
+            h.assertTrue(row.type().retiredFootprints().equals(Footprints.indices(row.type().footprints(), row.retired().toArray(new Footprint[0]))),
                     name + " retires " + row.type().retiredFootprints() + ", expected " + row.retired());
         }
         h.succeed();
@@ -226,7 +226,7 @@ public final class SwitchSizeTests {
                 for (Footprint size : row.added()) {
                     ItemStack stack = stackAt(type, size);
                     h.assertTrue(ComponentItem.footprint(stack).equals(size) && Footprints.offered(type).length > 0
-                            && !Footprints.retired(type, type.footprints().indexOf(size)), type.id() + ": " + size + " is not on offer");
+                            && !Footprints.isRetired(type, type.footprints().indexOf(size)), type.id() + ": " + size + " is not on offer");
                     s.player.setItemInHand(InteractionHand.MAIN_HAND, stack);
                     h.assertTrue(PanelOps.place(s.player, InteractionHand.MAIN_HAND, s.origin, 0, 0) == PanelGroup.Result.OK,
                             "placing a " + type.id() + " at " + size);
@@ -270,7 +270,7 @@ public final class SwitchSizeTests {
             String name = type.id().getPath();
             h.assertTrue(row.type().footprints().get(type.realDefaultIndex()).equals(row.start()), name + ": the default index is "
                     + type.footprints().get(type.realDefaultIndex()) + ", not " + row.start());
-            h.assertTrue(!Footprints.retired(type, type.realDefaultIndex()), name + ": the default is a retired size");
+            h.assertTrue(!Footprints.isRetired(type, type.realDefaultIndex()), name + ": the default is a retired size");
             // A bare stack, the creative tab's entry, and what the fabrication desk (or, for the joystick, the crafting grid) makes.
             h.assertTrue(ComponentItem.footprint(new ItemStack(type.item())).equals(row.start()), name + ": a bare stack is not " + row.start());
             h.assertTrue(ComponentItem.footprint(type.item().getDefaultInstance()).equals(row.start()), name + ": the creative entry is not " + row.start());

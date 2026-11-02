@@ -18,8 +18,12 @@ import java.util.List;
  */
 public final class AnnunciatorType extends ComponentType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(12, 8), Footprint.of(16, 12),
-            // real sizes: one window tile, 2.8125 x 2.625 in, and a double size one
-            Footprint.of(1, 1), Footprint.of(2, 2));
+            // real sizes: one window tile, 2.8125 x 2.625 in, and a double size one (both retired)
+            Footprint.of(1, 1), Footprint.of(2, 2),
+            // alpha.60 size table: 8x6, where a new item starts, and 8x8
+            Footprint.of(8, 6), Footprint.of(8, 8));
+    /** Retired: 1x1 and 2x2. */
+    private static final java.util.Set<Integer> RETIRED = java.util.Set.of(2, 3);
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.text("Line1", "component.bwr.field.line1", AnnunciatorData.MAX_TEXT),
             ConfigField.text("Line2", "component.bwr.field.line2", AnnunciatorData.MAX_TEXT),
@@ -41,10 +45,22 @@ public final class AnnunciatorType extends ComponentType {
         return 2;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 8x6 (alpha.60 size table). */
     @Override
     public Footprint realDefaultFootprint() {
-        return Footprint.of(2, 2);
+        return Footprint.of(8, 6);
+    }
+
+    /** Sizes added after the real sizes (the alpha.60 size table); see {@link ComponentType#appendedSizes()}. */
+    @Override
+    public int appendedSizes() {
+        return 2;
+    }
+
+    /** Retired sizes, by index into {@link #FOOTPRINTS}: still placeable from an old stack or a saved part, no longer offered ({@link Footprints}). */
+    @Override
+    public java.util.Set<Integer> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

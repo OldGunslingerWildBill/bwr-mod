@@ -102,7 +102,7 @@ final class PanelRealScaleShowcase {
 
     /** A component at the size a new item of its type starts at (twice its real size). */
     private static PanelComponent real(ServerLevel level, BlockPos pos, int cx, int cy, ComponentType type) {
-        Footprint size = type.footprints().get(type.realDefaultIndex());
+        Footprint size = ShowcaseSizes.layoutSize(type);
         return put(level, pos, cx, cy, type, size.w(), size.h());
     }
 
