@@ -86,7 +86,7 @@ final class PanelAngledShowcase {
             {"GEN", "LOCKOUT"}, {"ROD", "DRIFT"}, {"CRD", "ACCUM LOW"}, {"SCRAM", "RESET"}};
 
     private static PanelComponent real(ServerLevel level, BlockPos pos, int cx, int cy, ComponentType type) {
-        Footprint size = type.footprints().get(type.realDefaultIndex());
+        Footprint size = ShowcaseSizes.layoutSize(type);
         PanelComponent component = PanelOps.placeDirect(level, pos, cx, cy, type, size);
         if (component == null) {
             throw new AssertionError("Angled showcase: placement refused " + type.id() + " " + size.w() + "x" + size.h() + " at "
@@ -122,7 +122,7 @@ final class PanelAngledShowcase {
     private static int dials(ServerLevel level, BlockPos pos, int pitch, int rows, int columns, int firstX, int firstY) {
         int placed = 0;
         ComponentType type = ComponentTypes.DIAL_GAUGE;
-        Footprint size = type.footprints().get(type.realDefaultIndex());
+        Footprint size = ShowcaseSizes.layoutSize(type);
         for (int row = 0; row < rows; row++) {
             for (int column = 0; column < columns; column++) {
                 PanelComponent dial = PanelOps.placeDirect(level, pos, firstX + column * pitch, firstY + row * pitch, type, size);

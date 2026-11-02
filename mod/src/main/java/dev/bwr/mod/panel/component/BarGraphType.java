@@ -19,7 +19,11 @@ public final class BarGraphType extends ComponentType {
             // real sizes: an LED bar column or row, one cell thick (estimate)
             Footprint.of(1, 3), Footprint.of(3, 1), Footprint.of(1, 6), Footprint.of(6, 1),
             // twice the real size (an LED bar column), where a new item starts
-            Footprint.of(2, 6));
+            Footprint.of(2, 6),
+            // alpha.60 size table: the horizontal 6x2
+            Footprint.of(6, 2));
+    /** Retired: the four one-thick sizes, 1x3, 3x1, 1x6 and 6x1. */
+    private static final java.util.Set<Integer> RETIRED = java.util.Set.of(8, 9, 10, 11);
     private static final List<ConfigField> SCHEMA = java.util.stream.Stream.concat(java.util.stream.Stream.of(
             ConfigField.decimal("Min", "component.bwr.field.min", -BarGraphData.LIMIT, BarGraphData.LIMIT),
             ConfigField.decimal("Max", "component.bwr.field.max", -BarGraphData.LIMIT, BarGraphData.LIMIT),
@@ -38,10 +42,22 @@ public final class BarGraphType extends ComponentType {
         return 5;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 2x6 (unchanged). */
     @Override
     public Footprint realDefaultFootprint() {
         return Footprint.of(2, 6);
+    }
+
+    /** Sizes added after the real sizes (the alpha.60 size table); see {@link ComponentType#appendedSizes()}. */
+    @Override
+    public int appendedSizes() {
+        return 1;
+    }
+
+    /** Retired sizes, by index into {@link #FOOTPRINTS}: still placeable from an old stack or a saved part, no longer offered ({@link Footprints}). */
+    @Override
+    public java.util.Set<Integer> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

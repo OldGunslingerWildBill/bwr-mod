@@ -17,13 +17,23 @@ public final class SegmentDisplayType extends ComponentType {
     public static final int DIGIT_W = 5;
     public static final int DIGIT_H = 8;
     private static final int[] DIGIT_COUNTS = {4, 1, 2, 3, 5, 6, 8, 10, 12};
-    /** A real size display (shorter than one big digit) is one cell wide and two tall per digit. */
+    /** A real size display (shorter than one big digit) is one cell wide and two tall per digit (the 2 tall family is retired since alpha.60; 4 and 6 tall displays use the same rule). */
     public static final int COMPACT_DIGIT_W = 1;
     public static final int COMPACT_DIGIT_H = 2;
     /** Digits of the real size displays, the first being where a new item starts: a 4 digit panel meter window. */
     private static final int[] COMPACT_DIGIT_COUNTS = {4, 1, 2, 3, 6, 8};
     /** Twice the real size, where a new item starts: 4 digits, each 2 cells wide and 4 tall. */
     private static final Footprint DOUBLE_DEFAULT = Footprint.of(4 * 2 * COMPACT_DIGIT_W, 2 * COMPACT_DIGIT_H);
+    /**
+     * Added in the alpha.60 size table, after the real sizes: digits are half as wide as they are tall, so a 6 tall
+     * display has 3 wide digits (3, 4 and 6 of them) and a 4 tall one 2 wide digits (3 and 6 of them).
+     */
+    private static final Footprint[] ADDED = {Footprint.of(9, 6), Footprint.of(12, 6), Footprint.of(18, 6),
+            Footprint.of(6, 4), Footprint.of(12, 4)};
+    /** Retired: the 2 tall digit family, the compact entries of the list (the 8x4 that follows them stays). */
+    private static final java.util.Set<Integer> RETIRED = java.util.stream.IntStream
+            .range(DIGIT_COUNTS.length, DIGIT_COUNTS.length + COMPACT_DIGIT_COUNTS.length).boxed()
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
     private static final List<ConfigField> SCHEMA = SegmentDisplayData.schema();
     private static final List<PortSpec> INPUTS = List.of(
             PortSpec.of("v0"), PortSpec.of("v1"), PortSpec.of("v2"), PortSpec.of("v3"));
@@ -42,6 +52,7 @@ public final class SegmentDisplayType extends ComponentType {
             list.add(Footprint.of(digits * COMPACT_DIGIT_W, COMPACT_DIGIT_H));
         }
         list.add(DOUBLE_DEFAULT);
+        list.addAll(List.of(ADDED));
         this.footprints = List.copyOf(list);
     }
 
@@ -59,10 +70,22 @@ public final class SegmentDisplayType extends ComponentType {
         return COMPACT_DIGIT_COUNTS.length + 1;
     }
 
-    /** A new item starts at twice the real size, in each dimension. */
+    /** A new item starts at twice the real size, in each dimension: 8x4 (unchanged by the alpha.60 size table). */
     @Override
     public Footprint realDefaultFootprint() {
         return DOUBLE_DEFAULT;
+    }
+
+    /** The sizes added after the real ones (the alpha.60 size table); see {@link ComponentType#appendedSizes()}. */
+    @Override
+    public int appendedSizes() {
+        return ADDED.length;
+    }
+
+    /** The 2 tall digit family is retired: still on the list, no longer offered ({@link Footprints}). */
+    @Override
+    public java.util.Set<Integer> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

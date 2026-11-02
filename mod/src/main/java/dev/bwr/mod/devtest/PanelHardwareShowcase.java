@@ -79,7 +79,7 @@ final class PanelHardwareShowcase {
     }
 
     private static PanelComponent defaultSize(ServerLevel level, BlockPos pos, int x, int y, ComponentType type) {
-        return put(level, pos, x, y, type, type.footprints().get(type.realDefaultIndex()));
+        return put(level, pos, x, y, type, ShowcaseSizes.layoutSize(type));
     }
 
     private static void bind(ServerLevel level, BlockPos pos, PanelComponent component, int input, double value) {

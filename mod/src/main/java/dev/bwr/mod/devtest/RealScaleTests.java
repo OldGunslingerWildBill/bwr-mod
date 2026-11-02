@@ -9,6 +9,7 @@ import dev.bwr.mod.panel.component.ComponentItem;
 import dev.bwr.mod.panel.component.ComponentType;
 import dev.bwr.mod.panel.component.ComponentTypes;
 import dev.bwr.mod.panel.component.Footprint;
+import dev.bwr.mod.panel.component.Footprints;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.net.PanelNetwork;
 import dev.bwr.mod.panel.net.PanelPayloads;
@@ -73,6 +74,15 @@ public final class RealScaleTests {
             // The owner's bar gauge, real size since the gauge polish (its layout tests are relative to the case).
             legacy(ComponentTypes.BAR_GAUGE, 10, 16, 8, 16, 12, 24, 16, 32));
 
+    /**
+     * The new defaults of the alpha.60 size table (the indicator types), where they are no longer twice the real size. The
+     * other indicator types keep twice the real size as their default.
+     */
+    private static final java.util.Map<ComponentType, Footprint> TABLE_DEFAULTS = java.util.Map.of(
+            ComponentTypes.PUSHBUTTON, Footprint.of(4, 4), ComponentTypes.LAMP, Footprint.of(3, 3),
+            ComponentTypes.ANNUNCIATOR, Footprint.of(8, 6), ComponentTypes.ANNUNCIATOR_CONTROL, Footprint.of(32, 8),
+            ComponentTypes.RPS_TRIP, Footprint.of(12, 6));
+
     private static Object[] legacy(ComponentType type, int... sizes) {
         List<Footprint> list = new ArrayList<>();
         for (int i = 0; i < sizes.length; i += 2) {
@@ -107,8 +117,8 @@ public final class RealScaleTests {
             List<Footprint> sizes = type.footprints();
             String name = type.id().getPath();
             h.assertTrue(type.realSizes() > 0, name + " has no real size");
-            h.assertTrue(sizes.size() == old.size() + type.realSizes(), name + ": the real sizes are the whole tail of the list ("
-                    + sizes + ")");
+            h.assertTrue(sizes.size() == old.size() + type.realSizes() + type.appendedSizes(), name + ": the real sizes are the tail of the list, "
+                    + "except for the sizes appended after them (" + sizes + ")");
             for (int i = 0; i < old.size(); i++) {
                 h.assertTrue(sizes.get(i).equals(old.get(i)), name + ": index " + i + " moved from " + old.get(i) + " to " + sizes.get(i));
             }
@@ -116,6 +126,10 @@ public final class RealScaleTests {
             for (int i = old.size(); i < sizes.size(); i++) {
                 Footprint f = sizes.get(i);
                 h.assertTrue(f.w() >= 1 && f.h() >= 1 && f.w() <= limit && f.h() <= limit, name + ": " + f + " is outside the limits");
+                h.assertTrue(!old.contains(f), name + ": " + f + " repeats an old size");
+                if (i >= type.firstRealIndex() + type.realSizes()) {
+                    continue; // appended after the real sizes (the alpha.60 size table): sizes of their own, not real ones
+                }
                 // A real size is a lot smaller than the old default (the long displays and bar graphs are thin).
                 h.assertTrue(f.w() * f.h() < old.get(0).w() * old.get(0).h() || f.w() * f.h() <= 12,
                         name + ": the real size " + f + " is not smaller than the old default " + old.get(0));
@@ -124,8 +138,8 @@ public final class RealScaleTests {
             // A new item starts at twice the first real size in each dimension (owner's decision, gauge polish); the exact
             // real size stays on the list, right after the old sizes.
             // The control switch is the owner's exception: it starts at its first size, 8x12 (index 0).
-            Footprint firstReal = sizes.get(old.size());
-            Footprint start = type == ComponentTypes.CONTROL_SWITCH ? Footprint.of(8, 12) : Footprint.of(2 * firstReal.w(), 2 * firstReal.h());
+            Footprint firstReal = sizes.get(type.firstRealIndex());
+            Footprint start = type == ComponentTypes.CONTROL_SWITCH ? Footprint.of(8, 12) : TABLE_DEFAULTS.getOrDefault(type, Footprint.of(2 * firstReal.w(), 2 * firstReal.h()));
             h.assertTrue(sizes.get(type.realDefaultIndex()).equals(start) && (type == ComponentTypes.CONTROL_SWITCH
                             ? type.realDefaultIndex() == 0 : type.realDefaultIndex() >= old.size()),
                     name + ": a new item starts at " + start + ", not at " + sizes.get(type.realDefaultIndex()));
@@ -149,7 +163,7 @@ public final class RealScaleTests {
             FakePlayer player = player(h, "cycle");
             ItemStack stack = new ItemStack(item);
             java.util.Set<Footprint> seen = new java.util.HashSet<>();
-            int[] order = type.sizeOrder();
+            int[] order = Footprints.offered(type); // retired sizes are not cycled to
             // Walk to the smallest size first: cycling from the default may begin mid-list.
             for (int i = 0; i < order.length; i++) {
                 if (ComponentItem.footprint(stack).equals(type.footprints().get(order[0]))) {
@@ -166,7 +180,11 @@ public final class RealScaleTests {
                 seen.add(f);
                 ComponentItem.cycle(stack, player);
             }
-            h.assertTrue(seen.size() == new java.util.HashSet<>(type.footprints()).size(), type.id() + ": cycling missed a size: " + seen);
+            java.util.Set<Footprint> offered = new java.util.HashSet<>();
+            for (int index : order) {
+                offered.add(type.footprints().get(index));
+            }
+            h.assertTrue(seen.equals(offered), type.id() + ": cycling missed a size or reached a retired one: " + seen);
             h.assertTrue(ComponentItem.footprint(stack).equals(type.footprints().get(order[0])), type.id() + ": cycling does not wrap to the smallest");
             for (Object[] row : LEGACY) {
                 if (row[0] == type) {
@@ -283,9 +301,9 @@ public final class RealScaleTests {
         Object[][] expected = {
                 {ComponentTypes.DIAL_GAUGE, Footprint.of(4, 4), Footprint.of(2, 2)},
                 {ComponentTypes.CONTROL_SWITCH, Footprint.of(8, 12), Footprint.of(1, 2)},
-                {ComponentTypes.LAMP, Footprint.of(2, 2), Footprint.of(1, 1)},
-                {ComponentTypes.ANNUNCIATOR, Footprint.of(2, 2), Footprint.of(1, 1)},
-                {ComponentTypes.ANNUNCIATOR_CONTROL, Footprint.of(4, 2), Footprint.of(2, 1)},
+                {ComponentTypes.LAMP, Footprint.of(3, 3), Footprint.of(1, 1)},
+                {ComponentTypes.ANNUNCIATOR, Footprint.of(8, 6), Footprint.of(1, 1)},
+                {ComponentTypes.ANNUNCIATOR_CONTROL, Footprint.of(32, 8), Footprint.of(2, 1)},
                 {ComponentTypes.BAR_GAUGE, Footprint.of(2, 6), Footprint.of(1, 3)},
                 {ComponentTypes.BAR_GRAPH, Footprint.of(2, 6), Footprint.of(1, 3)},
                 {ComponentTypes.EDGEWISE_GAUGE_VERTICAL, Footprint.of(2, 6), Footprint.of(1, 3)},
@@ -297,9 +315,9 @@ public final class RealScaleTests {
                 {ComponentTypes.ROTARY_SELECTOR, Footprint.of(2, 4), Footprint.of(1, 2)},
                 {ComponentTypes.SETPOINT_KNOB, Footprint.of(2, 2), Footprint.of(1, 1)},
                 {ComponentTypes.TOGGLE_SWITCH, Footprint.of(2, 2), Footprint.of(1, 1)},
-                {ComponentTypes.PUSHBUTTON, Footprint.of(2, 2), Footprint.of(1, 1)},
+                {ComponentTypes.PUSHBUTTON, Footprint.of(4, 4), Footprint.of(1, 1)},
                 {ComponentTypes.PUSH_TURN_SWITCH, Footprint.of(2, 2), Footprint.of(1, 1)},
-                {ComponentTypes.RPS_TRIP, Footprint.of(4, 2), Footprint.of(2, 1)}};
+                {ComponentTypes.RPS_TRIP, Footprint.of(12, 6), Footprint.of(2, 1)}};
         for (Object[] row : expected) {
             ComponentType type = (ComponentType) row[0];
             Footprint twice = (Footprint) row[1];
@@ -412,12 +430,14 @@ public final class RealScaleTests {
         for (ComponentType type : inScope()) {
             int[] order = type.sizeOrder();
             h.assertTrue(order.length == type.footprints().size(), type.id() + ": the order lists every size once");
+            int[] offered = Footprints.offered(type);
             for (int i = 1; i < order.length; i++) {
                 Footprint a = type.footprints().get(order[i - 1]);
                 Footprint b = type.footprints().get(order[i]);
                 h.assertTrue(a.w() * a.h() <= b.w() * b.h(), type.id() + ": " + a + " is listed before " + b);
             }
-            h.assertTrue(((ComponentItem) type.item()).sizes().length == order.length, type.id() + ": its item offers every size");
+            h.assertTrue(((ComponentItem) type.item()).sizes().length == offered.length
+                    && offered.length == order.length - type.retiredFootprints().size(), type.id() + ": its item offers every size but the retired ones");
         }
         ComponentItem dx1000 = (ComponentItem) BwrItems.PAPERLESS_RECORDER.get();
         h.assertTrue(dx1000.sizes().length == 1 && dx1000.sizes()[0] == 0, "a DX1000 offers its one size");

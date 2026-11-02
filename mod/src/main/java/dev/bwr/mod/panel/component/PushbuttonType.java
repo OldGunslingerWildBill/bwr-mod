@@ -14,8 +14,12 @@ public final class PushbuttonType extends PanelInputType {
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(6, 6), Footprint.of(8, 8),
             // real size: a 30.5 mm oiltight pushbutton
             Footprint.of(1, 1),
-            // twice the real button, where a new item starts
-            Footprint.of(2, 2));
+            // twice the real button, the old default
+            Footprint.of(2, 2),
+            // alpha.60 size table: 3x3, and 4x4 where a new item starts
+            Footprint.of(3, 3), Footprint.of(4, 4));
+    /** Retired: the real size (1x1) and twice it (2x2). */
+    private static final java.util.Set<Integer> RETIRED = java.util.Set.of(2, 3);
     private static final List<ConfigField> SCHEMA = PanelStyles.withLook(PushbuttonData.TYPE, List.of(
             ConfigField.color("Color", "component.bwr.field.cap_color"),
             ConfigField.choice("Role", "component.bwr.field.role", PushbuttonData.ROLES),
@@ -31,10 +35,22 @@ public final class PushbuttonType extends PanelInputType {
         return 2;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 4x4 (alpha.60 size table). */
     @Override
     public Footprint realDefaultFootprint() {
-        return Footprint.of(2, 2);
+        return Footprint.of(4, 4);
+    }
+
+    /** Sizes added after the real sizes (the alpha.60 size table); see {@link ComponentType#appendedSizes()}. */
+    @Override
+    public int appendedSizes() {
+        return 2;
+    }
+
+    /** Retired sizes, by index into {@link #FOOTPRINTS}: still placeable from an old stack or a saved part, no longer offered ({@link Footprints}). */
+    @Override
+    public java.util.Set<Integer> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override

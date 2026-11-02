@@ -13,6 +13,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * A kind of panel component: the single object that defines everything common
@@ -98,13 +99,35 @@ public abstract class ComponentType {
     }
 
     /**
+     * How many sizes were appended to the list after the real sizes (sizes added later, for example the alpha.60 size
+     * table). The real sizes are then the {@link #realSizes()} entries before them rather than the very last ones. 0 for
+     * a type whose list still ends with its real sizes.
+     */
+    public int appendedSizes() {
+        return 0;
+    }
+
+    /** The index of the first real size on the list: the real sizes are the {@link #realSizes()} entries before the appended ones. */
+    public final int firstRealIndex() {
+        return footprints().size() - appendedSizes() - realSizes();
+    }
+
+    /**
+     * The footprint indices that are retired: still on the list (so a stack holding the index still places that size and a
+     * placed component keeps it) but no longer offered by the size picker or by cycling, see {@link Footprints}. None by default.
+     */
+    public Set<Integer> retiredFootprints() {
+        return Set.of();
+    }
+
+    /**
      * The size a new item of this type starts at when it has real sizes, else null: twice the real size of the part in
      * each dimension (the real sizes themselves stay on the list, to cycle to or pick). A type with real sizes overrides
      * this with its doubled size, which is on its list; the default is the first of the real sizes.
      */
     public Footprint realDefaultFootprint() {
         int real = realSizes();
-        return real <= 0 ? null : footprints().get(footprints().size() - real);
+        return real <= 0 ? null : footprints().get(firstRealIndex());
     }
 
     /** The index a new item of this type starts at when it has real sizes, else -1. */
@@ -120,7 +143,7 @@ public abstract class ComponentType {
     public final int designSide() {
         List<Footprint> list = footprints();
         int side = Integer.MAX_VALUE;
-        for (int i = 0; i < list.size() - realSizes(); i++) {
+        for (int i = 0; i < firstRealIndex(); i++) {
             side = Math.min(side, Math.min(list.get(i).w(), list.get(i).h()));
         }
         return side == Integer.MAX_VALUE ? 1 : side;

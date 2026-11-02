@@ -94,7 +94,7 @@ final class PanelDeskShowcase {
     }
 
     private static PanelComponent real(ServerLevel level, BlockPos pos, int cx, int cy, ComponentType type) {
-        Footprint size = type.footprints().get(type.realDefaultIndex());
+        Footprint size = ShowcaseSizes.layoutSize(type);
         PanelComponent component = PanelOps.placeDirect(level, pos, cx, cy, type, size);
         if (component == null) {
             throw new AssertionError("Desk showcase: placement refused " + type.id() + " " + size.w() + "x" + size.h() + " at "

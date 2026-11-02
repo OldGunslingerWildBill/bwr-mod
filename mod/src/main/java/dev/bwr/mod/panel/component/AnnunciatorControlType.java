@@ -25,8 +25,12 @@ public final class AnnunciatorControlType extends PanelInputType {
     public static final int TEST = 3;
     public static final int BUTTONS = 4;
     public static final List<Footprint> FOOTPRINTS = List.of(Footprint.of(24, 6),
-            // real sizes: four 12 mm buttons in a row, and a double size one
-            Footprint.of(2, 1), Footprint.of(4, 2));
+            // real sizes: four 12 mm buttons in a row, and a double size one (both retired)
+            Footprint.of(2, 1), Footprint.of(4, 2),
+            // alpha.60 size table: 16x4, and 32x8 where a new item starts
+            Footprint.of(16, 4), Footprint.of(32, 8));
+    /** Retired: 2x1 and 4x2. */
+    private static final java.util.Set<Integer> RETIRED = java.util.Set.of(1, 2);
     private static final List<ConfigField> SCHEMA = List.of(
             ConfigField.integer("AnnGroup", "component.bwr.field.ann_group", AnnunciatorData.MIN_GROUP, AnnunciatorData.MAX_GROUP));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("ack"), PortSpec.of("reset"), PortSpec.of("silence"),
@@ -41,10 +45,22 @@ public final class AnnunciatorControlType extends PanelInputType {
         return 2;
     }
 
-    /** A new item starts at twice the real size, in each dimension ({@link ComponentType#realDefaultFootprint}). */
+    /** A new item starts at 32x8 (alpha.60 size table). */
     @Override
     public Footprint realDefaultFootprint() {
-        return Footprint.of(4, 2);
+        return Footprint.of(32, 8);
+    }
+
+    /** Sizes added after the real sizes (the alpha.60 size table); see {@link ComponentType#appendedSizes()}. */
+    @Override
+    public int appendedSizes() {
+        return 2;
+    }
+
+    /** Retired sizes, by index into {@link #FOOTPRINTS}: still placeable from an old stack or a saved part, no longer offered ({@link Footprints}). */
+    @Override
+    public java.util.Set<Integer> retiredFootprints() {
+        return RETIRED;
     }
 
     @Override
