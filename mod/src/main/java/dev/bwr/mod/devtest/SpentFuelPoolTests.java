@@ -110,6 +110,13 @@ public final class SpentFuelPoolTests {
             f.be.scanNow();
             h.assertTrue(f.be.isFormed(), "the pool did not re-form: " + problem(f));
 
+            // a lamp's light block on the floor of a drained pool is air to it
+            BlockPos lit = FORM.offset(4, 1, 4);
+            f.level.setBlock(lit, Blocks.LIGHT.defaultBlockState(), 2);
+            f.be.scanNow();
+            h.assertTrue(f.be.isFormed(), "a light block in the dry pool unformed it: " + problem(f));
+            f.level.setBlock(lit, Blocks.AIR.defaultBlockState(), 2);
+
             // a hole in the wall
             BlockPos wall = FORM.offset(8, 3, 4);
             f.level.setBlock(wall, Blocks.AIR.defaultBlockState(), 2);

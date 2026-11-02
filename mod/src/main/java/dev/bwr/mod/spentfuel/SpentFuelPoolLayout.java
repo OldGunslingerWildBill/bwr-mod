@@ -179,7 +179,9 @@ public final class SpentFuelPoolLayout {
     }
 
     private static boolean interiorOk(BlockState s) {
-        return s.isAir() || s.is(BwrBlocks.SPENT_FUEL_RACK.get()) || (s.getFluidState().is(Fluids.WATER) && s.getFluidState().isSource());
+        // a light block (a beam lamp's, or a player's) is air to the pool: a lamp shining into a drained pool must not unform it
+        return s.isAir() || s.is(Blocks.LIGHT) || s.is(BwrBlocks.SPENT_FUEL_RACK.get())
+                || (s.getFluidState().is(Fluids.WATER) && s.getFluidState().isSource());
     }
 
     /**

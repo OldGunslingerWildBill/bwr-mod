@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased (alpha.60): turbine accident sounds
+- **A lamp shining into a drained spent fuel pool no longer unforms it.** Since alpha.59 the high-bays and HPS panels reach 40 to 48 blocks, so a
+  ceiling lamp over a pool lights its floor with `minecraft:light` blocks; the pool survey allowed only air, water and racks inside and said
+  *Clear the pool interior at ...* about an invisible block. A light block now counts as air to the pool (`SpentFuelPoolLayout.interiorOk`).
+
 
 - **Turbine accidents are loud now, for kilometres** (TURBINE-MAINTENANCE.md, *Sounds*). Until now a thrown blade, a burst disc and a shaft
   excursion only shook the ground and threw particles, and a turbine fire made only the sound of the fire blocks. New sound events:
