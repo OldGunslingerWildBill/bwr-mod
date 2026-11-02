@@ -114,7 +114,7 @@ public final class PushTurnSwitchType extends PanelInputType {
                 if (component.output(1) < 0.5) {
                     // Turned without being pushed in: it does not move. Say why.
                     if (context.player() != null) {
-                        context.player().displayClientMessage(Component.translatable("message.bwr.panel.push_to_turn"), true);
+                        context.player().displayClientMessage(Component.translatable("message.bwr.panel.push_to_turn", Component.keybind("key.bwr.wheel_turn")), true);
                     }
                     return false;
                 }

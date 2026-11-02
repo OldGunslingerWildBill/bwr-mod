@@ -115,6 +115,19 @@
       ]
     },
     {
+      "title": "Turning knobs with the wheel",
+      "text": [
+        "Knobs, selectors, thumbwheels and switches turn with the mouse wheel, but only while you hold the wheel key: the middle mouse button by default (Options > Controls > Realistic BWR, Turn controls with the wheel). Hold it and scroll over the part.",
+        "",
+        "Without the key the wheel changes your hotbar slot as usual, so a stray scroll never moves a control. Pressing the middle button over such a part does not pick the block."
+      ],
+      "icons": [
+        "bwr:control_switch",
+        "bwr:toggle_switch",
+        "bwr:thumbwheel"
+      ]
+    },
+    {
       "title": "Annunciators",
       "text": [
         "An annunciator window flashes until you acknowledge it, then holds steady until its condition clears, then goes out. Bind its condition input to a signal and set its alarm test (input above a setpoint, for example) in its wrench screen. Windows that touch along a side draw as one box.",

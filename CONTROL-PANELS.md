@@ -53,16 +53,25 @@ finish. Colours are in `PanelFinish.java`; a new finish is one more enum value a
 
 ### Keys
 
-The mod's own keys are in **Options > Controls**, under **Realistic BWR**, and are saved in `options.txt` like any other key. Each
-works only with its item in a hand and no screen open, and the defaults are keys the game does not use.
+The mod's own keys are in **Options > Controls**, under **Realistic BWR**, and are saved in `options.txt` like any other key. The size
+picker and the tape mode work only with their item in a hand and no screen open, and their defaults are keys the game does not use; the
+wheel key is the exception, and shares the middle button with Pick Block (below).
 
 | Key (default) | Action |
 | --- | --- |
 | **Panel part: pick a size** (Left Alt) | Hold it and click with a panel part in hand to open the size picker |
 | **Mimic tape: switch mode** (Right Shift) | Hold it and scroll the wheel with the tape in hand to switch draw, erase and edit |
+| **Turn controls with the wheel** (middle mouse button) | Hold it and scroll over a knob, thumbwheel, selector or switch to turn it. Without it held the wheel changes the hotbar slot as usual, so a stray scroll cannot move a control. Does nothing with a panel tool in hand |
+
+**The wheel key and Pick Block.** The middle mouse button is also the game's **Pick Block**, so Controls shows the pair in red; this is
+expected and left as it is (hiding it would need a conflict context that clashes with no in-game key, which would also hide a real
+clash when the key is moved onto, say, Swap Hands). While the crosshair is on a scrollable component the pick-block press is cancelled
+(no block is picked, the hand does not swing), so holding the wheel there never picks the panel; anywhere else Pick Block works as usual. Move
+the wheel key to a keyboard key and it works the same way (hold it and scroll); Pick Block is then the game's again everywhere. Nothing is
+sent to the server differently: the turn packet is the same, only the client's choice of when to send it changed.
 
 Everything else on a panel uses the game's own keys, so rebind those in the same screen: **Use Item / Place Block** operates a control
-(hold it to hold a pushbutton or a spring-return switch in; hold it and scroll to turn a push-to-turn knob), and **Sneak** is the "sneak" of every sneak-click in this document (it is the player's sneak state, which the server also sees, so it
+(hold it to hold a pushbutton or a spring-return switch in; hold it and, with the wheel key above held, scroll to turn a push-to-turn knob), and **Sneak** is the "sneak" of every sneak-click in this document (it is the player's sneak state, which the server also sees, so it
 is the game's Sneak key, or Toggle Sneak, and not a key of the mod). Inside the mod's screens the usual keys stay fixed: Esc closes,
 Enter confirms a text box, Tab and Shift+Tab move between fields, the arrow, Home, End and Page keys move through lists, sliders and
 maps, and Shift-click steps by 10 (or crafts a full batch) in the steppers and the Fabrication Desk.

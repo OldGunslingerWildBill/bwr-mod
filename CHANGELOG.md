@@ -10,6 +10,16 @@
   saturation for the harmonics small speakers can play; the MP3 is not in the repository), made by `tools-make-rumble-sounds.py --pool-from`;
   the synthesised loop stays in the tool as `--synth-pool`. Credited in SOUND-CREDITS.md, THIRD-PARTY-NOTICES.md and the README. New core
   tests: the shake's dominant frequency is 10 to 14 Hz, and the tremor layer on its own.
+- **The wheel turns a panel control only while a key is held** (the owner: "to prevent misinput"). Scrolling over a knob, thumbwheel, selector
+  or switch used to turn it at once, so scrolling through the hotbar with the crosshair on a panel moved controls by accident. Now the wheel
+  turns it only while **Turn controls with the wheel** (Options > Controls > Realistic BWR) is held; its default is the **middle mouse
+  button**, and without it the wheel changes the hotbar slot as before. The middle button is also Pick Block, so while the crosshair is on a
+  scrollable component that press is cancelled (nothing is picked, no swing); elsewhere Pick Block works as normal. Controls shows the
+  shared button in red; that is accepted (a conflict context that hides it would also hide real clashes if the key is moved).
+  Moved to a keyboard key it works the same way. A panel tool in hand still leaves the wheel alone. The tooltips of the parts, the
+  push-to-turn message, the guide book and CONTROL-PANELS.md, *Keys*, name the key. No server change. `PanelSpringCheck` and
+  `PanelSwitchInputCheck` now hold the key while they scroll; `KeybindClientCheck` covers scroll with and without the key, pick block on and off a
+  component, and a rebinding.
 - **The mod's keys are in Options > Controls.** A new **Realistic BWR** category holds **Panel part: pick a size** (Left Alt, as before: hold it
   and click with a panel part in hand) and **Mimic tape: switch mode** (hold it and scroll with the tape; now Right Shift, it was
   sneak-scroll, and the game's own Sneak key would show red against it in Controls). They were fixed to the Alt key (read directly, so it

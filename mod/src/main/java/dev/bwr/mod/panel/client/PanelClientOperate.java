@@ -1,6 +1,7 @@
 package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.BwrMod;
+import dev.bwr.mod.client.BwrKeys;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelGeometry;
 import dev.bwr.mod.panel.PanelGroup;
@@ -30,8 +31,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * the use key is down (vanilla repeats the use trigger every few ticks while it
  * is held, which doubles as the keep-alive the server's fail-safe wants) and
  * sends RELEASE the tick it is let go; scrolling over a
- * {@link ComponentType#scrollable()} control sends TURN instead of changing
- * the hotbar slot. Placing components and the wrench are {@link PanelClientInput}'s.
+ * {@link ComponentType#scrollable()} control with the wheel key ({@link BwrKeys#WHEEL_TURN}, the middle mouse button by
+ * default) held sends TURN instead of changing the hotbar slot; without the key the wheel is the hotbar's, so a stray scroll
+ * cannot move a control. Placing components and the wrench are {@link PanelClientInput}'s.
  *
  * <p>The server validates everything again ({@code PanelOps.operate}); this only
  * works out what the player meant. The vanilla right-click path still works as
@@ -154,11 +156,31 @@ public final class PanelClientOperate {
         event.setCanceled(true);
     }
 
+    /**
+     * The wheel key is the middle mouse button by default, which is also vanilla Pick Block: while the crosshair is on a
+     * scrollable component that press is cancelled, so holding the wheel to turn a knob never picks a block (nor swings the
+     * hand). Anywhere else, and when the player has moved the wheel key to another button or key, Pick Block works as usual.
+     * A tool in hand does not matter: holding the wheel over a component must never pick the panel.
+     */
+    @SubscribeEvent
+    public static void onPickBlock(InputEvent.InteractionKeyMappingTriggered event) {
+        if (!event.isPickBlock()) {
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!BwrKeys.WHEEL_TURN.getKey().equals(event.getKeyMapping().getKey()) || !aim(minecraft) || !AIM.component.type().scrollable()) {
+            return;
+        }
+        event.setCanceled(true);
+        event.setSwingHand(false);
+    }
+
     @SubscribeEvent
     public static void onScroll(InputEvent.MouseScrollingEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (event.getScrollDeltaY() == 0.0 || holdsTool(minecraft) || !aim(minecraft) || !AIM.component.type().scrollable()) {
-            return;
+        if (event.getScrollDeltaY() == 0.0 || !BwrKeys.WHEEL_TURN.isDown() || holdsTool(minecraft) || !aim(minecraft)
+                || !AIM.component.type().scrollable()) {
+            return; // (no key held: the wheel is the hotbar's)
         }
         int notches = event.getScrollDeltaY() > 0 ? 1 : -1;
         ComponentType type = AIM.component.type();

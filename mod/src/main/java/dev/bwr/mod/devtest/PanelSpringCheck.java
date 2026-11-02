@@ -1,6 +1,7 @@
 package dev.bwr.mod.devtest;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.bwr.mod.client.BwrKeys;
 import com.mojang.logging.LogUtils;
 import dev.bwr.mod.panel.PanelBlock;
 import dev.bwr.mod.panel.PanelBlockEntity;
@@ -393,7 +394,13 @@ final class PanelSpringCheck {
                 begin();
                 aim(mc, rig, 0.5);
                 var event = new InputEvent.MouseScrollingEvent(0.0, -1.0, false, false, false, 0.0, 0.0);
-                NeoForge.EVENT_BUS.post(event);
+                // the wheel turns a control only while its key is held (BwrKeys.WHEEL_TURN, the middle button by default)
+                KeyMapping.set(BwrKeys.WHEEL_TURN.getKey(), true);
+                try {
+                    NeoForge.EVENT_BUS.post(event);
+                } finally {
+                    KeyMapping.set(BwrKeys.WHEEL_TURN.getKey(), false);
+                }
                 require(event.isCanceled(), rig.name() + ": the scroll over the switch was not taken by the panel's handler");
             });
             add(rig.name() + ": scrolled", SETTLE, mc -> {

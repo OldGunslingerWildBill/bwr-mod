@@ -182,5 +182,8 @@ public final class ComponentItem extends Item {
                 tooltip.add(Component.translatable("tooltip.bwr.panel.footprint_hint", Component.keybind("key.bwr.size_picker")).withStyle(ChatFormatting.DARK_GRAY));
             }
         }
+        if (type() != null && type().scrollable()) {
+            tooltip.add(Component.translatable("tooltip.bwr.panel.wheel_turn", Component.keybind("key.bwr.wheel_turn")).withStyle(ChatFormatting.DARK_GRAY));
+        }
     }
 }
