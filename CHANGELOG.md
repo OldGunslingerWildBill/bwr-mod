@@ -17,6 +17,15 @@
   `options.txt`, work only with their item in hand and change
   nothing on the server. The tooltips name the key you set. Screen keys (Esc, Enter, Tab, the arrows, Shift-click for 10) stay fixed.
   Checked by `KeybindClientCheck` (`-PbwrKeybindCheck`); see CONTROL-PANELS.md, *Keys*.
+- **The Networking Wrench no longer presses buttons and turns switches.** Right-clicking a pushbutton, lever or selector on a control panel
+  with the Networking Wrench in hand (the owner's report) pressed or turned it as well as showing the wiring screen, because
+  `PanelClientOperate` skipped only the Panel Wrench, and nothing at all when the tool was in the off hand. With the Panel Wrench, the
+  Networking Wrench or the Panel Linker in either hand a click or a scroll on a component is now only the tool's: the wrench edits or removes,
+  the networking tools open the binding screen, and an empty spot or a component the tool has no action for does nothing. The client sends no
+  operate packet while a tool is held; the server refuses one too (the operate packet handler, `PanelOps.forwardUse` for the bare-hand click, and the recorder
+  message), so a modified client cannot press through a tool. A `RELEASE` of a held control is still accepted, and the client lets go of a
+  held control the tick a tool is taken up, so nothing stays held. Tests: `PanelToolClickTests` (4) and, in `-PbwrPanelClientCheck`, 12 more
+  sequences per switch in the `switch-input-*` stages.
 
 - **The canal gate lift never reads a chunk that is still loading.** As the plug lift does since this release, `CanalGateLift` (its survey,
   its world-ready wait and its next-leg checks) asks `BlockScan.readable` (`getChunkNow`) instead of `isLoaded`, which is true while a chunk is

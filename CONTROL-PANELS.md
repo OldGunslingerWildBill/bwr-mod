@@ -18,6 +18,7 @@ order and plug into the same wiring; the worked example below names them as the 
 | Panel wrench | Right-click a component: label, colours and other settings. Sneak-right-click removes it. Sneak-right-click on a bare spot of a panel (or on trim or furniture) changes its **finish**, see "Finishes" |
 | **Panel linker** | Wires components. See below |
 | **Networking Wrench** | Selects a device, shows its lines and Networking screen, names machines and wires components. See below |
+| *Tool in hand* | While the Panel Wrench, the Networking Wrench or the Panel linker is in either hand, a click or scroll on a component is only the tool's: it never presses, holds, turns or toggles the control (client and server both refuse). A tool with no action for that spot does nothing |
 | **Mimic tape** | Draws flow lines with arrows on the board face: see section 2d |
 
 ### Finishes

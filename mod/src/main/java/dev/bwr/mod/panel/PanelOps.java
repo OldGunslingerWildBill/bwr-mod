@@ -58,6 +58,39 @@ public final class PanelOps {
     }
 
     /**
+     * Whether the player holds, in either hand, a tool that takes a click on a panel for itself: the Panel Wrench, the
+     * Networking Wrench or the Panel Linker. With one in hand a click on a component never operates it (no press, hold,
+     * turn or toggle); it does only what the tool does. Client and server both ask this, so a modded client that sends
+     * the operate packet anyway is refused by {@link #toolRefusesOperate}.
+     */
+    public static boolean holdsTool(net.minecraft.world.entity.player.Player player) {
+        for (InteractionHand hand : InteractionHand.values()) {
+            ItemStack stack = player.getItemInHand(hand);
+            if (stack.getItem() instanceof PanelWrenchItem || LinkTools.isTool(stack)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether an operate request from the network must be dropped because the player holds a tool (see {@link #holdsTool}).
+     * Only a RELEASE of a holdable control is let through: the player may have taken up the tool mid-hold, and letting go
+     * must not depend on what is in the hand. The C2S handler asks this before {@link #operate}; {@code operate} itself is
+     * the plain validated operation (the GameTests and tooling call it directly).
+     */
+    public static boolean toolRefusesOperate(ServerPlayer player, BlockPos ownerPos, int id, OperateAction action) {
+        if (!holdsTool(player)) {
+            return false;
+        }
+        if (action != OperateAction.RELEASE) {
+            return true;
+        }
+        return !(player.serverLevel().isLoaded(ownerPos) && player.serverLevel().getBlockEntity(ownerPos) instanceof PanelBlockEntity owner
+                && owner.component(id) != null && owner.component(id).type() != null && owner.component(id).type().holdable());
+    }
+
+    /**
      * Which cell of the block at {@code pos} a view ray lands on.
      *
      * @return false when the ray misses the mounting plane of that block
@@ -344,7 +377,7 @@ public final class PanelOps {
      */
     public static boolean recorderMessage(ServerPlayer player, BlockPos ownerPos, int id, String text) {
         ServerLevel level = player.serverLevel();
-        if (!AssemblyAccess.mayOperate(player) || text == null || !inReach(player, ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos) || !level.isLoaded(ownerPos)
+        if (!AssemblyAccess.mayOperate(player) || holdsTool(player) || text == null || !inReach(player, ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos) || !level.isLoaded(ownerPos)
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return false;
         }
@@ -360,6 +393,9 @@ public final class PanelOps {
     public static InteractionResult forwardUse(ServerPlayer player, PanelBlockEntity clicked, int cx, int cy,
                                                double fx, double fy) {
         ServerLevel level = player.serverLevel();
+        if (holdsTool(player)) {
+            return InteractionResult.PASS; // a tool in the other hand: the click is the tool's, not the control's
+        }
         PanelBlockEntity.Claim claim = clicked.claimAt(cx, cy);
         if (claim == null || !level.isLoaded(claim.owner())
                 || !(level.getBlockEntity(claim.owner()) instanceof PanelBlockEntity owner)) {

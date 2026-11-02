@@ -80,7 +80,11 @@ public final class PanelNetwork {
     private static void handleOperate(PanelPayloads.Operate payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender
                 && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPERATE)) {
-            PanelOps.operate(sender, payload.pos(), payload.id(), OperateAction.byId(payload.action()), payload.value(), payload.seq());
+            OperateAction action = OperateAction.byId(payload.action());
+            if (PanelOps.toolRefusesOperate(sender, payload.pos(), payload.id(), action)) {
+                return; // a tool in hand takes the click for itself (a modified client cannot press through it)
+            }
+            PanelOps.operate(sender, payload.pos(), payload.id(), action, payload.value(), payload.seq());
         }
     }
 

@@ -415,6 +415,43 @@ final class PanelSwitchInputCheck {
         };
     }
 
+    // -- tools in the hand (client side only: the server's player keeps empty hands, so only what the client sends is tested)
+
+    private static Act hold(java.util.function.Supplier<net.minecraft.world.item.Item> tool, net.minecraft.world.InteractionHand hand) {
+        return (mc, rig) -> {
+            mc.player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY);
+            mc.player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, net.minecraft.world.item.ItemStack.EMPTY);
+            mc.player.setItemInHand(hand, new net.minecraft.world.item.ItemStack(tool.get()));
+        };
+    }
+
+    private static Act bareHands() {
+        return (mc, rig) -> {
+            mc.player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY);
+            mc.player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, net.minecraft.world.item.ItemStack.EMPTY);
+            if (mc.screen != null) {
+                mc.setScreen(null);
+            }
+        };
+    }
+
+    /** The panel wrench's own action on the client: the click on a control opened its configuration screen. */
+    private static Act configOpened(String when) {
+        return (mc, rig) -> require(mc.screen instanceof dev.bwr.mod.panel.client.ConfigScreen,
+                rig.name() + " " + when + ": the wrench's click did not open the configuration screen: " + mc.screen
+                        + " (sneaking " + mc.player.isShiftKeyDown() + ", aimed at " + mc.hitResult + ", hand " + mc.player.getMainHandItem()
+                        + ", claim " + dev.bwr.mod.panel.client.PanelClientInput.hoveredClaim(mc) + ")");
+    }
+
+    /** A scroll over the control with a tool in the hand is left to the hotbar: the panel's handler must not take it. */
+    private static Act scrollLeftToTheHotbar(double delta) {
+        return (mc, rig) -> {
+            var event = new InputEvent.MouseScrollingEvent(0.0, delta, false, false, false, 0.0, 0.0);
+            NeoForge.EVENT_BUS.post(event);
+            require(!event.isCanceled(), rig.name() + ": the scroll over the control with a tool in the hand was taken by the panel");
+        };
+    }
+
     private static Act both(Act first, Act second) {
         return (mc, rig) -> {
             first.run(mc, rig);
@@ -507,6 +544,39 @@ final class PanelSwitchInputCheck {
         // Sneak (Shift) down: the only modifier a bare hand can have.
         all.add(new Seq("sneak-quick-left", LEFT, SETTLE, true, at(0, both(aimSide(LEFT), click())), null));
         all.add(new Seq("sneak-hold-right-10-ticks", RIGHT, SETTLE, true, at(0, both(aimSide(RIGHT), press()), 9, holds(1, "sneaking, held 10 ticks"), 10, release()), null));
+        // A tool in either hand takes the click for itself: the control is never pressed, held or turned (the owner's bug: the
+        // Networking Wrench pressed the button). The panel wrench still opens its configuration screen, from either hand.
+        var main = net.minecraft.world.InteractionHand.MAIN_HAND;
+        var off = net.minecraft.world.InteractionHand.OFF_HAND;
+        // The tool is taken up at tick 0 and the crosshair is put on the switch again at the tick of the click (a sneak left by
+        // the sequence before changes the eye height for a tick or two, which would move a crosshair aimed earlier off a small switch).
+        for (int side : new int[] {LEFT, RIGHT}) {
+            String s = side < 0 ? "left" : "right";
+            all.add(seq("panel-wrench-click-" + s + "-opens-config", 0, at(0, hold(dev.bwr.mod.registry.BwrItems.PANEL_WRENCH::get, main),
+                    3, both(aimSide(side), click()), 8, configOpened("panel wrench, main hand"), 9, bareHands())));
+        }
+        all.add(seq("panel-wrench-offhand-click-opens-config", 0, at(0, hold(dev.bwr.mod.registry.BwrItems.PANEL_WRENCH::get, off),
+                3, both(aimSide(LEFT), click()), 8, configOpened("panel wrench, off hand"), 9, bareHands())));
+        for (int side : new int[] {LEFT, RIGHT}) {
+            String s = side < 0 ? "left" : "right";
+            all.add(seq("networking-wrench-click-" + s + "-never-presses", 0, at(0, hold(dev.bwr.mod.registry.BwrItems.NETWORKING_WRENCH::get, main),
+                    3, both(aimSide(side), click()), 8, springsBack("networking wrench click"), 9, bareHands())));
+            all.add(seq("networking-wrench-hold-" + s + "-never-presses", 0, at(0, hold(dev.bwr.mod.registry.BwrItems.NETWORKING_WRENCH::get, main),
+                    3, both(aimSide(side), press()), 12, springsBack("networking wrench held"), 13, release(), 14, bareHands())));
+        }
+        all.add(seq("networking-wrench-offhand-click-never-presses", 0, at(0, hold(dev.bwr.mod.registry.BwrItems.NETWORKING_WRENCH::get, off),
+                3, both(aimSide(RIGHT), click()), 8, springsBack("networking wrench in the off hand"), 9, bareHands())));
+        all.add(seq("linker-click-never-presses", 0, at(0, hold(dev.bwr.mod.registry.BwrItems.PANEL_LINKER::get, main),
+                3, both(aimSide(LEFT), click()), 8, springsBack("panel linker click"), 9, bareHands())));
+        all.add(seq("networking-wrench-scroll-never-turns", 0, at(0, hold(dev.bwr.mod.registry.BwrItems.NETWORKING_WRENCH::get, main),
+                3, both(aim(0.5), scrollLeftToTheHotbar(1.0)), 4, scrollLeftToTheHotbar(-1.0), 5, bareHands())));
+        // A tool taken up while a control is held down lets go of it: nothing stays held, whatever else happens.
+        all.add(new Seq("networking-wrench-taken-up-mid-hold", LEFT, LEAVE + 4, false,
+                at(0, both(aimSide(LEFT), press()), 3, holds(-1, "held before the wrench"), 4, hold(dev.bwr.mod.registry.BwrItems.NETWORKING_WRENCH::get, main),
+                        4 + LEAVE, springsBack("the networking wrench was taken up with the switch held"), 14, release(), 15, bareHands()), null));
+        all.add(new Seq("panel-wrench-offhand-taken-up-mid-hold", RIGHT, LEAVE + 4, false,
+                at(0, both(aimSide(RIGHT), press()), 3, holds(1, "held before the wrench"), 4, hold(dev.bwr.mod.registry.BwrItems.PANEL_WRENCH::get, off),
+                        4 + LEAVE, springsBack("the panel wrench was taken up with the switch held"), 14, release(), 15, bareHands()), null));
         return all;
     }
 

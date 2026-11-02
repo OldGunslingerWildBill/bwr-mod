@@ -97,6 +97,9 @@ public final class PanelClientInput {
             return;
         }
         ItemStack stack = minecraft.player.getItemInHand(event.getHand());
+        if (stack.isEmpty() && event.getHand() == InteractionHand.MAIN_HAND && PanelOps.holdsTool(minecraft.player)) {
+            stack = minecraft.player.getOffhandItem(); // empty main hand, tool in the off hand: the tool takes the click
+        }
         if (stack.getItem() instanceof ComponentItem) {
             if (minecraft.player.isShiftKeyDown()) {
                 return; // sneak-click cycles the footprint through the vanilla path
