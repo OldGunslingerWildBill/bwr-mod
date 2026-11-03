@@ -222,7 +222,7 @@ The pendant has a **GATE OUT** button (it reads **GATE IN** while a gate is laid
   **125 t**. Over the rating is refused (a datapack can make a gate that heavy).
 * **Refusals, with the reason, nothing moved:** not under the crane ("outside the reach"); nothing to lift ("sees no canal gate"); the eyes covered (a block on top of the
   gate, and where); over the rating; **a head across the gate**: the pool's surface and the well's (each counted down to the slot's floor at the lowest; the well's side
-  dry while the head is on or there is no usable well) must be within **0.3 m**, otherwise "The gate at ... holds back 1.42 m of water: the pool stands at y ... and the
+  dry while the head is on or there is no usable well) must be within **0.3 m** (a surface over the gate's top counts as the top: the gate holds back no more than its height), otherwise "The gate at ... holds back 1.42 m of water: the pool stands at y ... and the
   well at ... A gate is pulled only with both sides within 0.3 m"; no laydown (no free stand and no clear floor); the rails too low to lift the gate clear of the slot's top
   ("raise the rails to y ..."); for GATE IN, its place in the canal built over. The head across the gate is checked again when the hook closes: levels that part while
   the hook comes down stop the lift there (HALTED, the gate in its slot); level them and press GATE OUT again.

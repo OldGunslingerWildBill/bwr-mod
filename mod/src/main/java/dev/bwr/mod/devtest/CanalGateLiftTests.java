@@ -70,8 +70,13 @@ public final class CanalGateLiftTests {
         BuildingCraneBlockEntity crane;
 
         Rig(ServerLevel level, BlockPos o, boolean withStand) throws Exception {
+            this(level, o, withStand, 8);
+        }
+
+        /** A pool whose walls stand {@code poolH} high: the slot, and so the gate, is {@code poolH - 6} blocks tall. */
+        Rig(ServerLevel level, BlockPos o, boolean withStand, int poolH) throws Exception {
             this.l = level;
-            this.s = new ChuteSlotTests.Rig(level, o, 4, 8, 0);
+            this.s = new ChuteSlotTests.Rig(level, o, 4, poolH, 0);
             var env = s.s.env();
             // the slot's gate: a plug from the rim down to the slot's floor
             for (int y = s.slotBottom; y <= s.top; y++) {
@@ -79,7 +84,7 @@ public final class CanalGateLiftTests {
                 l.setBlock(p, BwrBlocks.CANAL_GATE_PLUG.get().defaultBlockState().setValue(TransferCanalBlock.AXIS, Direction.Axis.X)
                         .setValue(TransferCanalBlock.TOP, y == s.top).setValue(TransferCanalBlock.FLOOR, y == s.slotBottom), 3);
             }
-            railY = s.top + 10;
+            railY = s.top + 10 + 2 * (poolH - 8);   // the rails a taller gate needs, to lift it clear of the slot
             railLo = env.min().getX() - 4;
             railHi = s.x1 + 12;
             zN = s.zc - 9;
@@ -453,6 +458,59 @@ public final class CanalGateLiftTests {
             r.l.setBlock(r.console, Blocks.AIR.defaultBlockState(), 3);
             h.assertTrue(r.gateHome() && r.entities().isEmpty() && r.items().isEmpty() && r.gateBlocks() == 2, "back in its slot, once, nothing dropped");
             r.crane = null;
+        });
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // The head across a tall gate
+    // ------------------------------------------------------------------------------------------------------------
+
+    /**
+     * A pool brim full and a well whose walls stand higher, so that its water stands over the gate's top: the gate holds back its own height
+     * of water and no more, so it is lifted when both sides brim over it and refused when they differ below its top.
+     */
+    private static void gateHoldsBackNoMoreThanItsOwnHeight(GameTestHelper h, Rig r, int blocks) {
+        BlockPos eyes = new BlockPos(r.s.columnsX[0], r.s.top, r.s.zc);
+        var gate = CanalGateLift.survey(r.l, eyes).gate();
+        h.assertTrue(gate != null && gate.height() == blocks, "a gate of " + blocks + " blocks: " + (gate == null ? "none" : gate.height()));
+        double[] sides = new double[3];
+        double rim = r.s.top + 1.0;
+        // the pool to its rim, the well 7 m over it (the screen shows the brim of the canal on both sides)
+        r.s.poolAt(rim);
+        r.s.wellAt(rim + 7.14);
+        double head = CanalGateLift.headAcross(r.l, gate, sides);
+        h.assertTrue(head <= CanalGateLift.MAX_HEAD_M && Math.abs(sides[0] - rim) < 1e-9 && sides[1] > rim + 7.0, "both brim over the gate: " + head);
+        Component why = r.crane.queueGate(true, null);
+        h.assertTrue(why == null && r.crane.busy(), "so the gate is lifted: " + english(why));
+        r.crane.abort();
+        h.assertTrue(!r.crane.busy() && CanalGateLift.isGate(r.l.getBlockState(eyes)), "aborted before the hook closed: nothing moved");
+        // the pool a half metre under the rim: the head below the gate's top is that half metre, whatever the well has over it
+        r.s.poolAt(rim - 0.5);
+        head = CanalGateLift.headAcross(r.l, gate, sides);
+        h.assertTrue(Math.abs(head - 0.5) < 1e-6, "the head is counted to the gate's top: " + head);
+        why = r.crane.queueGate(true, null);
+        h.assertTrue(why != null && english(why).contains("holds back 0.50 m"), "refused with the head to the top: " + english(why));
+        // the well down to the slot's floor, the pool full
+        r.s.poolAt(rim);
+        r.s.wellAt(r.s.slotBottom - 0.6);
+        why = r.crane.queueGate(true, null);
+        h.assertTrue(why != null && english(why).contains("holds back"), "a gate is still not pulled against a head: " + english(why));
+        h.assertTrue(!r.crane.busy() && CanalGateLift.isGate(r.l.getBlockState(eyes)), "nothing moved");
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "gates", timeoutTicks = 400)
+    public static void aStackOfGatesIsNotHeldBackByWaterThatBrimsOverItsTop(GameTestHelper h) throws Exception {
+        Rig r = new Rig(h.getLevel(), origin(5), true, 11);
+        later(h, r, () -> gateHoldsBackNoMoreThanItsOwnHeight(h, r, 5));
+    }
+
+    @GameTest(template = "empty", templateNamespace = "bwrplug", batch = "gates", timeoutTicks = 400)
+    public static void aSingleGateIsNotHeldBackByWaterThatBrimsOverItsTopEither(GameTestHelper h) throws Exception {
+        Rig r = new Rig(h.getLevel(), origin(6), true);
+        later(h, r, () -> {
+            // the lowest plug out of the two: one plug at the rim
+            r.l.setBlock(r.gateBottom(), CanalGateLift_open(r.l.getBlockState(r.gateBottom())), 3);
+            gateHoldsBackNoMoreThanItsOwnHeight(h, r, 1);
         });
     }
 }

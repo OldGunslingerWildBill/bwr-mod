@@ -470,7 +470,7 @@ pool, the canal and the well are one body of water. The mod does the same.
   The column the gate leaves is open canal (the same canal block, with its water, floor and top), so the exchange's next step passes water; GATE IN puts the plug back into
   exactly that column, which closes it again.
 * **No pull against a head.** A gate holding back water is not pulled: the pool's surface and the well's (each counted down to the slot's floor at the lowest) must be within
-  **0.3 m**. With the head on, or no usable well, the well's side counts as dry.
+  **0.3 m** (a surface over the gate's top counts as the top). With the head on, or no usable well, the well's side counts as dry.
 * **The old hand gate** (Canal Gate, empty hand to open and close) keeps working in old builds and saves; its tooltip points to the plug and the crane.
 
 ![The crane lifting the gate plug out of the slot](art/cavity-flood/crane-lifting-gate-plug.png)

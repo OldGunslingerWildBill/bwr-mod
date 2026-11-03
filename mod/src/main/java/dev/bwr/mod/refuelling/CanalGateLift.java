@@ -50,7 +50,7 @@ import java.util.UUID;
  *   welded stainless gate 0.75 m wide), so a whole gate is a few tonnes, far within the crane's {@value PlugLift#RATED_CAPACITY_T} t; over the
  *   rating is refused.</li>
  *   <li><b>No pull against a head.</b> A gate holding back water cannot be pulled: the seals are loaded, and the water would rush through. The
- *   pool's surface and the well's (each down to the slot's floor at the lowest) must be within {@value #MAX_HEAD_M} m; otherwise the lift is
+ *   pool's surface and the well's (each up to the gate's top at the highest, down to the slot's floor at the lowest) must be within {@value #MAX_HEAD_M} m; otherwise the lift is
  *   refused with both levels. Checked when queued and again when the hook closes.</li>
  * </ul>
  * Nothing moves by itself: every lift is a button on the pendant or a computer's call. While it hangs, the gate is a
@@ -301,8 +301,10 @@ public final class CanalGateLift {
 
     /**
      * The water a gate in a slot's canal holds back, m: the higher of the pool's and the well's surfaces less the lower (each counted down to the
-     * slot's floor at the lowest). 0 for a gate that no slot's canal includes (an old chute couples no water), or when both are under the floor.
-     * {@code out} receives the pool's surface, the well's (NaN when it has none over its flange) and the sill.
+     * slot's floor at the lowest). A surface over the gate's top counts as the top: the gate holds back no more than its own height, and a well whose
+     * walls stand above the pool's rim is not a head across a gate that both sides brim over. 0 for a gate that no slot's canal includes (an old
+     * chute couples no water), or when both are under the floor. {@code out} receives the pool's surface, the well's (NaN when it has none over its
+     * flange) and the sill, as they stand.
      */
     public static double headAcross(Level level, Gate gate, @Nullable double[] out) {
         for (SpentFuelPoolBlockEntity pool : SpentFuelPoolRegistry.controllers(level)) {
@@ -334,12 +336,14 @@ public final class CanalGateLift {
                 out[1] = wellY;
                 out[2] = sill;
             }
-            double w = Double.isNaN(wellY) ? Double.NEGATIVE_INFINITY : wellY;
-            double hi = Math.max(poolY, w);
+            double top = gate.bottom().getY() + gate.height();
+            double p = Math.min(poolY, top);
+            double w = Double.isNaN(wellY) ? Double.NEGATIVE_INFINITY : Math.min(wellY, top);
+            double hi = Math.max(p, w);
             if (!(hi > sill)) {
                 return 0.0;
             }
-            return hi - Math.max(Math.min(poolY, w), sill);
+            return hi - Math.max(Math.min(p, w), sill);
         }
         return 0.0;
     }
