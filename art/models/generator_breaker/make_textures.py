@@ -43,7 +43,10 @@ def hazard():
 def run():
     OUT.mkdir(parents=True, exist_ok=True)
     images = {
-        'gcb_plate': tdp.nameplate(['GENERATOR BREAKER', 'SF6  3 POLE  ONE MECHANISM', '1300 MW  28.9 KA', 'IPB-45 FA  1150 MM'], 61),
+        'gcb_plate': tdp.nameplate(['GENERATOR BREAKER', 'SF6  3 POLE', '1300 MW  28.9 KA', 'IPB-45 FA  1150 MM'], 61),
+        'gcb_plate_vt': tdp.nameplate(['VOLTAGE XFMR', 'METAL ENCLOSED', 'GROUNDED TANK', 'GEN TERMINALS'], 64),
+        'gcb_plate_cap': tdp.nameplate(['SURGE CAP', 'METAL ENCLOSED', 'GROUNDED TANK', 'GEN TERMINALS'], 65),
+        'gcb_plate_arr': tdp.nameplate(['SURGE ARRESTER', 'METAL ENCLOSED', 'GROUNDED TANK', 'GEN TERMINALS'], 66),
         'gcb_plate_hmb': tdp.nameplate(['SPRING DRIVE', 'HYDROMECHANICAL', 'MECH TYPE HMB-8', 'FOR HEC 7/8 CLASS'], 62),
         'gcb_mpi_closed': indicator(True),
         'gcb_mpi_open': indicator(False),

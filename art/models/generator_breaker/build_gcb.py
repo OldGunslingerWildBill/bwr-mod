@@ -25,8 +25,8 @@ NOT found in sources, reasoned estimates (the owner may change them): overall fo
 (poles at x = 1.0, 2.5, 4.0), pole axis 2.0 m above the floor, enclosure diameter 0.9 m (chamber 1.25 m, IPB flange
 1.3 m), section lengths, the spring-stack/shaft layout of the HMB-8, cubicle 0.8 x 0.5 x 1.8 m, every colour (light
 grey RAL 7035-ish enclosures, darker grey frame, grey cubicle, brown porcelain arresters). The VT/capacitor/arrester
-are top-mounted and the earthing switches side-mounted on the +x side to fit the 3 m height; real units differ in
-arrangement. Original geometry; no vendor CAD, no vendor names or logos.
+are in grounded bolted metal compartments hanging under each pole (a metal-enclosed GCB has no exposed insulators) and the
+earthing switch drives are small metal boxes on the +x side; real units differ in arrangement. Original geometry; no vendor CAD, no vendor names or logos.
 
 The two states differ only in the mechanical position indicator (CLOSED red "I", OPEN green "O"; US practice) and the
 disconnector blade seen through each pole's viewing window (blade bridging the contacts / swung away).
@@ -107,6 +107,7 @@ HANDLEM = mpaint('door handle steel', (.55, .57, .58), .8, .3)
 NUTM = mpaint('dark fasteners', (.20, .21, .22), .6, .4)
 YELM = mpaint('pointer yellow', (.92, .70, .10), .0, .4)
 PL_PLATE = mtex('breaker nameplate', 'gcb_plate')
+PL_AUX = {k: mtex('compartment nameplate ' + k, 'gcb_plate_' + k) for k in ('vt', 'cap', 'arr')}
 PL_HMB = mtex('mechanism nameplate', 'gcb_plate_hmb')
 HAZ = mtex('warning label', 'gcb_hazard')
 SF6L = mtex('SF6 gas label', 'gcb_label_sf6')
@@ -205,31 +206,15 @@ def bolted_ring(s, name, xp, z, r_out, width, mat, bolts=NBOLT, n=20, bolt_r=Non
 
 
 # ---------------------------------------------------------------- pole
-def top_voltage_transformer(s, xp, zc, tag):
-    lathe(s, 'voltage transformer ' + tag, (xp, AY + .40, zc), (0, 1, 0),
-          [(0, .26), (.04, .26), (.04, .20), (.44, .20), (.50, .15), (.55, .09), (.56, .05)], ALUD, 10)
-    cylinder(s, 'VT terminal ' + tag, (xp, AY + .95, zc), (xp, AY + .985, zc), .045, BRIGHT, 8)
-
-
-def top_capacitor(s, xp, zc, tag):
-    prof = [(0, .20), (.04, .20), (.04, .12)]
-    for k in range(2):
-        t = .08 + k * .2
-        prof += [(t, .12), (t + .01, .165), (t + .17, .165), (t + .19, .12)]
-    prof += [(.5, .12), (.5, .08)]
-    lathe(s, 'surge capacitor ' + tag, (xp, AY + .40, zc), (0, 1, 0), prof, CAPP, 8)
-    cylinder(s, 'capacitor cap ' + tag, (xp, AY + .90, zc), (xp, AY + .96, zc), .09, BRIGHT, 12)
-
-
-def top_arrester(s, xp, zc):
-    prof = [(0, .20), (.04, .20), (.04, .10)]
-    for k in range(5):
-        t = .06 + k * .09
-        prof += [(t, .10), (t + .008, .17), (t + .085, .12)]
-    prof += [(.51, .10), (.51, .06)]
-    lathe(s, 'surge arrester', (xp, AY + .40, zc), (0, 1, 0), prof, PORC, 8)
-    cylinder(s, 'arrester cap', (xp, AY + .91, zc), (xp, AY + .96, zc), .10, BRIGHT, 12)
-    cylinder(s, 'arrester terminal', (xp, AY + .96, zc), (xp, AY + .985, zc), .035, BRIGHT, 8)
+def compartment(s, xp, zc, length, kind, tag):
+    """Grounded bolted metal compartment hanging under the pole (VT, surge capacitor, surge arrester): box with flanged cover."""
+    z0, z1 = zc - length / 2, zc + length / 2
+    box(s, 'compartment ' + tag, (xp - .30, 1.15, z0), (xp + .30, 1.60, z1), ALUD)
+    box(s, 'compartment cover flange ' + tag, (xp - .325, 1.17, z0 - .02), (xp - .30, 1.50, z1 + .02), ALUF)
+    for zz in (z0 + .04, z1 - .04):
+        for y in (1.21, 1.46):
+            stud(s, (xp - .32, y, zz), (xp - .355, y, zz), .022)
+    plate(s, 'compartment nameplate ' + tag, (xp - .325, 1.335, zc), (-1, 0, 0), (0, 1, 0), .20, .10, PL_AUX[kind], FRAMEM, .014)
 
 
 def side_earthing_switch(s, xp, zc, tag):
@@ -320,16 +305,20 @@ def pole(s, phase, xp, opened):
         else:
             bolted_ring(s, 'section flange', xp, z, R_FL, .07, ALUF, NBOLT, 16)
     # generator side (z .2 -> 2.15)
-    top_voltage_transformer(s, xp, .5, phase + 'g')
-    top_capacitor(s, xp, 1.025, phase + 'g')
+    compartment(s, xp, .5, .4, 'vt', 'VT ' + phase + 'g')
+    compartment(s, xp, 1.2, .4, 'cap', 'capacitor ' + phase + 'g')
     side_earthing_switch(s, xp, 1.5, phase + 'g')
     current_transformer(s, xp, 1.75, 2.15, phase + 'g')
     # transformer side (z 4.45 -> 6.8)
     current_transformer(s, xp, 4.45, 4.85, phase + 'x')
     side_earthing_switch(s, xp, 5.1, phase + 'x')
-    top_capacitor(s, xp, 5.55, phase + 'x')
-    top_arrester(s, xp, 6.0)
-    top_voltage_transformer(s, xp, 6.525, phase + 'x')
+    compartment(s, xp, 5.4, .4, 'cap', 'capacitor ' + phase + 'x')
+    compartment(s, xp, 5.9, .4, 'arr', 'arrester ' + phase + 'x')
+    compartment(s, xp, 6.6, .4, 'vt', 'VT ' + phase + 'x')
+    for z in (1.95, 4.65):
+        box(s, 'lifting lug', (xp - .02, AY + R_TUBE - .01, z - .06), (xp + .02, AY + R_TUBE + .13, z + .06), FRAMEM)
+    cylinder(s, 'SF6 fill valve', (xp, AY + R_TUBE - .01, 4.1), (xp, AY + R_TUBE + .09, 4.1), .03, ALUD, 8)
+    cylinder(s, 'SF6 fill valve cap', (xp, AY + R_TUBE + .09, 4.1), (xp, AY + R_TUBE + .13, 4.1), .04, BTN_R, 8)
     plate(s, 'pole warning label', (xp - R_CH + .003, AY + .25, 2.75), (-1, 0, 0), (0, 1, 0), .24, .12, HAZ, FRAMEM, .014)
     # crank housing under the chamber, driven from the operating shaft
     box(s, 'crank housing', (xp - .18, 1.15, 2.88), (xp + .38, 1.42, 3.32), ALUD)
@@ -337,7 +326,7 @@ def pole(s, phase, xp, opened):
 
 
 # ---------------------------------------------------------------- frame, mechanism, cubicle
-CROSS = [1.0, 2.3, 3.6, 5.0, 6.3]
+CROSS = [.85, 2.3, 3.6, 5.0, 6.3]
 LEGX = [.65, 1.75, 3.25, 4.35]
 
 
@@ -355,7 +344,7 @@ def base_frame(s):
         for x in LEGX:
             leg(s, 'frame leg', x, z, 0, 1.0)
     for ph, xp in POLES.items():
-        for z, r in ((1.0, .45), (2.3, .60), (3.6, .60), (5.0, .45), (6.3, .45)):
+        for z, r in ((.85, .45), (2.3, .60), (3.6, .60), (5.0, .45), (6.3, .45)):
             saddle(s, xp, z, r)
     # earthing bar along the last cross beam with a drop on the front leg, lug at the floor
     obox(s, 'earthing bar', (.55, 1.0, 6.3 + .105), (4.45, 1.0, 6.3 + .105), .02, .04, (0, 1, 0), EARTH)
