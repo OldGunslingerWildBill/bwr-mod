@@ -55,7 +55,7 @@ public final class PanelLinkerItem extends Item {
         Player player = context.getPlayer();
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
-        if(player!=null&&!player.isShiftKeyDown()&&level.getBlockEntity(pos) instanceof dev.bwr.mod.grid.GridTieBlockEntity tie){
+        if(player!=null&&!player.isShiftKeyDown()&&dev.bwr.mod.signal.DeviceResolver.resolve(level,pos) instanceof dev.bwr.mod.grid.GridTieBlockEntity tie){
             if(level.isClientSide())return InteractionResult.SUCCESS;
             if(!(player instanceof ServerPlayer sender))return InteractionResult.PASS;
             GlobalPos selected=linked(context.getItemInHand());boolean success=false;String action="refused";

@@ -59,6 +59,8 @@ public final class AssemblyAccess {
         } else if(state.getBlock() instanceof TurbineAssemblyBlock block) {
             BlockPos root=block.origin(pos,state);
             for(int i=0;i<block.cellCount(state);i++)cells.add(root.offset(TurbineAssemblyBlock.turn(block.cellOffset(state,i),state.getValue(TurbineAssemblyBlock.FACING))));
+        } else if(state.getBlock() instanceof dev.bwr.mod.grid.GridTieBlock block) {
+            cells.addAll(block.cells(pos,state));
         } else if(state.getBlock() instanceof dev.bwr.mod.suppression.RhrHeatExchangerBlock
                 && dev.bwr.mod.suppression.RhrHeatExchangerBlock.isAssembled(state)) {
             BlockPos root=dev.bwr.mod.suppression.RhrHeatExchangerBlock.rootOf(pos,state);

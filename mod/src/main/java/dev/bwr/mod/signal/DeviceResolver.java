@@ -33,6 +33,7 @@ public final class DeviceResolver {
         else if (state.getBlock() instanceof ProcessAssembly) be = PumpAssemblyCapabilities.controller(level, pos, state);
         else if (state.getBlock() instanceof dev.bwr.mod.isotope.LargeRtgBlock) be = dev.bwr.mod.isotope.LargeRtgBlock.controller(level, pos, state);
         else if (state.getBlock() instanceof MainSteamIsolationValveBlock msiv) be = msiv.controller(level, pos, state);
+        else if (state.getBlock() instanceof dev.bwr.mod.grid.GridTieBlock tie) be = tie.controller(level, pos, state);
         else be = dev.bwr.mod.world.LoadedWorld.blockEntity(level, pos);
         if (be == null || be.isRemoved()) return null;
         if (be instanceof CondenserBlockEntity part) be = part.owner();
