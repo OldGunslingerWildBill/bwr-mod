@@ -621,6 +621,26 @@ storage drains; merely opening this proposed export breaker leaves base feeders
 connected. The player's wiring determines blackout and restoration. No new
 station-blackout code or automatic transfer switch is added.
 
+### 8.1 New look: the generator circuit breaker (alpha.61)
+
+The Grid Tie is now the model of a generator circuit breaker (SF6, isolated-phase-bus connections), built in Blender
+(`art/models/generator_breaker/build_gcb.py`) and baked by `python tools-export-gcb.py` (`--check` is read-only), the same route as the
+MSIV (MAIN-STEAM-VALVES.md). Only the look and the footprint changed; every behaviour in this spec is as before.
+
+- **Footprint.** 5 wide (across the phases) x 3 tall x 7 long (along the bus: generator end, then transformer end). A new Grid Tie item
+  needs all 105 cells free and faces the way the pumps do (opposite the player's look); otherwise nothing is placed ("Not enough
+  room for the full assembly here"). Breaking any cell removes the whole breaker and drops one item.
+- **Controller.** The block entity is on the control cubicle's cell (x 0, y 0, z 1). Every cell routes to it: the FE sink (on every face of
+  every cell), BWR signals and panel wiring, the CC peripheral, the Panel Linker binding (generator and meters) and FE meter linking.
+  A cable at the generator end and one at the transformer end reach the same sink.
+- **Indicator.** The blockstate's `closed` follows the breaker (set on close, trip and load) and switches all cells between the closed
+  and open models; they differ only in the position indicator and the disconnector blades. Cells are written only when the state changes.
+- **Legacy blocks.** A Grid Tie saved as one block (`assembled=false`) keeps its cube, its model and all behaviour, and never spreads
+  into cells; its `closed` stays false. Only newly placed ties are the full breaker.
+- **CEE.** `GcbConnections.flanges(controllerPos, facing)` returns the six flange points (phases A, B, C at the generator and the
+  transformer end) in world coordinates, from `gcb_connections.json`, for the CEE add-on's wire nodes. No CEE code is here.
+- **Tests.** `GridTieModelTests` (placement, breaking, indicator, FE through a cell, legacy block, refused placement, flange points).
+
 ## 9. Build order and completion evidence
 
 The R1–R5 documentation update is followed by **seven implementation commits**;

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased (alpha.61): the Grid Tie is a generator circuit breaker
+
+- **The Grid Tie has a new model: a generator circuit breaker** (GRID-TIE-SPEC.md 8.1). A 5 x 3 x 7 SF6 breaker with isolated-phase-bus
+  flanges at both ends and a control cubicle, built in Blender like the MSIV. It needs room for all 105 cells, breaking any cell removes it
+  all, and the position indicator and disconnector blades follow the breaker (closed or open). The FE input, signals, peripheral, Panel
+  Linker and meter linking work from any cell exactly as before. **Grid Ties already placed keep their cube** and work unchanged. New
+  `GridTieModelTests`; `GcbConnections` gives the six bus flange points for the CEE add-on.
+
 ## Unreleased (alpha.60): turbine accident sounds
 
 - **A canal gate no longer "holds back" water that stands over its own top.** A pool brim full at its rim and a well whose walls stand higher (a fill port keeps filling it) looked level in the canal, which draws both sides full to the brim, but the crane refused GATE OUT with "holds back 7.14 m": the head was counted from the well's whole surface, y 98.14, to the pool's rim, y 91.00. A gate holds back only its own height, so each side's surface now counts no higher than the gate's top (`CanalGateLift.headAcross`; the message still prints the surfaces as they stand). A stack of 5 plugs and a single plug are both lifted when the two sides brim over the gate, and are still refused when they differ below its top. Tests: `CanalGateLiftTests` (+2, `bwrplug`).
