@@ -85,7 +85,7 @@ def javafile(cls):
     return ""
 
 # resolve per-block: find "name" -> class on the same register line
-for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*new ([A-Za-z0-9_.]+)\(', src):
+for m in re.finditer(r'BLOCKS\.register\(\s*"([a-z0-9_]+)",\s*\(\)\s*->\s*(?:[^;]*?:\s*)?new ([A-Za-z0-9_.]+)\(', src):
     name, cls = m.group(1), m.group(2).split('.')[-1]
     body = javafile(cls)
     # Registry classes can inherit blockstate properties (e.g. paired jet pumps).

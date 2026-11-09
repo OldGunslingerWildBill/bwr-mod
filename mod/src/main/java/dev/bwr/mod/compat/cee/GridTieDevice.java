@@ -20,14 +20,15 @@ import net.minecraft.world.level.Level;
  * three carry phases: the breaker needs no mode.
  *
  * <p>CEE gives every cell of a multiblock whose block is a device block its own device of this type (it cannot tell a cell from a block);
- * only the assembled controller cell has nodes and bridges anything, the other 104 do nothing.
+ * only the assembled controller cell has nodes and bridges anything, the other 71 do nothing.
  */
 public class GridTieDevice extends SimpleElectricalDevice {
     /**
-     * Resistance of one closed pole, generator flange to transformer flange.
-     * TODO: the CEE session is sourcing ABB HEC 7/8's real main-circuit resistance (times 10, the in-game convention); replace this placeholder.
+     * Resistance of one closed pole, generator flange to transformer flange: 5 uOhm real x10 in-game convention. HEC 7/8 is unpublished; the
+     * nearest published values are ABB GCB at Tongbai 3-4 uOhm/pole, an imported SF6 GCB at Jiangsu Shahe 5 uOhm, GE FKG1X 4.4 uOhm max
+     * per pole without connections, and ABB patent US7405569B2 2-20 uOhm for the main contacts.
      */
-    public static final double POLE_OHMS = 1.0e-5;
+    public static final double POLE_OHMS = 5.0e-5;
 
     /** Test hook: when set, called with the results of every solve in which a Grid Tie device is present (so a test can read any bridge in the circuit). */
     public static volatile Consumer<SimulationResults> testProbe;

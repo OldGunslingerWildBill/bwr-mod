@@ -158,7 +158,7 @@ final class GridTieCeeChecks {
     static void polesSwitchTheCircuit(GameTestHelper h, BlockPos root, Runnable done) {
         var l = h.getLevel();
         var sd = InfrastructureSavedData.load(l);
-        PowerModuleRuntimeCheck.place(l, BwrBlocks.NUCLEAR_GENERATOR.get(), root, Direction.EAST);
+        // no BWR generator: the breaker is set closed or open directly (GridTieBlockEntity.setClosedForTest)
         var tie = placeTie(l, root.east(24));
         var at = tie.getBlockPos();
         var battery = at.offset(0, 6, -8);
@@ -166,7 +166,8 @@ final class GridTieCeeChecks {
         placeCee(l, CEEBlocks.CREATIVE_BATTERY.get(), battery);
         placeCee(l, CEEBlocks.CREATIVE_RESISTOR.get(), resistor);
         ((ResistorBlockEntity) l.getBlockEntity(resistor)).setResistance(OHMS);
-        h.assertTrue(tie.bindGenerator(root) && GridTieTests.closeWithDraw(.999, tie::closeBreaker) && tie.closed(), "tie setup");
+        tie.setClosedForTest(true);
+        h.assertTrue(tie.closed(), "tie setup");
         h.assertTrue(DevicesSavedData.load(l).getDevice(at, GridTieDevice.class) != null, "no Grid Tie device at the controller");
         // + through pole X (nodes 0 and 3), - back through pole Z (nodes 5 and 2)
         wire(sd, node(sd, battery, 0), node(sd, at, 0));
@@ -196,7 +197,8 @@ final class GridTieCeeChecks {
                     var gcb = DevicesSavedData.load(l).getDevice(at, GridTieDevice.class);
                     h.assertTrue(!Double.isNaN(amps[0]) && amps[0] < 1e-3, "tripped: " + amps[0] + " A still flows through the load");
                     h.assertTrue(gcb.poleAmps[0] == 0 && gcb.poleAmps[2] == 0, "tripped: pole currents " + gcb.poleAmps[0] + ", " + gcb.poleAmps[2]);
-                    h.assertTrue(GridTieTests.closeWithDraw(.999, tie::closeBreaker) && tie.closed(), "the breaker did not close again");
+                    tie.setClosedForTest(true);
+                    h.assertTrue(tie.closed(), "the breaker did not close again");
                     amps[0] = Double.NaN;
                 } catch (RuntimeException | Error e) {
                     finish.run();

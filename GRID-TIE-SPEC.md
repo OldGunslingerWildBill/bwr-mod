@@ -627,10 +627,13 @@ The Grid Tie is now the model of a generator circuit breaker (SF6, isolated-phas
 (`art/models/generator_breaker/build_gcb.py`) and baked by `python tools-export-gcb.py` (`--check` is read-only), the same route as the
 MSIV (MAIN-STEAM-VALVES.md). Only the look and the footprint changed; every behaviour in this spec is as before.
 
-- **Footprint.** 5 wide (across the phases) x 3 tall x 7 long (along the bus: generator end, then transformer end). A new Grid Tie item
-  needs all 105 cells free and faces the way the pumps do (opposite the player's look); otherwise nothing is placed ("Not enough
+- **Footprint.** 6 wide (across the phases) x 3 tall x 4 long (along the bus: generator end z = 0, transformer end z = 4), 72 cells,
+  from ABB's HEC 7/8 brochure 1HC0070730 E02 (dimension drawings pp. 46-47): poles 2.0 m apart (x = 1, 3, 5; the brochure gives
+  1.65-2.1 m), bus axis 1.7 m up (1.6-1.75 m), pole enclosures 3.3 m between the flange zones (3.26 m), pole-end diameter 1.25 m, overall
+  height 2.9 m (at least 2.9 m), cubicle on the side of the frame. The voltage transformers, capacitors and arrester are compressed into
+  compartments under the poles. A new Grid Tie item needs all 72 cells free and faces the way the pumps do (opposite the player's look); otherwise nothing is placed ("Not enough
   room for the full assembly here"). Breaking any cell removes the whole breaker and drops one item.
-- **Controller.** The block entity is on the control cubicle's cell (x 0, y 0, z 1). Every cell routes to it: the FE sink (on every face of
+- **Controller.** The block entity is on the control cubicle's cell (x 0, y 0, z 0, cell index 0). Every cell routes to it: the FE sink (on every face of
   every cell), BWR signals and panel wiring, the CC peripheral, the Panel Linker binding (generator and meters) and FE meter linking.
   A cable at the generator end and one at the transformer end reach the same sink.
 - **Indicator.** The blockstate's `closed` follows the breaker (set on close, trip and load) and switches all cells between the closed
@@ -649,21 +652,23 @@ Without it nothing changes (the Grid Tie is the plain block; no CEE class is loa
 - **Nodes.** The block is then `CeeGridTieBlock`, an `ElectricalDeviceBlock`, chosen when the block is registered. Only the assembled
   controller cell has nodes, 0-2 the generator-end flanges of poles X, Y, Z (phases A, B, C: labels "X gen", "Y gen", "Z gen") and 3-5
   the transformer-end flanges ("X xfmr", "Y xfmr", "Z xfmr"), 1.3 m across like the IPB-45 flange, at the `GcbConnections` points. A saved
-  one-block tie and the other 104 cells have none. Nodes are registered when the controller is placed and on its two-second tick. They
+  one-block tie and the other 71 cells have none. Nodes are registered when the controller is placed and on its two-second tick. They
   and their wires are removed when the breaker is broken by anything (a player at any cell, an explosion, a command) or loses `assembled`;
   a Create wrench used sneaking takes the wires off without picking the breaker up. A click on any cell reaches the nodes: a mixin
   (`bwr.cee.mixins.json`, applied only with CEE) sends CEE's `InWorldNode.closestNode` for a non-controller cell to the controller's nodes.
 - **Switching.** `GridTieDevice` (a CEE `SimpleElectricalDevice`) reads `GridTieBlockEntity.closed()` and keeps no state of its own. Closed,
   each pole is a resistor of `GridTieDevice.POLE_OHMS` between its generator and transformer flange; open, nothing is bridged and the
-  six flanges are isolated. (CEE gives each of the 105 cells a device of this type, because it cannot tell a cell from a block; only the
-  controller's does anything.) `POLE_OHMS` is a placeholder, 1e-5 ohm: the real main-circuit resistance of an ABB HEC 7/8 breaker
-  (times 10, the in-game convention) is still to be sourced.
+  six flanges are isolated. (CEE gives each of the 72 cells a device of this type, because it cannot tell a cell from a block; only the
+  controller's does anything.) `POLE_OHMS` is 5e-5 ohm (5 uOhm real, x10 in-game convention). HEC 7/8's value is unpublished; the nearest published
+  ones are ABB GCB at Tongbai 3-4 uOhm per pole, an imported SF6 GCB at Jiangsu Shahe 5 uOhm, GE FKG1X 4.4 uOhm maximum per pole without
+  connections, and ABB patent US7405569B2 2-20 uOhm for the main contacts.
 - **Wiring it.** A bus run leaves each flange straight along the bus axis, so a straight CEE Grid isolated-phase-bus run (one axis, within
   half a block) out of each flange works as is. In DC the outer poles X and Z are + and - (Y unused); in AC all three poles carry a phase.
   The breaker needs no mode switch.
 - **Tests.** `GridTieCeeTests` (namespace `bwrcee`; with `-PwithCee` they run against the real CEE and Create on the dev runtime, without
   it they only report that they were skipped): nodes, labels and positions; a legacy cube has none; `closestNode` from a flange cell; wires
-  removed on break, removal and disassembly; a creative battery and resistor through poles X and Z (closed carries V/R, tripped none, closed again flows).
+  removed on break, removal and disassembly; a creative battery and resistor through poles X and Z (closed carries V/R, tripped none, closed again flows). That test sets the
+  breaker with `GridTieBlockEntity.setClosedForTest(boolean)` (add-on tests only, no generator, no shaft effects).
 
 ## 9. Build order and completion evidence
 

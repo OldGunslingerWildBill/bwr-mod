@@ -27,19 +27,20 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.shapes.*;
 
 /**
- * The Grid Tie: a 5 x 3 x 7 generator circuit breaker (art/models/generator_breaker, tools-export-gcb.py). One block entity on the
+ * The Grid Tie: a 6 x 3 x 4 generator circuit breaker (ABB HEC 7/8 dimensions) (art/models/generator_breaker, tools-export-gcb.py). One block entity on the
  * control cubicle's cell carries all behaviour; every cell routes to it. Grid Ties saved as one block (assembled=false) keep their cube.
  * Not final: with Create: Electro Energetics present the block is its subclass dev.bwr.mod.compat.cee.CeeGridTieBlock (the bus nodes).
- * Laid out like the MSIV (MainSteamIsolationValveBlock) and the pump assemblies (PumpAssemblyBlock): cell = x + 5 * (z + 7 * y).
+ * Laid out like the MSIV (MainSteamIsolationValveBlock) and the pump assemblies (PumpAssemblyBlock): cell = x + 6 * (z + 4 * y).
  */
 public class GridTieBlock extends BaseEntityBlock {
     public static final MapCodec<GridTieBlock> CODEC=simpleCodec(GridTieBlock::new);
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;
-    public static final IntegerProperty CELL=IntegerProperty.create("cell",0,104);
+    public static final IntegerProperty CELL=IntegerProperty.create("cell",0,71);
     public static final BooleanProperty ASSEMBLED=BooleanProperty.create("assembled");
     /** The breaker is closed: selects the closed or open cell models. Kept in step with the block entity (GridTieBlockEntity.syncIndicator). */
     public static final BooleanProperty CLOSED=BooleanProperty.create("closed");
-    private static final int W=5,H=3,D=7;
+    /** Footprint in cells: across the phases, up, along the bus. */
+    public static final int W=6,H=3,D=4;
     public static final int CELLS=W*H*D;
     /** The cell that carries the block entity (the control cubicle), from the model manifest. */
     public static final int CONTROLLER;
@@ -134,7 +135,7 @@ public class GridTieBlock extends BaseEntityBlock {
             ctx.getPlayer().displayClientMessage(dev.bwr.mod.text.BwrText.tr("status.bwr.pump_assembly.no_room_for_the_full_assembly","Not enough room for the full assembly here"),true);
         return null;
     }
-    /** Whether all 105 cells of {@code s} rooted at {@code root} are free to build; {@code ownRoot}: the root cell is already ours. */
+    /** Whether all 72 cells of {@code s} rooted at {@code root} are free to build; {@code ownRoot}: the root cell is already ours. */
     private boolean fits(Level level,LivingEntity actor,BlockPos root,BlockState s,boolean ownRoot){
         for(int i=0;i<CELLS;i++){
             if(ownRoot&&i==CONTROLLER)continue;

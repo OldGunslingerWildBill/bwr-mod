@@ -9,7 +9,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Where the six isolated-phase-bus flanges of a Grid Tie (the generator circuit breaker) are in the world, for the CEE add-on to attach
  * its wire nodes to. The constants are the points in art/models/generator_breaker/gcb_connections.json, in block units of the model's
- * 5 x 3 x 7 box (x across the phases, y up, z along the bus; generator end z = 0, transformer end z = 7) for a north-facing tie. They
+ * 6 x 3 x 4 box (x across the phases, y up, z along the bus; generator end z = 0, transformer end z = 4; ABB HEC 7/8, brochure 1HC0070730 E02) for a north-facing tie. They
  * are copied here, not read at run time; build_gcb.py writes the JSON, so change both together.
  */
 public final class GcbConnections {
@@ -18,16 +18,16 @@ public final class GcbConnections {
     public enum End { GENERATOR, TRANSFORMER }
     public record Flange(Phase phase, End end, Vec3 pos) {}
 
-    private static final double[] PHASE_X = {1.0, 2.5, 4.0};
-    private static final double Y = 2.0;
-    private static final double Z_GENERATOR = 0.0, Z_TRANSFORMER = 7.0;
+    private static final double[] PHASE_X = {1.0, 3.0, 5.0};
+    private static final double Y = 1.7;
+    private static final double Z_GENERATOR = 0.0, Z_TRANSFORMER = 4.0;
 
     /** The flange centre in the world, for a tie whose controller (control cubicle) cell is {@code controller} and which faces {@code facing}. */
     public static Vec3 flange(BlockPos controller, Direction facing, Phase phase, End end) {
         // Model coordinates of the controller cell's centre. The cells turn about their own centres (the blockstate's y rotation),
         // which is the same turn as GridTieBlock.cellPos applies to whole cells.
         int cell = GridTieBlock.CONTROLLER;
-        double cx = cell % 5 + .5, cy = cell / 35 + .5, cz = (cell / 5) % 7 + .5;
+        double cx = cell % GridTieBlock.W + .5, cy = cell / (GridTieBlock.W * GridTieBlock.D) + .5, cz = (cell / GridTieBlock.W) % GridTieBlock.D + .5;
         double dx = PHASE_X[phase.ordinal()] - cx, dz = (end == End.GENERATOR ? Z_GENERATOR : Z_TRANSFORMER) - cz;
         double rx, rz;
         switch (facing) {

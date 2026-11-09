@@ -82,7 +82,7 @@ public class CeeGridTieBlock extends GridTieBlock implements ElectricalDeviceBlo
         return NODE_SIZE;
     }
 
-    // --- lifecycle: the four behaviours of CEE's SimpleElectricalDeviceBlock, adapted to a 105-cell block ---
+    // --- lifecycle: the four behaviours of CEE's SimpleElectricalDeviceBlock, adapted to a 72-cell block ---
 
     @Override
     protected void onPlace(BlockState s, Level level, BlockPos pos, BlockState old, boolean moving) {

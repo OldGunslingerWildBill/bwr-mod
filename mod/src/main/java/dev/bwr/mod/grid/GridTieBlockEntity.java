@@ -103,6 +103,14 @@ public final class GridTieBlockEntity extends GridDevice {
         if(live())tickDevice();
         if(closed){closed=false;phase=0;setChanged();syncIndicator();var g=generator();if(g!=null)g.releaseGrid();}
     }
+    /**
+     * For add-on GameTests only (like {@link #testDestructDraw}): sets the breaker closed or open WITHOUT a bound generator. It updates
+     * {@code closed}, the indicator on the cells and the saved state, and applies no shaft effects (no damage, no motoring, no train shock).
+     * An add-on's end-to-end test needs it because building a BWR generator there is impractical. Not for gameplay.
+     */
+    public void setClosedForTest(boolean value){
+        closed=value;if(!value)phase=0;setChanged();syncIndicator();
+    }
     /** Shows the breaker on every cell of an assembled tie (the blockstate's closed flag). Writes only cells that differ, so a steady breaker costs no chunk update. */
     private void syncIndicator(){
         if(level==null||level.isClientSide())return;

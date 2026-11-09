@@ -31,7 +31,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * The Grid Tie as the 5 x 3 x 7 generator circuit breaker (GRID-TIE-SPEC.md, "New look"): placement and facing, breaking any cell,
+ * The Grid Tie as the 6 x 3 x 4 generator circuit breaker (GRID-TIE-SPEC.md, "New look"): placement and facing, breaking any cell,
  * the closed indicator on every cell, FE into a generator-end cell, a saved one-block tie, refused placement, and the CEE flange points.
  * Each test has its own row far from the others.
  */
@@ -105,13 +105,13 @@ public final class GridTieModelTests {
                     var s = l.getBlockState(root);
                     h.assertTrue(s.is(BwrBlocks.GRID_TIE.get()) && s.getValue(GridTieBlock.ASSEMBLED) && s.getValue(GridTieBlock.FACING) == d
                             && s.getValue(GridTieBlock.CELL) == GridTieBlock.CONTROLLER && !s.getValue(GridTieBlock.CLOSED), d + ": root state " + s);
-                    h.assertTrue(cellsStanding(l, root, d) == 105, d + ": " + cellsStanding(l, root, d) + " of 105 cells stand");
+                    h.assertTrue(cellsStanding(l, root, d) == GridTieBlock.CELLS, d + ": " + cellsStanding(l, root, d) + " of " + GridTieBlock.CELLS + " cells stand");
                     int blocks = 0, entities = 0;
                     for (var p : BlockPos.betweenClosed(min, max)) {
                         if (l.getBlockState(p).is(BwrBlocks.GRID_TIE.get())) blocks++;
                         if (l.getBlockEntity(p) != null) entities++;
                     }
-                    h.assertTrue(blocks == 105 && entities == 1 && l.getBlockEntity(root) instanceof GridTieBlockEntity, d + ": " + blocks + " blocks, " + entities + " block entities");
+                    h.assertTrue(blocks == GridTieBlock.CELLS && entities == 1 && l.getBlockEntity(root) instanceof GridTieBlockEntity, d + ": " + blocks + " blocks, " + entities + " block entities");
                     h.assertTrue(count(player, BwrItems.GRID_TIE.get()) == 0, d + ": the item was not taken once");
                 }
                 // a placer that sets the default state and calls setPlacedBy (no getStateForPlacement) still gets the full tie
@@ -122,7 +122,7 @@ public final class GridTieModelTests {
                 var def = BwrBlocks.GRID_TIE.get().defaultBlockState();
                 l.setBlock(root, def, 3);
                 BwrBlocks.GRID_TIE.get().setPlacedBy(l, root, def, player, stack);
-                h.assertTrue(cellsStanding(l, root, Direction.NORTH) == 105, "a default-state placer did not get the full tie: " + cellsStanding(l, root, Direction.NORTH));
+                h.assertTrue(cellsStanding(l, root, Direction.NORTH) == GridTieBlock.CELLS, "a default-state placer did not get the full tie: " + cellsStanding(l, root, Direction.NORTH));
                 h.succeed();
             } finally { clear(l, min, max); }
         });
@@ -136,12 +136,12 @@ public final class GridTieModelTests {
         var max = root.offset(8, 6, 8);
         EntityLookupProbe.runWhenLive(h, box(min, max), () -> {
             try {
-                // the first and last cells, the controller, and two in between
-                for (int cell : new int[]{0, GridTieBlock.CONTROLLER, 52, 71, 104}) {
+                // the controller (cell 0), the last cell, and two in between
+                for (int cell : new int[]{0, 30, 47, GridTieBlock.CELLS - 1}) {
                     clear(l, min, max);
                     var player = player(l, "bwr_gcb_break", GameType.SURVIVAL, root);
                     h.assertTrue(useItem(l, player, root, Direction.SOUTH), "no placement");
-                    h.assertTrue(cellsStanding(l, root, Direction.NORTH) == 105, "not whole before the break");
+                    h.assertTrue(cellsStanding(l, root, Direction.NORTH) == GridTieBlock.CELLS, "not whole before the break");
                     player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.NETHERITE_PICKAXE));
                     h.assertTrue(player.gameMode.destroyBlock(GridTieBlock.cellPos(root, Direction.NORTH, cell)), "cell " + cell + " would not break");
                     int left = 0;
@@ -183,8 +183,8 @@ public final class GridTieModelTests {
                 var at = tie.getBlockPos();
                 h.assertTrue(closedCells(l, at, Direction.EAST) == 0 && tie.bindGenerator(root), "setup");
                 h.assertTrue(GridTieTests.closeWithDraw(.999, tie::closeBreaker) && tie.closed(), "the breaker did not close");
-                h.assertTrue(closedCells(l, at, Direction.EAST) == 105, "closed on " + closedCells(l, at, Direction.EAST) + " of 105 cells");
-                h.assertTrue(cellsStanding(l, at, Direction.EAST) == 105, "closing changed the cells' other properties");
+                h.assertTrue(closedCells(l, at, Direction.EAST) == GridTieBlock.CELLS, "closed on " + closedCells(l, at, Direction.EAST) + " of " + GridTieBlock.CELLS + " cells");
+                h.assertTrue(cellsStanding(l, at, Direction.EAST) == GridTieBlock.CELLS, "closing changed the cells' other properties");
                 tie.tripBreaker();
                 h.assertTrue(!tie.closed() && closedCells(l, at, Direction.EAST) == 0, "tripped but " + closedCells(l, at, Direction.EAST) + " cells still closed");
                 // a load re-applies the saved state to cells that disagree (a stale chunk, or cells that were not loaded when it changed)
@@ -193,7 +193,7 @@ public final class GridTieModelTests {
                 tie.tripBreaker();
                 tie.loadWithComponents(saved, l.registryAccess());
                 tie.tickDevice();
-                h.assertTrue(tie.closed() && closedCells(l, at, Direction.EAST) == 105, "a load left the indicator at " + closedCells(l, at, Direction.EAST) + " of 105");
+                h.assertTrue(tie.closed() && closedCells(l, at, Direction.EAST) == GridTieBlock.CELLS, "a load left the indicator at " + closedCells(l, at, Direction.EAST) + " of " + GridTieBlock.CELLS);
                 tie.tripBreaker();
                 h.succeed();
             } finally { clear(l, min, max); }
@@ -216,8 +216,8 @@ public final class GridTieModelTests {
                 var at = tie.getBlockPos();
                 h.assertTrue(tie.bindGenerator(root) && tie.configure(new GridDemand(0, 48000, 0, 0, 0, 20)) && GridTieTests.closeWithDraw(.999, tie::closeBreaker), "tie setup");
                 ((net.minecraft.world.level.storage.ServerLevelData) l.getLevelData()).setGameTime(time + 1);
-                // phase B's generator-end flange cell (x 2, y 2, z 0), through the capability of that cell, not of the controller
-                var cell = GridTieBlock.cellPos(at, Direction.EAST, 2 + 5 * (0 + 7 * 2));
+                // phase B's generator-end flange cell (x 3, y 1, z 0), through the capability of that cell, not of the controller
+                var cell = GridTieBlock.cellPos(at, Direction.EAST, 3 + 6 * (0 + 4 * 1));
                 var cap = l.getCapability(Capabilities.EnergyStorage.BLOCK, cell, null);
                 h.assertTrue(cap != null && l.getCapability(Capabilities.EnergyStorage.BLOCK, cell, Direction.WEST) != null, "no energy capability on the generator-end cell");
                 int before = (int) tie.ledger().totalFE();
@@ -277,7 +277,7 @@ public final class GridTieModelTests {
         var max = root.offset(8, 6, 8);
         EntityLookupProbe.runWhenLive(h, box(min, max), () -> {
             try {
-                for (int cell : new int[]{0, 52, 104}) {
+                for (int cell : new int[]{1, 30, GridTieBlock.CELLS - 1}) {
                     clear(l, min, max);
                     // facing north (the player looks south): any one cell taken refuses the whole
                     l.setBlock(GridTieBlock.cellPos(root, Direction.NORTH, cell), Blocks.STONE.defaultBlockState(), 3);
@@ -302,13 +302,13 @@ public final class GridTieModelTests {
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void theSixFlangePointsFollowTheTieThroughEveryFacing(GameTestHelper h) {
         var at = new BlockPos(10, 20, 30);
-        // north: x across (1, 2.5, 4) from the controller cell's west edge, y 2, z 0 and 7 relative to the controller cell's z = 1
+        // north: x across (1, 3, 5) from the controller cell's west edge, y 1.7, z 0 and 4; the controller cell is (0, 0, 0)
         var north = GcbConnections.flanges(at, Direction.NORTH);
         h.assertTrue(north.size() == 6, "six flanges");
-        h.assertTrue(close(GcbConnections.flange(at, Direction.NORTH, GcbConnections.Phase.A, GcbConnections.End.GENERATOR), 11.0, 22.0, 29.0), "north A generator end");
-        h.assertTrue(close(GcbConnections.flange(at, Direction.NORTH, GcbConnections.Phase.C, GcbConnections.End.TRANSFORMER), 14.0, 22.0, 36.0), "north C transformer end");
+        h.assertTrue(close(GcbConnections.flange(at, Direction.NORTH, GcbConnections.Phase.A, GcbConnections.End.GENERATOR), 11.0, 21.7, 30.0), "north A generator end");
+        h.assertTrue(close(GcbConnections.flange(at, Direction.NORTH, GcbConnections.Phase.C, GcbConnections.End.TRANSFORMER), 15.0, 21.7, 34.0), "north C transformer end");
         // a quarter turn about the controller cell's centre, the way the cell models turn
-        h.assertTrue(close(GcbConnections.flange(at, Direction.EAST, GcbConnections.Phase.A, GcbConnections.End.GENERATOR), 12.0, 22.0, 31.0), "east A generator end");
+        h.assertTrue(close(GcbConnections.flange(at, Direction.EAST, GcbConnections.Phase.A, GcbConnections.End.GENERATOR), 11.0, 21.7, 31.0), "east A generator end");
         // every flange of every facing lies inside its tie's footprint box
         for (var d : DIRS) for (var f : GcbConnections.flanges(at, d)) {
             boolean inside = false;

@@ -121,7 +121,7 @@ public final class GridTieCeeTests {
                 GridTieCeeChecks.wiresGoWithTheBlock(h, at, min, max, p -> l.removeBlock(p, false), "the controller removed");
                 // another cell removed by code
                 GridTieCeeChecks.wiresGoWithTheBlock(h, at, min, max,
-                        p -> l.removeBlock(dev.bwr.mod.grid.GridTieBlock.cellPos(p, Direction.EAST, 104), false), "a corner cell removed");
+                        p -> l.removeBlock(dev.bwr.mod.grid.GridTieBlock.cellPos(p, Direction.EAST, dev.bwr.mod.grid.GridTieBlock.CELLS - 1), false), "a corner cell removed");
                 // the tie losing its assembled flag
                 GridTieCeeChecks.wiresGoWithTheBlock(h, at, min, max,
                         p -> l.setBlock(p, l.getBlockState(p).setValue(dev.bwr.mod.grid.GridTieBlock.ASSEMBLED, false), 3), "disassembled");

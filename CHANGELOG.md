@@ -2,8 +2,9 @@
 
 ## Unreleased (alpha.61): the Grid Tie is a generator circuit breaker
 
-- **The Grid Tie has a new model: a generator circuit breaker** (GRID-TIE-SPEC.md 8.1). A 5 x 3 x 7 SF6 breaker with isolated-phase-bus
-  flanges at both ends and a control cubicle, built in Blender like the MSIV. It needs room for all 105 cells, breaking any cell removes it
+- **The Grid Tie has a new model: a generator circuit breaker** (GRID-TIE-SPEC.md 8.1). A 6 x 3 x 4 SF6 breaker (ABB HEC 7/8 dimensions from the brochure: 2.0 m phase pitch, bus axis 1.7 m up,
+  3.3 m pole enclosures, 2.9 m high) with isolated-phase-bus flanges at both ends and a control cubicle, built in Blender like the MSIV.
+  It needs room for all 72 cells, breaking any cell removes it
   all, and the position indicator and disconnector blades follow the breaker (closed or open). The FE input, signals, peripheral, Panel
   Linker and meter linking work from any cell exactly as before. **Grid Ties already placed keep their cube** and work unchanged. New
   `GridTieModelTests`; `GcbConnections` gives the six bus flange points.
