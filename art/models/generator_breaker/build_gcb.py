@@ -589,6 +589,11 @@ if __name__ == '__main__':
         lo, hi = check_bounds(sc)
         print('GCB', sc.name, triangles(sc), 'triangles', 'objects', len(sc.objects), 'bounds', [round(x, 3) for x in lo + hi])
         assert all(lo[a] >= -1e-6 for a in range(3)) and hi[0] <= 5 + 1e-6 and hi[1] <= 3 + 1e-6 and hi[2] <= 7 + 1e-6, 'outside 5x3x7'
+    # Mesh/UV snapshots that tools-export-gcb.py bakes into per-cell models (the MSIV's route, tools-export-msiv.py). The size is
+    # width x height x depth in cells; the controller is the control cubicle's cell (x 0, y 0, z 1), where the block entity lives.
+    meta = {'id': 'generator_breaker', 'size': [5, 3, 7], 'controller': [0, 0, 1], 'ports': []}
+    export(SCENES[0], HERE / 'generator_breaker.json', meta)
+    export(SCENES[1], HERE / 'generator_breaker_open.json', dict(meta, id='generator_breaker_open'))
     for sc in list(bpy.data.scenes):
         if sc not in SCENES:
             bpy.data.scenes.remove(sc)
