@@ -126,7 +126,7 @@ public final class BwrBlocks {
             BLOCKS.register("thulium_170_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GRAY)
                     .instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.IRON_XYLOPHONE)
                     .requiresCorrectToolForDrops().strength(5.0f, 6.0f).sound(SoundType.METAL)));
-    public static final DeferredBlock<dev.bwr.mod.grid.GridTieBlock> GRID_TIE=BLOCKS.register("grid_tie",()->new dev.bwr.mod.grid.GridTieBlock(vesselSteel()));
+    public static final DeferredBlock<dev.bwr.mod.grid.GridTieBlock> GRID_TIE=BLOCKS.register("grid_tie",()->dev.bwr.mod.compat.cee.CeeCompat.present()?dev.bwr.mod.compat.cee.CeeCompat.newGridTie(vesselSteel()):new dev.bwr.mod.grid.GridTieBlock(vesselSteel()));
 
     /** Wall-mounted area radiation monitor (a reading, a lamp, two booleans); it never acts on the plant. */
     public static final DeferredBlock<dev.bwr.mod.radiation.AreaRadiationMonitorBlock> AREA_RADIATION_MONITOR =

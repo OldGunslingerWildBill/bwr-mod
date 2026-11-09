@@ -29,9 +29,10 @@ import net.minecraft.world.phys.shapes.*;
 /**
  * The Grid Tie: a 5 x 3 x 7 generator circuit breaker (art/models/generator_breaker, tools-export-gcb.py). One block entity on the
  * control cubicle's cell carries all behaviour; every cell routes to it. Grid Ties saved as one block (assembled=false) keep their cube.
+ * Not final: with Create: Electro Energetics present the block is its subclass dev.bwr.mod.compat.cee.CeeGridTieBlock (the bus nodes).
  * Laid out like the MSIV (MainSteamIsolationValveBlock) and the pump assemblies (PumpAssemblyBlock): cell = x + 5 * (z + 7 * y).
  */
-public final class GridTieBlock extends BaseEntityBlock {
+public class GridTieBlock extends BaseEntityBlock {
     public static final MapCodec<GridTieBlock> CODEC=simpleCodec(GridTieBlock::new);
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;
     public static final IntegerProperty CELL=IntegerProperty.create("cell",0,104);

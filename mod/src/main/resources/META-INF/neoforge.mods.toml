@@ -20,6 +20,10 @@ deliberately no built-in scram, no automatic ECCS actuation and no trip
 setpoints anywhere -- every protection scheme is yours to write in CC:Tweaked.
 '''
 
+[[mixins]]
+# Applied only when Create: Electro Energetics is installed (its plugin checks); inert otherwise.
+config = "bwr.cee.mixins.json"
+
 [[dependencies.${modId}]]
 modId = "neoforge"
 type = "required"
@@ -67,5 +71,14 @@ side = "BOTH"
 modId = "computercraft"
 type = "optional"
 versionRange = "[1.111,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Create: Electro Energetics is optional: the Grid Tie breaker gets six isolated-phase-bus nodes and switches the circuit when it is present.
+# Everything that names a CEE or Create type is in dev.bwr.mod.compat.cee, reached only when it is loaded. CEE needs Create itself.
+[[dependencies.${modId}]]
+modId = "electroenergetics"
+type = "optional"
+versionRange = "[1.21.1-1.1.4,)"
 ordering = "AFTER"
 side = "BOTH"

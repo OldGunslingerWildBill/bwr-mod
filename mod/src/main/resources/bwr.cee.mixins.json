@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "dev.bwr.mod.compat.cee.mixin",
+  "plugin": "dev.bwr.mod.compat.cee.CeeMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "InWorldNodeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

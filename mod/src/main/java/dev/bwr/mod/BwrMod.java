@@ -146,6 +146,10 @@ public final class BwrMod {
         if (ModList.get().isLoaded("cold_sweat")) {
             dev.bwr.mod.compat.coldsweat.ColdSweatCompat.register();
         }
+        // Create: Electro Energetics (optional): the Grid Tie breaker's bus nodes and its device. One package, same rule. BwrBlocks picks the block class itself.
+        if (ModList.get().isLoaded("electroenergetics")) {
+            dev.bwr.mod.compat.cee.CeeCompat.register(modBus);
+        }
         if (mekanismPresent) {
             modBus.addListener(
                     net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent.class,
