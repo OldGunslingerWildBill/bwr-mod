@@ -6,7 +6,11 @@
   flanges at both ends and a control cubicle, built in Blender like the MSIV. It needs room for all 105 cells, breaking any cell removes it
   all, and the position indicator and disconnector blades follow the breaker (closed or open). The FE input, signals, peripheral, Panel
   Linker and meter linking work from any cell exactly as before. **Grid Ties already placed keep their cube** and work unchanged. New
-  `GridTieModelTests`; `GcbConnections` gives the six bus flange points for the CEE add-on.
+  `GridTieModelTests`; `GcbConnections` gives the six bus flange points.
+- **Optional Create: Electro Energetics support for the breaker** (GRID-TIE-SPEC.md 8.2). With CEE installed the six flanges are wire nodes
+  (X, Y, Z at the generator and transformer end) that isolated-phase-bus wires attach to from any cell, and each pole conducts while
+  the breaker is closed and isolates when it is open. Breaking or disassembling the breaker takes its wires off. Without CEE nothing changes.
+  New `GridTieCeeTests` (namespace `bwrcee`, run with `-PwithCee`).
 
 ## Unreleased (alpha.60): turbine accident sounds
 

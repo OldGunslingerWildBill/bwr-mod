@@ -638,8 +638,32 @@ MSIV (MAIN-STEAM-VALVES.md). Only the look and the footprint changed; every beha
 - **Legacy blocks.** A Grid Tie saved as one block (`assembled=false`) keeps its cube, its model and all behaviour, and never spreads
   into cells; its `closed` stays false. Only newly placed ties are the full breaker.
 - **CEE.** `GcbConnections.flanges(controllerPos, facing)` returns the six flange points (phases A, B, C at the generator and the
-  transformer end) in world coordinates, from `gcb_connections.json`, for the CEE add-on's wire nodes. No CEE code is here.
+  transformer end) in world coordinates, from `gcb_connections.json`. With Create: Electro Energetics installed they are wire nodes (8.2).
 - **Tests.** `GridTieModelTests` (placement, breaking, indicator, FE through a cell, legacy block, refused placement, flange points).
+
+### 8.2 CEE (optional): the bus wires and the poles
+
+With Create: Electro Energetics (CEE 1.21.1-1.1.4 or later) installed, the six flanges are CEE wire nodes and each pole switches the circuit.
+Without it nothing changes (the Grid Tie is the plain block; no CEE class is loaded). Everything is in `dev.bwr.mod.compat.cee`.
+
+- **Nodes.** The block is then `CeeGridTieBlock`, an `ElectricalDeviceBlock`, chosen when the block is registered. Only the assembled
+  controller cell has nodes, 0-2 the generator-end flanges of poles X, Y, Z (phases A, B, C: labels "X gen", "Y gen", "Z gen") and 3-5
+  the transformer-end flanges ("X xfmr", "Y xfmr", "Z xfmr"), 1.3 m across like the IPB-45 flange, at the `GcbConnections` points. A saved
+  one-block tie and the other 104 cells have none. Nodes are registered when the controller is placed and on its two-second tick. They
+  and their wires are removed when the breaker is broken by anything (a player at any cell, an explosion, a command) or loses `assembled`;
+  a Create wrench used sneaking takes the wires off without picking the breaker up. A click on any cell reaches the nodes: a mixin
+  (`bwr.cee.mixins.json`, applied only with CEE) sends CEE's `InWorldNode.closestNode` for a non-controller cell to the controller's nodes.
+- **Switching.** `GridTieDevice` (a CEE `SimpleElectricalDevice`) reads `GridTieBlockEntity.closed()` and keeps no state of its own. Closed,
+  each pole is a resistor of `GridTieDevice.POLE_OHMS` between its generator and transformer flange; open, nothing is bridged and the
+  six flanges are isolated. (CEE gives each of the 105 cells a device of this type, because it cannot tell a cell from a block; only the
+  controller's does anything.) `POLE_OHMS` is a placeholder, 1e-5 ohm: the real main-circuit resistance of an ABB HEC 7/8 breaker
+  (times 10, the in-game convention) is still to be sourced.
+- **Wiring it.** A bus run leaves each flange straight along the bus axis, so a straight CEE Grid isolated-phase-bus run (one axis, within
+  half a block) out of each flange works as is. In DC the outer poles X and Z are + and - (Y unused); in AC all three poles carry a phase.
+  The breaker needs no mode switch.
+- **Tests.** `GridTieCeeTests` (namespace `bwrcee`; with `-PwithCee` they run against the real CEE and Create on the dev runtime, without
+  it they only report that they were skipped): nodes, labels and positions; a legacy cube has none; `closestNode` from a flange cell; wires
+  removed on break, removal and disassembly; a creative battery and resistor through poles X and Z (closed carries V/R, tripped none, closed again flows).
 
 ## 9. Build order and completion evidence
 
