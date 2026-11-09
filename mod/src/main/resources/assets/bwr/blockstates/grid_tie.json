@@ -32,15 +32,15 @@
       "y": 0
     },
     "assembled=true,cell=7,closed=true,facing=north": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_7",
       "y": 0
     },
     "assembled=true,cell=8,closed=true,facing=north": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_8",
       "y": 0
     },
     "assembled=true,cell=9,closed=true,facing=north": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_9",
       "y": 0
     },
     "assembled=true,cell=10,closed=true,facing=north": {
@@ -291,138 +291,6 @@
       "model": "bwr:block/pumps/generator_breaker/cell_71",
       "y": 0
     },
-    "assembled=true,cell=72,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_72",
-      "y": 0
-    },
-    "assembled=true,cell=73,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_73",
-      "y": 0
-    },
-    "assembled=true,cell=74,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_74",
-      "y": 0
-    },
-    "assembled=true,cell=75,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_75",
-      "y": 0
-    },
-    "assembled=true,cell=76,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_76",
-      "y": 0
-    },
-    "assembled=true,cell=77,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_77",
-      "y": 0
-    },
-    "assembled=true,cell=78,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_78",
-      "y": 0
-    },
-    "assembled=true,cell=79,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_79",
-      "y": 0
-    },
-    "assembled=true,cell=80,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_80",
-      "y": 0
-    },
-    "assembled=true,cell=81,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_81",
-      "y": 0
-    },
-    "assembled=true,cell=82,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_82",
-      "y": 0
-    },
-    "assembled=true,cell=83,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_83",
-      "y": 0
-    },
-    "assembled=true,cell=84,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_84",
-      "y": 0
-    },
-    "assembled=true,cell=85,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_85",
-      "y": 0
-    },
-    "assembled=true,cell=86,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_86",
-      "y": 0
-    },
-    "assembled=true,cell=87,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_87",
-      "y": 0
-    },
-    "assembled=true,cell=88,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_88",
-      "y": 0
-    },
-    "assembled=true,cell=89,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_89",
-      "y": 0
-    },
-    "assembled=true,cell=90,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_90",
-      "y": 0
-    },
-    "assembled=true,cell=91,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_91",
-      "y": 0
-    },
-    "assembled=true,cell=92,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_92",
-      "y": 0
-    },
-    "assembled=true,cell=93,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_93",
-      "y": 0
-    },
-    "assembled=true,cell=94,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_94",
-      "y": 0
-    },
-    "assembled=true,cell=95,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_95",
-      "y": 0
-    },
-    "assembled=true,cell=96,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_96",
-      "y": 0
-    },
-    "assembled=true,cell=97,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_97",
-      "y": 0
-    },
-    "assembled=true,cell=98,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_98",
-      "y": 0
-    },
-    "assembled=true,cell=99,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_99",
-      "y": 0
-    },
-    "assembled=true,cell=100,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_100",
-      "y": 0
-    },
-    "assembled=true,cell=101,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_101",
-      "y": 0
-    },
-    "assembled=true,cell=102,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_102",
-      "y": 0
-    },
-    "assembled=true,cell=103,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_103",
-      "y": 0
-    },
-    "assembled=true,cell=104,closed=true,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker/cell_104",
-      "y": 0
-    },
     "assembled=true,cell=0,closed=false,facing=north": {
       "model": "bwr:block/pumps/generator_breaker_open/cell_0",
       "y": 0
@@ -452,15 +320,15 @@
       "y": 0
     },
     "assembled=true,cell=7,closed=false,facing=north": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_7",
       "y": 0
     },
     "assembled=true,cell=8,closed=false,facing=north": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_8",
       "y": 0
     },
     "assembled=true,cell=9,closed=false,facing=north": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_9",
       "y": 0
     },
     "assembled=true,cell=10,closed=false,facing=north": {
@@ -711,138 +579,6 @@
       "model": "bwr:block/pumps/generator_breaker_open/cell_71",
       "y": 0
     },
-    "assembled=true,cell=72,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_72",
-      "y": 0
-    },
-    "assembled=true,cell=73,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_73",
-      "y": 0
-    },
-    "assembled=true,cell=74,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_74",
-      "y": 0
-    },
-    "assembled=true,cell=75,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_75",
-      "y": 0
-    },
-    "assembled=true,cell=76,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_76",
-      "y": 0
-    },
-    "assembled=true,cell=77,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_77",
-      "y": 0
-    },
-    "assembled=true,cell=78,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_78",
-      "y": 0
-    },
-    "assembled=true,cell=79,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_79",
-      "y": 0
-    },
-    "assembled=true,cell=80,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_80",
-      "y": 0
-    },
-    "assembled=true,cell=81,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_81",
-      "y": 0
-    },
-    "assembled=true,cell=82,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_82",
-      "y": 0
-    },
-    "assembled=true,cell=83,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_83",
-      "y": 0
-    },
-    "assembled=true,cell=84,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_84",
-      "y": 0
-    },
-    "assembled=true,cell=85,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_85",
-      "y": 0
-    },
-    "assembled=true,cell=86,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_86",
-      "y": 0
-    },
-    "assembled=true,cell=87,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_87",
-      "y": 0
-    },
-    "assembled=true,cell=88,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_88",
-      "y": 0
-    },
-    "assembled=true,cell=89,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_89",
-      "y": 0
-    },
-    "assembled=true,cell=90,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_90",
-      "y": 0
-    },
-    "assembled=true,cell=91,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_91",
-      "y": 0
-    },
-    "assembled=true,cell=92,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_92",
-      "y": 0
-    },
-    "assembled=true,cell=93,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_93",
-      "y": 0
-    },
-    "assembled=true,cell=94,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_94",
-      "y": 0
-    },
-    "assembled=true,cell=95,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_95",
-      "y": 0
-    },
-    "assembled=true,cell=96,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_96",
-      "y": 0
-    },
-    "assembled=true,cell=97,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_97",
-      "y": 0
-    },
-    "assembled=true,cell=98,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_98",
-      "y": 0
-    },
-    "assembled=true,cell=99,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_99",
-      "y": 0
-    },
-    "assembled=true,cell=100,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_100",
-      "y": 0
-    },
-    "assembled=true,cell=101,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_101",
-      "y": 0
-    },
-    "assembled=true,cell=102,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_102",
-      "y": 0
-    },
-    "assembled=true,cell=103,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_103",
-      "y": 0
-    },
-    "assembled=true,cell=104,closed=false,facing=north": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_104",
-      "y": 0
-    },
     "assembled=true,cell=0,closed=true,facing=east": {
       "model": "bwr:block/pumps/generator_breaker/cell_0",
       "y": 90
@@ -872,15 +608,15 @@
       "y": 90
     },
     "assembled=true,cell=7,closed=true,facing=east": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_7",
       "y": 90
     },
     "assembled=true,cell=8,closed=true,facing=east": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_8",
       "y": 90
     },
     "assembled=true,cell=9,closed=true,facing=east": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_9",
       "y": 90
     },
     "assembled=true,cell=10,closed=true,facing=east": {
@@ -1131,138 +867,6 @@
       "model": "bwr:block/pumps/generator_breaker/cell_71",
       "y": 90
     },
-    "assembled=true,cell=72,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_72",
-      "y": 90
-    },
-    "assembled=true,cell=73,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_73",
-      "y": 90
-    },
-    "assembled=true,cell=74,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_74",
-      "y": 90
-    },
-    "assembled=true,cell=75,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_75",
-      "y": 90
-    },
-    "assembled=true,cell=76,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_76",
-      "y": 90
-    },
-    "assembled=true,cell=77,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_77",
-      "y": 90
-    },
-    "assembled=true,cell=78,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_78",
-      "y": 90
-    },
-    "assembled=true,cell=79,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_79",
-      "y": 90
-    },
-    "assembled=true,cell=80,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_80",
-      "y": 90
-    },
-    "assembled=true,cell=81,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_81",
-      "y": 90
-    },
-    "assembled=true,cell=82,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_82",
-      "y": 90
-    },
-    "assembled=true,cell=83,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_83",
-      "y": 90
-    },
-    "assembled=true,cell=84,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_84",
-      "y": 90
-    },
-    "assembled=true,cell=85,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_85",
-      "y": 90
-    },
-    "assembled=true,cell=86,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_86",
-      "y": 90
-    },
-    "assembled=true,cell=87,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_87",
-      "y": 90
-    },
-    "assembled=true,cell=88,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_88",
-      "y": 90
-    },
-    "assembled=true,cell=89,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_89",
-      "y": 90
-    },
-    "assembled=true,cell=90,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_90",
-      "y": 90
-    },
-    "assembled=true,cell=91,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_91",
-      "y": 90
-    },
-    "assembled=true,cell=92,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_92",
-      "y": 90
-    },
-    "assembled=true,cell=93,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_93",
-      "y": 90
-    },
-    "assembled=true,cell=94,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_94",
-      "y": 90
-    },
-    "assembled=true,cell=95,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_95",
-      "y": 90
-    },
-    "assembled=true,cell=96,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_96",
-      "y": 90
-    },
-    "assembled=true,cell=97,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_97",
-      "y": 90
-    },
-    "assembled=true,cell=98,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_98",
-      "y": 90
-    },
-    "assembled=true,cell=99,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_99",
-      "y": 90
-    },
-    "assembled=true,cell=100,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_100",
-      "y": 90
-    },
-    "assembled=true,cell=101,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_101",
-      "y": 90
-    },
-    "assembled=true,cell=102,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_102",
-      "y": 90
-    },
-    "assembled=true,cell=103,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_103",
-      "y": 90
-    },
-    "assembled=true,cell=104,closed=true,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker/cell_104",
-      "y": 90
-    },
     "assembled=true,cell=0,closed=false,facing=east": {
       "model": "bwr:block/pumps/generator_breaker_open/cell_0",
       "y": 90
@@ -1292,15 +896,15 @@
       "y": 90
     },
     "assembled=true,cell=7,closed=false,facing=east": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_7",
       "y": 90
     },
     "assembled=true,cell=8,closed=false,facing=east": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_8",
       "y": 90
     },
     "assembled=true,cell=9,closed=false,facing=east": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_9",
       "y": 90
     },
     "assembled=true,cell=10,closed=false,facing=east": {
@@ -1551,138 +1155,6 @@
       "model": "bwr:block/pumps/generator_breaker_open/cell_71",
       "y": 90
     },
-    "assembled=true,cell=72,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_72",
-      "y": 90
-    },
-    "assembled=true,cell=73,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_73",
-      "y": 90
-    },
-    "assembled=true,cell=74,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_74",
-      "y": 90
-    },
-    "assembled=true,cell=75,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_75",
-      "y": 90
-    },
-    "assembled=true,cell=76,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_76",
-      "y": 90
-    },
-    "assembled=true,cell=77,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_77",
-      "y": 90
-    },
-    "assembled=true,cell=78,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_78",
-      "y": 90
-    },
-    "assembled=true,cell=79,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_79",
-      "y": 90
-    },
-    "assembled=true,cell=80,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_80",
-      "y": 90
-    },
-    "assembled=true,cell=81,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_81",
-      "y": 90
-    },
-    "assembled=true,cell=82,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_82",
-      "y": 90
-    },
-    "assembled=true,cell=83,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_83",
-      "y": 90
-    },
-    "assembled=true,cell=84,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_84",
-      "y": 90
-    },
-    "assembled=true,cell=85,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_85",
-      "y": 90
-    },
-    "assembled=true,cell=86,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_86",
-      "y": 90
-    },
-    "assembled=true,cell=87,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_87",
-      "y": 90
-    },
-    "assembled=true,cell=88,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_88",
-      "y": 90
-    },
-    "assembled=true,cell=89,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_89",
-      "y": 90
-    },
-    "assembled=true,cell=90,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_90",
-      "y": 90
-    },
-    "assembled=true,cell=91,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_91",
-      "y": 90
-    },
-    "assembled=true,cell=92,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_92",
-      "y": 90
-    },
-    "assembled=true,cell=93,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_93",
-      "y": 90
-    },
-    "assembled=true,cell=94,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_94",
-      "y": 90
-    },
-    "assembled=true,cell=95,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_95",
-      "y": 90
-    },
-    "assembled=true,cell=96,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_96",
-      "y": 90
-    },
-    "assembled=true,cell=97,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_97",
-      "y": 90
-    },
-    "assembled=true,cell=98,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_98",
-      "y": 90
-    },
-    "assembled=true,cell=99,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_99",
-      "y": 90
-    },
-    "assembled=true,cell=100,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_100",
-      "y": 90
-    },
-    "assembled=true,cell=101,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_101",
-      "y": 90
-    },
-    "assembled=true,cell=102,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_102",
-      "y": 90
-    },
-    "assembled=true,cell=103,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_103",
-      "y": 90
-    },
-    "assembled=true,cell=104,closed=false,facing=east": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_104",
-      "y": 90
-    },
     "assembled=true,cell=0,closed=true,facing=south": {
       "model": "bwr:block/pumps/generator_breaker/cell_0",
       "y": 180
@@ -1712,15 +1184,15 @@
       "y": 180
     },
     "assembled=true,cell=7,closed=true,facing=south": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_7",
       "y": 180
     },
     "assembled=true,cell=8,closed=true,facing=south": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_8",
       "y": 180
     },
     "assembled=true,cell=9,closed=true,facing=south": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_9",
       "y": 180
     },
     "assembled=true,cell=10,closed=true,facing=south": {
@@ -1971,138 +1443,6 @@
       "model": "bwr:block/pumps/generator_breaker/cell_71",
       "y": 180
     },
-    "assembled=true,cell=72,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_72",
-      "y": 180
-    },
-    "assembled=true,cell=73,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_73",
-      "y": 180
-    },
-    "assembled=true,cell=74,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_74",
-      "y": 180
-    },
-    "assembled=true,cell=75,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_75",
-      "y": 180
-    },
-    "assembled=true,cell=76,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_76",
-      "y": 180
-    },
-    "assembled=true,cell=77,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_77",
-      "y": 180
-    },
-    "assembled=true,cell=78,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_78",
-      "y": 180
-    },
-    "assembled=true,cell=79,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_79",
-      "y": 180
-    },
-    "assembled=true,cell=80,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_80",
-      "y": 180
-    },
-    "assembled=true,cell=81,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_81",
-      "y": 180
-    },
-    "assembled=true,cell=82,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_82",
-      "y": 180
-    },
-    "assembled=true,cell=83,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_83",
-      "y": 180
-    },
-    "assembled=true,cell=84,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_84",
-      "y": 180
-    },
-    "assembled=true,cell=85,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_85",
-      "y": 180
-    },
-    "assembled=true,cell=86,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_86",
-      "y": 180
-    },
-    "assembled=true,cell=87,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_87",
-      "y": 180
-    },
-    "assembled=true,cell=88,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_88",
-      "y": 180
-    },
-    "assembled=true,cell=89,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_89",
-      "y": 180
-    },
-    "assembled=true,cell=90,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_90",
-      "y": 180
-    },
-    "assembled=true,cell=91,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_91",
-      "y": 180
-    },
-    "assembled=true,cell=92,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_92",
-      "y": 180
-    },
-    "assembled=true,cell=93,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_93",
-      "y": 180
-    },
-    "assembled=true,cell=94,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_94",
-      "y": 180
-    },
-    "assembled=true,cell=95,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_95",
-      "y": 180
-    },
-    "assembled=true,cell=96,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_96",
-      "y": 180
-    },
-    "assembled=true,cell=97,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_97",
-      "y": 180
-    },
-    "assembled=true,cell=98,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_98",
-      "y": 180
-    },
-    "assembled=true,cell=99,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_99",
-      "y": 180
-    },
-    "assembled=true,cell=100,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_100",
-      "y": 180
-    },
-    "assembled=true,cell=101,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_101",
-      "y": 180
-    },
-    "assembled=true,cell=102,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_102",
-      "y": 180
-    },
-    "assembled=true,cell=103,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_103",
-      "y": 180
-    },
-    "assembled=true,cell=104,closed=true,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker/cell_104",
-      "y": 180
-    },
     "assembled=true,cell=0,closed=false,facing=south": {
       "model": "bwr:block/pumps/generator_breaker_open/cell_0",
       "y": 180
@@ -2132,15 +1472,15 @@
       "y": 180
     },
     "assembled=true,cell=7,closed=false,facing=south": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_7",
       "y": 180
     },
     "assembled=true,cell=8,closed=false,facing=south": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_8",
       "y": 180
     },
     "assembled=true,cell=9,closed=false,facing=south": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_9",
       "y": 180
     },
     "assembled=true,cell=10,closed=false,facing=south": {
@@ -2391,138 +1731,6 @@
       "model": "bwr:block/pumps/generator_breaker_open/cell_71",
       "y": 180
     },
-    "assembled=true,cell=72,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_72",
-      "y": 180
-    },
-    "assembled=true,cell=73,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_73",
-      "y": 180
-    },
-    "assembled=true,cell=74,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_74",
-      "y": 180
-    },
-    "assembled=true,cell=75,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_75",
-      "y": 180
-    },
-    "assembled=true,cell=76,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_76",
-      "y": 180
-    },
-    "assembled=true,cell=77,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_77",
-      "y": 180
-    },
-    "assembled=true,cell=78,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_78",
-      "y": 180
-    },
-    "assembled=true,cell=79,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_79",
-      "y": 180
-    },
-    "assembled=true,cell=80,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_80",
-      "y": 180
-    },
-    "assembled=true,cell=81,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_81",
-      "y": 180
-    },
-    "assembled=true,cell=82,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_82",
-      "y": 180
-    },
-    "assembled=true,cell=83,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_83",
-      "y": 180
-    },
-    "assembled=true,cell=84,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_84",
-      "y": 180
-    },
-    "assembled=true,cell=85,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_85",
-      "y": 180
-    },
-    "assembled=true,cell=86,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_86",
-      "y": 180
-    },
-    "assembled=true,cell=87,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_87",
-      "y": 180
-    },
-    "assembled=true,cell=88,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_88",
-      "y": 180
-    },
-    "assembled=true,cell=89,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_89",
-      "y": 180
-    },
-    "assembled=true,cell=90,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_90",
-      "y": 180
-    },
-    "assembled=true,cell=91,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_91",
-      "y": 180
-    },
-    "assembled=true,cell=92,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_92",
-      "y": 180
-    },
-    "assembled=true,cell=93,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_93",
-      "y": 180
-    },
-    "assembled=true,cell=94,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_94",
-      "y": 180
-    },
-    "assembled=true,cell=95,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_95",
-      "y": 180
-    },
-    "assembled=true,cell=96,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_96",
-      "y": 180
-    },
-    "assembled=true,cell=97,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_97",
-      "y": 180
-    },
-    "assembled=true,cell=98,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_98",
-      "y": 180
-    },
-    "assembled=true,cell=99,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_99",
-      "y": 180
-    },
-    "assembled=true,cell=100,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_100",
-      "y": 180
-    },
-    "assembled=true,cell=101,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_101",
-      "y": 180
-    },
-    "assembled=true,cell=102,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_102",
-      "y": 180
-    },
-    "assembled=true,cell=103,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_103",
-      "y": 180
-    },
-    "assembled=true,cell=104,closed=false,facing=south": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_104",
-      "y": 180
-    },
     "assembled=true,cell=0,closed=true,facing=west": {
       "model": "bwr:block/pumps/generator_breaker/cell_0",
       "y": 270
@@ -2552,15 +1760,15 @@
       "y": 270
     },
     "assembled=true,cell=7,closed=true,facing=west": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_7",
       "y": 270
     },
     "assembled=true,cell=8,closed=true,facing=west": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_8",
       "y": 270
     },
     "assembled=true,cell=9,closed=true,facing=west": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker/cell_9",
       "y": 270
     },
     "assembled=true,cell=10,closed=true,facing=west": {
@@ -2811,138 +2019,6 @@
       "model": "bwr:block/pumps/generator_breaker/cell_71",
       "y": 270
     },
-    "assembled=true,cell=72,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_72",
-      "y": 270
-    },
-    "assembled=true,cell=73,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_73",
-      "y": 270
-    },
-    "assembled=true,cell=74,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_74",
-      "y": 270
-    },
-    "assembled=true,cell=75,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_75",
-      "y": 270
-    },
-    "assembled=true,cell=76,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_76",
-      "y": 270
-    },
-    "assembled=true,cell=77,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_77",
-      "y": 270
-    },
-    "assembled=true,cell=78,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_78",
-      "y": 270
-    },
-    "assembled=true,cell=79,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_79",
-      "y": 270
-    },
-    "assembled=true,cell=80,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_80",
-      "y": 270
-    },
-    "assembled=true,cell=81,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_81",
-      "y": 270
-    },
-    "assembled=true,cell=82,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_82",
-      "y": 270
-    },
-    "assembled=true,cell=83,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_83",
-      "y": 270
-    },
-    "assembled=true,cell=84,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_84",
-      "y": 270
-    },
-    "assembled=true,cell=85,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_85",
-      "y": 270
-    },
-    "assembled=true,cell=86,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_86",
-      "y": 270
-    },
-    "assembled=true,cell=87,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_87",
-      "y": 270
-    },
-    "assembled=true,cell=88,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_88",
-      "y": 270
-    },
-    "assembled=true,cell=89,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_89",
-      "y": 270
-    },
-    "assembled=true,cell=90,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_90",
-      "y": 270
-    },
-    "assembled=true,cell=91,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_91",
-      "y": 270
-    },
-    "assembled=true,cell=92,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_92",
-      "y": 270
-    },
-    "assembled=true,cell=93,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_93",
-      "y": 270
-    },
-    "assembled=true,cell=94,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_94",
-      "y": 270
-    },
-    "assembled=true,cell=95,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_95",
-      "y": 270
-    },
-    "assembled=true,cell=96,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_96",
-      "y": 270
-    },
-    "assembled=true,cell=97,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_97",
-      "y": 270
-    },
-    "assembled=true,cell=98,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_98",
-      "y": 270
-    },
-    "assembled=true,cell=99,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_99",
-      "y": 270
-    },
-    "assembled=true,cell=100,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_100",
-      "y": 270
-    },
-    "assembled=true,cell=101,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_101",
-      "y": 270
-    },
-    "assembled=true,cell=102,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_102",
-      "y": 270
-    },
-    "assembled=true,cell=103,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_103",
-      "y": 270
-    },
-    "assembled=true,cell=104,closed=true,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker/cell_104",
-      "y": 270
-    },
     "assembled=true,cell=0,closed=false,facing=west": {
       "model": "bwr:block/pumps/generator_breaker_open/cell_0",
       "y": 270
@@ -2972,15 +2048,15 @@
       "y": 270
     },
     "assembled=true,cell=7,closed=false,facing=west": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_7",
       "y": 270
     },
     "assembled=true,cell=8,closed=false,facing=west": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_8",
       "y": 270
     },
     "assembled=true,cell=9,closed=false,facing=west": {
-      "model": "bwr:block/pumps/empty",
+      "model": "bwr:block/pumps/generator_breaker_open/cell_9",
       "y": 270
     },
     "assembled=true,cell=10,closed=false,facing=west": {
@@ -3229,138 +2305,6 @@
     },
     "assembled=true,cell=71,closed=false,facing=west": {
       "model": "bwr:block/pumps/generator_breaker_open/cell_71",
-      "y": 270
-    },
-    "assembled=true,cell=72,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_72",
-      "y": 270
-    },
-    "assembled=true,cell=73,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_73",
-      "y": 270
-    },
-    "assembled=true,cell=74,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_74",
-      "y": 270
-    },
-    "assembled=true,cell=75,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_75",
-      "y": 270
-    },
-    "assembled=true,cell=76,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_76",
-      "y": 270
-    },
-    "assembled=true,cell=77,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_77",
-      "y": 270
-    },
-    "assembled=true,cell=78,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_78",
-      "y": 270
-    },
-    "assembled=true,cell=79,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_79",
-      "y": 270
-    },
-    "assembled=true,cell=80,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_80",
-      "y": 270
-    },
-    "assembled=true,cell=81,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_81",
-      "y": 270
-    },
-    "assembled=true,cell=82,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_82",
-      "y": 270
-    },
-    "assembled=true,cell=83,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_83",
-      "y": 270
-    },
-    "assembled=true,cell=84,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_84",
-      "y": 270
-    },
-    "assembled=true,cell=85,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_85",
-      "y": 270
-    },
-    "assembled=true,cell=86,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_86",
-      "y": 270
-    },
-    "assembled=true,cell=87,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_87",
-      "y": 270
-    },
-    "assembled=true,cell=88,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_88",
-      "y": 270
-    },
-    "assembled=true,cell=89,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_89",
-      "y": 270
-    },
-    "assembled=true,cell=90,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_90",
-      "y": 270
-    },
-    "assembled=true,cell=91,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_91",
-      "y": 270
-    },
-    "assembled=true,cell=92,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_92",
-      "y": 270
-    },
-    "assembled=true,cell=93,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_93",
-      "y": 270
-    },
-    "assembled=true,cell=94,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_94",
-      "y": 270
-    },
-    "assembled=true,cell=95,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_95",
-      "y": 270
-    },
-    "assembled=true,cell=96,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_96",
-      "y": 270
-    },
-    "assembled=true,cell=97,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_97",
-      "y": 270
-    },
-    "assembled=true,cell=98,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_98",
-      "y": 270
-    },
-    "assembled=true,cell=99,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_99",
-      "y": 270
-    },
-    "assembled=true,cell=100,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_100",
-      "y": 270
-    },
-    "assembled=true,cell=101,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_101",
-      "y": 270
-    },
-    "assembled=true,cell=102,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_102",
-      "y": 270
-    },
-    "assembled=true,cell=103,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_103",
-      "y": 270
-    },
-    "assembled=true,cell=104,closed=false,facing=west": {
-      "model": "bwr:block/pumps/generator_breaker_open/cell_104",
       "y": 270
     }
   }

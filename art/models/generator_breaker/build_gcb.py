@@ -1,36 +1,45 @@
-"""Generator circuit breaker (GCB) for the 1,300 MW unit: SF6 breaker of the ABB/Hitachi HEC 7/8 class, closed and open.
+"""Generator circuit breaker (GCB) for the 1,300 MW unit: SF6 breaker of the ABB HEC 7/8 class, closed and open.
 
 Headless only:
     python art/models/generator_breaker/make_textures.py
     blender --background --factory-startup --python art/models/generator_breaker/build_gcb.py [-- --preview DIR]
 
 Writes the editable source art/models/generator_breaker/generator_breaker.blend (scenes 'BWR | GCB closed' and
-'BWR | GCB open'), art/models/generator_breaker/gcb_connections.json (the six IPB connection points for the CEE bus
-later) and, with --preview, studio pictures of both states. It does not write anything into mod/ and is not wired
-into the game yet. Coordinates are Minecraft X/Y/Z, one unit is one block (1 m); footprint 5 (x, across the phases)
-x 3 (y) x 7 (z, along the bus). Generator end is z = 0, transformer end z = 7; the control cubicle is on the west
-(x = 0) long side near the generator end ("front").
+'BWR | GCB open'), art/models/generator_breaker/gcb_connections.json (the six IPB connection points for the CEE bus),
+the mesh snapshots generator_breaker.json / generator_breaker_open.json that tools-export-gcb.py bakes, and, with
+--preview, studio pictures of both states. Coordinates are Minecraft X/Y/Z, one unit is one block (1 m); footprint 6 (x,
+across the phases) x 3 (y) x 4 (z, along the bus). Generator end is z = 0, transformer end z = 4 (the flange tips); the
+control cubicle is on the west (x = 0) side of the frame near the generator end ("front").
 
-Real reference (ABB Review special report "Pushing the limits of technology", HEC 9 single-line diagram and text; the
-HEC 7/8 class is used at nuclear units up to ~1,600 MW, e.g. V.C. Summer): three-phase system in single-phase
-enclosures, three separate parallel pole enclosures, one per phase, each in line with its IPB. HEC 7/8 poles sit on
-a common base frame with ONE HMB-8 hydromechanical spring mechanism (HEC 9 gives each pole its own frame and
-mechanism). Along each pole, generator end -> transformer end: connection zone -> voltage transformer -> surge
-capacitor -> earthing switch -> current transformer -> interrupting chamber (SF6, fat central part) -> series
-disconnector -> current transformer -> earthing switch -> surge capacitor -> surge arrester -> voltage transformer
--> connection zone. Plus a local control cubicle. Connection to the plant: CEE isolated-phase bus IPB-45 FA
-(enclosure 1,150 mm, conductor tube 600 mm).
+SOURCED (ABB brochure 1HC0070730 E02, HEC 7/8 dimension drawings pp. 46-47, checked by the CEE session):
+  - phase distance N 1,650-2,100 mm (HEC 7), 1,850-2,100 mm (HEC 8): 2.0 m pitch, poles at x = 1.0, 3.0, 5.0;
+  - pole enclosure length along the bus 3,260 mm (4,000 mm with erection allowance): 3.3 m between the flange zones
+    (z 0.35 to 3.65), flange tips at z = 0 and z = 4;
+  - bus centreline height 1,600-1,750 mm: pole axis 1.7 m above the floor;
+  - overall height at least 2,900 mm (HEC 7): the pressure relief hoods on the chambers reach 2.9 m;
+  - pole-end diameter 1,250 mm: the interrupting chamber (and the CT) are 1.25 m across; the IPB flange stays 1.3 m;
+  - the control cubicle sits on the side of the frame.
 
-NOT found in sources, reasoned estimates (the owner may change them): overall footprint 5 x 7 x 3 m, phase pitch 1.5 m
-(poles at x = 1.0, 2.5, 4.0), pole axis 2.0 m above the floor, enclosure diameter 0.9 m (chamber 1.25 m, IPB flange
-1.3 m), section lengths, the spring-stack/shaft layout of the HMB-8, cubicle 0.8 x 0.5 x 1.8 m, every colour (light
-grey RAL 7035-ish enclosures, darker grey frame, grey cubicle, brown porcelain arresters). The VT/capacitor/arrester
-are in grounded bolted metal compartments hanging under each pole (a metal-enclosed GCB has no exposed insulators) and the
-earthing switch drives are small metal boxes on the +x side; real units differ in arrangement. Original geometry; no vendor CAD, no vendor names or logos.
+Real reference for the arrangement (ABB Review special report "Pushing the limits of technology", HEC 9 single-line diagram and
+text; the HEC 7/8 class is used at nuclear units up to ~1,600 MW, e.g. V.C. Summer): three-phase system in single-phase
+enclosures, three separate parallel pole enclosures, one per phase, each in line with its IPB. HEC 7/8 poles sit on a common
+base frame with ONE HMB-8 hydromechanical spring mechanism (HEC 9 gives each pole its own frame and mechanism). Real order along
+each pole, generator end -> transformer end: connection zone -> voltage transformer -> surge capacitor -> earthing switch ->
+current transformer -> interrupting chamber (SF6, fat central part) -> series disconnector -> current transformer -> earthing
+switch -> surge capacitor -> surge arrester -> voltage transformer -> connection zone. Plus a local control cubicle. Connection
+to the plant: CEE isolated-phase bus IPB-45 FA (enclosure 1,150 mm, conductor tube 600 mm).
+
+COMPRESSED to fit 4 m (not sourced, reasoned): the voltage transformers, surge capacitors and surge arrester are grounded bolted
+metal compartments hanging under each pole, two side by side at each end (a metal-enclosed GCB has no exposed insulators); the
+earthing switch drives are small metal boxes on the +x side. Section lengths, enclosure diameter 0.9 m (flange rings 1.06 m), the
+spring-stack/shaft layout of the HMB-8, cubicle 0.6 x 0.4 x 1.8 m, and every colour (light grey RAL 7035-ish enclosures, darker
+grey frame, grey cubicle) are estimates; real units differ in arrangement. Original geometry; no vendor CAD, no vendor names or
+logos.
 
 The two states differ only in the mechanical position indicator (CLOSED red "I", OPEN green "O"; US practice) and the
 disconnector blade seen through each pole's viewing window (blade bridging the contacts / swung away).
 """
+
 import json
 import math
 import sys
@@ -122,10 +131,10 @@ def cylinder(s, name, a, b, r, mat, n=None):
 
 
 # ---------------------------------------------------------------- tunables
-AY = 2.0                     # pole axis height
-POLES = {'A': 1.0, 'B': 2.5, 'C': 4.0}
+AY = 1.7                     # pole axis height (brochure: bus centreline 1,600-1,750 mm)
+POLES = {'A': 1.0, 'B': 3.0, 'C': 5.0}   # 2.0 m phase pitch
 R_TUBE, R_FL, R_CH = .45, .53, .625
-Z_GEN, Z_XF = 0.0, 7.0
+Z_GEN, Z_XF = 0.0, 4.0
 SEG = 24                     # radial segments of the big round parts
 NBOLT = 4                    # flange bolts drawn per section flange
 
@@ -206,15 +215,17 @@ def bolted_ring(s, name, xp, z, r_out, width, mat, bolts=NBOLT, n=20, bolt_r=Non
 
 
 # ---------------------------------------------------------------- pole
-def compartment(s, xp, zc, length, kind, tag):
-    """Grounded bolted metal compartment hanging under the pole (VT, surge capacitor, surge arrester): box with flanged cover."""
+def compartment(s, xc, zc, length, kind, tag, side=-1):
+    """Grounded bolted metal compartment hanging under the pole (VT, surge capacitor, surge arrester): box with flanged cover on the
+    side (-1 west, +1 east) that faces away from its neighbour."""
     z0, z1 = zc - length / 2, zc + length / 2
-    box(s, 'compartment ' + tag, (xp - .30, 1.15, z0), (xp + .30, 1.60, z1), ALUD)
-    box(s, 'compartment cover flange ' + tag, (xp - .325, 1.17, z0 - .02), (xp - .30, 1.50, z1 + .02), ALUF)
+    box(s, 'compartment ' + tag, (xc - .30, .85, z0), (xc + .30, 1.30, z1), ALUD)
+    fx = xc + side * .30
+    box(s, 'compartment cover flange ' + tag, (min(fx, fx + side * .025), .87, z0 - .02), (max(fx, fx + side * .025), 1.20, z1 + .02), ALUF)
     for zz in (z0 + .04, z1 - .04):
-        for y in (1.21, 1.46):
-            stud(s, (xp - .32, y, zz), (xp - .355, y, zz), .022)
-    plate(s, 'compartment nameplate ' + tag, (xp - .325, 1.335, zc), (-1, 0, 0), (0, 1, 0), .20, .10, PL_AUX[kind], FRAMEM, .014)
+        for y in (.91, 1.16):
+            stud(s, (fx + side * .02, y, zz), (fx + side * .055, y, zz), .022)
+    plate(s, 'compartment nameplate ' + tag, (fx + side * .025, 1.035, zc), (side, 0, 0), (0, 1, 0), .20, .10, PL_AUX[kind], FRAMEM, .014)
 
 
 def side_earthing_switch(s, xp, zc, tag):
@@ -247,7 +258,7 @@ def connection_zone(s, xp, end):
         q = (xp + .60 * math.cos(t), AY + .60 * math.sin(t))
         stud(s, (q[0], q[1], z + dz * .125), (q[0], q[1], z + dz * .06), .026)
     cylinder(s, 'epoxy insulator ' + end, (xp, AY, z + dz * .15), (xp, AY, z + dz * .19), .40, LINER, 16)
-    sleeve(s, 'conductor tube stub ' + end, (xp, AY, z), (xp, AY, z + dz * .28), .30, .27, BRIGHT, 16)
+    sleeve(s, 'conductor tube stub ' + end, (xp, AY, z), (xp, AY, z + dz * .35), .30, .27, BRIGHT, 16)
 
 
 def disconnector(s, xp, z0, z1, opened, tag):
@@ -287,110 +298,125 @@ def interrupter(s, xp, z0, z1):
     for z in (z0 + .24, (z0 + z1) / 2, z1 - .24):
         bolted_ring(s, 'chamber joint', xp, z, R_CH + .07, .09, ALUF, 8, 16, R_CH + .035)
     # SF6 density monitor on the front (-x) side, with its gas label
-    cylinder(s, 'density monitor stub', (xp - R_CH + .02, AY + .15, 3.35), (xp - R_CH - .12, AY + .15, 3.35), .04, ALUD, 10)
-    gauge(s, (xp - R_CH - .15, AY + .15, 3.35), (-1, 0, 0), .07)
-    plate(s, 'SF6 label', (xp - R_CH + .005, AY - .15, 3.35), (-1, 0, 0), (0, 1, 0), .20, .10, SF6L, FRAMEM, .014)
+    zm = (z0 + z1) / 2 + .2
+    cylinder(s, 'density monitor stub', (xp - R_CH + .02, AY + .15, zm), (xp - R_CH - .12, AY + .15, zm), .04, ALUD, 10)
+    gauge(s, (xp - R_CH - .15, AY + .15, zm), (-1, 0, 0), .07)
+    plate(s, 'SF6 label', (xp - R_CH + .005, AY - .15, zm), (-1, 0, 0), (0, 1, 0), .20, .10, SF6L, FRAMEM, .014)
+
+
+CH0, CH1 = 1.05, 2.40        # interrupting chamber
+DS0, DS1 = 2.40, 3.00        # series disconnector
 
 
 def pole(s, phase, xp, opened):
     for end in ('gen', 'xfmr'):
         connection_zone(s, xp, end)
-    cylinder(s, 'enclosure generator side', (xp, AY, .2), (xp, AY, 2.15), R_TUBE, ALU, 20)
-    cylinder(s, 'enclosure transformer side', (xp, AY, 4.45), (xp, AY, 6.8), R_TUBE, ALU, 20)
-    interrupter(s, xp, 2.15, 3.75)
-    disconnector(s, xp, 3.75, 4.45, opened, phase)
-    for z in (.8, 1.25, 1.75, 2.15, 3.75, 4.45, 4.85, 5.35, 5.75, 6.25):
-        if z in (2.15, 3.75):
-            bolted_ring(s, 'section flange', xp, z, R_FL, .07, ALUF, NBOLT, 16, side=1 if z == 3.75 else -1)
+    # enclosure between the flange zones: z 0.35 to 3.65 = 3.3 m (brochure 3,260 mm)
+    cylinder(s, 'enclosure generator side', (xp, AY, .33), (xp, AY, CH0), R_TUBE, ALU, 20)
+    cylinder(s, 'enclosure transformer side', (xp, AY, DS1), (xp, AY, Z_XF - .33), R_TUBE, ALU, 20)
+    interrupter(s, xp, CH0, CH1)
+    disconnector(s, xp, DS0, DS1, opened, phase)
+    for z in (.55, .85, CH0, CH1, 3.0, 3.3):
+        if z in (CH0, CH1):
+            bolted_ring(s, 'section flange', xp, z, R_FL, .07, ALUF, NBOLT, 16, side=1 if z == CH1 else -1)
         else:
             bolted_ring(s, 'section flange', xp, z, R_FL, .07, ALUF, NBOLT, 16)
-    # generator side (z .2 -> 2.15)
+    # generator side (z .35 -> 1.05): VT and surge capacitor side by side under the tube, CT, earthing switch
     compartment(s, xp, .5, .4, 'vt', 'VT ' + phase + 'g')
-    compartment(s, xp, 1.2, .4, 'cap', 'capacitor ' + phase + 'g')
-    side_earthing_switch(s, xp, 1.5, phase + 'g')
-    current_transformer(s, xp, 1.75, 2.15, phase + 'g')
-    # transformer side (z 4.45 -> 6.8)
-    current_transformer(s, xp, 4.45, 4.85, phase + 'x')
-    side_earthing_switch(s, xp, 5.1, phase + 'x')
-    compartment(s, xp, 5.4, .4, 'cap', 'capacitor ' + phase + 'x')
-    compartment(s, xp, 5.9, .4, 'arr', 'arrester ' + phase + 'x')
-    compartment(s, xp, 6.6, .4, 'vt', 'VT ' + phase + 'x')
-    for z in (1.95, 4.65):
+    compartment(s, xp + .62, .5, .4, 'cap', 'capacitor ' + phase + 'g', 1)
+    current_transformer(s, xp, .55, .85, phase + 'g')
+    side_earthing_switch(s, xp, .95, phase + 'g')
+    # transformer side (z 3.0 -> 3.65)
+    current_transformer(s, xp, 3.0, 3.3, phase + 'x')
+    side_earthing_switch(s, xp, 3.47, phase + 'x')
+    compartment(s, xp, 3.2, .4, 'cap', 'capacitor ' + phase + 'x')
+    compartment(s, xp + .62, 3.2, .4, 'arr', 'arrester ' + phase + 'x', 1)
+    compartment(s, xp, 3.68, .4, 'vt', 'VT ' + phase + 'x')
+    for z in (.95, 2.55):
         box(s, 'lifting lug', (xp - .02, AY + R_TUBE - .01, z - .06), (xp + .02, AY + R_TUBE + .13, z + .06), FRAMEM)
-    cylinder(s, 'SF6 fill valve', (xp, AY + R_TUBE - .01, 4.1), (xp, AY + R_TUBE + .09, 4.1), .03, ALUD, 8)
-    cylinder(s, 'SF6 fill valve cap', (xp, AY + R_TUBE + .09, 4.1), (xp, AY + R_TUBE + .13, 4.1), .04, BTN_R, 8)
-    plate(s, 'pole warning label', (xp - R_CH + .003, AY + .25, 2.75), (-1, 0, 0), (0, 1, 0), .24, .12, HAZ, FRAMEM, .014)
+    cylinder(s, 'SF6 fill valve', (xp, AY + R_TUBE - .01, 2.7), (xp, AY + R_TUBE + .09, 2.7), .03, ALUD, 8)
+    cylinder(s, 'SF6 fill valve cap', (xp, AY + R_TUBE + .09, 2.7), (xp, AY + R_TUBE + .13, 2.7), .04, BTN_R, 8)
+    zm = (CH0 + CH1) / 2
+    plate(s, 'pole warning label', (xp - R_CH + .003, AY + .25, zm - .1), (-1, 0, 0), (0, 1, 0), .24, .12, HAZ, FRAMEM, .014)
+    # pressure relief device on top of the chamber: the highest part, 2.9 m above the floor (brochure: overall height at least 2,900 mm)
+    zr = CH1 - .4
+    cylinder(s, 'pressure relief flange', (xp, AY + R_CH - .04, zr), (xp, AY + R_CH + .03, zr), .17, ALUF, 16)
+    cylinder(s, 'pressure relief stack', (xp, AY + R_CH, zr), (xp, 2.82, zr), .09, ALUD, 12)
+    cylinder(s, 'pressure relief hood', (xp, 2.78, zr), (xp, 2.9, zr), .14, ALUF, 14)
     # crank housing under the chamber, driven from the operating shaft
-    box(s, 'crank housing', (xp - .18, 1.15, 2.88), (xp + .38, 1.42, 3.32), ALUD)
-    cylinder(s, 'crank housing end cover', (xp + .38, 1.285, 3.1), (xp + .43, 1.285, 3.1), .12, ALUF, 14)
+    box(s, 'crank housing', (xp - .18, .85, zm - .22), (xp + .38, 1.12, zm + .22), ALUD)
+    cylinder(s, 'crank housing end cover', (xp + .38, .985, zm), (xp + .43, .985, zm), .12, ALUF, 14)
 
 
 # ---------------------------------------------------------------- frame, mechanism, cubicle
-CROSS = [.85, 2.3, 3.6, 5.0, 6.3]
-LEGX = [.65, 1.75, 3.25, 4.35]
+CROSS = [.55, 1.15, 2.5, 3.4]
+LEGX = [.6, 2.0, 4.0, 5.4]
+FY = .745                    # cross beam centre height; the frame top is at .85 (saddles, compartments)
 
 
 def saddle(s, xp, z, r):
     c = r * math.cos(math.radians(30))
-    prof = [(xp + c, 1.15)] + [(xp + r * math.cos(math.radians(a)), AY + r * math.sin(math.radians(a))) for a in range(-30, -151, -30)] + [(xp - c, 1.15)]
+    prof = [(xp + c, .85)] + [(xp + r * math.cos(math.radians(a)), AY + r * math.sin(math.radians(a))) for a in range(-30, -151, -30)] + [(xp - c, .85)]
     prism(s, 'pole saddle', 'z', z - .04, z + .04, prof, FRAMEM)
 
 
 def base_frame(s):
     for ph, xp in POLES.items():
-        beam_z(s, 'frame longitudinal beam ' + ph, xp, 1.075, .6, 6.7)
+        beam_z(s, 'frame longitudinal beam ' + ph, xp, FY + .03, .5, 3.5)
     for z in CROSS:
-        beam_x(s, 'frame cross beam', z, 1.045, .55, 4.45)
+        beam_x(s, 'frame cross beam', z, FY, .4, 5.6)
         for x in LEGX:
-            leg(s, 'frame leg', x, z, 0, 1.0)
+            leg(s, 'frame leg', x, z, 0, FY - .075)
     for ph, xp in POLES.items():
-        for z, r in ((.85, .45), (2.3, .60), (3.6, .60), (5.0, .45), (6.3, .45)):
+        for z, r in ((.75, .45), (1.25, .60), (2.2, .60), (2.7, .45), (3.4, .45)):
             saddle(s, xp, z, r)
     # earthing bar along the last cross beam with a drop on the front leg, lug at the floor
-    obox(s, 'earthing bar', (.55, 1.0, 6.3 + .105), (4.45, 1.0, 6.3 + .105), .02, .04, (0, 1, 0), EARTH)
-    obox(s, 'earthing bar drop', (.65, 1.0, 6.3 + .08), (.65, .08, 6.3 + .08), .02, .04, (0, 0, 1), EARTH)
-    box(s, 'earthing lug', (.58, .05, 6.3 + .07), (.72, .11, 6.3 + .10), EARTH)
+    zb = CROSS[-1] + .105
+    obox(s, 'earthing bar', (.4, .70, zb), (5.6, .70, zb), .02, .04, (0, 1, 0), EARTH)
+    obox(s, 'earthing bar drop', (.65, .70, zb - .025), (.65, .08, zb - .025), .02, .04, (0, 0, 1), EARTH)
+    box(s, 'earthing lug', (.58, .05, zb - .035), (.72, .11, zb - .005), EARTH)
 
 
 def mechanism(s, opened):
     """HMB-8 style hydromechanical spring mechanism under the middle pole, with the operating shaft across all poles."""
     xb = POLES['B']
-    box(s, 'mechanism cabinet', (xb - .5, .08, 2.75), (xb + .5, .92, 3.45), MECHM)
-    box(s, 'mechanism cabinet top', (xb - .52, .92, 2.73), (xb + .52, .95, 3.47), ALUD)
-    box(s, 'mechanism plinth', (xb - .52, .02, 2.73), (xb + .52, .08, 3.47), FRAMEM)
+    box(s, 'mechanism cabinet', (xb - .5, .052, 1.35), (xb + .5, .598, 2.05), MECHM)
+    box(s, 'mechanism cabinet top', (xb - .52, .60, 1.33), (xb + .52, .62, 2.07), ALUD)
+    box(s, 'mechanism plinth', (xb - .52, .013, 1.33), (xb + .52, .052, 2.07), FRAMEM)
     # spring stack: housing and exposed coil, running toward the transformer end
-    cylinder(s, 'spring stack housing', (xb, .5, 3.45), (xb, .5, 3.95), .21, SPRM, 18)
-    for z in (3.6, 3.78, 3.92):
-        cylinder(s, 'spring stack band', (xb, .5, z - .012), (xb, .5, z + .012), .225, ALUD, 18)
-    helix(s, 'closing spring', (xb, .5, 3.95), (0, 0, 1), .17, .028, .22, 4, SPRM, 10, 5)
-    cylinder(s, 'spring stack end plate', (xb, .5, 4.17), (xb, .5, 4.21), .22, ALUD, 18)
-    cylinder(s, 'spring guide rod', (xb, .5, 4.2), (xb, .5, 4.3), .03, SHAFTM2, 8)
-    plate(s, 'mechanism nameplate', (xb - .5, .62, 3.10), (-1, 0, 0), (0, 1, 0), .30, .15, PL_HMB, FRAMEM, .014)
-    gauge(s, (xb - .5, .33, 3.28), (-1, 0, 0), .06)
-    plate(s, 'mechanism position indicator', (xb - .5, .33, 2.95), (-1, 0, 0), (0, 1, 0), .11, .11, MPI[not opened], FRAMEM, .014)
-    cylinder(s, 'manual charge handle', (xb - .5, .8, 3.30), (xb - .6, .8, 3.30), .015, HANDLEM, 8)
-    cylinder(s, 'manual charge handle grip', (xb - .6, .8, 3.30), (xb - .6, .8, 3.40), .02, BTN_R, 8)
+    cylinder(s, 'spring stack housing', (xb, .325, 2.05), (xb, .325, 2.55), .2, SPRM, 18)
+    for z in (2.2, 2.38, 2.52):
+        cylinder(s, 'spring stack band', (xb, .325, z - .012), (xb, .325, z + .012), .215, ALUD, 18)
+    helix(s, 'closing spring', (xb, .325, 2.55), (0, 0, 1), .16, .026, .22, 4, SPRM, 10, 5)
+    cylinder(s, 'spring stack end plate', (xb, .325, 2.77), (xb, .325, 2.81), .21, ALUD, 18)
+    cylinder(s, 'spring guide rod', (xb, .325, 2.8), (xb, .325, 2.9), .03, SHAFTM2, 8)
+    plate(s, 'mechanism nameplate', (xb - .5, .40, 1.70), (-1, 0, 0), (0, 1, 0), .30, .12, PL_HMB, FRAMEM, .014)
+    gauge(s, (xb - .5, .215, 1.88), (-1, 0, 0), .06)
+    plate(s, 'mechanism position indicator', (xb - .5, .215, 1.55), (-1, 0, 0), (0, 1, 0), .11, .11, MPI[not opened], FRAMEM, .014)
+    cylinder(s, 'manual charge handle', (xb - .5, .52, 1.90), (xb - .6, .52, 1.90), .015, HANDLEM, 8)
+    cylinder(s, 'manual charge handle grip', (xb - .6, .52, 1.90), (xb - .6, .52, 2.0), .02, BTN_R, 8)
     # operating shaft across under all three poles, bearing blocks, cranks and link rods up to each pole's crank housing
-    cylinder(s, 'operating shaft', (.55, .62, 3.1), (4.45, .62, 3.1), .035, SHAFTM2, 10)
+    zs = 1.70
+    cylinder(s, 'operating shaft', (.6, .40, zs), (5.4, .40, zs), .035, SHAFTM2, 10)
     for xp in POLES.values():
         dx = -.3
-        box(s, 'shaft bearing block', (xp + dx - .07, .02, 3.03), (xp + dx + .07, .52, 3.17), FRAMEM)
-        cylinder(s, 'shaft bearing', (xp + dx - .05, .62, 3.1), (xp + dx + .05, .62, 3.1), .07, ALUD, 10)
-        obox(s, 'crank arm', (xp + .25, .62, 3.1), (xp + .25, .62, 3.22), .05, .06, (0, 1, 0), SHAFTM2)
-        cylinder(s, 'crank link rod', (xp + .25, .62, 3.22), (xp + .25, 1.16, 3.22), .02, SHAFTM2, 8)
-        cylinder(s, 'crank collar', (xp + .20, .62, 3.1), (xp + .30, .62, 3.1), .05, SHAFTM2, 8)
-    for x in (.62, 4.38):
-        box(s, 'shaft end bearing block', (x - .07, .02, 3.03), (x + .07, .52, 3.17), FRAMEM)
-        cylinder(s, 'shaft end bearing', (x - .05, .62, 3.1), (x + .05, .62, 3.1), .07, ALUD, 10)
-    pipe(s, 'control cable trunk', [(.30, .12, 1.25), (1.9, .12, 1.25), (1.9, .12, 2.9), (xb - .45, .12, 2.9)], .03, FRAMEM, 8)
+        box(s, 'shaft bearing block', (xp + dx - .07, .013, zs - .07), (xp + dx + .07, .338, zs + .07), FRAMEM)
+        cylinder(s, 'shaft bearing', (xp + dx - .05, .40, zs), (xp + dx + .05, .40, zs), .07, ALUD, 10)
+        obox(s, 'crank arm', (xp + .25, .40, zs), (xp + .25, .40, zs + .12), .05, .06, (0, 1, 0), SHAFTM2)
+        cylinder(s, 'crank link rod', (xp + .25, .40, zs + .12), (xp + .25, .98, zs + .12), .02, SHAFTM2, 8)
+        cylinder(s, 'crank collar', (xp + .20, .40, zs), (xp + .30, .40, zs), .05, SHAFTM2, 8)
+    for x in (.65, 5.35):
+        box(s, 'shaft end bearing block', (x - .07, .013, zs - .07), (x + .07, .338, zs + .07), FRAMEM)
+        cylinder(s, 'shaft end bearing', (x - .05, .40, zs), (x + .05, .40, zs), .07, ALUD, 10)
+    pipe(s, 'control cable trunk', [(.30, .12, .70), (1.5, .12, .70), (1.5, .12, 1.55), (xb - .45, .12, 1.55)], .03, FRAMEM, 8)
 
 
 def cubicle(s, opened):
-    """Local control cubicle on the west long side near the generator end: 0.8 wide (z) x 0.5 deep x 1.8 tall."""
-    z0, z1, zc = .85, 1.65, 1.25
-    box(s, 'cubicle plinth', (.0, .0, z0 - .02), (.52, .10, z1 + .02), FRAMEM)
-    box(s, 'cubicle body', (.05, .10, z0), (.50, 1.90, z1), CUBM)
-    box(s, 'cubicle roof', (.0, 1.90, z0 - .02), (.52, 1.95, z1 + .02), ALUD)
+    """Local control cubicle on the west side of the frame near the generator end: 0.6 wide (z) x 0.4 deep x 1.8 tall."""
+    z0, z1, zc = .40, 1.00, .70
+    box(s, 'cubicle plinth', (.0, .0, z0 - .02), (.42, .10, z1 + .02), FRAMEM)
+    box(s, 'cubicle body', (.05, .10, z0), (.40, 1.90, z1), CUBM)
+    box(s, 'cubicle roof', (.0, 1.90, z0 - .02), (.42, 1.95, z1 + .02), ALUD)
     box(s, 'cubicle door', (.02, .16, z0 + .03), (.05, 1.84, z1 - .03), DOORM)
     for y in (.30, 1.20, 1.70):
         cylinder(s, 'door hinge', (.03, y, z0 + .035), (.03, y + .12, z0 + .035), .018, FRAMEM, 8)
@@ -480,7 +506,7 @@ def smooth_all(s, angle=38):
 
 
 def rig(s, tag):
-    # floor: 1 m checker (one block per square) plus the 5 x 7 footprint outline
+    # floor: 1 m checker (one block per square) plus the 6 x 4 footprint outline
     fm = bpy.data.materials.new('floor checker')
     fm.use_nodes = True
     nt = fm.node_tree
@@ -498,9 +524,9 @@ def rig(s, tag):
     mesh.materials.append(fm)
     s.collection.objects.link(bpy.data.objects.new('floor', mesh))
     outline = mpaint('footprint outline', (.80, .15, .10), 0, .8)
-    for a, b in (((0, 0), (5, 0)), ((5, 0), (5, 7)), ((5, 7), (0, 7)), ((0, 7), (0, 0))):
+    for a, b in (((0, 0), (6, 0)), ((6, 0), (6, 4)), ((6, 4), (0, 4)), ((0, 4), (0, 0))):
         obox(s, 'footprint outline', (a[0], .004, a[1]), (b[0], .004, b[1]), .04, .01, (0, 1, 0), outline)
-    figure(s, -.55, 2.4)
+    figure(s, -.55, 1.6)
     world = bpy.data.worlds.new('studio ' + tag)
     world.use_nodes = True
     bg = next(n for n in world.node_tree.nodes if n.type == 'BACKGROUND')
@@ -513,7 +539,7 @@ def rig(s, tag):
         ld.angle = math.radians(ang)
         lo = bpy.data.objects.new(nm, ld)
         s.collection.objects.link(lo)
-        lo.rotation_euler = (xyz((2.5, 0, 3.5)) - xyz(loc)).to_track_quat('-Z', 'Y').to_euler()
+        lo.rotation_euler = (xyz((3.0, 0, 2.0)) - xyz(loc)).to_track_quat('-Z', 'Y').to_euler()
         lo.location = xyz(loc)
 
 
@@ -539,12 +565,12 @@ def set_engine(s):
 
 VIEWS = {
     # name: (eye, target, lens, (w, h), figure?)  all in Minecraft X/Y/Z
-    '1-iso-front': ((-5.0, 3.4, -2.0), (2.4, .9, 3.0), 30, (1600, 1000), True),
-    '2-iso-rear': ((9.2, 3.8, 10.0), (2.5, .9, 3.5), 32, (1600, 1000), False),
-    '3-side-along-bus': ((-9.5, 2.2, 3.5), (2.5, 1.45, 3.5), 38, (1800, 800), False),
-    '4-end-flanges': ((2.5, 2.2, -9.5), (2.5, 1.5, 0.0), 55, (1600, 1000), False),
-    '5-cubicle-indicator': ((-1.7, 1.55, 0.55), (0.0, 1.55, 1.25), 32, (1200, 1000), False),
-    '6-disconnector-window': ((-2.4, 2.1, 3.9), (0.4, 2.0, 4.1), 40, (1400, 1000), False),
+    '1-iso-front': ((-4.5, 3.4, -2.8), (2.8, 1.1, 1.8), 30, (1600, 1000), True),
+    '2-iso-rear': ((10.5, 3.8, 7.5), (3.0, 1.1, 2.0), 32, (1600, 1000), False),
+    '3-side-along-bus': ((-10.0, 2.0, 2.0), (3.0, 1.3, 2.0), 38, (1800, 800), False),
+    '4-end-flanges': ((3.0, 2.2, -9.0), (3.0, 1.5, 0.0), 55, (1600, 1000), False),
+    '5-cubicle-indicator': ((-1.7, 1.55, 0.2), (0.0, 1.55, 0.7), 32, (1200, 1000), False),
+    '6-disconnector-window': ((-2.2, 2.0, 3.8), (0.6, 1.7, 2.7), 40, (1400, 1000), False),
 }
 
 
@@ -580,18 +606,18 @@ if __name__ == '__main__':
     gcb(False)
     gcb(True)
     (HERE / 'gcb_connections.json').write_text(json.dumps({
-        'description': 'IPB-45 FA connection points of the generator breaker, in block units of the 5 x 7 x 3 box '
-                       '(x across the phases, y up, z along the bus; generator end z = 0, transformer end z = 7).',
-        'box': [5, 3, 7], 'connections': connections()}, indent=2) + '\n', encoding='utf-8')
+        'description': 'IPB-45 FA connection points of the generator breaker, in block units of the 6 x 3 x 4 box '
+                       '(x across the phases, y up, z along the bus; generator end z = 0, transformer end z = 4).',
+        'box': [6, 3, 4], 'connections': connections()}, indent=2) + '\n', encoding='utf-8')
     for sc in SCENES:
         sc['description'] = ('Original reference-based model (ABB/Hitachi HEC 7/8 class SF6 generator breaker); '
                              'one Blender unit is one block. Sizes and colours are estimates.')
         lo, hi = check_bounds(sc)
         print('GCB', sc.name, triangles(sc), 'triangles', 'objects', len(sc.objects), 'bounds', [round(x, 3) for x in lo + hi])
-        assert all(lo[a] >= -1e-6 for a in range(3)) and hi[0] <= 5 + 1e-6 and hi[1] <= 3 + 1e-6 and hi[2] <= 7 + 1e-6, 'outside 5x3x7'
+        assert all(lo[a] >= -1e-6 for a in range(3)) and hi[0] <= 6 + 1e-6 and hi[1] <= 3 + 1e-6 and hi[2] <= 4 + 1e-6, 'outside 6x3x4'
     # Mesh/UV snapshots that tools-export-gcb.py bakes into per-cell models (the MSIV's route, tools-export-msiv.py). The size is
-    # width x height x depth in cells; the controller is the control cubicle's cell (x 0, y 0, z 1), where the block entity lives.
-    meta = {'id': 'generator_breaker', 'size': [5, 3, 7], 'controller': [0, 0, 1], 'ports': []}
+    # width x height x depth in cells; the controller is the control cubicle's cell (x 0, y 0, z 0), where the block entity lives.
+    meta = {'id': 'generator_breaker', 'size': [6, 3, 4], 'controller': [0, 0, 0], 'ports': []}
     export(SCENES[0], HERE / 'generator_breaker.json', meta)
     export(SCENES[1], HERE / 'generator_breaker_open.json', dict(meta, id='generator_breaker_open'))
     for sc in list(bpy.data.scenes):
