@@ -1,0 +1,52 @@
+{
+  "description": "IPB-45 FA connection points of the generator breaker, in block units of the 6 x 3 x 4 box (x across the phases, y up, z along the bus; generator end z = 0, transformer end z = 4).",
+  "box": [
+    6,
+    3,
+    4
+  ],
+  "connections": [
+    {
+      "phase": "A",
+      "end": "gen",
+      "x": 1.0,
+      "y": 1.7,
+      "z": 0.0
+    },
+    {
+      "phase": "A",
+      "end": "xfmr",
+      "x": 1.0,
+      "y": 1.7,
+      "z": 4.0
+    },
+    {
+      "phase": "B",
+      "end": "gen",
+      "x": 3.0,
+      "y": 1.7,
+      "z": 0.0
+    },
+    {
+      "phase": "B",
+      "end": "xfmr",
+      "x": 3.0,
+      "y": 1.7,
+      "z": 4.0
+    },
+    {
+      "phase": "C",
+      "end": "gen",
+      "x": 5.0,
+      "y": 1.7,
+      "z": 0.0
+    },
+    {
+      "phase": "C",
+      "end": "xfmr",
+      "x": 5.0,
+      "y": 1.7,
+      "z": 4.0
+    }
+  ]
+}

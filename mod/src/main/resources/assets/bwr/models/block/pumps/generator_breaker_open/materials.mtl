@@ -1,0 +1,131 @@
+newmtl mat_0
+Kd 0.04499999925418884 0.04499999925418884 0.05000000142575615
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_1
+Kd 0.6200000002918433 0.6400000083471948 0.6400000083471948
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_2
+Kd 0.19999999868206275 0.21000000430493465 0.21999999498921152
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_3
+Kd 0.07999999887273415 0.08999999692505478 0.09999999991362188
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_4
+Kd 0.8199999872960941 0.8399999977387712 0.8599999843661085
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_5
+Kd 0.7899999959075178 0.8100000158846915 0.8000000108774858
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_6
+Kd 0.5200000052070863 0.5500000090900438 0.5500000090900438
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_7
+Kd 0.13000000109304727 0.13999999784656367 0.14999999780761628
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_8
+Kd 0.7220273482492262 0.7673756654827062 0.791786885083823
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_9
+Kd 1 1 1
+map_Kd bwr:block/modern/tdp_gauge
+
+newmtl mat_10
+Kd 0.25999999883394925 0.27999999962993777 0.2900000038414875
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_11
+Kd 1 1 1
+map_Kd bwr:block/modern/gcb_label_sf6
+
+newmtl mat_12
+Kd 0.6200000002918433 0.7800000017700219 0.8399999977387712
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_13
+Kd 0.7200000033238447 0.5600000132598122 0.25000000067158873
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_14
+Kd 0.8999999981853642 0.9200000123974647 0.9300000033732305
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_15
+Kd 0.25000000067158873 0.27000000033440846 0.27999999962993777
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_16
+Kd 1 1 1
+map_Kd bwr:block/modern/gcb_plate_vt
+
+newmtl mat_17
+Kd 1 1 1
+map_Kd bwr:block/modern/gcb_plate_cap
+
+newmtl mat_18
+Kd 0.9200000123974647 0.700000005816421 0.09999999991362188
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_19
+Kd 0.5999999947550138 0.700000005816421 0.09999999991362188
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_20
+Kd 1 1 1
+map_Kd bwr:block/modern/gcb_plate_arr
+
+newmtl mat_21
+Kd 0.7500000009342138 0.09999999991362188 0.07999999887273415
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_22
+Kd 1 1 1
+map_Kd bwr:block/modern/gcb_hazard
+
+newmtl mat_23
+Kd 0.3999999974259806 0.48000000468553666 0.5500000090900438
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_24
+Kd 0.2999999961013092 0.3299999972442969 0.3600000050599685
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_25
+Kd 0.7200000033238447 0.7400000119251188 0.7500000009342138
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_26
+Kd 1 1 1
+map_Kd bwr:block/modern/gcb_plate_hmb
+
+newmtl mat_27
+Kd 1 1 1
+map_Kd bwr:block/modern/gcb_mpi_open
+
+newmtl mat_28
+Kd 0.5500000090900438 0.5699999996012601 0.5800000003539741
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_29
+Kd 0.5800000003539741 0.5999999947550138 0.5999999947550138
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_30
+Kd 0.6400000083471948 0.6599999923026542 0.6499999885386016
+map_Kd minecraft:block/white_concrete
+
+newmtl mat_31
+Kd 1 1 1
+map_Kd bwr:block/modern/gcb_plate
+
+newmtl mat_32
+Kd 0.09999999991362188 0.5500000090900438 0.19999999868206275
+map_Kd minecraft:block/white_concrete

@@ -19,6 +19,8 @@ public final class GridTieBlockEntity extends GridDevice {
     private double phase,lastAngle,lastSlip,demand;
     private final double[] requested=new double[20];
     private int requestCursor;
+    /** The blockstate's closed flag on the cells may be out of date (after a load, or a cell that was not loaded): written by the next tick. */
+    private boolean indicatorDirty=true;
     public GridTieBlockEntity(BlockPos pos,BlockState state){super(BwrBlockEntities.GRID_TIE.get(),pos,state);}
     public PowerModuleBlockEntity generator(){
         if(generator==null)return null;
@@ -93,16 +95,30 @@ public final class GridTieBlockEntity extends GridDevice {
         double u=Double.isNaN(testDestructDraw)?level.getRandom().nextDouble():testDestructDraw;
         double destruct=dev.bwr.core.turbine.TurbineBlades.destructRpm(g.rpm,u);
         if(destruct>0)g.armDestruct(destruct);
-        closed=true;setChanged();g.markGridHeld(level.getGameTime());return true;
+        closed=true;setChanged();syncIndicator();g.markGridHeld(level.getGameTime());return true;
     }
     /** Test hook: when finite, the 0..1 draw that picks the destruct speed of a close on a stalled shaft, in place of the level's random. */
     public static volatile double testDestructDraw=Double.NaN;
     public void tripBreaker(){
         if(live())tickDevice();
-        if(closed){closed=false;phase=0;setChanged();var g=generator();if(g!=null)g.releaseGrid();}
+        if(closed){closed=false;phase=0;setChanged();syncIndicator();var g=generator();if(g!=null)g.releaseGrid();}
+    }
+    /**
+     * For add-on GameTests only (like {@link #testDestructDraw}): sets the breaker closed or open WITHOUT a bound generator. It updates
+     * {@code closed}, the indicator on the cells and the saved state, and applies no shaft effects (no damage, no motoring, no train shock).
+     * An add-on's end-to-end test needs it because building a BWR generator there is impractical. Not for gameplay.
+     */
+    public void setClosedForTest(boolean value){
+        closed=value;if(!value)phase=0;setChanged();syncIndicator();
+    }
+    /** Shows the breaker on every cell of an assembled tie (the blockstate's closed flag). Writes only cells that differ, so a steady breaker costs no chunk update. */
+    private void syncIndicator(){
+        if(level==null||level.isClientSide())return;
+        var state=getBlockState();
+        indicatorDirty=state.getBlock() instanceof GridTieBlock block&&state.getValue(GridTieBlock.ASSEMBLED)&&!block.showClosed(level,worldPosition,state,closed);
     }
     @Override public void tickDevice(){
-        if(!live())return;long now=level.getGameTime();if(now==tick)return;
+        if(!live())return;if(indicatorDirty)syncIndicator();long now=level.getGameTime();if(now==tick)return;
         if(tick!=Long.MIN_VALUE){
             requested[requestCursor]=demand;requestCursor=(requestCursor+1)%20;
             for(long n=1;n<Math.min(now>tick?now-tick:1,21);n++){requested[requestCursor]=0;requestCursor=(requestCursor+1)%20;}
@@ -147,7 +163,7 @@ public final class GridTieBlockEntity extends GridDevice {
         curvePhase=Math.floorMod(t.getLong("CurvePhase"),period);budget.restore(t.getDouble("Carry"));
         phase=Double.isFinite(t.getDouble("Phase"))?Synchronizer.wrap(t.getDouble("Phase")):0;
         hasClose=t.getBoolean("HasClose");lastAngle=finite(t.getDouble("LastAngle"));lastSlip=finite(t.getDouble("LastSlip"));lastCloseFault=t.getBoolean("LastCloseFault");
-        tick=Long.MIN_VALUE;demand=0;java.util.Arrays.fill(requested,0);requestCursor=0;
+        tick=Long.MIN_VALUE;demand=0;java.util.Arrays.fill(requested,0);requestCursor=0;indicatorDirty=true;
     }
     private static double finite(double n){return Double.isFinite(n)?n:0;}
     private static double bounded(double n,double max){return Math.max(0,Math.min(max,finite(n)));}

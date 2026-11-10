@@ -103,7 +103,7 @@ def model(location):
 def bake_assembly_cells(id, suffix='_modern'):
     """Shared Blender mesh clipping for pump and main-turbine assemblies."""
     source=read(id+'.json');w,h,d=source['size'];count=w*h*d
-    assert count<=256 and w%2==1 and d%2==1
+    assert count<=256
     folder=RES/f'assets/bwr/models/block/pumps/{id}{suffix}'
     mats=materials(source,folder);faces=source['faces'];cells=[];after=0
     for i in range(count):

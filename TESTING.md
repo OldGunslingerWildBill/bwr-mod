@@ -292,6 +292,7 @@ Opt-in real-client checks:
 .\gradlew.bat :mod:runTurbineModelCheck -PbwrCreativePerformanceCheck
 .\gradlew.bat :mod:runTurbineModelCheck -PbwrAlphaClientCheck
 python tools-export-alpha.py --check
+python tools-export-gcb.py --check     # the Grid Tie's generator breaker cells
 ```
 
 The first measures vanilla and BWR creative tabs in a disposable world. Local

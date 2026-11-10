@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (alpha.61): the Grid Tie is a generator circuit breaker
+
+- **The Grid Tie has a new model: a generator circuit breaker** (GRID-TIE-SPEC.md 8.1). A 6 x 3 x 4 SF6 breaker (ABB HEC 7/8 dimensions from the brochure: 2.0 m phase pitch, bus axis 1.7 m up,
+  3.3 m pole enclosures, 2.9 m high) with isolated-phase-bus flanges at both ends and a control cubicle, built in Blender like the MSIV.
+  It needs room for all 72 cells, breaking any cell removes it
+  all, and the position indicator and disconnector blades follow the breaker (closed or open). The FE input, signals, peripheral, Panel
+  Linker and meter linking work from any cell exactly as before. **Grid Ties already placed keep their cube** and work unchanged. New
+  `GridTieModelTests`; `GcbConnections` gives the six bus flange points.
+- **Optional Create: Electro Energetics support for the breaker** (GRID-TIE-SPEC.md 8.2). With CEE installed the six flanges are wire nodes
+  (X, Y, Z at the generator and transformer end) that isolated-phase-bus wires attach to from any cell, and each pole conducts while
+  the breaker is closed and isolates when it is open. Breaking or disassembling the breaker takes its wires off. Without CEE nothing changes.
+  New `GridTieCeeTests` (namespace `bwrcee`, run with `-PwithCee`).
+
 ## Unreleased (alpha.60): turbine accident sounds
 
 - **A canal gate no longer "holds back" water that stands over its own top.** A pool brim full at its rim and a well whose walls stand higher (a fill port keeps filling it) looked level in the canal, which draws both sides full to the brim, but the crane refused GATE OUT with "holds back 7.14 m": the head was counted from the well's whole surface, y 98.14, to the pool's rim, y 91.00. A gate holds back only its own height, so each side's surface now counts no higher than the gate's top (`CanalGateLift.headAcross`; the message still prints the surfaces as they stand). A stack of 5 plugs and a single plug are both lifted when the two sides brim over the gate, and are still refused when they differ below its top. Tests: `CanalGateLiftTests` (+2, `bwrplug`).
