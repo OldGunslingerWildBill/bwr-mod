@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bwr:control_panel_benchboard"
+    },
+    {
+      "item": "bwr:control_panel_vertical"
+    },
+    {
+      "tag": "c:nuggets/steel"
+    },
+    {
+      "tag": "c:nuggets/steel"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "bwr:control_panel_tall_run_outside_bend_a"
+  }
+}

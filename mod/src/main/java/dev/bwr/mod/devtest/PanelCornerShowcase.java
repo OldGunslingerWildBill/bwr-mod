@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The 45 degree desk corners part of the panel client check (CONTROL-PANELS-SPEC section 14): an inside corner (the
+ * The 45 degree single desk corners part of the panel client check (CONTROL-PANELS-SPEC section 14): an inside corner (the
  * console wrapping around the operator) and an outside corner (wrapping away), each with a straight desk run on both sides
  * and components mounted on the angled face, once from a distance for the run, corner and run, and once close to the face.
  * Every picture is 1920 x 1080 (see {@link CheckShots}). The check confirms that every block of each corner drew from its
@@ -54,17 +54,13 @@ final class PanelCornerShowcase {
     }
 
     private static final Spec[] SPECS = {new Spec(true, 1, 6210, 5600, false, false), new Spec(true, 1, 6210, 5600, false, true),
-            new Spec(false, 1, 6210, 5614, false, false), new Spec(false, 1, 6210, 5614, false, true),
-            new Spec(true, 3, 6210, 5632, false, false), new Spec(true, 3, 6210, 5632, false, true),
-            new Spec(false, 3, 6210, 5650, false, false), new Spec(false, 3, 6210, 5650, false, true),
-            new Spec(true, 3, 6240, 5632, true, false)};
+            new Spec(false, 1, 6210, 5614, false, false), new Spec(false, 1, 6210, 5614, false, true)};
     /** The dial of the middle of the face, covering cell (8, 5): what the crosshair of the close stages finds. */
     private static final int AIM_X = 8;
     private static final int AIM_Y = 5;
 
     static final String[] NAMES = {"corner-inside-run-corner-run", "corner-inside-face", "corner-outside-run-corner-run",
-            "corner-outside-face", "corner-inside-3-run-corner-run", "corner-inside-3-face", "corner-outside-3-run-corner-run",
-            "corner-outside-3-face", "corner-room-inside-3-fills-the-corner"};
+            "corner-outside-face"};
 
     static boolean night(int stage) {
         return false;

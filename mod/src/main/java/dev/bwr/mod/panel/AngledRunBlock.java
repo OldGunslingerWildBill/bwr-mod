@@ -220,8 +220,10 @@ public final class AngledRunBlock extends PanelBlock {
         BlockPos origin = origin(pos, state);
         AngledRunBlock unitBlock = UNITS.get(block.family.id() + block.inside);
         PanelBlockEntity first = null;
-        PanelBlockEntity best = null;
-        double bestT = Double.MAX_VALUE;
+        PanelBlockEntity strictBest = null;
+        PanelBlockEntity looseBest = null;
+        double strictT = Double.MAX_VALUE;
+        double looseT = Double.MAX_VALUE;
         double[] cell = new double[2];
         for (int step = -1; step <= 1; step++) {
             BlockPos unitOrigin = chainOrigin(origin, facing, mirror, block.inside, step);
@@ -242,17 +244,23 @@ public final class AngledRunBlock extends PanelBlock {
                     continue;
                 }
                 PanelGeometry.Frame frame = PanelGeometry.frame(be);
-                if (PanelGeometry.rayToCell(frame, core.getX(), core.getY(), core.getZ(), eye.x, eye.y, eye.z, look.x, look.y, look.z, cell)
-                        && cell[0] >= -0.5 && cell[0] <= PanelGeometry.GRID + 0.5
-                        && cell[1] >= -0.5 && cell[1] <= PanelGeometry.rows(be.panelType()) + 0.5) {
-                    double t = distance(frame, core, eye, look);
-                    if (t < bestT) {
-                        bestT = t;
-                        best = be;
-                    }
+                if (!PanelGeometry.rayToCell(frame, core.getX(), core.getY(), core.getZ(), eye.x, eye.y, eye.z, look.x, look.y, look.z, cell)) {
+                    continue;
+                }
+                int rows = PanelGeometry.rows(be.panelType());
+                double t = distance(frame, core, eye, look);
+                // on the face itself, or within half a cell of it (the faces of a board and the strip above it meet along an edge:
+                // a ray on the edge belongs to the one it is on, strictly, first)
+                if (cell[0] >= 0 && cell[0] <= PanelGeometry.GRID && cell[1] >= 0 && cell[1] <= rows && t < strictT) {
+                    strictT = t;
+                    strictBest = be;
+                } else if (cell[0] >= -0.5 && cell[0] <= PanelGeometry.GRID + 0.5 && cell[1] >= -0.5 && cell[1] <= rows + 0.5 && t < looseT) {
+                    looseT = t;
+                    looseBest = be;
                 }
             }
         }
+        PanelBlockEntity best = strictBest != null ? strictBest : looseBest;
         return best != null ? best : first;
     }
 

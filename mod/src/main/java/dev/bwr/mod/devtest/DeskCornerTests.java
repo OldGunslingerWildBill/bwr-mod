@@ -489,7 +489,7 @@ public final class DeskCornerTests {
         fixture(h, 2, (level, floor) -> {
             FakePlayer player = player(level, "CornerBreak", GameType.SURVIVAL);
             BlockPos at = floor.above();
-            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 3), new Kind(true, 4)}) {
+            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 1)}) {
                 for (GameType mode : new GameType[] {GameType.SURVIVAL, GameType.CREATIVE}) {
                     List<DeskCornerGeometry.Part> parts = kind.parts();
                     for (int i = 0; i < parts.size(); i += Math.max(1, parts.size() / 4)) {
@@ -647,7 +647,7 @@ public final class DeskCornerTests {
             FakePlayer player = player(level, "CornerOperate", GameType.SURVIVAL);
             FakePlayer far = player(level, "CornerFar", GameType.SURVIVAL);
             BlockPos at = floor.above();
-            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 1), new Kind(true, 3), new Kind(false, 3)}) {
+            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 1)}) {
                 for (Direction facing : new Direction[] {Direction.NORTH, Direction.SOUTH, Direction.WEST}) {
                     clear(level, floor);
                     check(h, place(player, new ItemStack(kind.item()), at, facing), "not placed");
@@ -688,7 +688,7 @@ public final class DeskCornerTests {
         fixture(h, 5, (level, floor) -> {
             FakePlayer player = player(level, "CornerGroups", GameType.SURVIVAL);
             BlockPos at = floor.above().relative(Direction.NORTH.getClockWise(), 3);
-            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 3)}) {
+            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 1)}) {
                 clear(level, floor);
                 Direction facing = Direction.NORTH;
                 check(h, place(player, new ItemStack(kind.item()), at, facing), "corner not placed");
@@ -714,7 +714,7 @@ public final class DeskCornerTests {
         fixture(h, 6, (level, floor) -> {
             FakePlayer player = player(level, "CornerPaint", GameType.CREATIVE);
             BlockPos at = floor.above();
-            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 3)}) {
+            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 1)}) {
                 clear(level, floor);
                 Direction facing = Direction.EAST;
                 check(h, place(player, new ItemStack(kind.item()), at, facing), "not placed");
@@ -727,7 +727,7 @@ public final class DeskCornerTests {
                         check(h, PanelFinish.of(level.getBlockState(kind.part(at, facing, each))) == after, clicked + ": " + each + " did not take the finish");
                     }
                 }
-                check(h, kind.block().getStateDefinition().getPossibleStates().size() == 4 * 5 * 5 * 5, "states: 4 facings, 5 x 5 parts, 5 finishes");
+                check(h, kind.block().getStateDefinition().getPossibleStates().size() == 4 * 2 * 2 * 5, "states: 4 facings, 2 x 2 parts, 5 finishes");
             }
         });
     }
@@ -738,7 +738,7 @@ public final class DeskCornerTests {
             var registries = level.registryAccess();
             FakePlayer player = player(level, "CornerSave", GameType.SURVIVAL);
             BlockPos at = floor.above();
-            for (Kind kind : new Kind[] {new Kind(true, 3), new Kind(false, 2), new Kind(true, 1)}) {
+            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 1)}) {
                 for (Direction facing : Direction.Plane.HORIZONTAL) {
                     clear(level, floor);
                     check(h, place(player, PanelFinish.withFinish(new ItemStack(kind.item()), PanelFinish.GREY), at, facing), "not placed");
