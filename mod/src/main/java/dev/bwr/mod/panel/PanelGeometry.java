@@ -168,7 +168,8 @@ public final class PanelGeometry {
             Map<Direction, VoxelShape> shapes = new EnumMap<>(Direction.class);
             for (Direction facing : Direction.Plane.HORIZONTAL) {
                 frames.put(facing, buildFrame(type, facing));
-                shapes.put(facing, buildShape(type, facing));
+                // the desk corners' shapes are built when first asked for (DeskCornerGeometry), they are not small
+                shapes.put(facing, DeskCornerGeometry.isCorner(type) ? Shapes.empty() : buildShape(type, facing));
             }
             FRAMES.put(type, frames);
             SHAPES.put(type, shapes);
@@ -180,6 +181,11 @@ public final class PanelGeometry {
     }
 
     public static VoxelShape shape(PanelType type, Direction facing) {
+        if (DeskCornerGeometry.isCorner(type)) {
+            // the block holding the face; the other blocks of a corner have their own (DeskCornerGeometry.shape)
+            boolean inside = type == PanelType.DESK_CORNER_INSIDE;
+            return DeskCornerGeometry.shape(inside, DeskCornerGeometry.core(inside), facing);
+        }
         return SHAPES.get(type).get(facing);
     }
 
@@ -237,6 +243,17 @@ public final class PanelGeometry {
                 return localFrame(facing, new double[] {r * start, 1.0, 1.0 - r * start},
                         new double[] {r / GRID, 0.0, -r / GRID}, new double[] {0.5 / GRID, -1.0 / GRID, 0.5 / GRID},
                         new double[] {s3, s3, s3});
+            }
+            case DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE -> {
+                // A level desk top turned 45 degrees: the columns and rows run along the diagonals of the plan, the normal
+                // is straight up. The origin is in the local frame of the block that holds the face (it may be outside it).
+                boolean inside = type == PanelType.DESK_CORNER_INSIDE;
+                double[] o = DeskCornerGeometry.faceOrigin(inside);
+                double[] u = DeskCornerGeometry.columnDirection(inside);
+                double[] v = DeskCornerGeometry.rowDirection(inside);
+                return localFrame(facing, new double[] {o[0], DESK_TOP, o[1]},
+                        new double[] {u[0] / GRID, 0.0, u[1] / GRID}, new double[] {v[0] / GRID, 0.0, v[1] / GRID},
+                        new double[] {0.0, 1.0, 0.0});
             }
             default -> {
                 return buildAxisFrame(type, facing);
@@ -392,7 +409,7 @@ public final class PanelGeometry {
         }
         return switch (type) {
             case CHAMFER_VERTICAL -> cx < CHAMFER_VERTICAL_COLUMNS;
-            case DESK -> cy < DESK_ROWS;
+            case DESK, DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE -> cy < DESK_ROWS;
             case CHAMFER_BENCH -> {
                 double half = CHAMFER_BENCH_HALF_TOP_CELLS * (1.0 - (cy + 1) / (double) GRID);
                 yield Math.max(Math.abs(cx - GRID / 2.0), Math.abs(cx + 1 - GRID / 2.0)) <= half + 1.0e-9;
@@ -403,7 +420,7 @@ public final class PanelGeometry {
 
     /** How many rows of the 16-cell grid of a block of this style are mounting surface: all 16, but 10 on a desk top. */
     public static int rows(PanelType type) {
-        return type == PanelType.DESK ? DESK_ROWS : GRID;
+        return type == PanelType.DESK || DeskCornerGeometry.isCorner(type) ? DESK_ROWS : GRID;
     }
 
     /** A box given in the local frame, rotated to world for {@code facing}. */

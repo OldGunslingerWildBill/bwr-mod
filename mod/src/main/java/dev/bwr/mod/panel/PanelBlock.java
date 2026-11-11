@@ -79,6 +79,8 @@ public class PanelBlock extends BaseEntityBlock {
             case DUPLEX_BOARD, DUPLEX_BENCH, DUPLEX_HEADER -> DuplexPanelBlock.CODEC;
             case HEADER_TILT, CHAMFER_VERTICAL, CHAMFER_BENCH ->
                     throw new IllegalStateException("angled trim blocks answer with their own codec");
+            case DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE ->
+                    throw new IllegalStateException("desk corners answer with their own codec");
         };
     }
 

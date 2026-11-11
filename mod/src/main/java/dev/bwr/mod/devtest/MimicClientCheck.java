@@ -129,6 +129,7 @@ public final class MimicClientCheck {
             case HEADER_TILT -> BwrBlocks.CONTROL_PANEL_HEADER_STRIP.get();
             case CHAMFER_VERTICAL -> BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_CHAMFER.get();
             case CHAMFER_BENCH -> BwrBlocks.CONTROL_PANEL_CORNER_BENCH_CHAMFER.get();
+            case DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE -> throw new UnsupportedOperationException("a desk corner is four blocks");
         };
         // A floor and clear air around the wall, so the picture is of the wall.
         for (BlockPos p : BlockPos.betweenClosed(wall.offset(-columns - 6, -rows - 8, -12), wall.offset(8, rows + 6, 6))) {

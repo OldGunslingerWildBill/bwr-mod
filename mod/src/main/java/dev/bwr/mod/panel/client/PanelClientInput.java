@@ -63,7 +63,9 @@ public final class PanelClientInput {
                 || !(minecraft.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) {
             return TARGET;
         }
-        if (!(minecraft.level.getBlockEntity(hit.getBlockPos()) instanceof PanelBlockEntity be)) {
+        // a body block of a desk corner answers with the corner's face (its core block entity)
+        PanelBlockEntity be = dev.bwr.mod.panel.DeskCornerBlock.faceEntity(minecraft.level, hit.getBlockPos());
+        if (be == null) {
             return TARGET;
         }
         Vec3 eye = minecraft.player.getEyePosition(1.0f);
