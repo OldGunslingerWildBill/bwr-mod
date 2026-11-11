@@ -1,6 +1,7 @@
 """Blender-only reproducible inventory renders of the shipped OBJ meshes.
 
 Run: blender --background --python art/models/inventory/render_icons.py
+Without a Blender binary (bpy from PyPI): BWR_ICON_ONLY=a,b python3 art/models/inventory/render_icons.py (CPU Cycles).
 Only GUI models are replaced; held items and placed machines retain their mesh.
 """
 import bpy, json, math, sys
@@ -62,8 +63,13 @@ def render(item, obj):
         light = bpy.data.objects.new(lamp.name, lamp); scene.collection.objects.link(light)
         light.location = center + Vector(offset)*span
         light.rotation_euler = (center-light.location).to_track_quat('-Z','Y').to_euler()
-    try: scene.render.engine = 'BLENDER_EEVEE'
-    except TypeError: pass
+    if '--cycles' in sys.argv or not bpy.app.binary_path:
+        # bpy as a Python module (no Blender binary, no GPU): EEVEE cannot start, so render on the CPU.
+        scene.render.engine = 'CYCLES'; scene.cycles.device = 'CPU'; scene.cycles.samples = 48
+        scene.cycles.use_denoising = False; scene.cycles.max_bounces = 2
+    else:
+        try: scene.render.engine = 'BLENDER_EEVEE'
+        except TypeError: pass
     scene.render.film_transparent = True
     scene.render.resolution_x = scene.render.resolution_y = 128; scene.render.resolution_percentage = 100
     for prop, value in [('file_format','PNG'),('color_mode','RGBA')]:
