@@ -1,0 +1,209 @@
+{
+ "Modern | TDP skid dark grey": {
+  "color": [
+   0.24000000363030738,
+   0.25999999883394925,
+   0.27000000033440846
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | TDP dark fastener": {
+  "color": [
+   0.190000001765487,
+   0.19999999868206275,
+   0.21000000430493465
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | TDP feed pump barrel blue grey": {
+  "color": [
+   0.30999999434304204,
+   0.4099999906716198,
+   0.5099999951771147
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | machined steel": {
+  "color": [
+   0.7220273482492262,
+   0.7673756654827062,
+   0.791786885083823
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | TDP machined shaft": {
+  "color": [
+   0.7200000033238447,
+   0.7400000119251188,
+   0.7500000009342138
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | pipe steel": {
+  "color": [
+   0.5271127874042686,
+   0.5748710099136345,
+   0.601243396864941
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | gasket": {
+  "color": [
+   0.16007763005392425,
+   0.18281266418082706,
+   0.19966343942950698
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | suction band": {
+  "color": [
+   0.12835403856590433,
+   0.5657284345101499,
+   0.7673756654827062
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | discharge band": {
+  "color": [
+   0.17184408839511128,
+   0.701410709184914,
+   0.601243396864941
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | TDP actuator black": {
+  "color": [
+   0.13000000109304727,
+   0.13999999784656367,
+   0.14999999780761628
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "TDP | pressure gauge dial": {
+  "color": [
+   1,
+   1,
+   1
+  ],
+  "texture": "bwr:block/modern/tdp_gauge",
+  "tint": -1
+ },
+ "Modern | TDP valve handwheel red": {
+  "color": [
+   0.7200000033238447,
+   0.12000000139546163,
+   0.07999999887273415
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "TDP | feedpump nameplate": {
+  "color": [
+   1,
+   1,
+   1
+  ],
+  "texture": "bwr:block/modern/tdp_plate_feedpump",
+  "tint": -1
+ },
+ "Modern | TDP coupling guard yellow": {
+  "color": [
+   0.8999999981853642,
+   0.6799999908109459,
+   0.09999999991362188
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "TDP | guard warning label": {
+  "color": [
+   1,
+   1,
+   1
+  ],
+  "texture": "bwr:block/modern/tdp_label_guard",
+  "tint": -1
+ },
+ "Modern | TDP feed turbine pedestal grey": {
+  "color": [
+   0.4300000078368356,
+   0.47000000295008587,
+   0.49000000372270985
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | TDP feed turbine casing grey": {
+  "color": [
+   0.5999999947550138,
+   0.6400000083471948,
+   0.6599999923026542
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "TDP | rfpt nameplate": {
+  "color": [
+   1,
+   1,
+   1
+  ],
+  "texture": "bwr:block/modern/tdp_plate_rfpt",
+  "tint": -1
+ },
+ "Modern | TDP aluminium insulation jacket": {
+  "color": [
+   0.8000000108774858,
+   0.8199999872960941,
+   0.8300000085287765
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | steam band": {
+  "color": [
+   0.9063317593127924,
+   0.5657284345101499,
+   0.17184408839511128
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | TDP cast valve body": {
+  "color": [
+   0.3600000050599685,
+   0.38999999358793075,
+   0.3999999974259806
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | TDP hydraulic cylinder grey": {
+  "color": [
+   0.43999999244434335,
+   0.47000000295008587,
+   0.49000000372270985
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ },
+ "Modern | TDP lube oil line ochre": {
+  "color": [
+   0.7200000033238447,
+   0.5399999961355948,
+   0.1599999991998655
+  ],
+  "texture": "minecraft:block/white_concrete",
+  "tint": -1
+ }
+}
