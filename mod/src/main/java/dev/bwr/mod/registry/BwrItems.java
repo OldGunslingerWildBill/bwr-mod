@@ -86,13 +86,46 @@ public final class BwrItems {
     public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_CORNER_OUTSIDE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE);
     /** The items of the modular 45 degree runs (AngledRunItem), in the order of BwrBlocks.ANGLED_RUNS. */
-    public static final java.util.Map<String, DeferredItem<dev.bwr.mod.panel.AngledRunItem>> ANGLED_RUNS = new java.util.LinkedHashMap<>();
+    public static final java.util.Map<String, DeferredItem<BlockItem>> ANGLED_RUNS = new java.util.LinkedHashMap<>();
+
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_RUN_INSIDE_BEND_A =
+            ITEMS.register("control_panel_desk_run_inside_bend_a", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_DESK_RUN_INSIDE_BEND_A.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_RUN_INSIDE_UNIT =
+            ITEMS.register("control_panel_desk_run_inside_unit", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_DESK_RUN_INSIDE_UNIT.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_RUN_INSIDE_BEND_B =
+            ITEMS.register("control_panel_desk_run_inside_bend_b", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_DESK_RUN_INSIDE_BEND_B.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_A =
+            ITEMS.register("control_panel_desk_run_outside_bend_a", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_A.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_RUN_OUTSIDE_UNIT =
+            ITEMS.register("control_panel_desk_run_outside_unit", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_DESK_RUN_OUTSIDE_UNIT.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_B =
+            ITEMS.register("control_panel_desk_run_outside_bend_b", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_B.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_TALL_RUN_INSIDE_BEND_A =
+            ITEMS.register("control_panel_tall_run_inside_bend_a", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_TALL_RUN_INSIDE_BEND_A.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_TALL_RUN_INSIDE_UNIT =
+            ITEMS.register("control_panel_tall_run_inside_unit", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_TALL_RUN_INSIDE_UNIT.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_TALL_RUN_INSIDE_BEND_B =
+            ITEMS.register("control_panel_tall_run_inside_bend_b", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_TALL_RUN_INSIDE_BEND_B.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_A =
+            ITEMS.register("control_panel_tall_run_outside_bend_a", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_A.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_TALL_RUN_OUTSIDE_UNIT =
+            ITEMS.register("control_panel_tall_run_outside_unit", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_TALL_RUN_OUTSIDE_UNIT.get(), new Item.Properties()));
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_B =
+            ITEMS.register("control_panel_tall_run_outside_bend_b", () -> new dev.bwr.mod.panel.AngledRunItem(BwrBlocks.CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_B.get(), new Item.Properties()));
 
     static {
-        for (var entry : BwrBlocks.ANGLED_RUNS.entrySet()) {
-            ANGLED_RUNS.put(entry.getKey(), ITEMS.register(entry.getKey(),
-                    () -> new dev.bwr.mod.panel.AngledRunItem(entry.getValue().get(), new Item.Properties())));
-        }
+        ANGLED_RUNS.put("control_panel_desk_run_inside_bend_a", CONTROL_PANEL_DESK_RUN_INSIDE_BEND_A);
+        ANGLED_RUNS.put("control_panel_desk_run_inside_unit", CONTROL_PANEL_DESK_RUN_INSIDE_UNIT);
+        ANGLED_RUNS.put("control_panel_desk_run_inside_bend_b", CONTROL_PANEL_DESK_RUN_INSIDE_BEND_B);
+        ANGLED_RUNS.put("control_panel_desk_run_outside_bend_a", CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_A);
+        ANGLED_RUNS.put("control_panel_desk_run_outside_unit", CONTROL_PANEL_DESK_RUN_OUTSIDE_UNIT);
+        ANGLED_RUNS.put("control_panel_desk_run_outside_bend_b", CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_B);
+        ANGLED_RUNS.put("control_panel_tall_run_inside_bend_a", CONTROL_PANEL_TALL_RUN_INSIDE_BEND_A);
+        ANGLED_RUNS.put("control_panel_tall_run_inside_unit", CONTROL_PANEL_TALL_RUN_INSIDE_UNIT);
+        ANGLED_RUNS.put("control_panel_tall_run_inside_bend_b", CONTROL_PANEL_TALL_RUN_INSIDE_BEND_B);
+        ANGLED_RUNS.put("control_panel_tall_run_outside_bend_a", CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_A);
+        ANGLED_RUNS.put("control_panel_tall_run_outside_unit", CONTROL_PANEL_TALL_RUN_OUTSIDE_UNIT);
+        ANGLED_RUNS.put("control_panel_tall_run_outside_bend_b", CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_B);
     }
 
     public static final DeferredItem<dev.bwr.mod.panel.PanelWrenchItem> PANEL_WRENCH =
