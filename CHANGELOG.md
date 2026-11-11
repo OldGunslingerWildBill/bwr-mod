@@ -2,6 +2,27 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **Annunciator lights: lens swatches, addresses for computers, a horn, and linking in either order** (CONTROL-PANELS.md; the owner asked
+  for all four).
+  - **Lens colour.** The window's colour field has White, Yellow and Red swatches. Any colour still loads and the default is unchanged.
+  - **Light address.** A window can carry an address, 00000 to 10000 (wrench screen; saved only when set). One address may be given to
+    several windows of a group. On the `bwr_panel` peripheral: `setAlarm(address, on)`, `setValue(address, number)`, `getAlarm(address)`,
+    `annunciators()`, and `acknowledge(group)` and `reset(group)`, which do what the ACK and RESET buttons do. A window with no source
+    becomes computer-driven on the first call; one wired to a machine, redstone or a constant refuses with an error naming its source.
+    Example: `docs/lua/annunciator_alarms.lua` (a low level and a bus undervoltage alarm; it parses, it has not been run under CC here).
+  - **Horn.** A new alarm sounds `bwr:annunciator_horn` at the panel, one loop per panel group, 16 blocks, on the Blocks volume. ACK stops
+    it for the acknowledged windows; the control module's SILENCE stops it for its group and changes nothing else. A silenced,
+    unacknowledged alarm stays quiet if its condition clears and returns. The sound is the first recorded audio in the mod: converted
+    from a clip the owner supplied (level raised about 24 dB, 40 ms crossfade so the loop does not click). Its source and licence are
+    still to be confirmed by the owner (SOUND-CREDITS.md); the other placeholders stay silent.
+  - **Linker, component first.** Besides device first: sneak-right-click a component with the Panel Linker, then right-click a plant
+    device, and the binding screen opens for that component and device. Sneak-right-click the air forgets either selection. While a
+    component is selected its binding is accepted from the device, beyond arm's reach of the panel (link range, dimension and claims
+    still apply), and a plain linker click on any signal-reporting block wires it instead of the block's own linker action.
+  - **Trigger on the binding screen.** For an annunciator window the binding screen shows its alarm condition and setpoint and applies
+    them with the binding; a wiring tool in hand is enough for those two fields.
+  - No packet was added and the protocol number is unchanged. Compiled and tested only by CI; the horn, the binding-screen fields and
+    the sneak-click have not been seen in the game.
 - **Annunciator windows have a "Columbia tile box" style, after owner-supplied photographs of the P800-C1 and P800-C5 boxes**
   (CONTROL-PANELS.md; `art/models/panel/annunciator/README.md`). Ivory tray tiles on a black plate, each tile split into an upper and a
   lower alarm; row numbers down the left, "-1", "-2" and so on across the top; a nameplate under the box ("ANN PANEL" over a **Box name**
