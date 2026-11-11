@@ -2,7 +2,7 @@
 
 The three steam-turbine-driven pumps have new exterior models:
 
-- `bwr:turbine_feed_pump`: the reactor feed pump turbine (RFPT) and its barrel feed pump.
+- `bwr:turbine_feed_pump`: the reactor feed pump turbine (RFPT) and its barrel feed pump. **This one has since been rebuilt again; see [TURBINE-FEED-PUMP-REMODEL.md](TURBINE-FEED-PUMP-REMODEL.md).** What this page says about it describes the earlier model, which old one-block saves still show as their compact model.
 - `bwr:rcic_twl`: the RCIC Terry turbine and pump skid.
 - `bwr:hpci_turbine`: the HPCI Terry turbine and pump skid.
 
@@ -104,7 +104,7 @@ These machines are ordinary chunk-baked block models. The machine mesh cache in 
 ```powershell
 python art/models/turbine_pumps/make_textures.py
 blender --background --factory-startup --python art/models/turbine_pumps/build_models.py
-python tools-export-modern.py        # feed pump turbine cells, manifest and the tdp_* textures
+python tools-export-modern.py        # the tdp_* textures (the feed pump turbine cells now come from build_turbine_feed_pump.py)
 python tools-export-terry.py         # RCIC and HPCI cells and manifests
 blender --background --factory-startup --python art/models/turbine_pumps/render_icons.py
 python tools-export-modern.py --check
@@ -113,9 +113,10 @@ python tools-export-terry.py --check
 
 `build_models.py` checks the ports, footprint and controller cell against the shipped `data/bwr/pump_models/*.json` before it writes anything. It also refuses any geometry outside the footprint. It writes these files:
 
-- `art/models/modern/turbine_feed_pump.json`;
 - `art/models/terry/{rcic_twl,hpci_turbine}.json`;
 - the editable `art/models/turbine_pumps/turbine_pumps.blend`.
+
+It no longer writes `art/models/modern/turbine_feed_pump.json`; `art/models/modern/build_turbine_feed_pump.py` does. `render_icons.py` here now renders the two Terry icons only.
 
 Do not regenerate `turbine_feed_pump` with `art/models/modern/build_models.py`, because that script would restore the old model.
 

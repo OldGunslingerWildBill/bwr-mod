@@ -32,7 +32,7 @@ In every case the pump can of a vertical pump is implied to hang below the floor
 - **Held item:** uses a new scaled copy of the remodelled mesh, `inventory.obj`. Inventory icons were re-rendered with `art/models/inventory/render_icons.py`.
 - **Legacy cell sets:** the non-modern cell sets (`pumps/<id>/cell_N`) that previously assembled saves use are not touched.
 - **Collision boxes:** each cell's box follows the new mesh, as before.
-- **Turbine feed pump and pipe fittings:** unchanged. The turbine feed pump and the 64 round pipe fittings are still exported from `modern_pumps_and_pipes.blend`, which this work does not open.
+- **Turbine feed pump and pipes:** not part of this work. The turbine feed pump has its own script and write-up ([TURBINE-FEED-PUMP-REMODEL.md](TURBINE-FEED-PUMP-REMODEL.md)); the round pipes are built in `art/models/pipes` ([PIPES.md](PIPES.md)). Neither comes from `modern_pumps_and_pipes.blend` any more.
 
 ## Authoring
 

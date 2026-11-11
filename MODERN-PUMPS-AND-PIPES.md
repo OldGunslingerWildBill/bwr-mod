@@ -16,7 +16,7 @@ of one Minecraft block face. Connect the pipe directly outside that face.
 
 Dimensions describe the reserved placement volume. One unit is one block. All
 five use a controller at the center of the base; the machine extends to either
-side of the clicked block. The four motor-driven bodies were later remodelled ([MOTOR-PUMP-REMODEL.md](MOTOR-PUMP-REMODEL.md)). The DVSS recirculation pump is unchanged.
+side of the clicked block. The four motor-driven bodies were later remodelled ([MOTOR-PUMP-REMODEL.md](MOTOR-PUMP-REMODEL.md)), and the turbine feedwater pump too ([TURBINE-FEED-PUMP-REMODEL.md](TURBINE-FEED-PUMP-REMODEL.md)). The DVSS recirculation pump is unchanged.
 
 See [the port table](PUMP-MODELS.md#ports) for offsets relative to the controller.
 Suction accepts ordinary water pipes; pressure-side discharge uses BWR water
@@ -68,8 +68,8 @@ python tools-export-modern.py --check
 python tools-audit-assets.py
 ```
 
-The turbine feedwater model is now built by `art/models/turbine_pumps/build_models.py`
-(see [TURBINE-DRIVEN-PUMPS.md](TURBINE-DRIVEN-PUMPS.md)), not by this script.
+The turbine feedwater model is now built by `art/models/modern/build_turbine_feed_pump.py`
+(see [TURBINE-FEED-PUMP-REMODEL.md](TURBINE-FEED-PUMP-REMODEL.md)), not by this script.
 
 The LPCS, HPCS, RHR/LPCI and motor feedwater bodies (and the SLC pump and tank) are now built by
 `art/models/modern/build_motor_pumps.py`; see [MOTOR-PUMP-REMODEL.md](MOTOR-PUMP-REMODEL.md).
