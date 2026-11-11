@@ -119,12 +119,13 @@ final class PanelRunShowcase {
             return new Vec3(target.x + f.nx * 1.7, target.y + f.ny * 1.7 - 1.62, target.z + f.nz * 1.7);
         }
         // from the operator side of the diagonal, back and above enough to see both straight runs and the whole angled section
-        double back = spec.walls() ? 5.4 : 8.5;
-        double up = spec.family() == Family.TALL ? (spec.walls() ? 1.62 : 3.6) : 3.4;
-        double side = 0.0;
+        // (the horizontal direction toward the operator: a board's normal, a desk top's rows)
+        double back = spec.walls() ? 5.4 : (spec.family() == Family.DESK ? 7.5 : 8.5);
+        double up = spec.family() == Family.TALL ? (spec.walls() ? 1.62 : 3.6) : 5.0;
+        double hx = spec.family() == Family.TALL ? f.nx : f.downX;
+        double hz = spec.family() == Family.TALL ? f.nz : f.downZ;
         Vec3 centre = faceAt(spec, 2, aimFace(spec), 8, 8);
-        return new Vec3(centre.x + f.nx * back + f.rightX * side, centre.y + up - 1.62,
-                centre.z + f.nz * back + f.rightZ * side);
+        return new Vec3(centre.x + hx * back, centre.y + up - 1.62, centre.z + hz * back);
     }
 
     static Vec3 target(int stage) {
