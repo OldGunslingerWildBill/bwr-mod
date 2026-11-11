@@ -919,7 +919,9 @@ public final class AngledRunTests {
                                 PanelBlockEntity panel = be(level, core);
                                 PanelGeometry.Frame f = PanelGeometry.frame(panel);
                                 String what = run.name() + " " + facing + (mirror ? " m" : "") + " " + face.kind() + " at " + core;
-                                for (int[] want : new int[][] {{0, 0}, {15, face.rows() - 1}, {8, face.rows() / 2}, {3, 2}, {12, face.rows() - 3}}) {
+                                // (the bench's top rows are under the overhang of the board above it: a look along the normal meets the board first, so start at row 4)
+                                int first = face.kind().equals("bench") ? 4 : 0;
+                                for (int[] want : new int[][] {{0, first}, {15, face.rows() - 1}, {8, face.rows() / 2}, {3, Math.max(2, first)}, {12, face.rows() - 3}}) {
                                     BlockHitResult hit = aimAt(level, player, f, core, want[0] + 0.5, want[1] + 0.5);
                                     check(h, hit.getType() == HitResult.Type.BLOCK, what + ": the look at " + want[0] + "," + want[1] + " hit nothing");
                                     PanelBlockEntity found = dev.bwr.mod.panel.DeskCornerBlock.faceEntity(level, hit.getBlockPos(), player.getEyePosition(), player.getLookAngle());

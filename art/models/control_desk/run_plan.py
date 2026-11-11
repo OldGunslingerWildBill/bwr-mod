@@ -103,16 +103,23 @@ def plan_dirs(kind):
 
 
 def face_centre(kind, fam, spec, k=1):
-    """Plan centre (x, f) and height y of the middle of a face of unit k: the middle column, the middle row."""
+    """Plan centre (x, f) and height y of the middle of a face of unit k: the middle column, the middle row. The faces of
+    the layers of a unit are stacked on one line across the diagonal (the same column positions in every layer, as the rows of
+    a straight panel are): the line through the middle of the first face at the middle of the unit's slab x = -k .. -k + 1."""
+    r = math.sqrt(0.5)
+    first = face_specs(fam)[0]
+    t_ref = (first["t0"] + first["t1"]) / 2.0
     t = (spec["t0"] + spec["t1"]) / 2.0
     y = (spec["y0"] + spec["y1"]) / 2.0
     xc = -k + 0.5
     phi, w = PHI[(fam, kind)], FAMILIES[fam]["W"]
     if kind == "inside":
-        fc = SQ2 * t - xc + phi
-    else:
-        fc = SQ2 * t + xc - (phi + T22 * w)
-    return xc, fc, y
+        xb = xc - r * t_ref                  # the back line x + f = phi at the foot of that line
+        fb = phi - xb
+        return xb + r * t, fb + r * t, y
+    xb = xc + r * t_ref                      # the back line x - f = phi + tan(22.5) W
+    fb = xb - (phi + T22 * w)
+    return xb - r * t, fb + r * t, y
 
 
 def unit_face_cores(kind, fam):
