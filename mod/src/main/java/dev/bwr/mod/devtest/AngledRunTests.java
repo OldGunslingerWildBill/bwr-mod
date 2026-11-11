@@ -1130,6 +1130,8 @@ public final class AngledRunTests {
 
     @GameTest(template = "empty", templateNamespace = "bwrcorner")
     public static void theRunPiecesAreRegisteredWithItemsRecipesLootAndTheCreativeTab(GameTestHelper h) {
+        // The tab's display list is filled only when it is built; build it here so the check does not depend on test order.
+        net.minecraft.world.item.CreativeModeTabs.tryRebuildTabContents(h.getLevel().enabledFeatures(), true, h.getLevel().registryAccess());
         for (Run run : RUNS) {
             for (Role role : Role.values()) {
                 String path = "control_panel_" + run.family().id() + "_run_" + (run.inside() ? "inside" : "outside") + "_" + role.id();

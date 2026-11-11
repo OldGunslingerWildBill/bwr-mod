@@ -771,6 +771,8 @@ public final class DeskCornerTests {
 
     @GameTest(template = "empty", templateNamespace = "bwrcorner")
     public static void theCornersAreRegisteredWithItemsRecipesAndTheCreativeTab(GameTestHelper h) {
+        // The tab's display list is filled only when it is built; build it here so the check does not depend on test order.
+        net.minecraft.world.item.CreativeModeTabs.tryRebuildTabContents(h.getLevel().enabledFeatures(), true, h.getLevel().registryAccess());
         for (Kind kind : KINDS) {
             String path = "control_panel_desk_corner_" + (kind.inside() ? "inside" : "outside") + (kind.length() == 1 ? "" : "_" + kind.length());
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath("bwr", path);
