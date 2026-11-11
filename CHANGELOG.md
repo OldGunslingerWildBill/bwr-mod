@@ -23,8 +23,8 @@
   side exhaust through an expansion joint, a turning gear and a lube oil console. Same block, 9 x 3 x 3 footprint and four ports. Its
   pump nameplate now reads "TURBINE DRIVEN" instead of "BARREL MULTISTAGE".
 - **What the pump references are, and are not.** The NRC website refuses automated downloads, so the Columbia FSAR and the NRC technology
-  manuals were not opened. What was read are NRC contractor reports, a DOE and two EPRI reports and an INL system study on osti.gov and
-  nrcoe.inl.gov. An independent pass re-opened every cited page of both write-ups and the wording was corrected where a source covered
+  manuals were not opened. What was read are three NRC contractor reports, two DOE-sponsored reports, two EPRI reports and an INL system study, on
+  osti.gov and nrcoe.inl.gov. An independent pass re-opened every cited page of both write-ups and the wording was corrected where a source covered
   one pump and was applied to another by analogy; each claim is tagged [V] (read) or [S] (search result only), and the Gaps lists say
   what is still unverified for Columbia (among them: the LPCS and RHR motor sizes, which way up the feed pumps' nozzles are, whether
   Columbia has a motor-driven feed pump at all, and the look of the feed pump turbine).
