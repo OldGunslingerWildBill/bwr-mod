@@ -467,6 +467,8 @@ same 16 columns as the top. Mount the indicators you want up high on a vertical 
 | --- | --- | --- | --- |
 | Control Panel (Desk, 1 m) | `bwr:control_panel_desk` | 1 x 1 x 1, one block | `DESK` |
 | Control Panel (Desk, 2 m) | `bwr:control_panel_desk_wide` | 2 x 1 x 1, two blocks | `DESK`, both blocks |
+| Control Panel (Desk, Inside Corner) | `bwr:control_panel_desk_corner_inside` | 2 x 1 x 2, four blocks | `DESK_CORNER_INSIDE`, the core block |
+| Control Panel (Desk, Outside Corner) | `bwr:control_panel_desk_corner_outside` | 2 x 1 x 2, four blocks | `DESK_CORNER_OUTSIDE`, the core block |
 
 * **Joining.** Desks of the `DESK` style and one facing join sideways, to the operator's right and left, into one face: a 1 m desk,
   a 2 m desk and another 1 m desk are one run 64 cells wide, and a part can span the seams. A desk is a single row (nothing joins in
@@ -484,6 +486,27 @@ same 16 columns as the top. Mount the indicators you want up high on a vertical 
   they were and the four new rows 6 to 9 are the overhang in front of them. A desk from an older save loads with every part on the same
   cells, in the same place (`ControlDeskTests.aDeskSavedBeforeTheOverhangLoadsWithEveryPartWhereItWas` loads a 1 m and a 2 m desk saved in
   the old form). No block, state or saved value changed.
+
+### 45 degree desk corners (inside and outside)
+
+Two corner pieces turn a run of desks through two 45 degree bends, so a U-shaped console reads as one piece with chamfered corners,
+like a real control room. Each is **four blocks, placed by one item** (2 x 2, with the footprint going to the operator's left from
+the block you click and, for an inside corner, toward the operator, for an outside one, away from the operator). If any block is
+in the way nothing is placed. Break any block and the whole corner goes with one drop, and every part mounted on it drops.
+
+* **Inside corner**: the console wraps around the operator (the U). Place it at the end of a desk run, looking at the run, and
+  continue with desks turned 90 degrees at the far side of the footprint. **Outside corner**: the console wraps away from the
+  operator. The straight run joins the corner at the edge of its footprint with no seam; the four directions you can look give
+  all four orientations, left and right corners both.
+* **The angled section carries parts.** Its level top is a 16 x 10 cell face like a desk's (1.0 m wide, 0.625 m deep) turned 45
+  degrees: right-click it with a part to place one, aim at it, operate it, wire it with the linker or the Networking Wrench and move
+  signals to and from it like on any desk. Aim at any block of the corner: the face reaches into the other blocks and a click on
+  any of them finds it. The face is **its own group**: it does not merge its cells with the desks on either side, and a part
+  cannot span from a desk onto the corner (the short stubs at each end of the corner, 0.5 m, take no parts).
+* **Finish and recipes.** Same finishes as the desks (the wrench paints all four blocks together). Three 1 m desks and an iron ingot
+  make an inside corner; an outside corner takes an iron nugget as well. With Mekanism: two steel ingots instead of the iron ingot,
+  and two steel nuggets for the outside corner. They are grid recipes.
+* The benchboard has its own 45 degree pieces (the corner pieces under "Trim blocks").
 
 ### Control-room recipes
 

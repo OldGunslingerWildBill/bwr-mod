@@ -2,6 +2,7 @@
 
 ## Unreleased (alpha.61): the Grid Tie is a generator circuit breaker
 
+- **45 degree desk corners** (CONTROL-PANELS-SPEC.md section 14). Two new four-block pieces, `control_panel_desk_corner_inside` (the console wraps around the operator) and `control_panel_desk_corner_outside`, turn a run of control desks (1 m or 2 m) through two 45 degree bends with the same profile, so a U-shaped console reads as one piece. The angled section's level top is a mounting face (16 x 10 cells, turned 45 degrees): parts are placed, aimed at, operated, wired and saved there like on any desk, through any block of the corner. Built in Blender (`build_desk_corner.py`); three desks and an iron ingot (and a nugget for the outside one) in the grid. Existing desks, saves and recipes are unchanged. New `DeskCornerTests` (namespace `bwrcorner`) and panel client check stages `corner-*`.
 - **The Grid Tie has a new model: a generator circuit breaker** (GRID-TIE-SPEC.md 8.1). A 6 x 3 x 4 SF6 breaker (ABB HEC 7/8 dimensions from the brochure: 2.0 m phase pitch, bus axis 1.7 m up,
   3.3 m pole enclosures, 2.9 m high) with isolated-phase-bus flanges at both ends and a control cubicle, built in Blender like the MSIV.
   It needs room for all 72 cells, breaking any cell removes it

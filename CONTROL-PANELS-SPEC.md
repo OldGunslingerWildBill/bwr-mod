@@ -320,3 +320,63 @@ horns: wire sound events with silent placeholders only); GUI styling.
 5. **Wiring and integration:** linker, binding screens, component-to-
    component wiring, redstone, CC peripheral, docs (`CONTROL-PANELS.md` with
    a worked example control room).
+
+## 14. 45 degree desk corners (alpha.61)
+
+The owner's request: "there's no corner blocks or desks that have a 45 deg corner". A run of control desks could only meet another
+at a hard 90 degree corner; real BWR consoles, and the reference screenshots, join runs through 45 degree chamfered sections
+that carry controls too.
+
+**What was added.** Two items, `bwr:control_panel_desk_corner_inside` (the console wraps around the operator, the U) and
+`bwr:control_panel_desk_corner_outside` (it wraps away). Each continues the desk profile of `control_panel_desk` and
+`control_panel_desk_wide` exactly (the same cross-section, 0.75 deep, the top 0.75 up, the overhang, the riser and shelf, the knee
+front), so run -> corner -> run reads as one console. The 1 m and the 2 m desk share one profile, so one pair of corners serves
+both. **The benchboard already has its 45 degree pieces** (`control_panel_corner_bench_inside`, `_outside` and the mountable
+`_chamfer`), and a new benchboard section was not built: the benchboard face falls 45 degrees over a full block of
+depth, so a mitred band of it is a hip, which the existing bench chamfer already is.
+
+**Footprint: 2 x 2 blocks** (one item; `DeskCornerBlock`, four blocks with a `part` property: `origin`, `left`, `deep`, `deep_left`).
+A 1 x 1 chamfer cannot work against a 0.75 deep console: the mitred band's operator-side edge is 0.35 m long (inside) and its
+mounting rectangle does not fit. 2 x 2 gives an angled section 1.06 m long on the operator side (inside) and 1.15 to 1.77 m
+(outside), and a face of the same 16 columns x 10 rows (1.0 m x 0.625 m) as a straight desk. The straight run arrives at the edge
+of the footprint exactly where a straight desk stands, so it joins with no seam. `DeskCornerGeometry` has the plan (mitred joints,
+constant depth): inside, runs along `f = 0..0.75` and `x = 0..0.75`, operator-side vertices at 1.5; outside, the second run leaves
+backwards (toward the back, so the footprint grows away from the operator) in `x = 0.25..1`. Placing is whole or not at all, from
+the origin block (the one at the operator's right; the others go to the operator's left and one block deep, toward the
+operator for an inside corner, away for an outside one); breaking any block removes the corner with one drop; a corner that
+loses a block another way falls apart. Placing from the four facings reaches all four orientations (left and right U corners,
+both bends).
+
+**The 45 degree face.** `PanelGeometry.Frame` was already a general block-space frame (cell origin, column step, row step,
+normal) and the chamfer trim blocks already use a diagonal one; the panel code asks `PanelGeometry.frame(be.panelType(),
+be.facing())` for every cell, ray, ghost, line and component, so nothing assumed a cardinal face except the frames. The two new
+`PanelType`s, `DESK_CORNER_INSIDE` and `DESK_CORNER_OUTSIDE`, are a level top (normal straight up, 0.75 up) whose columns and rows
+run along the diagonals of the plan (a cell is still 1/16 block both ways). Their frame origin is given in the local frame of
+the **core** block, the one the middle of the face lies in (`left` for an inside corner, `deep` for an outside one), so the face
+reaches 0.5 m into the other blocks. Only the core has a block entity and a face (`panelType(state)` is `null` for the other three,
+like the duplex board's body cells); a click on any block of the corner is forwarded to the core's block entity
+(`DeskCornerBlock.faceEntity`, used by `PanelClientInput`, `PanelClientOperate`, `MimicClientInput` and the block's own vanilla
+use paths), and the cell is found by the ray against the true plane exactly as on every face. Placement, operate and wiring checks
+(`PanelOps`, `WiringOps`, `AssemblyAccess`) address the core's position and are unchanged: reach is measured to the core block,
+which the face never leaves by more than 0.6 m (the reach slack is 1.0). Saved components are the core's, with the usual keys and
+absolute claim positions; nothing about a cardinal face changed. **The corner's face is its own panel group of one block**
+(`hasRows` and `hasColumns` are false): it does not merge its grid with the straight runs beside it, and components do not span
+between a run and the corner (the 0.5 m stubs of console at each end of the corner are not mountable).
+
+**Model and shape.** `art/models/control_desk/build_desk_corner.py` (Blender, headless, procedural like `build_desk.py`) builds the
+mitred console from the same profile and slices it into the four block models (`desk_corner_<inside|outside>_<part>.obj`) and a
+whole-piece item model; `tools-export-desk-corner.py` writes the model, blockstate, item and loot JSON. Polygons of five or more
+corners are split into triangles: the game's OBJ loader drops them (the first build had holes). Previews are in
+`art/models/control_desk/previews/` (closed iso and run + corner + run, from the operator's side and from above, plus the in-game
+pictures of the panel client check). Collision and outline shapes are stepped per 1/16 cell from the same profile and built
+lazily (`DeskCornerGeometry.shape`).
+
+**Recipes.** Grid recipes (not Fabrication Desk ones: `FabricationDeskTests` pins the desk at exactly 42 recipes): three 1 m desks
+and an iron ingot (inside), plus an iron nugget (outside, so the two recipes differ); with Mekanism two steel ingots (and two
+steel nuggets), the usual doubling.
+
+**Tests.** `DeskCornerTests` (namespace `bwrcorner`): the frames, the face on the console, the shapes under every cell of the face
+and the knee space, the models under every cell, placing for every facing, refusal, breaking, mounting through a real block ray
+cast and the real `Place` and `Operate` packet handlers, wiring a component to another on the face, groups, finishes, saves. The
+panel client check (`-PbwrPanelClientCheck`, stages `corner-inside-*`, `corner-outside-*`) draws both corners with parts mounted
+and has the client's own aiming (`PanelClientInput.hoveredClaim`) find the dial at the middle of the face.
