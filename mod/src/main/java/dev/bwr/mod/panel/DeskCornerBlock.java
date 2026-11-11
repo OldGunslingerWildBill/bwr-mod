@@ -52,7 +52,8 @@ public final class DeskCornerBlock extends PanelBlock {
     public DeskCornerBlock(Properties properties, boolean inside) {
         super(properties.pushReaction(PushReaction.BLOCK), inside ? PanelType.DESK_CORNER_INSIDE : PanelType.DESK_CORNER_OUTSIDE);
         this.inside = inside;
-        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(PART, CornerPart.ORIGIN));
+        // the default state is the core block: the one with a block entity (the computer face and other registries take their prototype from it)
+        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(PART, DeskCornerGeometry.core(inside)));
     }
 
     public boolean inside() {

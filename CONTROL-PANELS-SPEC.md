@@ -380,3 +380,19 @@ and the knee space, the models under every cell, placing for every facing, refus
 cast and the real `Place` and `Operate` packet handlers, wiring a component to another on the face, groups, finishes, saves. The
 panel client check (`-PbwrPanelClientCheck`, stages `corner-inside-*`, `corner-outside-*`) draws both corners with parts mounted
 and has the client's own aiming (`PanelClientInput.hoveredClaim`) find the dial at the middle of the face.
+
+**Not built (open design points, owner request after the corners).**
+*Longer 45 degree runs.* A run advancing one block along each axis has a pitch of 1.414 m, not a multiple of the 1 m cell grid; a
+panel group's columns are 16 cells of one block and cells must stay square (a component model is drawn square from the frame), so
+the faces of repeated diagonal pieces cannot be one cell space: each piece would be its own group with 16 of its 22.6 cells (the
+rest dead top), exactly like the corners. The piece-by-piece scheme that fits the grid is: a bend piece (a straight run into a 45
+degree turn, mitred, left and right hand, inside and outside) and a diagonal straight piece (an L of three blocks, a main block and
+two wedge blocks, pitch (1, 1)), with the corner a bend + n diagonals + bend; the core/forwarding mechanism here
+(`DeskCornerBlock.faceEntity`) already serves it, and `build_desk_corner.py` already builds a console from any list of sections.
+Not implemented: it needs a handedness property, a face index in the frame (one `PanelType` per face, or a per-state frame) and
+a block-state per part of a (n+1) x (n+1) footprint.
+*Tall panels (benchboard).* The benchboard group is a staircase: each row down is one block toward the operator. A 45 degree run of
+it steps (1, 1) blocks per row, 1.41 m of travel for 1 m of drop, a 35 degree face, not the 45 degree one: that is exactly the
+existing mountable `CHAMFER_BENCH` facet (normal 35.26 degrees above the horizon). A multi-row diagonal bench therefore tiles only as
+stacked chamfer facets, which join nothing today (`hasColumns`/`hasRows` false); making them join into one group needs a diagonal
+column/row step in `PanelGroup`. No new tall-panel corner was added.
