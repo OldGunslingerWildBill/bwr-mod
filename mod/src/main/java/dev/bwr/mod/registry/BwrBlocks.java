@@ -699,31 +699,31 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.DeskPanelBlock> CONTROL_PANEL_DESK_WIDE =
             BLOCKS.register("control_panel_desk_wide",
                     () -> new dev.bwr.mod.panel.DeskPanelBlock(panelBoard()));
-    /** The 45 degree desk corners, one to four angled units long (four to many blocks each, DeskCornerBlock): the console wraps around the operator, or away. */
+    /** The 45 degree single desk corners, one angled unit long (four blocks, DeskCornerBlock): the console wraps around the operator, or away. Longer runs are the modular pieces below. */
     public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_INSIDE =
             BLOCKS.register("control_panel_desk_corner_inside",
                     () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true, 1));
-    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_INSIDE_2 =
-            BLOCKS.register("control_panel_desk_corner_inside_2",
-                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true, 2));
-    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_INSIDE_3 =
-            BLOCKS.register("control_panel_desk_corner_inside_3",
-                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true, 3));
-    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_INSIDE_4 =
-            BLOCKS.register("control_panel_desk_corner_inside_4",
-                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true, 4));
     public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_OUTSIDE =
             BLOCKS.register("control_panel_desk_corner_outside",
                     () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false, 1));
-    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_OUTSIDE_2 =
-            BLOCKS.register("control_panel_desk_corner_outside_2",
-                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false, 2));
-    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_OUTSIDE_3 =
-            BLOCKS.register("control_panel_desk_corner_outside_3",
-                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false, 3));
-    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_OUTSIDE_4 =
-            BLOCKS.register("control_panel_desk_corner_outside_4",
-                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false, 4));
+    /**
+     * The modular 45 degree runs (AngledRunBlock): bend A, the diagonal unit and bend B of the desk and of the tall panel, inside and
+     * outside, named {@code control_panel_<desk|tall>_run_<inside|outside>_<bend_a|unit|bend_b>}. A run is bend A + n units + bend B.
+     */
+    public static final java.util.Map<String, DeferredBlock<dev.bwr.mod.panel.AngledRunBlock>> ANGLED_RUNS = new java.util.LinkedHashMap<>();
+
+    static {
+        for (dev.bwr.mod.panel.AngledRunGeometry.Family family : dev.bwr.mod.panel.AngledRunGeometry.Family.values()) {
+            for (boolean inside : new boolean[] {true, false}) {
+                for (dev.bwr.mod.panel.AngledRunGeometry.Role role : dev.bwr.mod.panel.AngledRunGeometry.Role.values()) {
+                    String name = "control_panel_" + family.id() + "_run_" + (inside ? "inside" : "outside") + "_" + role.id();
+                    ANGLED_RUNS.put(name, BLOCKS.register(name,
+                            () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), family, inside, role)));
+                }
+            }
+        }
+    }
+
     /** The duplex board: one item places a 1 x 2 x 4 column (bench, board, tilted header); see DuplexPanelBlock. */
     public static final DeferredBlock<dev.bwr.mod.panel.DuplexPanelBlock> CONTROL_PANEL_DUPLEX =
             BLOCKS.register("control_panel_duplex",

@@ -298,6 +298,9 @@ public final class BwrBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.bwr.mod.panel.PanelBlockEntity>>
             PANEL = BLOCK_ENTITIES.register("panel",
             () -> BlockEntityType.Builder.of(dev.bwr.mod.panel.PanelBlockEntity::new,
+                    java.util.stream.Stream.concat(
+                            BwrBlocks.ANGLED_RUNS.values().stream().map(b -> (net.minecraft.world.level.block.Block) b.get()),
+                            java.util.stream.Stream.of(
                     BwrBlocks.CONTROL_PANEL_VERTICAL.get(),
                     BwrBlocks.CONTROL_PANEL_BENCHBOARD.get(),
                     BwrBlocks.CONTROL_PANEL_CONSOLE.get(),
@@ -306,15 +309,9 @@ public final class BwrBlockEntities {
                     BwrBlocks.CONTROL_PANEL_DESK.get(),
                     BwrBlocks.CONTROL_PANEL_DESK_WIDE.get(),
                     BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE.get(),
-                    BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE_2.get(),
-                    BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE_3.get(),
-                    BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE_4.get(),
                     BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE.get(),
-                    BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE_2.get(),
-                    BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE_3.get(),
-                    BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE_4.get(),
                     BwrBlocks.CONTROL_PANEL_HEADER_STRIP.get(),
                     BwrBlocks.CONTROL_PANEL_HEADER_CANOPY.get(),
                     BwrBlocks.CONTROL_PANEL_CORNER_VERTICAL_CHAMFER.get(),
-                    BwrBlocks.CONTROL_PANEL_CORNER_BENCH_CHAMFER.get()).build(null));
+                    BwrBlocks.CONTROL_PANEL_CORNER_BENCH_CHAMFER.get())).toArray(net.minecraft.world.level.block.Block[]::new)).build(null));
 }

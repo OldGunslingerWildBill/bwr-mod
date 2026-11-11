@@ -66,7 +66,7 @@ MATERIALS = ["face", "paint", "bezel", "back", "kick", "cheek", "hood", "apron",
 # --- the corner plan (DeskCornerGeometry.java); n is the length: the number of angled units (faces), 1 to 4 ---
 OUTSIDE_B_FRONT = 0.25
 OUTSIDE_B_BACK = 1.0
-LENGTHS = (1, 2, 3, 4)
+LENGTHS = (1,)
 
 
 def size(n):
@@ -575,7 +575,7 @@ def main():
     for kind in ("inside", "outside"):
         # the corner alone, then a run + corner + run (two straight desk blocks each side); in game orientation (facing
         # north, operator toward +Y of Blender), seen from the operator side above; lengths 1 and 3
-        for n in (1, 3):
+        for n in (1,):
             for label, runs in (("iso", False), ("arrangement", True)):
                 polys = solid(kind, n, runs)
                 oriented = orient(polys)

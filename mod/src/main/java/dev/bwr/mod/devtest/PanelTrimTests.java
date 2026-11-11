@@ -402,7 +402,7 @@ public final class PanelTrimTests {
                 case CHAMFER_VERTICAL -> "chamfer_vertical";
                 case CHAMFER_BENCH -> "chamfer_bench";
                 // the desk corners have four block models, each a slice of the console: DeskCornerTests checks their face
-                case DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE -> null;
+                case DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE, DESK_RUN, RUN_BENCH, RUN_VERTICAL, RUN_HEADER -> null;
             };
             if (name == null) {
                 continue;

@@ -16,7 +16,7 @@ PARTS = os.path.join(ROOT, "art/models/control_desk/desk_corner_parts.json")
 
 FACINGS = (("north", 0), ("east", 90), ("south", 180), ("west", 270))
 KINDS = ("inside", "outside")
-LENGTHS = (1, 2, 3, 4)
+LENGTHS = (1,)
 FINISHES = ("cream", "tan", "grey", "light_blue")
 
 
@@ -82,8 +82,8 @@ def main():
                 for facing, y in FACINGS:
                     variants["facing=%s,left=%d,deep=%d" % (facing, left, deep)] = {"model": "bwr:block/control_panel/" + name, "y": y}
             # combinations that are no block of this corner are never placed, but every state needs a model: the origin's
-            for left in range(5):
-                for deep in range(5):
+            for left in range(2):
+                for deep in range(2):
                     if [left, deep] not in plan["%s_%d" % (kind, n)]:
                         for facing, y in FACINGS:
                             variants["facing=%s,left=%d,deep=%d" % (facing, left, deep)] = {

@@ -44,7 +44,7 @@ public final class DeskCornerGeometry {
     }
 
     private static final double SQRT2 = Math.sqrt(2.0);
-    public static final int MAX_LENGTH = 4;
+    public static final int MAX_LENGTH = 1;
     /** Depth of the console band: that of the straight desk. */
     public static final double W = PanelGeometry.DESK_FRONT;
     /** The second run of an outside corner: its front (operator side) is the line {@code x = OUTSIDE_B_FRONT}. */

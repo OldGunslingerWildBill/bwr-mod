@@ -60,7 +60,7 @@ public final class BwrPeripheralSupport {
         if(!level.isLoaded(pos))return null;
         var state=level.getBlockState(pos);
         if(state.getBlock() instanceof JetPumpBlock)return jet(level,pos,state);
-        if(state.getBlock() instanceof dev.bwr.mod.panel.DeskCornerBlock)return typed(dev.bwr.mod.panel.DeskCornerBlock.faceEntity(level,pos)); // any block of a desk corner is the one face
+        if(state.getBlock() instanceof dev.bwr.mod.panel.DeskCornerBlock||state.getBlock() instanceof dev.bwr.mod.panel.AngledRunBlock)return typed(dev.bwr.mod.panel.DeskCornerBlock.faceEntity(level,pos)); // any block of a desk corner is the one face
         // The same owner lookup the panel signal layer uses, so both agree on which device a position means.
         return typed(dev.bwr.mod.signal.DeviceResolver.resolve(level,pos));
     }

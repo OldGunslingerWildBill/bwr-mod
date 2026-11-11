@@ -46,6 +46,8 @@ public final class PanelFinishes {
             }
         } else if (block instanceof DeskCornerBlock) {
             cells.addAll(DeskCornerBlock.piece(pos, state));
+        } else if (block instanceof AngledRunBlock) {
+            cells.addAll(AngledRunBlock.piece(pos, state));
         } else if (block instanceof AssemblyBlock assembly && assembly.cellCount() > 1) {
             Direction facing = state.getValue(AssemblyBlock.FACING);
             BlockPos origin = assembly.origin(pos, state);

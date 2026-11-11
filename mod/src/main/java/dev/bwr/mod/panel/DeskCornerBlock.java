@@ -46,14 +46,14 @@ import java.util.List;
  * updates. No ticker; nothing saved beyond the cores' components.
  */
 public final class DeskCornerBlock extends PanelBlock {
-    public static final IntegerProperty LEFT = IntegerProperty.create("left", 0, 4);
-    public static final IntegerProperty DEEP = IntegerProperty.create("deep", 0, 4);
+    public static final IntegerProperty LEFT = IntegerProperty.create("left", 0, 1);
+    public static final IntegerProperty DEEP = IntegerProperty.create("deep", 0, 1);
     private static final List<MapCodec<DeskCornerBlock>> CODECS = new ArrayList<>();
 
     static {
-        // the property ranges are literals (tools-audit-assets.py reads them): a footprint is at most MAX_LENGTH + 1 = 5 blocks across
-        if (DeskCornerGeometry.MAX_LENGTH != 4) {
-            throw new IllegalStateException("the left and deep properties cover 0..4");
+        // the property ranges are literals (tools-audit-assets.py reads them): a footprint is at most MAX_LENGTH + 1 = 2 blocks across
+        if (DeskCornerGeometry.MAX_LENGTH != 1) {
+            throw new IllegalStateException("the left and deep properties cover 0..1");
         }
     }
 
@@ -176,6 +176,9 @@ public final class DeskCornerBlock extends PanelBlock {
      */
     public static PanelBlockEntity faceEntity(BlockGetter level, BlockPos pos, Vec3 eye, Vec3 look) {
         BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof AngledRunBlock) {
+            return AngledRunBlock.faceEntity(level, pos, eye, look); // the modular runs share every call site of this lookup
+        }
         if (!(state.getBlock() instanceof DeskCornerBlock block)) {
             return level.getBlockEntity(pos) instanceof PanelBlockEntity be ? be : null;
         }

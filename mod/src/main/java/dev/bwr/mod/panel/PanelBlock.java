@@ -81,6 +81,8 @@ public class PanelBlock extends BaseEntityBlock {
                     throw new IllegalStateException("angled trim blocks answer with their own codec");
             case DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE ->
                     throw new IllegalStateException("desk corners answer with their own codec");
+            case DESK_RUN, RUN_BENCH, RUN_VERTICAL, RUN_HEADER ->
+                    throw new IllegalStateException("angled run pieces answer with their own codec");
         };
     }
 
