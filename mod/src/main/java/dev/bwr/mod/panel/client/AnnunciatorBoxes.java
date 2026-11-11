@@ -23,9 +23,11 @@ import java.util.WeakHashMap;
  * already has, the components of the group's loaded blocks, and nothing is sent.
  *
  * <p>Once a frame per group (the first block of the group to draw asks) the group's annunciators are folded into a
- * signature without allocating; only when it changed, a window was added, moved, resized or replaced, are the edge
- * words worked out again and written into each window's {@link RenderCache#boxEdges}. The lamp test is read on every
- * scan, as a bit per group number.
+ * signature without allocating; only when it changed, a window was added, moved, resized, replaced or given other
+ * settings, are the edge words worked out again and written into each window's {@link RenderCache#boxEdges}, together
+ * with its place in its box ({@link RenderCache#boxTile}, {@link AnnunciatorBox#layout}) and the name on the box's
+ * nameplate ({@link RenderCache#boxName}), which the Columbia style draws from. The lamp test is read on every scan, as a
+ * bit per group number.
  */
 public final class AnnunciatorBoxes {
     private AnnunciatorBoxes() {
@@ -87,6 +89,8 @@ public final class AnnunciatorBoxes {
                     signature = mix(signature, System.identityHashCode(c));
                     signature = mix(signature, ((long) group.columnOf(pos) << 48) ^ ((long) group.rowOf(pos) << 40)
                             ^ ((long) c.x() << 24) ^ ((long) c.y() << 16) ^ ((long) c.w() << 8) ^ c.h());
+                    // A window's settings too: the name on a box's nameplate is a setting of one of its windows.
+                    signature = mix(signature, c.revision());
                 } else if (c.type() == ComponentTypes.ANNUNCIATOR_CONTROL && c.output(AnnunciatorControlType.TEST) > 0.5
                         && c.data() instanceof AnnunciatorControlData data) {
                     testing |= 1 << (data.group - AnnunciatorData.MIN_GROUP);
@@ -117,12 +121,54 @@ public final class AnnunciatorBoxes {
                 }
             }
         }
-        int[] edges = AnnunciatorBox.edges(rects.toArray(new AnnunciatorBox.Rect[0]));
+        AnnunciatorBox.Rect[] windowRects = rects.toArray(new AnnunciatorBox.Rect[0]);
+        int[] edges = AnnunciatorBox.edges(windowRects);
+        // How each box is dressed in the Columbia style (rows, columns, split tiles, the nameplate and the latch). It is
+        // decoration: should it ever fail, every window draws as a box by itself rather than the panel not drawing.
+        AnnunciatorBox.Tile[] tiles = null;
+        try {
+            tiles = AnnunciatorBox.layout(windowRects);
+        } catch (RuntimeException e) {
+            tiles = null;
+        }
+        if (tiles != null && tiles.length != found.size()) {
+            tiles = null;
+        }
+        String[] names = tiles == null ? null : boxNames(found, windowRects, tiles);
         for (int i = 0; i < found.size(); i++) {
             RenderCache cache = RenderCache.of(found.get(i));
             cache.boxEdges = edges[i];
             cache.boxState = state;
+            AnnunciatorBox.Tile tile = tiles == null ? null : tiles[i];
+            cache.boxTile = tile;
+            cache.boxName = tile != null && names != null && tile.box() >= 0 && tile.box() < names.length ? names[tile.box()] : "";
         }
+    }
+
+    /**
+     * The nameplate name of each box, by box number: the Box name of the first window of the box, in reading order, that
+     * has one; "" for a box with none.
+     */
+    private static String[] boxNames(List<PanelComponent> found, AnnunciatorBox.Rect[] rects, AnnunciatorBox.Tile[] tiles) {
+        String[] names = new String[found.size()]; // a group has at most as many boxes as windows
+        int[] from = new int[found.size()];
+        java.util.Arrays.fill(names, "");
+        java.util.Arrays.fill(from, -1);
+        for (int i = 0; i < found.size(); i++) {
+            if (tiles[i] == null || !(found.get(i).data() instanceof AnnunciatorData data) || data.boxName.isEmpty()) {
+                continue;
+            }
+            int box = tiles[i].box();
+            if (box < 0 || box >= names.length) {
+                continue;
+            }
+            int best = from[box];
+            if (best < 0 || rects[i].y() < rects[best].y() || rects[i].y() == rects[best].y() && rects[i].x() < rects[best].x()) {
+                from[box] = i;
+                names[box] = data.boxName;
+            }
+        }
+        return names;
     }
 
     /** Whether a lamp test is on for annunciator group {@code number}, as of the last scan of the window's panel group. */

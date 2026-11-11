@@ -90,7 +90,8 @@ public final class IndicatorSizeTableTests {
     private static final List<Row> TABLE = List.of(
             new Row(ComponentTypes.PUSHBUTTON, a(6, 6, 8, 8, 1, 1, 2, 2), a(1, 1, 2, 2), a(3, 3, 4, 4), a(4, 4)),
             new Row(ComponentTypes.LAMP, a(4, 4, 6, 6, 1, 1, 2, 2), a(1, 1), a(3, 3), a(3, 3)),
-            new Row(ComponentTypes.ANNUNCIATOR, a(12, 8, 16, 12, 1, 1, 2, 2), a(1, 1, 2, 2), a(8, 6, 8, 8), a(8, 6)),
+            // (the last three are the half height windows, one alarm of a split tile, added after the table for the Columbia style)
+            new Row(ComponentTypes.ANNUNCIATOR, a(12, 8, 16, 12, 1, 1, 2, 2), a(1, 1, 2, 2), a(8, 6, 8, 8, 8, 3, 12, 4, 16, 6), a(8, 6)),
             new Row(ComponentTypes.ANNUNCIATOR_CONTROL, a(24, 6, 2, 1, 4, 2), a(2, 1, 4, 2), a(16, 4, 32, 8), a(32, 8)),
             new Row(ComponentTypes.RPS_TRIP, a(16, 8, 24, 12, 32, 16, 2, 1, 4, 2), a(2, 1, 4, 2), a(8, 4, 12, 6), a(12, 6)),
             new Row(ComponentTypes.BAR_GRAPH, a(3, 24, 3, 12, 3, 16, 3, 32, 24, 3, 12, 3, 16, 3, 32, 3, 1, 3, 3, 1, 1, 6, 6, 1, 2, 6),

@@ -2,9 +2,9 @@ package dev.bwr.mod.panel.client;
 
 import dev.bwr.mod.panel.component.AnnunciatorControlData;
 import dev.bwr.mod.panel.component.AnnunciatorControlType;
-import dev.bwr.mod.panel.component.AnnunciatorData;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.model.BakedPanelModel;
+import dev.bwr.mod.panel.model.Legends;
 import dev.bwr.mod.panel.model.PanelModels;
 import dev.bwr.mod.panel.model.PartDraw;
 import dev.bwr.mod.panel.model.Placement;
@@ -14,10 +14,13 @@ import dev.bwr.mod.panel.model.Placement;
  * its legend under it. A button sits low and glows while it is held (the output is 1), like a pushbutton. At the real
  * size (2 x 1 cells) the legends are far too small to read, which is what the distance fade is for.
  *
- * <p>A module whose Style is the lamp box is drawn from the control station model instead ({@code ann_control}, built by
- * {@code art/models/panel/annunciator}): its plate and bezels are recorded, its four caps ({@link #CAP_PARTS}, in the
- * order of the outputs) slide in and glow while held, and the same four legends are printed under them. The model is
- * four buttons wide as the module is, so the quarter of the face a click lands on is still the button under it.
+ * <p>A module whose Style is the pushbutton station is drawn from the station model instead ({@code ann_control}, built
+ * by {@code art/models/panel/annunciator} after a photograph of a local panel): four round black pushbuttons in bright
+ * bezel rings set straight in the panel face, a black legend plate under each. Its rings and plates are recorded; its
+ * four caps ({@link #CAP_PARTS}, in the order of the outputs) are drawn each frame, black at rest and slid in and
+ * glowing in the button's colour while held; the same four legends are printed on the plates, at the model's label
+ * anchors ({@link #LABELS}). The model is four buttons wide as the module is, so the quarter of the face a click lands
+ * on is still the button under it.
  */
 final class AnnunciatorControlModel implements ComponentModel {
     static final String[] LEGENDS = {"ACK", "RESET", "SILENCE", "TEST"};
@@ -28,10 +31,11 @@ final class AnnunciatorControlModel implements ComponentModel {
     private static final float HOUSING_TOP = 1.0f;
     private static final float BUTTON_SHARE = 0.6f;
 
-    /** The caps of the control station model, one per output. */
+    /** The caps of the station model and the label anchors of their legend plates, one per output. */
     static final String[] CAP_PARTS = {"cap_ack", "cap_reset", "cap_silence", "cap_test"};
-    /** A label anchor of the station model: its elevation is the plate the legends are printed on. */
-    static final String PLATE_ANCHOR = "ack";
+    static final String[] LABELS = {"ack", "reset", "silence", "test"};
+    /** The most of a button's quarter of the width a legend may take: the legend plate, less its edge. */
+    private static final float PLATE_TEXT_SHARE = 0.7f;
 
     private static final class Widths {
         final int[] pixels = new int[LEGENDS.length];
@@ -51,15 +55,15 @@ final class AnnunciatorControlModel implements ComponentModel {
 
     /** The station model this module is drawn from, or null: its style is classic, or the file is missing or not a station. */
     private static BakedPanelModel station(PanelComponent component) {
-        if (!(component.data() instanceof AnnunciatorControlData data) || !AnnunciatorData.STYLE_LAMPBOX.equals(data.style)) {
+        if (!(component.data() instanceof AnnunciatorControlData data) || !AnnunciatorControlData.STYLE_STATION.equals(data.style)) {
             return null;
         }
         BakedPanelModel model = PanelModels.get(AnnunciatorControlData.STATION_MODEL);
-        if (model == null || model.label(PLATE_ANCHOR) == null) {
+        if (model == null || !(model.footprintW > 0.0f) || !(model.footprintH > 0.0f)) {
             return null;
         }
-        for (String cap : CAP_PARTS) {
-            if (model.part(cap) == null) {
+        for (int i = 0; i < CAP_PARTS.length; i++) {
+            if (model.part(CAP_PARTS[i]) == null || model.label(LABELS[i]) == null) {
                 return null;
             }
         }
@@ -116,57 +120,75 @@ final class AnnunciatorControlModel implements ComponentModel {
 
     @Override
     public void renderDynamic(PanelRenderContext context, PanelComponent component) {
+        Widths widths = state(component);
+        if (widths.model != null && widths.place != null) {
+            renderStation(context, component, widths);
+            return;
+        }
         float w = component.w();
         float h = component.h();
-        Widths widths = state(component);
-        BakedPanelModel model = widths.model;
-        // The rectangle the four buttons and their legends are laid out in, and the surface the legends are printed on:
-        // the whole module, or what the station model covers of it.
-        float left = 0.0f;
-        float top = 0.0f;
-        float plate = HOUSING_TOP;
-        if (model != null) {
-            Placement place = widths.place;
-            for (int i = 0; i < AnnunciatorControlType.BUTTONS; i++) {
-                boolean held = component.output(i) > 0.5;
-                PartDraw.emit(context, model.part(CAP_PARTS[i]), place, 0.0f, held ? 1.0f : 0.0f, -1, held ? 1.0f : 0.8f, held,
-                        widths.quad);
-            }
-            left = place.offsetX;
-            top = place.offsetY;
-            w = model.footprintW * place.scale;
-            h = model.footprintH * place.rowScale;
-            plate = place.z(model.label(PLATE_ANCHOR).z);
-        } else {
-            float bezel = bezel(w, h);
-            float inset = bezel * 0.2f;
-            for (int i = 0; i < AnnunciatorControlType.BUTTONS; i++) {
-                boolean held = component.output(i) > 0.5;
-                int color = held ? CAPS[i] : QuadSink.shade(CAPS[i], 0.8f);
-                float x = bezelX(w, i, bezel) + inset;
-                float y = bezelY(h, bezel) + inset;
-                float stand = stand(bezel);
-                context.box(x, y, bezel - 2 * inset, bezel - 2 * inset, HOUSING_TOP, HOUSING_TOP + (held ? 0.9f : 2.2f) * stand, color, held);
-            }
+        float bezel = bezel(w, h);
+        float inset = bezel * 0.2f;
+        for (int i = 0; i < AnnunciatorControlType.BUTTONS; i++) {
+            boolean held = component.output(i) > 0.5;
+            int color = held ? CAPS[i] : QuadSink.shade(CAPS[i], 0.8f);
+            float x = bezelX(w, i, bezel) + inset;
+            float y = bezelY(h, bezel) + inset;
+            float stand = stand(bezel);
+            context.box(x, y, bezel - 2 * inset, bezel - 2 * inset, HOUSING_TOP, HOUSING_TOP + (held ? 0.9f : 2.2f) * stand, color, held);
         }
         if (context.lod() < PanelRenderContext.LOD_FULL) {
             return;
         }
-        if (!widths.measured) {
-            for (int i = 0; i < LEGENDS.length; i++) {
-                widths.pixels[i] = Math.max(1, context.font().width(LEGENDS[i]));
-            }
-            widths.measured = true;
-        }
+        measure(context, widths);
         float pitch = w / AnnunciatorControlType.BUTTONS;
         float labelTop = h * BUTTON_SHARE + h * 0.03f;
         float labelHeight = h - labelTop - h * 0.14f;
         float rowAspect = context.rowAspect();
         for (int i = 0; i < LEGENDS.length; i++) {
             float scale = Math.min(pitch * 0.92f / widths.pixels[i], labelHeight / (8.0f * rowAspect));
-            float x = left + pitch * i + (pitch - widths.pixels[i] * scale) / 2.0f;
-            float y = top + labelTop + (labelHeight - 8.0f * scale * rowAspect) / 2.0f;
-            context.text(LEGENDS[i], x, y, scale, plate + 0.05f, ModelDraw.ENGRAVED, false);
+            float x = pitch * i + (pitch - widths.pixels[i] * scale) / 2.0f;
+            float y = labelTop + (labelHeight - 8.0f * scale * rowAspect) / 2.0f;
+            context.text(LEGENDS[i], x, y, scale, HOUSING_TOP + 0.05f, ModelDraw.ENGRAVED, false);
+        }
+    }
+
+    /** The legends' widths in font pixels, measured once. */
+    private static void measure(PanelRenderContext context, Widths widths) {
+        if (!widths.measured) {
+            for (int i = 0; i < LEGENDS.length; i++) {
+                widths.pixels[i] = Math.max(1, context.font().width(LEGENDS[i]));
+            }
+            widths.measured = true;
+        }
+    }
+
+    /** The station model's moving parts and legends: each cap in or out, and the legend on the plate under it. */
+    private static void renderStation(PanelRenderContext context, PanelComponent component, Widths widths) {
+        BakedPanelModel model = widths.model;
+        Placement place = widths.place;
+        for (int i = 0; i < CAP_PARTS.length; i++) {
+            BakedPanelModel.Part cap = model.part(CAP_PARTS[i]);
+            if (cap == null) {
+                continue;
+            }
+            // Black at rest; pushed in and glowing in the button's own colour while its output is 1.
+            boolean held = component.output(i) > 0.5;
+            PartDraw.emit(context, cap, place, 0.0f, held ? 1.0f : 0.0f, held ? CAPS[i] : -1, 1.0f, held, widths.quad);
+        }
+        if (context.lod() < PanelRenderContext.LOD_FULL) {
+            return;
+        }
+        measure(context, widths);
+        float room = PLATE_TEXT_SHARE * place.length(model.footprintW) / AnnunciatorControlType.BUTTONS;
+        for (int i = 0; i < LABELS.length; i++) {
+            BakedPanelModel.Label label = model.label(LABELS[i]);
+            if (label == null) {
+                continue;
+            }
+            float scale = Math.min(place.length(label.height) / Legends.CAP_PIXELS, room / widths.pixels[i]);
+            context.text(LEGENDS[i], place.x(label.x) - widths.pixels[i] * scale / 2.0f,
+                    place.y(label.y) - Legends.CAP_PIXELS * scale / 2.0f, scale, place.z(label.z) + 0.05f, ModelDraw.ENGRAVED, false);
         }
     }
 }

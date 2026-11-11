@@ -31,6 +31,14 @@ public final class RenderCache {
 
     /** An annunciator window's joined sides and inside corners ({@link dev.bwr.mod.panel.model.AnnunciatorBox}); 0 for a lone window. */
     public int boxEdges;
+    /**
+     * An annunciator window's place in its box ({@link dev.bwr.mod.panel.model.AnnunciatorBox#layout}): its row and column,
+     * whether it is one alarm of a split tile, and whether it draws the box's nameplate or latch. Null before the first scan
+     * of its panel group, and the window then draws as a box by itself.
+     */
+    public dev.bwr.mod.panel.model.AnnunciatorBox.Tile boxTile;
+    /** The name on the nameplate of the window's box: the first Box name among the box's windows in reading order, "" for none. */
+    public String boxName = "";
     /** The panel group's annunciator state the window was last scanned with (see {@link AnnunciatorBoxes}); null before the first scan. */
     AnnunciatorBoxes.State boxState;
     /** What the static mesh was built for beyond the revision: {@link ComponentModel#staticKey}. */

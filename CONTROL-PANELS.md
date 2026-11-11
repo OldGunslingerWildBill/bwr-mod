@@ -110,7 +110,7 @@ use the same one.
 | Control switch | 8x12 (the default), 12x16, 6x9; retired 1x2, 2x3 |
 | Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits); **real** 1 cell wide per digit, 2 tall: 3x2 (3 digits), 1x2 to 8x2; **default** 6x4 (3 digits, 2 wide and 4 tall each) |
 | Lamp | 4x4, 6x6, ~~1x1~~, 2x2 (kept for packed indicator strips), **new** 3x3 (**default**) |
-| Annunciator window | 12x8, 16x12, ~~1x1~~, ~~2x2~~, **new** 8x6 (**default**), 8x8 |
+| Annunciator window | 12x8, 16x12, ~~1x1~~, ~~2x2~~, **new** 8x6 (**default**), 8x8; half height, one alarm of a split tile (see "Columbia style"): 8x3, 12x4, 16x6 |
 | Annunciator control module | 24x6, ~~2x1~~, ~~4x2~~, **new** 16x4, 32x8 (**default**) |
 | Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells; ~~1x3~~, ~~3x1~~, ~~1x6~~, ~~6x1~~, 2x6 (**default**), **new** 6x2 |
 | Round dial | 12x12, 16x16, 20x20, 24x24, 32x32, ~~2x2~~, ~~3x3~~, 4x4 (**default**), **new** 6x6, 8x8 |
@@ -218,7 +218,7 @@ by itself looks like a bezelled tile as before. Lit colour and flash are unchang
 dim version of its colour when off), the lettering is a dark tone of the colour on a white or amber tile and light on a
 red one, and dim when off. The legend is up to **four lines** (Engraved line 1 to 4 in the wrench screen; lines 3 and 4
 are saved only when used), each centred, one scale for all (`AnnunciatorLayout`). Not done: the row and column labels
-of the decorative header strip.
+of the decorative header strip (a box in the Columbia style, below, has its own).
 
 **Annunciator control module** (`annunciator_control`; 24x6, 16x4 and 32x8, the default; 2x1 and 4x2 are retired): ACK, RESET, SILENCE and TEST
 pushbuttons in one part. Each output (`ack`, `reset`, `silence`, `test`) is 1 while held, like a pushbutton, and only
@@ -227,24 +227,62 @@ pushbutton with that role does (`AnnunciatorGroups`, once per press, for the mod
 more. SILENCE has no horn to silence, so it is an output only. TEST lights every window of the module's group while it
 is held (a lamp test the client draws from the synced output); it changes no alarm state and sends nothing to the plant.
 
-**Lamp box style (models).** The annunciator window and the control module each have a **Style** in the wrench screen:
-*Classic (simple)*, the procedural look described above and the default, or *Lamp box (model)*, drawn from the models of
-`art/models/panel/annunciator` (`ann_window`, `ann_control`; see its README for what is and is not sourced: the make of
-Columbia's annunciators could not be established, so the lamp box is generic). The style is saved (key `Style`) only when
-it is not classic, so every saved window and module, and every new one, is classic until a player changes it; a missing
-model file draws classic too. Nothing else changes with the style:
-* **Window.** The model is not fitted with one scale like other models, because windows must tile a box at every size and
-  on every slope: `AnnunciatorLampBox` cuts it in nine at the lens's outline and lays the pieces on the rectangles the
-  procedural window uses (`AnnunciatorBox.insets`). The lens fills the tile, a run of the trim frame is drawn only on a side
-  that is not joined, a corner only where both sides are open, and the lens front is at the procedural tile's elevation.
-  So the joined-box rules, the sizes, the lit tile, flash, lamp test, the no-signal flag and the four-line legend are the
-  procedural window's own code, drawn over the model's lens. A window inside a box is 5 quads, as the procedural tile.
-  Classic and lamp box windows join each other into one box (the frame colours are the same).
-* **Control module.** The station model (four 30.5 mm pushbuttons on a plate) is four buttons wide like the module, so a
-  click still picks the button in its quarter; a cap slides in and glows while held, and the game prints the same four
-  legends under the caps. Outputs and what ACK, RESET, SILENCE and TEST do are untouched.
-* **Not done.** New windows do not start in the lamp box style, and the style is not in `PanelStyles.TABLE` (see the
-  README). The header strip and canopy are unchanged: no reference for Columbia's canopy was reachable.
+**Columbia style (the tile box).** An annunciator window has a **Style** in the wrench screen: *Classic (simple)*, the
+procedural look described above and the default, or *Columbia tile box (model)*, after the annunciator boxes of Columbia
+Generating Station's P800 boards (boxes "ANN PANEL P800-C5" and "P800-C1" in two owner-supplied photographs, which are not in
+the repository; `art/models/panel/annunciator/README.md` says what was measured on them, what is by eye and what is unknown).
+The style is saved (key `Style`) only when it is not classic, so every saved window and every new one is classic until a
+player changes it, and a missing tile model draws classic too.
+
+* **What it looks like.** A black plate standing off the board carries ivory tray tiles (a raised rim with rounded corners
+  round a slightly darker face) that nearly touch. On Columbia's boxes every tile is **two alarms**, one above the other,
+  split by a thin dark line; the box has small white numerals down its left margin, one per alarm (1 to 10 on a box of
+  five tiles), "-1" to "-7" across the top, one per column, so an alarm is called row-column ("3-2"); a white nameplate
+  ("ANN PANEL" over the box's name) under the middle of the box; and a round bright latch half way up the right margin.
+* **One window is one alarm.** A window at least twice as wide as tall is one alarm of a split tile, so there are three
+  **half height sizes**: 8x3, 12x4 and 16x6 (two of them make a tile of 8x6, 12x8 or 16x12). Down each column the half
+  windows pair off, upper then lower; a half window left without a partner, and a window of any other size, is a whole
+  tile with rim all round. Windows sit exactly on their own cells with the small black gap between tiles, and each has its
+  own colour, legend (up to four lines, two read best in a half), condition and group, as always.
+* **The plate overhangs the box.** Each window draws the plate under itself and, on every side that is not joined to
+  another window, a strip of plate margin *outside its own cells*: 0.30 of a tile width on the left, 0.31 on the right, 0.19
+  above and 0.375 below (2.4, 2.5, 1.5 and 3.0 cells for 8 wide windows; half as much again for 12 wide). **Leave about 3
+  cells clear round a box** (about 5 for 12 wide windows, 6 for 16): the margin covers whatever is mounted there, and a box
+  at the edge of a board hangs over the edge. The margin is not part of the window: it cannot be clicked and takes no cells.
+* **Numerals, nameplate, latch.** The row number is printed beside each window on the box's left edge and "-N" above each
+  on its top edge; one window of the bottom row draws the nameplate, centred under the box, and one of the right column the
+  latch, half way up (`AnnunciatorBox.layout`, a pure function over the windows of the panel group, worked out where the
+  joined sides are, only when the set of windows or a window's settings change). The nameplate's first line is the language
+  string `text.bwr.annunciator.box_title` ("ANN PANEL"); its second is the box's name, the new optional setting **Box name
+  (nameplate)** of a window (key `BoxName`, at most 12 letters, saved only when not empty): the first window of the box, in
+  reading order, that has one names the box, so it can be typed into any of them. A window by itself is a box of one,
+  with its own plate, numerals, nameplate and latch.
+* **Lit and dark.** Dark, a tile is ivory whatever its colour (with a touch of the colour in its face, so a red window can
+  be told from a white one) and its legend is black, as in the photographs. Lit, flashing, acknowledged and under a lamp
+  test it behaves exactly as the classic window: the face inside the rim is the window's colour, full-bright, with the same
+  lettering; no signal puts the same grey flag in its corner. What colour Columbia's windows light is not known.
+* **How it is drawn.** `AnnunciatorTileBox` cuts the tile model `ann_window` at the outline of its face into four corners,
+  four runs of rim and the face, and lays the pieces on the window's cells: the gap and the rim keep their share of the
+  tile's width (a corner stays round), the runs and the face stretch, and the upper alarm of a split tile simply has no
+  bottom rim. The plate, its margins, the dividing line, the nameplate and the latch are drawn in code from the
+  proportions in `AnnunciatorBox` (the same numbers build the preview box in `art/models/panel/annunciator/build.py`).
+  One alarm of a split tile is 18 quads and a whole tile 26 (the classic window is 10 inside a box); a 7 x 10 box with
+  its margins, nameplate and latch is 1,356 quads against 870 for the same windows classic. A panel block's render bounds
+  are widened by 6 cells round a Columbia window, so a margin is not culled while its window is off screen.
+* **Limits.** Classic and Columbia windows may be mixed in one box, but they do not match: keep a box to one style. A
+  box whose outline is not a rectangle gets its margins side by side round the outline, with no closing edge where the
+  outline steps. On a benchboard or console the rows of every annunciator, classic or not, are drawn at their true
+  height, which is less than a cell there, so the rows of a box stand apart: boxes belong on vertical boards and header
+  strips. The header strip and canopy blocks are unchanged.
+
+**Pushbutton station style.** The annunciator control module has a **Style** too: *Classic (simple)*, or *Pushbutton
+station (model)*: four round black pushbuttons in bright bezel rings set straight in the panel face, each with a small
+black legend plate under it carrying ACK, RESET, SILENCE or TEST in white (the model `ann_control`). It follows an
+owner-supplied photograph of a local panel of an unnamed plant, with an 8 x 6 box of unsplit tiles above four such
+buttons; what the acknowledge and reset controls of Columbia's control room look like is not known. The station is four
+buttons wide like the module, so a click still picks the button in its quarter; a button slides in and glows in its own
+colour (white, blue, amber, green) while held; outputs and what the four buttons do are untouched. Saved (key `Style`)
+only when not classic, so a module at its defaults still saves nothing.
 
 **Distance fade of text.** Small printed text (annunciator legends, gauge numbers, captions) turns to speckle from across
 a room. The panel renderer works out, once per component per frame, how tall a glyph is on the screen (`TextFade`: the

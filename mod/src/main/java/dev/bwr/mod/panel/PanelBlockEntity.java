@@ -1213,9 +1213,13 @@ public final class PanelBlockEntity extends BlockEntity {
             AABB bounds = new AABB(worldPosition);
             PanelGeometry.Frame frame = PanelGeometry.frame(panelType(), facing());
             for (PanelComponent component : owned) {
+                // An annunciator window of the Columbia style draws the plate margin of its box outside its own cells
+                // (numerals, nameplate, latch): room for that, so the margin is not culled while its window is off screen.
+                double over = component.data() instanceof dev.bwr.mod.panel.component.AnnunciatorData window && window.overhangs()
+                        ? dev.bwr.mod.panel.model.AnnunciatorBox.MAX_OVERHANG : 0.0;
                 for (int corner = 0; corner < 8; corner++) {
-                    double cu = component.x() + ((corner & 1) == 0 ? 0 : component.w());
-                    double cv = component.y() + ((corner & 2) == 0 ? 0 : component.h());
+                    double cu = component.x() + ((corner & 1) == 0 ? -over : component.w() + over);
+                    double cv = component.y() + ((corner & 2) == 0 ? -over : component.h() + over);
                     double cz = (corner & 4) == 0 ? 0 : 16;
                     bounds = bounds.minmax(new AABB(worldPosition.getX() + frame.x(cu, cv, cz),
                             worldPosition.getY() + frame.y(cu, cv, cz),

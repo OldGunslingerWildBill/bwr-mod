@@ -45,6 +45,274 @@ public final class AnnunciatorBox {
     public record Rect(int x, int y, int w, int h) {
     }
 
+    // ---- the Columbia tile box: what is drawn round the tiles, as shares of the tile width. The same numbers, under
+    // the same names, build the preview box in art/models/panel/annunciator/build.py (read off the owner's photograph
+    // of box P800-C5): keep the two in step. The tile itself (gap, rim, elevations) comes from the model file.
+    /** Plate margin left of the tiles (it holds the row numerals), right (the latch), above (the column numerals) and below (the nameplate). */
+    public static final float MARGIN_LEFT = 0.30f;
+    public static final float MARGIN_RIGHT = 0.31f;
+    public static final float MARGIN_TOP = 0.19f;
+    public static final float MARGIN_BOTTOM = 0.375f;
+    /** The dark line that splits a tile into its two alarms. */
+    public static final float DIVIDER = 0.02f;
+    /** Cap height of the white margin numerals. */
+    public static final float NUMERAL_CAP = 0.085f;
+    /** The white nameplate under the box: width, height, its distance below the tiles, the cap height of its lines, its thickness. */
+    public static final float NAMEPLATE_W = 0.95f;
+    public static final float NAMEPLATE_H = 0.33f;
+    public static final float NAMEPLATE_GAP = 0.012f;
+    public static final float NAMEPLATE_CAP = 0.095f;
+    public static final float NAMEPLATE_T = 0.006f;
+    /** The round latch in the right margin: radius, and how far it stands off the plate. */
+    public static final float LATCH_R = 0.10f;
+    public static final float LATCH_H = 0.09f;
+    /**
+     * The most a window of the Columbia style draws outside its own cells, in cells: the bottom margin of a box of the
+     * widest windows there are (16 cells). {@code PanelBlockEntity.renderBounds} is widened by this for such a window.
+     */
+    public static final float MAX_OVERHANG = MARGIN_BOTTOM * 16.0f;
+
+    /** What a window is in a split tile: a whole tile, or the upper or the lower of the two alarms that share one. */
+    public static final int WHOLE = 0;
+    public static final int UPPER = 1;
+    public static final int LOWER = 2;
+
+    /**
+     * Where one window sits in its box ({@link #layout}).
+     *
+     * @param box       number of the box among the boxes of the panel group, from 0
+     * @param row       the window's row in its box, from 0 at the top: one row per alarm, so a split tile is two rows
+     * @param column    its column in the box, from 0 at the left
+     * @param role      {@link #WHOLE}, {@link #UPPER} or {@link #LOWER}
+     * @param unit      the tile width of the box in cells (the width of its first window in reading order): what the
+     *                  margins, the numerals, the nameplate and the latch are sized by
+     * @param nameplate whether this is the one window of its box that draws the nameplate
+     * @param nameX2    twice the distance in cells from the window's left edge to the centre of the nameplate
+     * @param latch     whether this is the one window of its box that draws the latch
+     * @param latchY2   twice the distance in cells from the window's top edge to the centre of the latch
+     */
+    public record Tile(int box, int row, int column, int role, int unit, boolean nameplate, int nameX2, boolean latch, int latchY2) {
+        /** A window that is a box by itself (also what a window is taken for until its panel group has been scanned). */
+        public static Tile lone(int w, int h) {
+            return new Tile(0, 0, 0, WHOLE, Math.max(1, w), true, w, true, h);
+        }
+
+        /** Everything a window's mesh depends on besides its edge word, folded into one number (never negative). */
+        public long key() {
+            long k = role;
+            k = k * 131 + unit;
+            k = k * 131 + (nameplate ? nameX2 + 1024 : 0);
+            k = k * 131 + (latch ? latchY2 + 1024 : 0);
+            return k & 0x7FFFFFFFFFFFFFL;
+        }
+    }
+
+    /** Whether a window of this size is one alarm of a split tile rather than a whole tile: at least twice as wide as tall. */
+    public static boolean halfShaped(int w, int h) {
+        return w >= 2 * h;
+    }
+
+    /**
+     * The boxes the windows form and each window's place in its box. Windows that touch along any length of a side
+     * are one box. Rows and columns are counted over the distinct tops and lefts of the box's windows, so a regular
+     * grid numbers as a grid and an irregular box still gets numbers. A window that is {@link #halfShaped} pairs with
+     * the same-sized window directly under it into one split tile (the first of a column is the upper alarm, the next
+     * the lower, and so on down); one left without a partner, and every other window, is a whole tile. One window of
+     * the bottom row draws the nameplate, centred under the box, and one of the right column the latch, half way up
+     * it; where the box's bottom row (right column) does not reach all the way under (beside) it there, as in an L,
+     * the nearest window draws it, centred on itself, so it always has plate behind it.
+     *
+     * @param windows the windows of one panel group; they must not overlap. Never throws for any input.
+     */
+    public static Tile[] layout(Rect[] windows) {
+        int n = windows.length;
+        Tile[] out = new Tile[n];
+        if (n == 0) {
+            return out;
+        }
+        // Which window holds each cell.
+        java.util.Map<Long, Integer> owner = new java.util.HashMap<>();
+        for (int i = 0; i < n; i++) {
+            Rect r = windows[i];
+            for (int x = r.x; x < r.x + r.w; x++) {
+                for (int y = r.y; y < r.y + r.h; y++) {
+                    owner.put(key(x, y), i);
+                }
+            }
+        }
+        // Boxes: windows that touch along a side are merged.
+        int[] group = new int[n];
+        for (int i = 0; i < n; i++) {
+            group[i] = i;
+        }
+        for (int i = 0; i < n; i++) {
+            Rect r = windows[i];
+            for (int y = r.y; y < r.y + r.h; y++) {
+                merge(group, i, owner.get(key(r.x + r.w, y)));
+            }
+            for (int x = r.x; x < r.x + r.w; x++) {
+                merge(group, i, owner.get(key(x, r.y + r.h)));
+            }
+        }
+        // The windows in reading order (top to bottom, then left to right), so boxes and their first windows are stable.
+        Integer[] order = new Integer[n];
+        for (int i = 0; i < n; i++) {
+            order[i] = i;
+        }
+        java.util.Arrays.sort(order, (a, b) -> windows[a].y != windows[b].y ? Integer.compare(windows[a].y, windows[b].y)
+                : windows[a].x != windows[b].x ? Integer.compare(windows[a].x, windows[b].x) : Integer.compare(a, b));
+        int[] boxOf = new int[n];
+        java.util.Map<Integer, Integer> numbers = new java.util.HashMap<>();
+        for (int i : order) {
+            int root = rootOf(group, i);
+            Integer number = numbers.get(root);
+            if (number == null) {
+                number = numbers.size();
+                numbers.put(root, number);
+            }
+            boxOf[i] = number;
+        }
+        int boxes = numbers.size();
+        int[] x0 = new int[boxes];
+        int[] y0 = new int[boxes];
+        int[] x1 = new int[boxes];
+        int[] y1 = new int[boxes];
+        int[] unit = new int[boxes];
+        java.util.Arrays.fill(x0, Integer.MAX_VALUE);
+        java.util.Arrays.fill(y0, Integer.MAX_VALUE);
+        java.util.Arrays.fill(x1, Integer.MIN_VALUE);
+        java.util.Arrays.fill(y1, Integer.MIN_VALUE);
+        java.util.List<java.util.TreeSet<Integer>> tops = new java.util.ArrayList<>();
+        java.util.List<java.util.TreeSet<Integer>> lefts = new java.util.ArrayList<>();
+        for (int b = 0; b < boxes; b++) {
+            tops.add(new java.util.TreeSet<>());
+            lefts.add(new java.util.TreeSet<>());
+        }
+        for (int i : order) {
+            Rect r = windows[i];
+            int b = boxOf[i];
+            if (unit[b] == 0) {
+                unit[b] = Math.max(1, r.w);
+            }
+            x0[b] = Math.min(x0[b], r.x);
+            y0[b] = Math.min(y0[b], r.y);
+            x1[b] = Math.max(x1[b], r.x + r.w);
+            y1[b] = Math.max(y1[b], r.y + r.h);
+            tops.get(b).add(r.y);
+            lefts.get(b).add(r.x);
+        }
+        // Split tiles: down each column the half-shaped windows pair off, upper then lower.
+        int[] role = new int[n];
+        boolean[] open = new boolean[n]; // an upper alarm still waiting for the window under it
+        for (int i : order) {
+            Rect r = windows[i];
+            if (!halfShaped(r.w, r.h)) {
+                continue;
+            }
+            Integer above = owner.get(key(r.x, r.y - 1));
+            if (above != null && open[above] && windows[above].x == r.x && windows[above].w == r.w && windows[above].h == r.h
+                    && windows[above].y + windows[above].h == r.y) {
+                role[above] = UPPER;
+                role[i] = LOWER;
+                open[above] = false;
+            } else {
+                open[i] = true;
+            }
+        }
+        // The nameplate and the latch: the window on the box's centre line, else the nearest to it.
+        int[] nameAt = new int[boxes];
+        int[] latchAt = new int[boxes];
+        long[] nameBest = new long[boxes];
+        long[] latchBest = new long[boxes];
+        java.util.Arrays.fill(nameAt, -1);
+        java.util.Arrays.fill(latchAt, -1);
+        for (int i : order) {
+            Rect r = windows[i];
+            int b = boxOf[i];
+            if (r.y + r.h == y1[b]) {
+                long off = distance2(r.x, r.x + r.w, (long) x0[b] + x1[b]);
+                if (nameAt[b] < 0 || off < nameBest[b]) {
+                    nameAt[b] = i;
+                    nameBest[b] = off;
+                }
+            }
+            if (r.x + r.w == x1[b]) {
+                long off = distance2(r.y, r.y + r.h, (long) y0[b] + y1[b]);
+                if (latchAt[b] < 0 || off < latchBest[b]) {
+                    latchAt[b] = i;
+                    latchBest[b] = off;
+                }
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            Rect r = windows[i];
+            int b = boxOf[i];
+            boolean name = nameAt[b] == i;
+            boolean latch = latchAt[b] == i;
+            // Centred on the box where the box's bottom row (right column) runs under the whole nameplate (beside the
+            // whole latch) there; else, as for the nearest window of an L, centred on the window that draws it.
+            int nameX2 = r.w;
+            if (name && nameBest[b] == 0) {
+                double centre = (x0[b] + x1[b]) / 2.0;
+                double half = NAMEPLATE_W * unit[b] / 2.0;
+                if (boxCovers(owner, boxOf, b, (int) Math.floor(centre - half), (int) Math.ceil(centre + half) - 1, y1[b] - 1, true)) {
+                    nameX2 = x0[b] + x1[b] - 2 * r.x;
+                }
+            }
+            int latchY2 = r.h;
+            if (latch && latchBest[b] == 0) {
+                double centre = (y0[b] + y1[b]) / 2.0;
+                double half = LATCH_R * unit[b];
+                if (boxCovers(owner, boxOf, b, (int) Math.floor(centre - half), (int) Math.ceil(centre + half) - 1, x1[b] - 1, false)) {
+                    latchY2 = y0[b] + y1[b] - 2 * r.y;
+                }
+            }
+            out[i] = new Tile(b, tops.get(b).headSet(r.y).size(), lefts.get(b).headSet(r.x).size(), role[i], unit[b],
+                    name, nameX2, latch, latchY2);
+        }
+        return out;
+    }
+
+    /**
+     * Whether windows of box {@code box} hold every cell from {@code from} to {@code to} along the row {@code line}
+     * ({@code alongRow}) or along the column {@code line}.
+     */
+    private static boolean boxCovers(java.util.Map<Long, Integer> owner, int[] boxOf, int box, int from, int to, int line,
+                                     boolean alongRow) {
+        for (int at = from; at <= to; at++) {
+            Integer window = owner.get(alongRow ? key(at, line) : key(line, at));
+            if (window == null || boxOf[window] != box) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** 0 when twice the centre {@code c2} lies within {@code from .. to} (ends included), else how far outside it is (doubled). */
+    private static long distance2(int from, int to, long c2) {
+        long lo = 2L * from;
+        long hi = 2L * to;
+        return c2 < lo ? lo - c2 : c2 > hi ? c2 - hi : 0L;
+    }
+
+    private static int rootOf(int[] group, int i) {
+        while (group[i] != i) {
+            group[i] = group[group[i]];
+            i = group[i];
+        }
+        return i;
+    }
+
+    private static void merge(int[] group, int a, Integer b) {
+        if (b != null) {
+            int ra = rootOf(group, a);
+            int rb = rootOf(group, b);
+            if (ra != rb) {
+                group[Math.max(ra, rb)] = Math.min(ra, rb);
+            }
+        }
+    }
+
     private static long key(int x, int y) {
         return ((long) x << 32) | (y & 0xFFFFFFFFL);
     }
