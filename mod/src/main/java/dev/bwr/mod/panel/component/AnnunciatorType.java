@@ -30,6 +30,7 @@ public final class AnnunciatorType extends ComponentType {
             ConfigField.text("Line3", "component.bwr.field.line3", AnnunciatorData.MAX_TEXT),
             ConfigField.text("Line4", "component.bwr.field.line4", AnnunciatorData.MAX_TEXT),
             ConfigField.color("Color", "component.bwr.field.tile_color"),
+            ConfigField.choice(PanelStyles.KEY_STYLE, "component.bwr.field.style", AnnunciatorData.STYLES),
             ConfigField.choice("Condition", "component.bwr.field.condition", AnnunciatorData.CONDITIONS),
             ConfigField.decimal("Setpoint", "component.bwr.field.setpoint", -AnnunciatorData.LIMIT, AnnunciatorData.LIMIT),
             ConfigField.integer("AnnGroup", "component.bwr.field.ann_group", AnnunciatorData.MIN_GROUP, AnnunciatorData.MAX_GROUP),

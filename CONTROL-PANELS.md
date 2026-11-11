@@ -227,6 +227,25 @@ pushbutton with that role does (`AnnunciatorGroups`, once per press, for the mod
 more. SILENCE has no horn to silence, so it is an output only. TEST lights every window of the module's group while it
 is held (a lamp test the client draws from the synced output); it changes no alarm state and sends nothing to the plant.
 
+**Lamp box style (models).** The annunciator window and the control module each have a **Style** in the wrench screen:
+*Classic (simple)*, the procedural look described above and the default, or *Lamp box (model)*, drawn from the models of
+`art/models/panel/annunciator` (`ann_window`, `ann_control`; see its README for what is and is not sourced: the make of
+Columbia's annunciators could not be established, so the lamp box is generic). The style is saved (key `Style`) only when
+it is not classic, so every saved window and module, and every new one, is classic until a player changes it; a missing
+model file draws classic too. Nothing else changes with the style:
+* **Window.** The model is not fitted with one scale like other models, because windows must tile a box at every size and
+  on every slope: `AnnunciatorLampBox` cuts it in nine at the lens's outline and lays the pieces on the rectangles the
+  procedural window uses (`AnnunciatorBox.insets`). The lens fills the tile, a run of the trim frame is drawn only on a side
+  that is not joined, a corner only where both sides are open, and the lens front is at the procedural tile's elevation.
+  So the joined-box rules, the sizes, the lit tile, flash, lamp test, the no-signal flag and the four-line legend are the
+  procedural window's own code, drawn over the model's lens. A window inside a box is 5 quads, as the procedural tile.
+  Classic and lamp box windows join each other into one box (the frame colours are the same).
+* **Control module.** The station model (four 30.5 mm pushbuttons on a plate) is four buttons wide like the module, so a
+  click still picks the button in its quarter; a cap slides in and glows while held, and the game prints the same four
+  legends under the caps. Outputs and what ACK, RESET, SILENCE and TEST do are untouched.
+* **Not done.** New windows do not start in the lamp box style, and the style is not in `PanelStyles.TABLE` (see the
+  README). The header strip and canopy are unchanged: no reference for Columbia's canopy was reachable.
+
 **Distance fade of text.** Small printed text (annunciator legends, gauge numbers, captions) turns to speckle from across
 a room. The panel renderer works out, once per component per frame, how tall a glyph is on the screen (`TextFade`: the
 distance and the projection of the level pass); below 4.5 pixels of cap height the glyphs fade out, and by 2 pixels they

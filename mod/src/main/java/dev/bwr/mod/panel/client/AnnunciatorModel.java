@@ -8,6 +8,7 @@ import dev.bwr.mod.panel.model.AnnunciatorLayout;
 import dev.bwr.mod.panel.model.BakedPanelModel;
 import dev.bwr.mod.panel.model.GaugeScale;
 import dev.bwr.mod.panel.model.Legends;
+import dev.bwr.mod.panel.model.PanelModels;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,10 @@ import java.util.function.ToIntFunction;
  * of its group lights it too. Lit, the tile is full-bright with lettering in a dark tone of the same colour (light
  * lettering on a red one). The legend is up to four lines, each centred ({@link AnnunciatorLayout}); no signal puts a
  * grey flag in the corner. The text fit is computed once per revision and neighbour change.
+ *
+ * <p>A window whose Style is the lamp box takes its frame and unlit lens from the window model instead
+ * ({@link AnnunciatorLampBox}); everything that changes with state (the lit tile, the flag, the legend) is drawn as for
+ * the procedural window, on the same rectangles.
  */
 final class AnnunciatorModel implements ComponentModel {
     // Elevations: see AnnunciatorBox. The legend sits a hair above the lit face, not a fixed lift above the base.
@@ -62,22 +67,27 @@ final class AnnunciatorModel implements ComponentModel {
         float frame = AnnunciatorBox.frame(w, h);
         float lip = Math.max(0.03f, 0.3f * frame);
         sink.box(0, 0, w, h, 0, BASE_Z, BOX_DARK, false);
-        // The bezel lip runs along each side that is not joined to a neighbour.
-        if ((edges & AnnunciatorBox.LEFT) == 0) {
-            sink.box(0, 0, lip, h, BASE_Z, LIP_Z, BOX_LIP, false);
+        // The lamp box look: the trim frame and the lens of the window model, laid on the same rectangles as the
+        // procedural ones below. Classic, a missing model file or one that is not a window draws the procedural window.
+        BakedPanelModel lampBox = AnnunciatorData.STYLE_LAMPBOX.equals(data.style) ? PanelModels.get(AnnunciatorData.WINDOW_MODEL) : null;
+        if (lampBox == null || !AnnunciatorLampBox.emit(sink, lampBox, edges, w, h, in, AnnunciatorLayout.offBody(data.color))) {
+            // The bezel lip runs along each side that is not joined to a neighbour.
+            if ((edges & AnnunciatorBox.LEFT) == 0) {
+                sink.box(0, 0, lip, h, BASE_Z, LIP_Z, BOX_LIP, false);
+            }
+            if ((edges & AnnunciatorBox.RIGHT) == 0) {
+                sink.box(w - lip, 0, lip, h, BASE_Z, LIP_Z, BOX_LIP, false);
+            }
+            if ((edges & AnnunciatorBox.TOP) == 0) {
+                sink.box(0, 0, w, lip, BASE_Z, LIP_Z, BOX_LIP, false);
+            }
+            if ((edges & AnnunciatorBox.BOTTOM) == 0) {
+                sink.box(0, h - lip, w, lip, BASE_Z, LIP_Z, BOX_LIP, false);
+            }
+            float tileW = w - in[0] - in[2];
+            float tileH = h - in[1] - in[3];
+            sink.box(in[0], in[1], tileW, tileH, BASE_Z, TILE_Z, AnnunciatorLayout.offBody(data.color), false);
         }
-        if ((edges & AnnunciatorBox.RIGHT) == 0) {
-            sink.box(w - lip, 0, lip, h, BASE_Z, LIP_Z, BOX_LIP, false);
-        }
-        if ((edges & AnnunciatorBox.TOP) == 0) {
-            sink.box(0, 0, w, lip, BASE_Z, LIP_Z, BOX_LIP, false);
-        }
-        if ((edges & AnnunciatorBox.BOTTOM) == 0) {
-            sink.box(0, h - lip, w, lip, BASE_Z, LIP_Z, BOX_LIP, false);
-        }
-        float tileW = w - in[0] - in[2];
-        float tileH = h - in[1] - in[3];
-        sink.box(in[0], in[1], tileW, tileH, BASE_Z, TILE_Z, AnnunciatorLayout.offBody(data.color), false);
         // An inside corner of the box: the frame of the neighbours turns the corner here, so it takes a piece of the tile.
         notch(sink, edges, AnnunciatorBox.NOTCH_TOP_LEFT, 0, 0, frame, lip, 1, 1);
         notch(sink, edges, AnnunciatorBox.NOTCH_TOP_RIGHT, w - frame, 0, frame, lip, -1, 1);

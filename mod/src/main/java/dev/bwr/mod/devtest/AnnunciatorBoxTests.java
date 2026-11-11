@@ -18,8 +18,11 @@ import dev.bwr.mod.panel.component.ConfigSchema;
 import dev.bwr.mod.panel.component.Footprint;
 import dev.bwr.mod.panel.component.OperateAction;
 import dev.bwr.mod.panel.component.PanelComponent;
+import dev.bwr.mod.panel.component.PanelStyles;
 import dev.bwr.mod.panel.model.AnnunciatorBox;
 import dev.bwr.mod.panel.model.AnnunciatorLayout;
+import dev.bwr.mod.panel.model.BakedPanelModel;
+import dev.bwr.mod.panel.model.PanelModelParser;
 import dev.bwr.mod.panel.model.TextFade;
 import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.registry.BwrItems;
@@ -474,6 +477,78 @@ public final class AnnunciatorBoxTests {
             loaded.load(new CompoundTag());
             helper.assertTrue(loaded.group == 1, "an old tag with nothing loads as group 1");
         });
+    }
+
+    // ---- the lamp box style (the window and control station models)
+
+    @GameTest(template = "empty")
+    public static void lampBoxStyleIsSavedOnlyWhenChosenAndItsModelsLoad(GameTestHelper helper) throws java.io.IOException {
+        AnnunciatorData window = new AnnunciatorData();
+        helper.assertTrue(window.style.equals(PanelStyles.CLASSIC) && !window.toTag().contains("Style"),
+                "a new window is classic and saves no style: " + window.toTag());
+        CompoundTag edit = new CompoundTag();
+        edit.putString("Style", AnnunciatorData.STYLE_LAMPBOX);
+        window.load(ConfigSchema.merge(ComponentTypes.ANNUNCIATOR.configSchema(), window.toTag(), edit));
+        helper.assertTrue(window.style.equals(AnnunciatorData.STYLE_LAMPBOX) && window.toTag().getString("Style").equals("lampbox"),
+                "the wrench sets the lamp box style and it is saved: " + window.toTag());
+        AnnunciatorData reloaded = new AnnunciatorData();
+        reloaded.load(window.toTag());
+        helper.assertTrue(reloaded.style.equals(AnnunciatorData.STYLE_LAMPBOX) && reloaded.toTag().equals(window.toTag()), "and it round trips");
+        CompoundTag odd = window.toTag();
+        odd.putString("Style", "no_such_style");
+        AnnunciatorData unknown = new AnnunciatorData();
+        unknown.load(odd);
+        helper.assertTrue(unknown.style.equals(PanelStyles.CLASSIC), "an unknown style loads as classic");
+        CompoundTag back = new CompoundTag();
+        back.putString("Style", PanelStyles.CLASSIC);
+        window.load(ConfigSchema.merge(ComponentTypes.ANNUNCIATOR.configSchema(), window.toTag(), back));
+        helper.assertTrue(window.style.equals(PanelStyles.CLASSIC) && !window.toTag().contains("Style"), "classic again saves no style");
+
+        AnnunciatorControlData module = new AnnunciatorControlData();
+        module.load(ConfigSchema.merge(ComponentTypes.ANNUNCIATOR_CONTROL.configSchema(), module.toTag(), edit));
+        helper.assertTrue(module.style.equals(AnnunciatorData.STYLE_LAMPBOX) && module.toTag().getString("Style").equals("lampbox")
+                && !module.toTag().contains("AnnGroup"), "the control module takes the style too: " + module.toTag());
+        AnnunciatorControlData moduleAgain = new AnnunciatorControlData();
+        moduleAgain.load(module.toTag());
+        helper.assertTrue(moduleAgain.style.equals(AnnunciatorData.STYLE_LAMPBOX) && moduleAgain.group == 1, "and reloads with it");
+
+        // The two model files are accepted by the loader and have the parts and anchors the renderer looks for.
+        BakedPanelModel windowModel = shipped(helper, AnnunciatorData.WINDOW_MODEL);
+        for (String part : List.of("lens", "frame_top", "frame_bottom", "frame_left", "frame_right",
+                "corner_tl", "corner_tr", "corner_bl", "corner_br")) {
+            helper.assertTrue(windowModel.part(part) != null && windowModel.part(part).faceCount > 0, "the window model has " + part);
+        }
+        BakedPanelModel.Part lens = windowModel.part("lens");
+        helper.assertTrue(lens.role == BakedPanelModel.Role.LAMP && lens.faceCount <= 5,
+                "a window inside a box draws its lens only, no more quads than the procedural tile: " + lens.faceCount);
+        helper.assertTrue(windowModel.faceTotal() <= 64, "a window is placed by the hundred: " + windowModel.faceTotal() + " faces");
+        BakedPanelModel station = shipped(helper, AnnunciatorControlData.STATION_MODEL);
+        helper.assertTrue(Math.abs(station.footprintW / station.footprintH - 4.0f) < 1.0e-3f,
+                "the station is four buttons wide, like the module's sizes: " + station);
+        String[] buttons = {"ack", "reset", "silence", "test"};
+        for (int i = 0; i < buttons.length; i++) {
+            BakedPanelModel.Part cap = station.part("cap_" + buttons[i]);
+            BakedPanelModel.Label label = station.label(buttons[i]);
+            helper.assertTrue(cap != null && cap.hasTravel && cap.travel > 0.0f && label != null, "the station has the " + buttons[i] + " cap and legend");
+            // Each cap and its legend lie in their own quarter of the width: the quarter a click picks.
+            float quarter = station.footprintW / buttons.length;
+            for (int f = 0; f < cap.faceCount; f++) {
+                for (int c = 0; c < 4; c++) {
+                    helper.assertTrue(cap.corner(f, c, 0) > quarter * i && cap.corner(f, c, 0) < quarter * (i + 1),
+                            buttons[i] + " cap leaves its quarter");
+                }
+            }
+            helper.assertTrue(label.x > quarter * i && label.x < quarter * (i + 1), buttons[i] + " legend is under its cap");
+        }
+        helper.assertTrue(station.faceTotal() <= 800, "the station is within the face budget: " + station.faceTotal());
+        helper.succeed();
+    }
+
+    private static BakedPanelModel shipped(GameTestHelper helper, String id) throws java.io.IOException {
+        try (java.io.InputStream in = AnnunciatorBoxTests.class.getResourceAsStream("/assets/bwr/models/panel/" + id + ".json")) {
+            helper.assertTrue(in != null, "the model " + id + " ships in the mod");
+            return PanelModelParser.parse(id, new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+        }
     }
 
     // ---- the distance fade (pure)
