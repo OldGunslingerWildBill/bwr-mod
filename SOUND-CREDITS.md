@@ -115,8 +115,16 @@ replaced. Do not add unlicensed recordings or samples.
 `annunciator_horn.ogg` (`bwr:annunciator_horn`, `subtitle.bwr.annunciator_horn`) is the one exception among the control-room events
 above: it is not silent and not generated, so it is not in the table, `tools-generate-sound-placeholders.py` neither writes nor checks
 it, and `tools-audit-sounds.py` audits it apart (`OWNER_SUPPLIED`). The file was converted from an audio clip the project owner supplied
-on 2026-11-11 (`Assets_Audio_CGSPanelAlarm.mp3`); its original source and licence are not recorded, and the owner is to confirm them
-before a public release.
+on 2026-11-11 (`Assets_Audio_CGSPanelAlarm.mp3`).
+
+- **Source.** The clip is `Assets/Audio/CGSPanelAlarm.mp3` of OpenLWR (<https://github.com/OpenLWR/OpenLWR>): the supplied file is
+  byte-identical to that repository's file at commit `db56cd6` (2026-04-23; SHA-256 `227bb2e6...a7ec709`). The repository does not say
+  who made the recording.
+- **Licence.** That repository is under the **GNU Affero General Public License, version 3** and states no separate terms for its
+  audio. So this one file is **not** under the project's own licence: it is distributed under AGPL-3.0, whose text ships as
+  `licenses/third-party/AGPL-3.0.txt` (in the JAR: `META-INF/licenses/third-party/AGPL-3.0.txt`). See THIRD-PARTY-NOTICES.md.
+- **Changes made** (2026-11-11): stereo mixed to mono, level raised by about 24 dB, 40 ms crossfade at the two ends so the loop does
+  not click, encoded as Ogg Vorbis at 48 kHz (1.28 s). The unmodified clip is the one in the OpenLWR repository.
 
 ## The two rumble loops (not silent)
 

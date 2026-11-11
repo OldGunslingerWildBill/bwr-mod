@@ -86,7 +86,8 @@ def scan(jar_bytes, origin, problems, counters):
         if any(name.startswith('dev/bwr/') for name in z.namelist()):
             required = ['LICENSE', 'NOTICE', 'THIRD-PARTY-NOTICES.md',
                         'licenses/legacy/core-MIT.txt', 'licenses/legacy/mod-MPL-2.0.txt',
-                        'licenses/legacy/PREVIOUS-LICENSING.txt']
+                        'licenses/legacy/PREVIOUS-LICENSING.txt',
+                        'licenses/third-party/AGPL-3.0.txt']
             for source in required:
                 entry = 'META-INF/' + source
                 if entry not in z.namelist():

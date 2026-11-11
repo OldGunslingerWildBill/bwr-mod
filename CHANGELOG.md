@@ -13,8 +13,9 @@
   - **Horn.** A new alarm sounds `bwr:annunciator_horn` at the panel, one loop per panel group, 16 blocks, on the Blocks volume. ACK stops
     it for the acknowledged windows; the control module's SILENCE stops it for its group and changes nothing else. A silenced,
     unacknowledged alarm stays quiet if its condition clears and returns. The sound is the first recorded audio in the mod: converted
-    from a clip the owner supplied (level raised about 24 dB, 40 ms crossfade so the loop does not click). Its source and licence are
-    still to be confirmed by the owner (SOUND-CREDITS.md); the other placeholders stay silent.
+    from a clip the owner supplied (level raised about 24 dB, 40 ms crossfade so the loop does not click). It is OpenLWR's `Assets/Audio/CGSPanelAlarm.mp3`
+    (byte-identical to that repository's file), so this one file is under AGPL-3.0, not the project licence; the licence text ships in
+    the JAR and the source and changes are in SOUND-CREDITS.md and THIRD-PARTY-NOTICES.md. The other placeholders stay silent.
   - **Linker, component first.** Besides device first: sneak-right-click a component with the Panel Linker, then right-click a plant
     device, and the binding screen opens for that component and device. Sneak-right-click the air forgets either selection. While a
     component is selected its binding is accepted from the device, beyond arm's reach of the panel (link range, dimension and claims
