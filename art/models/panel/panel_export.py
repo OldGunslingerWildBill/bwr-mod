@@ -213,6 +213,13 @@ def preview(path, footprint_w, footprint_h, views=("front", "three_quarter", "si
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in [e.identifier for e in
         bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items] else "BLENDER_EEVEE"
+    # A machine with no GPU or EGL (bpy from PyPI in a container) cannot run EEVEE: set
+    # BWR_PANEL_PREVIEW_ENGINE=CYCLES to render the previews on the CPU instead.
+    if os.environ.get("BWR_PANEL_PREVIEW_ENGINE"):
+        scene.render.engine = os.environ["BWR_PANEL_PREVIEW_ENGINE"]
+        if scene.render.engine == "CYCLES":
+            scene.cycles.device = "CPU"
+            scene.cycles.samples = 24
     scene.render.resolution_x = scene.render.resolution_y = res
     if scene.world is None:
         scene.world = bpy.data.worlds.new("w")

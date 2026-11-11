@@ -32,7 +32,8 @@ public final class AnnunciatorControlType extends PanelInputType {
     /** Retired: 2x1 and 4x2. */
     private static final java.util.Set<Integer> RETIRED = java.util.Set.of(1, 2);
     private static final List<ConfigField> SCHEMA = List.of(
-            ConfigField.integer("AnnGroup", "component.bwr.field.ann_group", AnnunciatorData.MIN_GROUP, AnnunciatorData.MAX_GROUP));
+            ConfigField.integer("AnnGroup", "component.bwr.field.ann_group", AnnunciatorData.MIN_GROUP, AnnunciatorData.MAX_GROUP),
+            ConfigField.choice(PanelStyles.KEY_STYLE, "component.bwr.field.style", AnnunciatorData.STYLES));
     private static final List<PortSpec> OUTPUTS = List.of(PortSpec.of("ack"), PortSpec.of("reset"), PortSpec.of("silence"),
             PortSpec.of("test"));
 

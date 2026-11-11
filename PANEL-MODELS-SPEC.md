@@ -266,6 +266,20 @@ so a display with nothing moving costs no model code at all. Beyond the 24 block
 skipped as for every component and a lamp is its coloured quad. Measurements and the numbers before the change are in
 `PROJECT-LOG.md`.
 
+## Annunciator family (as built)
+
+Two models (`art/models/panel/annunciator`, read its README: only the window tile size has a source, the rest is a generic
+lamp box). Neither goes through the style table or `BakedComponentModel`:
+
+| Model id | Used by | How |
+| --- | --- | --- |
+| `ann_window` | `annunciator`, Style `lampbox` | `AnnunciatorModel` records the model's frame and unlit lens through `AnnunciatorLampBox`, which stretches the model in nine pieces onto the window's cells (a window fills its cells and joins its neighbours, so it cannot keep one scale); the lit tile, flag and legend are the procedural window's |
+| `ann_control` | `annunciator_control`, Style `lampbox` | `AnnunciatorControlModel` fits it with the ordinary `Placement`, records `body` and `bezels`, and draws the four caps (`cap_ack`, `cap_reset`, `cap_silence`, `cap_test`) each frame: slid in and glowing while their output is 1 |
+
+The Style of these two types is their own field (`AnnunciatorData.STYLES`: `classic`, `lampbox`), saved only when it is not
+classic and classic for a new component, unlike the table's styles: a control module at its defaults must save nothing, and
+`classic` must stay what a save without the key means.
+
 ## Sources (local copies for reading only)
 Scratch folder: `C:\Users\14238\AppData\Local\Temp\claude\C--Users-14238-Downloads-bwr-mod-handoff\418cd604-018d-4e92-a0cc-37a0e339a9c4\scratchpad\cr-refs\`
 - GE GEH-90BH: `ge_geh90bh.pdf`; rendered pages `geh_p2.png`, `geh_p4.png`.

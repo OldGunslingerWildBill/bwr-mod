@@ -19,6 +19,12 @@ public final class AnnunciatorData extends ComponentData {
     public static final List<String> RESET_MODES = List.of(RESET_AUTO, RESET_MANUAL);
     public static final List<String> CONDITIONS = List.of(AnnunciatorLogic.ABOVE, AnnunciatorLogic.BELOW, AnnunciatorLogic.EQUALS);
     public static final int DEFAULT_COLOR = 0xFFB000;
+    /** The look drawn from the lamp box models of {@code art/models/panel/annunciator} (a window, and the control station). */
+    public static final String STYLE_LAMPBOX = "lampbox";
+    /** The looks an annunciator window and its control module offer: the procedural one first, which is the default. */
+    public static final List<String> STYLES = List.of(PanelStyles.CLASSIC, STYLE_LAMPBOX);
+    /** Id of the window model ({@code assets/bwr/models/panel/ann_window.json}). */
+    public static final String WINDOW_MODEL = "ann_window";
     public static final double LIMIT = 1.0e9;
 
     public String line1 = "";
@@ -27,6 +33,11 @@ public final class AnnunciatorData extends ComponentData {
     public String line3 = "";
     public String line4 = "";
     public int color = DEFAULT_COLOR;
+    /**
+     * Look: {@link PanelStyles#CLASSIC} (the procedural window) or {@link #STYLE_LAMPBOX}. Saved only when it is not
+     * classic, so a window saved before the model existed, and one nobody restyled, saves exactly what it always did.
+     */
+    public String style = PanelStyles.CLASSIC;
     public String condition = AnnunciatorLogic.ABOVE;
     public double setpoint = 0.5;
     public int group = MIN_GROUP;
@@ -54,6 +65,9 @@ public final class AnnunciatorData extends ComponentData {
             tag.putString("Line4", line4);
         }
         tag.putInt("Color", color);
+        if (!PanelStyles.CLASSIC.equals(style)) {
+            tag.putString(PanelStyles.KEY_STYLE, style);
+        }
         tag.putString("Condition", condition);
         tag.putDouble("Setpoint", setpoint);
         tag.putInt("AnnGroup", group);
@@ -69,6 +83,8 @@ public final class AnnunciatorData extends ComponentData {
         line3 = ConfigSchema.cleanText(tag.getString("Line3"), MAX_TEXT);
         line4 = ConfigSchema.cleanText(tag.getString("Line4"), MAX_TEXT);
         color = tag.contains("Color", Tag.TAG_ANY_NUMERIC) ? tag.getInt("Color") & 0xFFFFFF : DEFAULT_COLOR;
+        String savedStyle = tag.getString(PanelStyles.KEY_STYLE);
+        style = STYLES.contains(savedStyle) ? savedStyle : PanelStyles.CLASSIC;
         String savedCondition = tag.getString("Condition");
         condition = CONDITIONS.contains(savedCondition) ? savedCondition : AnnunciatorLogic.ABOVE;
         double savedSetpoint = tag.getDouble("Setpoint");

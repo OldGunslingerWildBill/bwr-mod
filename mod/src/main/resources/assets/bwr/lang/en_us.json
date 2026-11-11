@@ -654,6 +654,7 @@
   "component.bwr.option.Style.ge": "General Power",
   "component.bwr.option.Style.westinghouse": "Westingapartment",
   "component.bwr.option.Style.oiltight": "Oiltight 30.5 mm",
+  "component.bwr.option.Style.lampbox": "Lamp box (model)",
   "component.bwr.option.Variant.pistol": "Pistol grip",
   "component.bwr.option.Variant.pistol_hd": "Pistol grip (heavy duty)",
   "component.bwr.option.Variant.oval": "Oval",
