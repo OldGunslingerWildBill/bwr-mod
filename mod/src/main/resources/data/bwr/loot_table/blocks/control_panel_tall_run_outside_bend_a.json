@@ -1,0 +1,123 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_tall_run_outside_bend_a",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_tall_run_outside_bend_a",
+                  "properties": {
+                    "finish": "cream"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "cream"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_tall_run_outside_bend_a",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_tall_run_outside_bend_a",
+                  "properties": {
+                    "finish": "tan"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "tan"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_tall_run_outside_bend_a",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_tall_run_outside_bend_a",
+                  "properties": {
+                    "finish": "grey"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "grey"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_tall_run_outside_bend_a",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "bwr:control_panel_tall_run_outside_bend_a",
+                  "properties": {
+                    "finish": "light_blue"
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_components",
+                  "components": {
+                    "minecraft:block_state": {
+                      "finish": "light_blue"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "bwr:control_panel_tall_run_outside_bend_a"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "bwr:control_panel_tall_run_outside_bend_a",
+          "properties": {
+            "part": "0"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

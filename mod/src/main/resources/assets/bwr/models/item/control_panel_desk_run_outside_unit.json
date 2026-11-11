@@ -1,0 +1,60 @@
+{
+  "parent": "bwr:block/control_panel/run_desk_outside_unit_item",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.24,
+        0.24,
+        0.24
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.158,
+        0.158,
+        0.158
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.206,
+        0.206,
+        0.206
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ],
+      "scale": [
+        0.125,
+        0.125,
+        0.125
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.158,
+        0.158,
+        0.158
+      ]
+    }
+  }
+}

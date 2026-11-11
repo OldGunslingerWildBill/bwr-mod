@@ -159,6 +159,7 @@ public final class PanelGeometry {
         }
     }
 
+    private static final Map<String, Frame> CORNER_FRAMES = new java.util.concurrent.ConcurrentHashMap<>();
     private static final Map<PanelType, Map<Direction, Frame>> FRAMES = new EnumMap<>(PanelType.class);
     private static final Map<PanelType, Map<Direction, VoxelShape>> SHAPES = new EnumMap<>(PanelType.class);
 
@@ -168,7 +169,8 @@ public final class PanelGeometry {
             Map<Direction, VoxelShape> shapes = new EnumMap<>(Direction.class);
             for (Direction facing : Direction.Plane.HORIZONTAL) {
                 frames.put(facing, buildFrame(type, facing));
-                shapes.put(facing, buildShape(type, facing));
+                // the desk corners' shapes are built when first asked for (DeskCornerGeometry), they are not small
+                shapes.put(facing, DeskCornerGeometry.isCorner(type) || type.isRunFace() ? Shapes.empty() : buildShape(type, facing));
             }
             FRAMES.put(type, frames);
             SHAPES.put(type, shapes);
@@ -179,7 +181,38 @@ public final class PanelGeometry {
         return FRAMES.get(type).get(facing);
     }
 
+    /** The frame of the face a panel block entity holds: a desk corner's depends on its length and which face it is. */
+    public static Frame frame(PanelBlockEntity be) {
+        net.minecraft.world.level.block.state.BlockState state = be.getBlockState();
+        if (state.getBlock() instanceof DeskCornerBlock corner) {
+            return cornerFrame(corner.inside(), corner.length(), corner.faceOf(state), state.getValue(PanelBlock.FACING));
+        }
+        if (state.getBlock() instanceof AngledRunBlock run) {
+            return run.faceFrame(state);
+        }
+        return frame(be.panelType(), be.facing());
+    }
+
+    /** A desk corner's face {@code face} (see {@link DeskCornerGeometry}) in the local frame of its core block. */
+    public static Frame cornerFrame(boolean inside, int length, int face, Direction facing) {
+        return CORNER_FRAMES.computeIfAbsent(inside + ":" + length + ":" + face + ":" + facing, key -> {
+            double[] o = DeskCornerGeometry.faceOrigin(inside, length, face);
+            double[] u = DeskCornerGeometry.columnDirection(inside);
+            double[] v = DeskCornerGeometry.rowDirection(inside);
+            // a level desk top turned 45 degrees: columns and rows along the diagonals of the plan, normal straight up
+            return localFrame(facing, new double[] {o[0], DESK_TOP, o[1]},
+                    new double[] {u[0] / GRID, 0.0, u[1] / GRID}, new double[] {v[0] / GRID, 0.0, v[1] / GRID},
+                    new double[] {0.0, 1.0, 0.0});
+        });
+    }
+
     public static VoxelShape shape(PanelType type, Direction facing) {
+        if (DeskCornerGeometry.isCorner(type)) {
+            // the block holding the face; the other blocks of a corner have their own (DeskCornerGeometry.shape)
+            boolean inside = type == PanelType.DESK_CORNER_INSIDE;
+            DeskCornerGeometry.Part core = DeskCornerGeometry.core(inside, 1, 0);
+            return DeskCornerGeometry.shape(inside, 1, core.left(), core.deep(), facing);
+        }
         return SHAPES.get(type).get(facing);
     }
 
@@ -237,6 +270,17 @@ public final class PanelGeometry {
                 return localFrame(facing, new double[] {r * start, 1.0, 1.0 - r * start},
                         new double[] {r / GRID, 0.0, -r / GRID}, new double[] {0.5 / GRID, -1.0 / GRID, 0.5 / GRID},
                         new double[] {s3, s3, s3});
+            }
+            case DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE -> {
+                // A level desk top turned 45 degrees: the columns and rows run along the diagonals of the plan, the normal
+                // is straight up. The origin is in the local frame of the block that holds the face (it may be outside it).
+                return cornerFrame(type == PanelType.DESK_CORNER_INSIDE, 1, 0, facing);
+            }
+            case DESK_RUN, RUN_BENCH, RUN_VERTICAL, RUN_HEADER -> {
+                // The faces of the angled run units depend on the piece (AngledRunBlock.faceFrame, PanelGeometry.frame(be)); this
+                // is only a placeholder with the cardinal frame of the same style.
+                return buildAxisFrame(type == PanelType.DESK_RUN ? PanelType.DESK : type == PanelType.RUN_BENCH
+                        ? PanelType.BENCHBOARD : type == PanelType.RUN_VERTICAL ? PanelType.VERTICAL : PanelType.HEADER_TILT, facing);
             }
             default -> {
                 return buildAxisFrame(type, facing);
@@ -392,7 +436,7 @@ public final class PanelGeometry {
         }
         return switch (type) {
             case CHAMFER_VERTICAL -> cx < CHAMFER_VERTICAL_COLUMNS;
-            case DESK -> cy < DESK_ROWS;
+            case DESK, DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE, DESK_RUN -> cy < DESK_ROWS;
             case CHAMFER_BENCH -> {
                 double half = CHAMFER_BENCH_HALF_TOP_CELLS * (1.0 - (cy + 1) / (double) GRID);
                 yield Math.max(Math.abs(cx - GRID / 2.0), Math.abs(cx + 1 - GRID / 2.0)) <= half + 1.0e-9;
@@ -403,7 +447,7 @@ public final class PanelGeometry {
 
     /** How many rows of the 16-cell grid of a block of this style are mounting surface: all 16, but 10 on a desk top. */
     public static int rows(PanelType type) {
-        return type == PanelType.DESK ? DESK_ROWS : GRID;
+        return type == PanelType.DESK || DeskCornerGeometry.isCorner(type) || type == PanelType.DESK_RUN ? DESK_ROWS : GRID;
     }
 
     /** A box given in the local frame, rotated to world for {@code facing}. */

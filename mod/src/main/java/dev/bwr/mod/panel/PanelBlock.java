@@ -79,6 +79,10 @@ public class PanelBlock extends BaseEntityBlock {
             case DUPLEX_BOARD, DUPLEX_BENCH, DUPLEX_HEADER -> DuplexPanelBlock.CODEC;
             case HEADER_TILT, CHAMFER_VERTICAL, CHAMFER_BENCH ->
                     throw new IllegalStateException("angled trim blocks answer with their own codec");
+            case DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE ->
+                    throw new IllegalStateException("desk corners answer with their own codec");
+            case DESK_RUN, RUN_BENCH, RUN_VERTICAL, RUN_HEADER ->
+                    throw new IllegalStateException("angled run pieces answer with their own codec");
         };
     }
 
@@ -144,7 +148,7 @@ public class PanelBlock extends BaseEntityBlock {
         if (tape) {
             // The vanilla path of the mimic tape; the client input hook normally sends the exact cursor in a packet.
             double[] exact = new double[2];
-            PanelGeometry.Frame frame = PanelGeometry.frame(panelType(state), state.getValue(FACING));
+            PanelGeometry.Frame frame = PanelGeometry.frame(be);
             Vec3 eye = sender.getEyePosition();
             Vec3 look = sender.getLookAngle();
             if (PanelGeometry.rayToCell(frame, pos.getX(), pos.getY(), pos.getZ(), eye.x, eye.y, eye.z, look.x, look.y,
@@ -199,7 +203,7 @@ public class PanelBlock extends BaseEntityBlock {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         BlockPos pos = be.getBlockPos();
-        PanelGeometry.Frame frame = PanelGeometry.frame(be.panelType(), be.facing());
+        PanelGeometry.Frame frame = PanelGeometry.frame(be);
         return PanelGeometry.rayToCell(frame, pos.getX(), pos.getY(), pos.getZ(), eye.x, eye.y, eye.z, look.x, look.y,
                 look.z, exact) ? dev.bwr.mod.panel.mimic.MimicOps.pick(be, exact[0], exact[1]) : null;
     }

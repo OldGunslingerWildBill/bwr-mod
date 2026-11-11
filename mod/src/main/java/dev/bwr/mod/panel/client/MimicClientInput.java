@@ -44,13 +44,16 @@ public final class MimicClientInput {
     static Aim aim(Minecraft minecraft) {
         if (minecraft.level == null || minecraft.player == null || minecraft.screen != null
                 || !(minecraft.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
-                || !(minecraft.level.getBlockEntity(hit.getBlockPos()) instanceof PanelBlockEntity block)) {
+                || dev.bwr.mod.panel.DeskCornerBlock.faceEntity(minecraft.level, hit.getBlockPos(),
+                        minecraft.player.getEyePosition(1.0f), minecraft.player.getViewVector(1.0f)) == null) {
             return null;
         }
+        PanelBlockEntity block = dev.bwr.mod.panel.DeskCornerBlock.faceEntity(minecraft.level, hit.getBlockPos(),
+                minecraft.player.getEyePosition(1.0f), minecraft.player.getViewVector(1.0f));
         Vec3 eye = minecraft.player.getEyePosition(1.0f);
         Vec3 look = minecraft.player.getViewVector(1.0f);
         BlockPos pos = block.getBlockPos();
-        PanelGeometry.Frame frame = PanelGeometry.frame(block.panelType(), block.facing());
+        PanelGeometry.Frame frame = PanelGeometry.frame(block);
         if (!PanelGeometry.rayToCell(frame, pos.getX(), pos.getY(), pos.getZ(), eye.x, eye.y, eye.z, look.x, look.y,
                 look.z, CELL)) {
             return null;

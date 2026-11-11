@@ -699,6 +699,71 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.DeskPanelBlock> CONTROL_PANEL_DESK_WIDE =
             BLOCKS.register("control_panel_desk_wide",
                     () -> new dev.bwr.mod.panel.DeskPanelBlock(panelBoard()));
+    /** The 45 degree single desk corners, one angled unit long (four blocks, DeskCornerBlock): the console wraps around the operator, or away. Longer runs are the modular pieces below. */
+    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_INSIDE =
+            BLOCKS.register("control_panel_desk_corner_inside",
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true, 1));
+    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_OUTSIDE =
+            BLOCKS.register("control_panel_desk_corner_outside",
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false, 1));
+    /**
+     * The modular 45 degree runs (AngledRunBlock): bend A, the diagonal unit and bend B of the desk and of the tall panel, inside and
+     * outside, named {@code control_panel_<desk|tall>_run_<inside|outside>_<bend_a|unit|bend_b>}. A run is bend A + n units + bend B.
+     */
+    public static final java.util.Map<String, DeferredBlock<dev.bwr.mod.panel.AngledRunBlock>> ANGLED_RUNS = new java.util.LinkedHashMap<>();
+
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_DESK_RUN_INSIDE_BEND_A =
+            BLOCKS.register("control_panel_desk_run_inside_bend_a",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.DESK, true, dev.bwr.mod.panel.AngledRunGeometry.Role.BEND_A));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_DESK_RUN_INSIDE_UNIT =
+            BLOCKS.register("control_panel_desk_run_inside_unit",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.DESK, true, dev.bwr.mod.panel.AngledRunGeometry.Role.UNIT));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_DESK_RUN_INSIDE_BEND_B =
+            BLOCKS.register("control_panel_desk_run_inside_bend_b",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.DESK, true, dev.bwr.mod.panel.AngledRunGeometry.Role.BEND_B));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_A =
+            BLOCKS.register("control_panel_desk_run_outside_bend_a",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.DESK, false, dev.bwr.mod.panel.AngledRunGeometry.Role.BEND_A));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_DESK_RUN_OUTSIDE_UNIT =
+            BLOCKS.register("control_panel_desk_run_outside_unit",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.DESK, false, dev.bwr.mod.panel.AngledRunGeometry.Role.UNIT));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_B =
+            BLOCKS.register("control_panel_desk_run_outside_bend_b",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.DESK, false, dev.bwr.mod.panel.AngledRunGeometry.Role.BEND_B));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_TALL_RUN_INSIDE_BEND_A =
+            BLOCKS.register("control_panel_tall_run_inside_bend_a",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.TALL, true, dev.bwr.mod.panel.AngledRunGeometry.Role.BEND_A));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_TALL_RUN_INSIDE_UNIT =
+            BLOCKS.register("control_panel_tall_run_inside_unit",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.TALL, true, dev.bwr.mod.panel.AngledRunGeometry.Role.UNIT));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_TALL_RUN_INSIDE_BEND_B =
+            BLOCKS.register("control_panel_tall_run_inside_bend_b",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.TALL, true, dev.bwr.mod.panel.AngledRunGeometry.Role.BEND_B));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_A =
+            BLOCKS.register("control_panel_tall_run_outside_bend_a",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.TALL, false, dev.bwr.mod.panel.AngledRunGeometry.Role.BEND_A));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_TALL_RUN_OUTSIDE_UNIT =
+            BLOCKS.register("control_panel_tall_run_outside_unit",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.TALL, false, dev.bwr.mod.panel.AngledRunGeometry.Role.UNIT));
+    public static final DeferredBlock<dev.bwr.mod.panel.AngledRunBlock> CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_B =
+            BLOCKS.register("control_panel_tall_run_outside_bend_b",
+                    () -> new dev.bwr.mod.panel.AngledRunBlock(panelBoard(), dev.bwr.mod.panel.AngledRunGeometry.Family.TALL, false, dev.bwr.mod.panel.AngledRunGeometry.Role.BEND_B));
+
+    static {
+        ANGLED_RUNS.put("control_panel_desk_run_inside_bend_a", CONTROL_PANEL_DESK_RUN_INSIDE_BEND_A);
+        ANGLED_RUNS.put("control_panel_desk_run_inside_unit", CONTROL_PANEL_DESK_RUN_INSIDE_UNIT);
+        ANGLED_RUNS.put("control_panel_desk_run_inside_bend_b", CONTROL_PANEL_DESK_RUN_INSIDE_BEND_B);
+        ANGLED_RUNS.put("control_panel_desk_run_outside_bend_a", CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_A);
+        ANGLED_RUNS.put("control_panel_desk_run_outside_unit", CONTROL_PANEL_DESK_RUN_OUTSIDE_UNIT);
+        ANGLED_RUNS.put("control_panel_desk_run_outside_bend_b", CONTROL_PANEL_DESK_RUN_OUTSIDE_BEND_B);
+        ANGLED_RUNS.put("control_panel_tall_run_inside_bend_a", CONTROL_PANEL_TALL_RUN_INSIDE_BEND_A);
+        ANGLED_RUNS.put("control_panel_tall_run_inside_unit", CONTROL_PANEL_TALL_RUN_INSIDE_UNIT);
+        ANGLED_RUNS.put("control_panel_tall_run_inside_bend_b", CONTROL_PANEL_TALL_RUN_INSIDE_BEND_B);
+        ANGLED_RUNS.put("control_panel_tall_run_outside_bend_a", CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_A);
+        ANGLED_RUNS.put("control_panel_tall_run_outside_unit", CONTROL_PANEL_TALL_RUN_OUTSIDE_UNIT);
+        ANGLED_RUNS.put("control_panel_tall_run_outside_bend_b", CONTROL_PANEL_TALL_RUN_OUTSIDE_BEND_B);
+    }
+
     /** The duplex board: one item places a 1 x 2 x 4 column (bench, board, tilted header); see DuplexPanelBlock. */
     public static final DeferredBlock<dev.bwr.mod.panel.DuplexPanelBlock> CONTROL_PANEL_DUPLEX =
             BLOCKS.register("control_panel_duplex",

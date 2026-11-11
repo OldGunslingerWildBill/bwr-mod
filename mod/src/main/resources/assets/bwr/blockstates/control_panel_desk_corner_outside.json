@@ -1,0 +1,68 @@
+{
+  "variants": {
+    "facing=north,left=0,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_0_0",
+      "y": 0
+    },
+    "facing=east,left=0,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_0_0",
+      "y": 90
+    },
+    "facing=south,left=0,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_0_0",
+      "y": 180
+    },
+    "facing=west,left=0,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_0_0",
+      "y": 270
+    },
+    "facing=north,left=0,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_0_1",
+      "y": 0
+    },
+    "facing=east,left=0,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_0_1",
+      "y": 90
+    },
+    "facing=south,left=0,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_0_1",
+      "y": 180
+    },
+    "facing=west,left=0,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_0_1",
+      "y": 270
+    },
+    "facing=north,left=1,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_1_0",
+      "y": 0
+    },
+    "facing=east,left=1,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_1_0",
+      "y": 90
+    },
+    "facing=south,left=1,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_1_0",
+      "y": 180
+    },
+    "facing=west,left=1,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_1_0",
+      "y": 270
+    },
+    "facing=north,left=1,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_1_1",
+      "y": 0
+    },
+    "facing=east,left=1,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_1_1",
+      "y": 90
+    },
+    "facing=south,left=1,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_1_1",
+      "y": 180
+    },
+    "facing=west,left=1,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_outside_1_1_1",
+      "y": 270
+    }
+  }
+}

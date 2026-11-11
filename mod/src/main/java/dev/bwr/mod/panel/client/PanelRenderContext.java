@@ -115,7 +115,7 @@ public final class PanelRenderContext implements QuadSink {
         this.gameTime = time;
         this.font = font;
         this.fadeFocal = 0.0f;
-        PanelGeometry.Frame f = PanelGeometry.frame(be.panelType(), be.facing());
+        PanelGeometry.Frame f = PanelGeometry.frame(be);
         this.frame = f;
         setNormal(NORMAL_FACE, (float) f.nx, (float) f.ny, (float) f.nz);
         setNormal(NORMAL_LEFT, (float) -f.rightX, (float) -f.rightY, (float) -f.rightZ);

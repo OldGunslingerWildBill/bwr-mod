@@ -38,6 +38,11 @@ import net.minecraft.core.Direction;
  *       half a block forward one block up (facing forward and down, 26.6 degrees from vertical), a single row.</li>
  * </ul>
  *
+ * <p>The 45 degree desk corners ({@link #DESK_CORNER_INSIDE}, {@link #DESK_CORNER_OUTSIDE}, {@link DeskCornerBlock}) carry
+ * a level desk top like {@link #DESK} (16 columns by {@link PanelGeometry#DESK_ROWS} rows) but turned 45 degrees about
+ * the vertical: the columns run along the diagonal ({@link DeskCornerGeometry}). Each is a single group of its own: it
+ * joins nothing, neither the straight runs it continues nor another corner.
+ *
  * <p>The angled trim blocks ({@link dev.bwr.mod.panel.trim.MountableTrimBlock}) mount components too, on faces that
  * are neither level nor square to the block:
  * <ul>
@@ -65,7 +70,13 @@ public enum PanelType {
     DESK("control_panel_desk", "DSK"),
     HEADER_TILT("control_panel_header_strip", "HDR"),
     CHAMFER_VERTICAL("control_panel_corner_vertical_chamfer", "CHV"),
-    CHAMFER_BENCH("control_panel_corner_bench_chamfer", "CHB");
+    CHAMFER_BENCH("control_panel_corner_bench_chamfer", "CHB"),
+    DESK_CORNER_INSIDE("control_panel_desk_corner_inside", "DCI"),
+    DESK_CORNER_OUTSIDE("control_panel_desk_corner_outside", "DCO"),
+    DESK_RUN("control_panel_desk_run_inside_unit", "DRN"),
+    RUN_BENCH("control_panel_tall_run_inside_unit", "RBN"),
+    RUN_VERTICAL("control_panel_tall_run_inside_unit", "RVT"),
+    RUN_HEADER("control_panel_tall_run_inside_unit", "RHD");
 
     private final String registryName;
     private final String shortName;
@@ -86,7 +97,8 @@ public enum PanelType {
     /** Whether blocks of this style can stack into more than one row. */
     public boolean hasRows() {
         return this != CONSOLE && this != DUPLEX_BENCH && this != DUPLEX_HEADER && this != HEADER_TILT
-                && this != CHAMFER_BENCH && this != DESK;
+                && this != CHAMFER_BENCH && this != DESK && this != DESK_CORNER_INSIDE && this != DESK_CORNER_OUTSIDE
+                && !isRunFace();
     }
 
     /**
@@ -94,7 +106,18 @@ public enum PanelType {
      * is a diagonal facet that does not meet the facet of the block beside it.
      */
     public boolean hasColumns() {
-        return this != CHAMFER_VERTICAL && this != CHAMFER_BENCH;
+        return this != CHAMFER_VERTICAL && this != CHAMFER_BENCH && this != DESK_CORNER_INSIDE && this != DESK_CORNER_OUTSIDE
+                && !isRunFace();
+    }
+
+    /**
+     * The faces of the diagonal units of the modular 45 degree runs ({@link AngledRunBlock}): the level desk top
+     * ({@link #DESK_RUN}) and the layers of the tall panel, the bench's 45 degree face ({@link #RUN_BENCH}), the vertical
+     * boards ({@link #RUN_VERTICAL}) and the leaning header ({@link #RUN_HEADER}). Each face is a group of one block of its
+     * own, like the fixed corners'.
+     */
+    public boolean isRunFace() {
+        return this == DESK_RUN || this == RUN_BENCH || this == RUN_VERTICAL || this == RUN_HEADER;
     }
 
     /**
@@ -105,7 +128,8 @@ public enum PanelType {
         return switch (this) {
             case VERTICAL, BACK_PANEL, DUPLEX_BOARD, CHAMFER_VERTICAL -> pos.below();
             case BENCHBOARD -> pos.below().relative(facing);
-            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH, DESK -> null;
+            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH, DESK, DESK_CORNER_INSIDE,
+                    DESK_CORNER_OUTSIDE, DESK_RUN, RUN_BENCH, RUN_VERTICAL, RUN_HEADER -> null;
         };
     }
 
@@ -114,7 +138,8 @@ public enum PanelType {
         return switch (this) {
             case VERTICAL, BACK_PANEL, DUPLEX_BOARD, CHAMFER_VERTICAL -> pos.above();
             case BENCHBOARD -> pos.above().relative(facing.getOpposite());
-            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH, DESK -> null;
+            case CONSOLE, DUPLEX_BENCH, DUPLEX_HEADER, HEADER_TILT, CHAMFER_BENCH, DESK, DESK_CORNER_INSIDE,
+                    DESK_CORNER_OUTSIDE, DESK_RUN, RUN_BENCH, RUN_VERTICAL, RUN_HEADER -> null;
         };
     }
 

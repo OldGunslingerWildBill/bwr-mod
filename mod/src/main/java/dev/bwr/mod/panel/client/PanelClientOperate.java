@@ -63,13 +63,16 @@ public final class PanelClientOperate {
     private static boolean aim(Minecraft minecraft) {
         if (minecraft.level == null || minecraft.player == null || minecraft.screen != null
                 || !(minecraft.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
-                || !(minecraft.level.getBlockEntity(hit.getBlockPos()) instanceof PanelBlockEntity clicked)) {
+                || dev.bwr.mod.panel.DeskCornerBlock.faceEntity(minecraft.level, hit.getBlockPos(),
+                        minecraft.player.getEyePosition(1.0f), minecraft.player.getViewVector(1.0f)) == null) {
             return false;
         }
+        PanelBlockEntity clicked = dev.bwr.mod.panel.DeskCornerBlock.faceEntity(minecraft.level, hit.getBlockPos(),
+                minecraft.player.getEyePosition(1.0f), minecraft.player.getViewVector(1.0f));
         Vec3 eye = minecraft.player.getEyePosition(1.0f);
         Vec3 look = minecraft.player.getViewVector(1.0f);
         BlockPos pos = clicked.getBlockPos();
-        PanelGeometry.Frame frame = PanelGeometry.frame(clicked.panelType(), clicked.facing());
+        PanelGeometry.Frame frame = PanelGeometry.frame(clicked);
         if (!PanelGeometry.rayToCell(frame, pos.getX(), pos.getY(), pos.getZ(), eye.x, eye.y, eye.z, look.x, look.y, look.z, CELL)) {
             return false;
         }

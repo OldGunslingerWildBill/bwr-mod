@@ -12,17 +12,17 @@
     {
       "title": "Boards and desks",
       "text": [
-        "Panels are boards you cover with instruments and controls, then wire to the plant. Build them from panel blocks: vertical, bench, console, back and duplex bodies, and 1 m and 2 m control desks. Blocks of one style and facing whose faces line up join into one group, so a part can span the seams.",
+        "Panels are boards you cover with controls and instruments, then wire to the plant: vertical, bench, console, back and duplex bodies, 1 m and 2 m desks and tall panels. Blocks of one style and facing whose faces line up join into a group.",
         "",
-        "A Board Blueprint places eight blank board shapes in one click. Right-click the air to pick the shape, then right-click a block: green means it fits. In survival the panel blocks are paid from your inventory. Sneak-right-click a bare spot with the Panel Wrench to change the paint finish."
+        "Desks and tall panels turn 45 degrees in runs you extend one block at a time: bend A, any number of units, bend B. Place bend A at the end of a straight run, then a unit against any block of it: it snaps to the open end, in line. Each unit carries its own faces. Sneak mirrors a piece. A Board Blueprint places blank boards; the Panel Wrench paints."
       ],
       "icons": [
         "bwr:control_panel_vertical",
         "bwr:control_panel_benchboard",
-        "bwr:control_panel_console",
-        "bwr:control_panel_duplex",
         "bwr:control_panel_desk",
-        "bwr:control_panel_desk_wide",
+        "bwr:control_panel_desk_run_inside_unit",
+        "bwr:control_panel_tall_run_inside_unit",
+        "bwr:control_panel_desk_corner_inside",
         "bwr:board_blueprint"
       ]
     },

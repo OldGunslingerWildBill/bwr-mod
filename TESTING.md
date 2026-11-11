@@ -50,6 +50,22 @@ GameTest run and prints `SYNC LOAD AUDIT` lines for any chunk our code loaded sy
 
 **The two spikes it found.** The containment survey reads at most `scanCellsPerTick` = 4,000 cells a tick, its completion tick rates faces with what is left of that budget and later ticks rate 1,333 faces each (`Containment.survey`, `Containment.complete`, `Containment.strength` in the probe). The reactor's 1 Hz nodal flux solve is assembled on the server thread (`Reactor.flux start (assemble)`, about 2 ms) and iterated on the `bwr-flux-N` pool; its answer is applied 20 ticks (one refresh interval) later, waiting for the worker only if it is not done (`Reactor.flux wait for worker`). The GameTest server runs the plant unthrottled, about 1 ms a tick, so 20 ticks there are shorter than one solve and the probe shows the wait; at 20 ticks a second there is none (a core stepped at that pace: worst step 23.6 ms immediate, 2.4 ms on the pool). `FluxAsyncTests` (batch `fluxasync`) runs the plant fixture's reactor for 30 s with `DEFERRED_ASYNC_CHECKED`: every solve is iterated on the pool and again on the server thread from the same assembled problem, and the apply counts any difference in any bit; it asserts there were none, on at least 28 solves. Two runs of the whole plant fixture are not comparable for this: with both inline they already differ by about 0.01 % of power after 30 s, which is the fixture, not the solve. In the core, `DeferredNodalRefreshTest` checks that the split solve equals `solve()`, that a pool core and an inline core give identical records after 60 s of burnup, flow and rod motion, and that a refresh in flight survives a save and a discard. `-Dbwr.fluxAsync=false` runs the mod's reactors inline (same results, the solve on the server thread); the core acceptance suite runs `NodalRefresh.IMMEDIATE`, the old behaviour, because it calls `ReactorCore.step` directly.
 
+## 45 degree corners and runs (CONTROL-PANELS-SPEC.md section 14)
+
+`DeskCornerTests` (12 tests, the single corner, inside and outside) and `AngledRunTests` (16 tests, the modular desk and tall panel runs, both
+hands) are in the namespace `bwrcorner` (own `empty` template, kept out of the jar); `-PbwrGameTestNamespaces=bwrcorner` runs just
+those in about two minutes, the normal run includes them. Fixtures at 150,000 / 150,000 and 150,000 / 151,000. They check the plan
+(the pieces partition a run of 0 to 3 units, one face core per layer), the frames of every unit face (the angle, the cell shape and the
+handedness are the straight panel's, the columns to the operator's right whichever hand), the shapes under every cell of every face, the
+block models of every part in both hands under every cell, placing every piece for every facing and hand, refusal of the whole piece,
+building a run by clicking (bend A against a straight run, units snapping against the open end, one more unit, bend B), the facing and hand
+taken from straight runs, breaking any block (that piece alone, one drop, the finish, the components), aiming through a real block ray cast
+and mounting on every face of every unit, operating and wiring through the real packet handlers, groups, finishes, saves, registration and
+recipes. The panel client check has the single-corner stages `corner-inside-run-corner-run`, `corner-inside-face`, `corner-outside-*`
+(`-PbwrPanelClientStages=corner-inside,corner-outside`) and the run stages `angled-run-desk-inside-3-piece-by-piece`, `angled-run-desk-inside-3-face`,
+the same for `desk-outside`, `tall-inside`, `tall-outside`, and `angled-run-room-tall-inside-fills-the-corner` (`-PbwrPanelClientStages=angled-run`):
+pictures of the runs with parts mounted, and the client's own aiming finds the dial at the middle of the face.
+
 ## Reactor-bred isotopes (BREEDING-TARGETS.md)
 
 - **Core** `BreedingTargetsTest` (in `:core:acceptance`): the cobalt calibration, every new kind completing at its rated time, yields against the hand formula and the starting atoms, one cassette one ingot, the U-233 driver.

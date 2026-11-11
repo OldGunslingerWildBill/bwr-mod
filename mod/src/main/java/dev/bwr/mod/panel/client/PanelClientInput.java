@@ -63,7 +63,10 @@ public final class PanelClientInput {
                 || !(minecraft.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) {
             return TARGET;
         }
-        if (!(minecraft.level.getBlockEntity(hit.getBlockPos()) instanceof PanelBlockEntity be)) {
+        // a body block of a desk corner answers with the corner's face (its core block entity)
+        PanelBlockEntity be = dev.bwr.mod.panel.DeskCornerBlock.faceEntity(minecraft.level, hit.getBlockPos(),
+                minecraft.player.getEyePosition(1.0f), minecraft.player.getViewVector(1.0f));
+        if (be == null) {
             return TARGET;
         }
         Vec3 eye = minecraft.player.getEyePosition(1.0f);
@@ -250,7 +253,7 @@ public final class PanelClientInput {
     private static void outline(RenderHighlightEvent.Block event, PoseStack pose, Vec3 camera, PanelBlockEntity anchor,
                                 int cx, int cy, int w, int h, float r, float g, float b) {
         BlockPos pos = anchor.getBlockPos();
-        PanelGeometry.Frame frame = PanelGeometry.frame(anchor.panelType(), anchor.facing());
+        PanelGeometry.Frame frame = PanelGeometry.frame(anchor);
         double lift = 0.4; // 1/16 block units above the face, so the lines do not z-fight with it
         float[] c = new float[12];
         double[][] corners = {{cx, cy}, {cx + w, cy}, {cx + w, cy + h}, {cx, cy + h}};

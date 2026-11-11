@@ -75,7 +75,7 @@ public final class MimicPreview {
 
         void target(PanelBlockEntity block, Vec3 camera, VertexConsumer out, PoseStack.Pose pose, float alpha) {
             BlockPos pos = block.getBlockPos();
-            this.frame = PanelGeometry.frame(block.panelType(), block.facing());
+            this.frame = PanelGeometry.frame(block);
             this.ox = pos.getX() - camera.x;
             this.oy = pos.getY() - camera.y;
             this.oz = pos.getZ() - camera.z;
@@ -144,7 +144,7 @@ public final class MimicPreview {
     }
 
     private static float aspect(PanelBlockEntity block) {
-        return (float) PanelGeometry.frame(block.panelType(), block.facing()).vLength;
+        return (float) PanelGeometry.frame(block).vLength;
     }
 
     /** The points and lines so far, in the colour a new path gets. */

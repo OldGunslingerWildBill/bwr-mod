@@ -600,7 +600,7 @@ public final class PanelBlockEntity extends BlockEntity {
             LOGGER.warn("Panel component {} at {} has an unknown type; nothing to drop", component.id(), worldPosition);
             return;
         }
-        PanelGeometry.Frame frame = PanelGeometry.frame(panelType(), facing());
+        PanelGeometry.Frame frame = PanelGeometry.frame(this);
         double cu = component.x() + component.w() / 2.0;
         double cv = component.y() + component.h() / 2.0;
         double x = worldPosition.getX() + frame.x(cu, cv, 4.0);
@@ -1211,7 +1211,7 @@ public final class PanelBlockEntity extends BlockEntity {
     public AABB renderBounds() {
         if (renderBounds == null) {
             AABB bounds = new AABB(worldPosition);
-            PanelGeometry.Frame frame = PanelGeometry.frame(panelType(), facing());
+            PanelGeometry.Frame frame = PanelGeometry.frame(this);
             for (PanelComponent component : owned) {
                 for (int corner = 0; corner < 8; corner++) {
                     double cu = component.x() + ((corner & 1) == 0 ? 0 : component.w());

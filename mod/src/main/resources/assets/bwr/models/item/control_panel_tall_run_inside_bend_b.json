@@ -1,0 +1,60 @@
+{
+  "parent": "bwr:block/control_panel/run_tall_inside_bend_b_item",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.153,
+        0.153,
+        0.153
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.101,
+        0.101,
+        0.101
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.132,
+        0.132,
+        0.132
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ],
+      "scale": [
+        0.08,
+        0.08,
+        0.08
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.101,
+        0.101,
+        0.101
+      ]
+    }
+  }
+}

@@ -401,7 +401,12 @@ public final class PanelTrimTests {
                 case HEADER_TILT -> "header_tilt";
                 case CHAMFER_VERTICAL -> "chamfer_vertical";
                 case CHAMFER_BENCH -> "chamfer_bench";
+                // the desk corners have four block models, each a slice of the console: DeskCornerTests checks their face
+                case DESK_CORNER_INSIDE, DESK_CORNER_OUTSIDE, DESK_RUN, RUN_BENCH, RUN_VERTICAL, RUN_HEADER -> null;
             };
+            if (name == null) {
+                continue;
+            }
             PanelGeometry.Frame frame = PanelGeometry.frame(type, Direction.NORTH);
             int rows = PanelGeometry.rows(type); // 16, except the 10 rows of a desk top
             double[][] expected = {

@@ -55,6 +55,8 @@ public static void computerFacesCoverMachineRegistry(GameTestHelper h){
         for(var entry:BwrBlocks.BLOCKS.getEntries()){
             var block=entry.get();var s=block.defaultBlockState();
             if(!(block instanceof net.minecraft.world.level.block.EntityBlock)&&!(block instanceof dev.bwr.mod.flow.JetPumpBlock))continue;
+            // the bend pieces of the angled panel runs are body only (no face, no block entity): nothing to give a computer face to
+            if(block instanceof dev.bwr.mod.panel.AngledRunBlock run&&run.newBlockEntity(BlockPos.ZERO,s)==null)continue;
             var pos=new BlockPos(9300+count*16,220,9300);l.getChunkAt(pos);l.removeBlock(pos,false);l.setBlock(pos,s,2);
             for(var side:Direction.values()){
                 var p=l.getCapability(dan200.computercraft.api.peripheral.PeripheralCapability.get(),pos,side);
