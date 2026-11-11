@@ -159,6 +159,7 @@ public final class PanelGeometry {
         }
     }
 
+    private static final Map<String, Frame> CORNER_FRAMES = new java.util.concurrent.ConcurrentHashMap<>();
     private static final Map<PanelType, Map<Direction, Frame>> FRAMES = new EnumMap<>(PanelType.class);
     private static final Map<PanelType, Map<Direction, VoxelShape>> SHAPES = new EnumMap<>(PanelType.class);
 
@@ -188,8 +189,6 @@ public final class PanelGeometry {
         }
         return frame(be.panelType(), be.facing());
     }
-
-    private static final Map<String, Frame> CORNER_FRAMES = new java.util.concurrent.ConcurrentHashMap<>();
 
     /** A desk corner's face {@code face} (see {@link DeskCornerGeometry}) in the local frame of its core block. */
     public static Frame cornerFrame(boolean inside, int length, int face, Direction facing) {

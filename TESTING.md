@@ -52,13 +52,13 @@ GameTest run and prints `SYNC LOAD AUDIT` lines for any chunk our code loaded sy
 
 ## 45 degree desk corners (CONTROL-PANELS-SPEC.md section 14)
 
-`DeskCornerTests` (12 tests) is in the namespace `bwrcorner` (own `empty` template, kept out of the jar); `-PbwrGameTestNamespaces=bwrcorner` runs just
+`DeskCornerTests` (12 tests, every kind and length 1 to 4) is in the namespace `bwrcorner` (own `empty` template, kept out of the jar); `-PbwrGameTestNamespaces=bwrcorner` runs just
 those in about a minute, the normal run includes them. Fixtures at 150,000 / 150,000. They check the frames of the two corner
 `PanelType`s (level, square, 45 degrees to the grid, the 16 x 10 grid on the top of the console), the shapes under every cell of
 the face and the knee space, the four block models under every cell, placing for every facing, refusal of the whole piece, breaking
 any block (one drop, the finish, the components), aiming through a real block ray cast and mounting, operating and wiring through
 the real packet handlers, groups, finishes and saves. The panel client check has the stages `corner-inside-run-corner-run`,
-`corner-inside-face`, `corner-outside-run-corner-run` and `corner-outside-face` (`-PbwrPanelClientStages=corner-inside,corner-outside`):
+`corner-inside-face`, `corner-outside-*`, the 3-long `corner-inside-3-*` and `corner-outside-3-*` and `corner-room-inside-3-fills-the-corner` (`-PbwrPanelClientStages=corner-inside,corner-outside,corner-room`):
 pictures of both corners with parts mounted, and the client's own aiming finds the dial at the middle of the face.
 
 ## Reactor-bred isotopes (BREEDING-TARGETS.md)

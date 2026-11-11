@@ -506,6 +506,11 @@ in the way nothing is placed. Break any block and the whole corner goes with one
 * **Finish and recipes.** Same finishes as the desks (the wrench paints all four blocks together). Three 1 m desks and an iron ingot
   make an inside corner; an outside corner takes an iron nugget as well. With Mekanism: two steel ingots instead of the iron ingot,
   and two steel nuggets for the outside corner. They are grid recipes.
+* **Longer runs.** The corner comes in lengths 1 to 4 (`..._2`, `..._3`, `..._4` in the name; length 1 is the plain name): that many 1.414 m
+  angled units between the two bends, a 3-block-long 45 degree desk being the `_3` item (10 blocks, one item, placed whole). **Every unit has its own
+  face**, each its own group (the pitch of a diagonal is not a multiple of the 16 cells of a metre), so a part cannot span from one unit to the
+  next; 1.414 m apart, 0.41 m of plain top between. Aim at any block: the click finds the face the ray lands on. Recipes: length + 2 desks, an
+  iron ingot (two steel ingots with Mekanism), and for an outside corner a nugget.
 * The benchboard has its own 45 degree pieces (the corner pieces under "Trim blocks").
 
 ### Control-room recipes

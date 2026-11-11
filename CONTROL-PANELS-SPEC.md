@@ -381,18 +381,26 @@ cast and the real `Place` and `Operate` packet handlers, wiring a component to a
 panel client check (`-PbwrPanelClientCheck`, stages `corner-inside-*`, `corner-outside-*`) draws both corners with parts mounted
 and has the client's own aiming (`PanelClientInput.hoveredClaim`) find the dial at the middle of the face.
 
-**Not built (open design points, owner request after the corners).**
-*Longer 45 degree runs.* A run advancing one block along each axis has a pitch of 1.414 m, not a multiple of the 1 m cell grid; a
-panel group's columns are 16 cells of one block and cells must stay square (a component model is drawn square from the frame), so
-the faces of repeated diagonal pieces cannot be one cell space: each piece would be its own group with 16 of its 22.6 cells (the
-rest dead top), exactly like the corners. The piece-by-piece scheme that fits the grid is: a bend piece (a straight run into a 45
-degree turn, mitred, left and right hand, inside and outside) and a diagonal straight piece (an L of three blocks, a main block and
-two wedge blocks, pitch (1, 1)), with the corner a bend + n diagonals + bend; the core/forwarding mechanism here
-(`DeskCornerBlock.faceEntity`) already serves it, and `build_desk_corner.py` already builds a console from any list of sections.
-Not implemented: it needs a handedness property, a face index in the frame (one `PanelType` per face, or a per-state frame) and
-a block-state per part of a (n+1) x (n+1) footprint.
-*Tall panels (benchboard).* The benchboard group is a staircase: each row down is one block toward the operator. A 45 degree run of
-it steps (1, 1) blocks per row, 1.41 m of travel for 1 m of drop, a 35 degree face, not the 45 degree one: that is exactly the
-existing mountable `CHAMFER_BENCH` facet (normal 35.26 degrees above the horizon). A multi-row diagonal bench therefore tiles only as
-stacked chamfer facets, which join nothing today (`hasColumns`/`hasRows` false); making them join into one group needs a diagonal
-column/row step in `PanelGroup`. No new tall-panel corner was added.
+**Longer runs: corners one to four units long.** The angled section of a corner is built from *units* of 1.414 m (a run that advances
+one block along each axis), 1 to 4 of them: `control_panel_desk_corner_inside` / `_outside` are length 1 (the 2 x 2 piece above) and
+`..._2`, `..._3`, `..._4` are the same corner with that many units between the two bends (a (length + 1) square footprint, 7, 10 or 13
+blocks that hold console). One item places the whole run (a 3-block-long 45 degree desk is `..._3`); the bend vertices sit at
+`length + 0.75 / sqrt 2` so the diagonal between the mitres is exactly `length` units, and the faces' centres are exactly one block
+apart along the diagonal, which also guarantees that no two faces share a core block (one block entity per block). Every unit has its
+own 16 x 10 face; **each face is its own panel group**: a diagonal pitch of 1.414 m is not a multiple of the 16 cells of a metre,
+cells must stay square (a component model is drawn square from the frame), and a group's columns are the cells of one block, so the
+faces cannot share one cell space; they sit 1.414 m apart with 0.41 m of plain top between them. A block of the footprint is
+`left` / `deep` (0..4 each) from the origin; `DeskCornerBlock.faceEntity` resolves a click on any block to the face the view ray
+lands on (the faces of a long run reach into many blocks). The frame of face k is `PanelGeometry.cornerFrame(inside, length, k,
+facing)` (cached), `PanelGeometry.frame(PanelBlockEntity)` picks it from the block state; the 12 call sites that asked
+`frame(be.panelType(), be.facing())` now ask `frame(be)` (same result for every other block). Not piece by piece: a placed corner
+cannot be lengthened; the piece-by-piece scheme (a bend of two blocks, a 3-block column unit of pitch (1, -1) and a second bend of a
+different two-block shape, each in two hands) is described in the git history of this section but was not built.
+
+**Tall panels (benchboard): not built.** The benchboard group is a staircase: each row is one block down and one block toward the
+operator, so its face is 45 degrees. A 45 degree *diagonal* run of the staircase would need each row to step 1 m along the
+diagonal normal, which is not a block-grid step: the grid steps (1, 1), 1.414 m, so a diagonal row stack can only be a 35 degree
+face (that is exactly the existing `CHAMFER_BENCH` normal), whose junction with the 45 degree straight runs would be a visible
+crease, or a single row (one block high) at 45 degrees. The existing `control_panel_corner_bench_*` blocks stay as they are (old
+saves use them). The same mechanism as the desk corners (a profile swept along mitred sections, models sliced per block, one
+face per unit) would build either; the choice between a 35 degree stack and a one-row 45 degree piece is the owner's.
