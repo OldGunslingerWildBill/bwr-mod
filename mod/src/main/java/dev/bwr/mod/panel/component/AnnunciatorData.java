@@ -31,6 +31,18 @@ public final class AnnunciatorData extends ComponentData {
     public static final String WINDOW_MODEL = "ann_window";
     /** NBT key of {@link #boxName}. */
     public static final String KEY_BOX_NAME = "BoxName";
+    /** NBT and wrench-screen key of {@link #address}: five digits, present only when the window has an address. */
+    public static final String KEY_ADDRESS = "Address";
+    /** NBT key of the horn bit ({@link AnnunciatorLogic#audible()}), present only while the window is sounding. */
+    public static final String KEY_AUDIBLE = "Audible";
+    /** {@link #address} of a window that has none. */
+    public static final int NO_ADDRESS = -1;
+    public static final int MIN_ADDRESS = 0;
+    public static final int MAX_ADDRESS = 10000;
+    /** The lens colours the wrench screen offers as swatches (any other RGB is still accepted and kept). */
+    public static final int COLOR_WHITE = 0xF0F0E0;
+    public static final int COLOR_YELLOW = 0xFFD000;
+    public static final int COLOR_RED = 0xE02020;
     public static final double LIMIT = 1.0e9;
 
     public String line1 = "";
@@ -50,6 +62,12 @@ public final class AnnunciatorData extends ComponentData {
      * Saved only when not empty.
      */
     public String boxName = "";
+    /**
+     * The light address a computer drives this window by ({@code setAlarm}, {@code setValue} and {@code getAlarm} of the
+     * {@code bwr_panel} peripheral): {@link #MIN_ADDRESS} to {@link #MAX_ADDRESS}, or {@link #NO_ADDRESS}. Several
+     * windows may share one (they are then driven together). Saved only when set, as five digits.
+     */
+    public int address = NO_ADDRESS;
     public String condition = AnnunciatorLogic.ABOVE;
     public double setpoint = 0.5;
     public int group = MIN_GROUP;
@@ -59,6 +77,36 @@ public final class AnnunciatorData extends ComponentData {
     /** Whether this window draws outside its own cells (the plate margin of its box): the Columbia style does. */
     public boolean overhangs() {
         return STYLE_COLUMBIA.equals(style);
+    }
+
+    /** {@link #address} as the wrench screen and the save hold it: five digits, or empty when there is none. */
+    public String addressText() {
+        return address < MIN_ADDRESS ? "" : formatAddress(address);
+    }
+
+    /** An address as five digits ({@code 00042}). */
+    public static String formatAddress(int address) {
+        return String.format(java.util.Locale.ROOT, "%05d", address);
+    }
+
+    /**
+     * Reads an address as typed or saved: digits only (surrounding blanks ignored), {@link #MIN_ADDRESS} to
+     * {@link #MAX_ADDRESS}. Anything else, an empty text included, is {@link #NO_ADDRESS}.
+     */
+    public static int parseAddress(String text) {
+        String digits = text == null ? "" : text.strip();
+        if (digits.isEmpty() || digits.length() > 5) {
+            return NO_ADDRESS;
+        }
+        int value = 0;
+        for (int i = 0; i < digits.length(); i++) {
+            char c = digits.charAt(i);
+            if (c < '0' || c > '9') {
+                return NO_ADDRESS;
+            }
+            value = value * 10 + (c - '0');
+        }
+        return value <= MAX_ADDRESS ? value : NO_ADDRESS;
     }
 
     /** The legend's non-empty lines, top to bottom (at most four); allocates, so call it once per revision. */
@@ -88,12 +136,18 @@ public final class AnnunciatorData extends ComponentData {
         if (!boxName.isEmpty()) {
             tag.putString(KEY_BOX_NAME, boxName);
         }
+        if (address >= MIN_ADDRESS) {
+            tag.putString(KEY_ADDRESS, addressText());
+        }
         tag.putString("Condition", condition);
         tag.putDouble("Setpoint", setpoint);
         tag.putInt("AnnGroup", group);
         tag.putString("Reset", resetMode);
         tag.putInt("AlarmState", logic.stateId());
         tag.putBoolean("AlarmCondition", logic.condition());
+        if (logic.audible()) {
+            tag.putBoolean(KEY_AUDIBLE, true);
+        }
     }
 
     @Override
@@ -106,6 +160,7 @@ public final class AnnunciatorData extends ComponentData {
         String savedStyle = tag.getString(PanelStyles.KEY_STYLE);
         style = STYLES.contains(savedStyle) ? savedStyle : PanelStyles.CLASSIC;
         boxName = ConfigSchema.cleanText(tag.getString(KEY_BOX_NAME), MAX_TEXT);
+        address = parseAddress(tag.getString(KEY_ADDRESS));
         String savedCondition = tag.getString("Condition");
         condition = CONDITIONS.contains(savedCondition) ? savedCondition : AnnunciatorLogic.ABOVE;
         double savedSetpoint = tag.getDouble("Setpoint");
@@ -115,6 +170,6 @@ public final class AnnunciatorData extends ComponentData {
         String savedReset = tag.getString("Reset");
         resetMode = RESET_MODES.contains(savedReset) ? savedReset : RESET_AUTO;
         logic.setManualReset(RESET_MANUAL.equals(resetMode));
-        logic.restore(tag.getInt("AlarmState"), tag.getBoolean("AlarmCondition"));
+        logic.restore(tag.getInt("AlarmState"), tag.getBoolean("AlarmCondition"), tag.getBoolean(KEY_AUDIBLE));
     }
 }

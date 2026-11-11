@@ -32,5 +32,6 @@ public final class PanelPlayerCleanup {
         NetworkShare.forget(player);
         NetworkingOps.forget(player);
         MimicOps.forget(player);
+        LinkSelection.forget(player);
     }
 }

@@ -224,8 +224,22 @@ of the decorative header strip (a box in the Columbia style, below, has its own)
 pushbuttons in one part. Each output (`ack`, `reset`, `silence`, `test`) is 1 while held, like a pushbutton, and only
 one button is held at a time; the quarter of the face a click lands on picks the button. ACK and RESET do what a
 pushbutton with that role does (`AnnunciatorGroups`, once per press, for the module's **Annunciator group**), nothing
-more. SILENCE has no horn to silence, so it is an output only. TEST lights every window of the module's group while it
+more. SILENCE stops the horn of the module's group (below) once per press and changes nothing else: the windows keep
+flashing until they are acknowledged; it is also an output like the others. TEST lights every window of the module's group while it
 is held (a lamp test the client draws from the synced output); it changes no alarm state and sends nothing to the plant.
+
+**Lens colour, light address and the horn.** *Tile colour* offers three swatches, **White** (F0F0E0), **Yellow**
+(FFD000) and **Red** (E02020); any other colour still loads, saves and shows as *Other colour*, and the default
+(FFB000 amber) is what it was. *Light address* is the optional number a computer drives the window by (section 4).
+**The horn:** a window that enters a new alarm sounds the annunciator horn, at the panel, until it is acknowledged or its
+group is silenced; an acknowledged or cleared alarm never sounds, and a silenced alarm that is still unacknowledged
+stays quiet however its condition comes and goes. The horn bit is part of the alarm sequence (`AnnunciatorLogic`), set
+on both sides by the same input change that starts the flash and cleared by ACK and SILENCE through the state the server
+already re-sends, so nothing new is sent; it is saved only while set, so a sounding alarm survives a restart and a save
+from before the horn loads silent. Each client loops one horn per panel group in the Blocks sound category with ordinary
+attenuation (16 blocks), placed among the group's blocks that hold a sounding window, and stops it when no loaded
+window of the group is sounding: acknowledged, silenced, the panel unloaded or broken, or the level left. The sound
+file is the one exception among the placeholder control-room sounds (SOUND-CREDITS.md, *Annunciator horn*).
 
 **Columbia style (the tile box).** An annunciator window has a **Style** in the wrench screen: *Classic (simple)*, the
 procedural look described above and the default, or *Columbia tile box (model)*, after the annunciator boxes of Columbia
@@ -355,6 +369,20 @@ the last operation. The switch's "Target red after" setting picks which operatio
 * **Right-click a component** (not sneaking) to open the binding screen. Choose a port (an *input* is a
   value the component displays, an *output* is a value a control produces), choose what to wire it to, and
   press Apply. Clear removes the wiring of the chosen port.
+* **Or the other way round, with the Panel Linker:** sneak-right-click a panel component to select it (the action
+  bar names it), walk to the plant device and right-click it (not sneaking). The device is stored on the linker as a
+  sneak-click would store it and the same binding screen opens for the selected component. The component stays selected
+  until you select another, sneak-right-click the air (which forgets the device and the component), change dimension or
+  leave; while it is selected, a plain right-click with the linker on a block that reports signals wires instead of
+  operating that block (a grid tie included), and that one component can be wired from beyond arm's reach of its
+  panel, since you are standing at the device. Everything else is the rule of any binding: the linker in hand, your
+  permissions at the panel and at the device, the same dimension, `linkRange` between panel and device, both loaded.
+  Selecting needs the panel in reach. The Networking Wrench has no component-first mode.
+* **An annunciator window's trigger is on the binding screen.** When the screen wires a window's input, the row of the
+  port selector also carries the window's **Alarm** condition (above, below or equal to the setpoint) and its setpoint,
+  the same two settings as *Alarm when input is* and *Alarm setpoint* in the wrench screen, which keeps them. Apply sends
+  them with the binding (only when you changed them); a setpoint that is not a number greys Apply out. With a wiring
+  tool in hand the server takes those two settings and nothing else from such an edit.
 * **Hold the linker and look at a wired component:** every plant device it reads from is outlined in cyan
   and every device it commands in orange, through walls, so you can follow a run across the plant.
 * A device can be bound only if it is **in the same dimension** and within `linkRange` blocks of the panel
@@ -593,7 +621,7 @@ input has exactly one source; an output can fan out to up to 8 sinks.**
 | Plant signal | One signal of the linked device, e.g. the reactor's `pressure` | Sampled on the server at most every `sampleTicks` ticks (default 2); only changes are sent to clients, batched per chunk and tick. An unloaded or removed device, or a signal with no value, reads **no signal**. Never loads a chunk |
 | Component | An output of another component **in the same group** | Pushed the moment the control changes, no polling. Follows the component by id, so renaming labels does not break it. Removing the control gives no signal |
 | Redstone | Signal strength 0 to 15 at the **back face** of the panel block that holds the anchor | Read like a repeater reads its input |
-| CC | A value a program sets with `set` | Shows **awaiting CC** (no signal) until the first set; the value is saved |
+| CC | A value a program sets with `set` | Shows **awaiting CC** (no signal) until the first set; the value is saved. An annunciator window that has a **Light address** and no source yet is given this source by the first `setAlarm` or `setValue` to its address (section 4) |
 | Constant / none | Wrench screen | A fixed number, or no signal |
 
 A panel is sampled only while it has a plant or redstone input; a panel with none costs nothing per tick.
@@ -1071,6 +1099,12 @@ server thread; a bad label or argument raises an error.
 | `getInputs()` | `{label = {port = value}}` | The current **output** of every control (switches, knobs, buttons): the "inputs" a program reads |
 | `set(label, value)` | boolean | Sets the first input of a component that is wired to **CC**. Errors if that input has another source or the value is not finite |
 | `setPort(label, port, value)` | boolean | Same, for the input named `port` (keys as in `get(label).inputs`) |
+| `setAlarm(address, on)` | number (windows driven) | Annunciator lights by **address** (below): every window of the group with that address gets 1 (`true`) or 0 on its input, as `set(label, 1)` would. A window with no source yet is wired to CC first; one wired to something else is an error naming that source, and then no window is changed. An address no window has is an error |
+| `setValue(address, number)` | number (windows driven) | The same with any finite number, for the window's own condition and setpoint to judge |
+| `getAlarm(address)` | `"off"`, `"alarm"` or `"acknowledged"` | What the light shows: off, a new alarm (flashing) or an acknowledged one (steady). Of several windows sharing the address, the most urgent |
+| `annunciators()` | `{ {address, label, legend = {lines}, color, group, state}, ... }` | Every annunciator window of the group; `address` is absent for a window that has none, `color` is `0xRRGGBB`, `state` as `getAlarm` |
+| `acknowledge(group)` | number (windows changed) | ACK for annunciator group 1 to 8, exactly as the pushbutton or the control module does it (it also stops the horn) |
+| `reset(group)` | number (windows changed) | RESET for annunciator group 1 to 8 |
 | `setText(label, text)` | boolean (changed) | Text of a nameplate (line 1), a text display, or the caption of a core display or rod select matrix |
 | `setTextField(label, field, text)` | boolean (changed) | One named text field: a nameplate's `line1`..`line3`, `cornerLeft`, `cornerRight`, `tag`; a core display's or matrix's `caption`. An unknown field is an error that lists the component's fields |
 | `getSize(label)` | `width, height` | Pixels (graphic display) or characters and rows (character LCD) |
@@ -1081,6 +1115,15 @@ server thread; a bad label or argument raises an error.
 | `blit(label, rows)` | boolean | `rows` is a table of hex strings, one palette index per digit, from the top-left |
 | `setPalette(label, index, rgb)` | boolean | `rgb` as `0xRRGGBB` |
 | `write(label, row, column, text)` | boolean | Character LCD, 0-based |
+
+**Annunciator light addresses.** An annunciator window has an optional **Light address** in the wrench screen: a
+whole number from 0 to 10000, shown and saved as five digits (`00042`), saved only when set; clear the field for none.
+Addresses need not be unique: windows that share one are one light and are driven together. `setAlarm(101, true)`
+writes 1 to the input of every window at 00101, so with the default trigger (alarm above 0.5) the window alarms and then
+runs its own sequence: it flashes and sounds the horn until ACK (or SILENCE for the horn), whatever the program does
+next, and turning the light off only clears the condition. A program that wants its own trigger writes the measurement
+with `setValue` and leaves condition and setpoint to the window. There is no silence call: SILENCE is the control
+module's button. `docs/lua/annunciator_alarms.lua` is a short example (a low reactor level and a bus undervoltage).
 
 The drawing calls work on components whose data implements `PanelDrawTarget`; on anything else they raise
 "is not a drawable display". Drawing is coalesced: however many calls arrive in a tick, each watching client

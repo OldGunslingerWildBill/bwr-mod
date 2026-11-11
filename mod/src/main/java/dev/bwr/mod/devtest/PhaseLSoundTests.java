@@ -17,6 +17,12 @@ public final class PhaseLSoundTests {
             "contactor_click", "control_switch_detent", "breaker_close", "breaker_trip", "pump_motor",
             "turbine_whine", "steam_flow", "srv_lift", "msiv_slam", "scram_buzzer", "edg_start",
             "edg_run", "geiger_click");
+    /**
+     * The one event of {@link #PATHS} whose file is not a silent placeholder: the annunciator horn, an audio clip the
+     * project owner supplied (SOUND-CREDITS.md "Annunciator horn"). It is registered like the others; the checks that
+     * require exact silence ({@code SoundClientCheck}, tools-audit-sounds.py) treat it apart.
+     */
+    static final List<String> OWNER_SUPPLIED = List.of("annunciator_horn");
 
     private PhaseLSoundTests() { }
 

@@ -118,7 +118,7 @@ public final class WiringOps {
             return Result.NOT_PERMITTED;
         }
         BlockPos ownerPos = request.pos();
-        if (!PanelOps.inReach(player, ownerPos) || !level.isLoaded(ownerPos)) {
+        if (!reachable(player, ownerPos, request.id()) || !level.isLoaded(ownerPos)) {
             return Result.OUT_OF_REACH;
         }
         if (!AssemblyAccess.permitted(level, player, ownerPos)) {
@@ -457,6 +457,44 @@ public final class WiringOps {
         return Result.NO_SUCH_KEY;
     }
 
+    /**
+     * Whether the player is close enough to wire this component: within reach of its panel block, or holding it as the
+     * Panel Linker's selected component ({@link dev.bwr.mod.panel.LinkSelection}: selected at the panel, wired at the
+     * device).
+     */
+    private static boolean reachable(ServerPlayer player, BlockPos ownerPos, int id) {
+        return PanelOps.inReach(player, ownerPos) || dev.bwr.mod.panel.LinkSelection.holds(player, ownerPos, id);
+    }
+
+    /**
+     * Sets the alarm trigger of an annunciator window from the binding screen, which shows the window's Condition and
+     * Setpoint when it wires the window's input. The same checks as a binding (a wiring tool in hand, reach, permitted),
+     * and of a config edit only those two settings are taken ({@link dev.bwr.mod.panel.component.AnnunciatorTrigger}),
+     * so a wiring tool can change nothing else the wrench screen holds.
+     *
+     * @return whether the window took the edit
+     */
+    public static boolean setTrigger(ServerPlayer player, BlockPos ownerPos, int id, net.minecraft.nbt.CompoundTag edit) {
+        ServerLevel level = player.serverLevel();
+        net.minecraft.nbt.CompoundTag config = dev.bwr.mod.panel.component.AnnunciatorTrigger.restrict(edit);
+        if (config == null || id < 0 || !AssemblyAccess.mayEdit(player) || LinkTools.held(player).isEmpty()
+                || !reachable(player, ownerPos, id) || !level.isLoaded(ownerPos)
+                || !AssemblyAccess.permitted(level, player, ownerPos)
+                || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
+            return false;
+        }
+        PanelComponent component = owner.component(id);
+        if (component == null || !(component.type() instanceof dev.bwr.mod.panel.component.AnnunciatorType type)
+                || !(component.data() instanceof dev.bwr.mod.panel.component.AnnunciatorData)) {
+            return false;
+        }
+        component.data().load(dev.bwr.mod.panel.component.ConfigSchema.merge(type.configSchema(), component.data().toTag(), config));
+        type.onLoaded(component); // the alarm is judged again with the new trigger
+        component.touch();
+        owner.syncFull();
+        return true;
+    }
+
     // ---- binding screen
 
     /**
@@ -475,7 +513,7 @@ public final class WiringOps {
     /** The screen contents {@link #openScreen} would send, or null when the player may not open it. */
     public static PanelPayloads.LinkerScreen screenFor(ServerPlayer player, BlockPos ownerPos, int id) {
         ServerLevel level = player.serverLevel();
-        if (!AssemblyAccess.mayEdit(player) || LinkTools.held(player).isEmpty() || !PanelOps.inReach(player, ownerPos)
+        if (!AssemblyAccess.mayEdit(player) || LinkTools.held(player).isEmpty() || !reachable(player, ownerPos, id)
                 || !level.isLoaded(ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos)
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return null;
@@ -560,7 +598,7 @@ public final class WiringOps {
      */
     public static PanelPayloads.LinkerScreen ccPortScreenFor(ServerPlayer player, BlockPos ownerPos, int id, int port) {
         ServerLevel level = player.serverLevel();
-        if (!AssemblyAccess.mayEdit(player) || LinkTools.held(player).isEmpty() || !PanelOps.inReach(player, ownerPos)
+        if (!AssemblyAccess.mayEdit(player) || LinkTools.held(player).isEmpty() || !reachable(player, ownerPos, id)
                 || !level.isLoaded(ownerPos) || !AssemblyAccess.permitted(level, player, ownerPos)
                 || !(level.getBlockEntity(ownerPos) instanceof PanelBlockEntity owner)) {
             return null;

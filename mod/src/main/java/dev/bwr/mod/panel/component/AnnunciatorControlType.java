@@ -12,7 +12,8 @@ import java.util.List;
  * <ul>
  *   <li>ACK and RESET do what a pushbutton with that role does today ({@link AnnunciatorGroups}) for the module's
  *       group, once per press: they are the ISA-18.1 sequence's own acknowledge and reset, nothing more.</li>
- *   <li>SILENCE has no horn in the mod to silence, so it is an output only, for a program or a sink to use.</li>
+ *   <li>SILENCE stops the horn of the module's group ({@link AnnunciatorGroups#silence}), once per press, and changes
+ *       nothing else: the windows keep flashing until they are acknowledged. It is also an output, like the others.</li>
  *   <li>TEST lights every window of the module's group while it is held (a lamp test, drawn by the client from the
  *       synced output); it changes no alarm state and sends nothing to the plant.</li>
  * </ul>
@@ -126,6 +127,7 @@ public final class AnnunciatorControlType extends PanelInputType {
                     switch (button) {
                         case ACK -> AnnunciatorGroups.acknowledge(context.level(), context.owner(), group);
                         case RESET -> AnnunciatorGroups.reset(context.level(), context.owner(), group);
+                        case SILENCE -> AnnunciatorGroups.silence(context.level(), context.owner(), group);
                         default -> {
                         }
                     }

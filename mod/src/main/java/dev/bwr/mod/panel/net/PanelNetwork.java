@@ -73,7 +73,10 @@ public final class PanelNetwork {
     private static void handleConfigure(PanelPayloads.Configure payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender
                 && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.CONFIGURE)) {
-            PanelOps.configure(sender, payload.pos(), payload.id(), payload.edit());
+            if (!PanelOps.configure(sender, payload.pos(), payload.id(), payload.edit())) {
+                // Not the wrench's edit: the binding screen sends an annunciator window's trigger with a wiring tool in hand.
+                WiringOps.setTrigger(sender, payload.pos(), payload.id(), payload.edit());
+            }
         }
     }
 
@@ -97,7 +100,12 @@ public final class PanelNetwork {
     private static void handleLinkerOpen(PanelPayloads.LinkerOpen payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender
                 && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPEN_SCREEN)) {
-            WiringOps.openScreen(sender, payload.pos(), payload.id());
+            if (sender.isShiftKeyDown() && payload.id() >= 0 && !dev.bwr.mod.panel.PanelLinkerItem.held(sender).isEmpty()) {
+                // Sneaking with the Panel Linker: the component is selected, to be wired at a plant device.
+                dev.bwr.mod.panel.LinkSelection.select(sender, payload.pos(), payload.id());
+            } else {
+                WiringOps.openScreen(sender, payload.pos(), payload.id());
+            }
         }
     }
 
