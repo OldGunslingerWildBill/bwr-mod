@@ -1,0 +1,60 @@
+{
+  "parent": "bwr:block/control_panel/run_desk_inside_bend_a_item",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.336,
+        0.336,
+        0.336
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.222,
+        0.222,
+        0.222
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.289,
+        0.289,
+        0.289
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ],
+      "scale": [
+        0.175,
+        0.175,
+        0.175
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.222,
+        0.222,
+        0.222
+      ]
+    }
+  }
+}

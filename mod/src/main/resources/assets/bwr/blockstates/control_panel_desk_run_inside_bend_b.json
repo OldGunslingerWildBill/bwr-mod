@@ -1,0 +1,324 @@
+{
+  "variants": {
+    "facing=north,mirror=false,part=0": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=0": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=0": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=0": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=0": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=0": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=0": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=0": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 270
+    },
+    "facing=north,mirror=false,part=1": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_1",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=1": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_1",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=1": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_1",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=1": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_1",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=1": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_1_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=1": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_1_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=1": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_1_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=1": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_1_m",
+      "y": 270
+    },
+    "facing=north,mirror=false,part=2": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=2": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=2": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=2": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=2": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=2": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=2": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=2": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 270
+    },
+    "facing=north,mirror=false,part=3": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=3": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=3": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=3": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=3": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=3": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=3": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=3": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 270
+    },
+    "facing=north,mirror=false,part=4": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=4": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=4": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=4": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=4": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=4": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=4": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=4": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 270
+    },
+    "facing=north,mirror=false,part=5": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=5": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=5": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=5": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=5": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=5": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=5": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=5": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 270
+    },
+    "facing=north,mirror=false,part=6": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=6": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=6": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=6": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=6": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=6": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=6": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=6": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 270
+    },
+    "facing=north,mirror=false,part=7": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=7": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=7": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=7": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=7": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=7": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=7": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=7": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 270
+    },
+    "facing=north,mirror=false,part=8": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=8": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=8": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=8": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=8": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=8": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=8": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=8": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 270
+    },
+    "facing=north,mirror=false,part=9": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 0
+    },
+    "facing=east,mirror=false,part=9": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 90
+    },
+    "facing=south,mirror=false,part=9": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 180
+    },
+    "facing=west,mirror=false,part=9": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0",
+      "y": 270
+    },
+    "facing=north,mirror=true,part=9": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 0
+    },
+    "facing=east,mirror=true,part=9": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 90
+    },
+    "facing=south,mirror=true,part=9": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 180
+    },
+    "facing=west,mirror=true,part=9": {
+      "model": "bwr:block/control_panel/run_desk_inside_bend_b_0_m",
+      "y": 270
+    }
+  }
+}
