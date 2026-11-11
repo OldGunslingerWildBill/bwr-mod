@@ -321,86 +321,119 @@ horns: wire sound events with silent placeholders only); GUI styling.
    component wiring, redstone, CC peripheral, docs (`CONTROL-PANELS.md` with
    a worked example control room).
 
-## 14. 45 degree desk corners (alpha.61)
+## 14. 45 degree desk corners and angled tall panels (alpha.61)
 
-The owner's request: "there's no corner blocks or desks that have a 45 deg corner". A run of control desks could only meet another
-at a hard 90 degree corner; real BWR consoles, and the reference screenshots, join runs through 45 degree chamfered sections
-that carry controls too.
+The owner's request: "there's no corner blocks or desks that have a 45 deg corner". A run of control desks could only meet another at
+a hard 90 degree corner; real BWR consoles, and the reference screenshots, join runs through 45 degree chamfered sections that carry
+controls too, and the owner wants to extend such a run **block by block, not pick a length up front**, for the desks and for the tall
+panels (the benchboard with the boards above it).
 
-**What was added.** Two items, `bwr:control_panel_desk_corner_inside` (the console wraps around the operator, the U) and
-`bwr:control_panel_desk_corner_outside` (it wraps away). Each continues the desk profile of `control_panel_desk` and
-`control_panel_desk_wide` exactly (the same cross-section, 0.75 deep, the top 0.75 up, the overhang, the riser and shelf, the knee
-front), so run -> corner -> run reads as one console. The 1 m and the 2 m desk share one profile, so one pair of corners serves
-both. **The benchboard already has its 45 degree pieces** (`control_panel_corner_bench_inside`, `_outside` and the mountable
-`_chamfer`), and a new benchboard section was not built: the benchboard face falls 45 degrees over a full block of
-depth, so a mitred band of it is a hip, which the existing bench chamfer already is.
+### 14.1 What exists
 
-**Footprint: 2 x 2 blocks** (one item; `DeskCornerBlock`, four blocks with a `part` property: `origin`, `left`, `deep`, `deep_left`).
-A 1 x 1 chamfer cannot work against a 0.75 deep console: the mitred band's operator-side edge is 0.35 m long (inside) and its
-mounting rectangle does not fit. 2 x 2 gives an angled section 1.06 m long on the operator side (inside) and 1.15 to 1.77 m
-(outside), and a face of the same 16 columns x 10 rows (1.0 m x 0.625 m) as a straight desk. The straight run arrives at the edge
-of the footprint exactly where a straight desk stands, so it joins with no seam. `DeskCornerGeometry` has the plan (mitred joints,
-constant depth): inside, runs along `f = 0..0.75` and `x = 0..0.75`, operator-side vertices at 1.5; outside, the second run leaves
-backwards (toward the back, so the footprint grows away from the operator) in `x = 0.25..1`. Placing is whole or not at all, from
-the origin block (the one at the operator's right; the others go to the operator's left and one block deep, toward the
-operator for an inside corner, away for an outside one); breaking any block removes the corner with one drop; a corner that
-loses a block another way falls apart. Placing from the four facings reaches all four orientations (left and right U corners,
-both bends).
+| Item (`bwr:`) | What | Blocks |
+| --- | --- | --- |
+| `control_panel_desk_corner_inside`, `_outside` | the **single corner**: both bends and one angled unit in one item (the U, and the wrap away) | 4 each (2 x 2), unchanged from the first cut |
+| `control_panel_desk_run_<inside\|outside>_bend_a`, `_unit`, `_bend_b` | the desk **run pieces** | 2, 3 and 2 |
+| `control_panel_tall_run_<inside\|outside>_bend_a`, `_unit`, `_bend_b` | the tall panel run pieces | 5 / 9 / 8 inside, 8 / 9 / 5 outside |
 
-**The 45 degree face.** `PanelGeometry.Frame` was already a general block-space frame (cell origin, column step, row step,
-normal) and the chamfer trim blocks already use a diagonal one; the panel code asks `PanelGeometry.frame(be.panelType(),
-be.facing())` for every cell, ray, ghost, line and component, so nothing assumed a cardinal face except the frames. The two new
-`PanelType`s, `DESK_CORNER_INSIDE` and `DESK_CORNER_OUTSIDE`, are a level top (normal straight up, 0.75 up) whose columns and rows
-run along the diagonals of the plan (a cell is still 1/16 block both ways). Their frame origin is given in the local frame of
-the **core** block, the one the middle of the face lies in (`left` for an inside corner, `deep` for an outside one), so the face
-reaches 0.5 m into the other blocks. Only the core has a block entity and a face (`panelType(state)` is `null` for the other three,
-like the duplex board's body cells); a click on any block of the corner is forwarded to the core's block entity
-(`DeskCornerBlock.faceEntity`, used by `PanelClientInput`, `PanelClientOperate`, `MimicClientInput` and the block's own vanilla
-use paths), and the cell is found by the ray against the true plane exactly as on every face. Placement, operate and wiring checks
-(`PanelOps`, `WiringOps`, `AssemblyAccess`) address the core's position and are unchanged: reach is measured to the core block,
-which the face never leaves by more than 0.6 m (the reach slack is 1.0). Saved components are the core's, with the usual keys and
-absolute claim positions; nothing about a cardinal face changed. **The corner's face is its own panel group of one block**
-(`hasRows` and `hasColumns` are false): it does not merge its grid with the straight runs beside it, and components do not span
-between a run and the corner (the 0.5 m stubs of console at each end of the corner are not mountable).
+**The fixed lengths `_2`, `_3`, `_4` of the first cut are gone** (unreleased, so no save has them): a run of bend A, n units and bend B
+covers every length they did and any other, one unit at a time. The length-1 2 x 2 corner stays as the natural single corner: one item,
+one face, four blocks, where a run needs three items and ten.
 
-**Model and shape.** `art/models/control_desk/build_desk_corner.py` (Blender, headless, procedural like `build_desk.py`) builds the
-mitred console from the same profile and slices it into the four block models (`desk_corner_<inside|outside>_<part>.obj`) and a
-whole-piece item model; `tools-export-desk-corner.py` writes the model, blockstate, item and loot JSON. Polygons of five or more
-corners are split into triangles: the game's OBJ loader drops them (the first build had holes). Previews are in
-`art/models/control_desk/previews/` (closed iso and run + corner + run, from the operator's side and from above, plus the in-game
-pictures of the panel client check). Collision and outline shapes are stepped per 1/16 cell from the same profile and built
-lazily (`DeskCornerGeometry.shape`).
+### 14.2 The scheme: bend A + n units + bend B
 
-**Recipes.** Grid recipes (not Fabrication Desk ones: `FabricationDeskTests` pins the desk at exactly 42 recipes): three 1 m desks
-and an iron ingot (inside), plus an iron nugget (outside, so the two recipes differ); with Mekanism two steel ingots (and two
-steel nuggets), the usual doubling.
+A run is `bend A`, any number n >= 0 of `unit`s and `bend B`; the straight run before bend A and the one after bend B are the ordinary
+straight blocks (desks, or a benchboard with the boards above it). The console is a band of constant depth W bent twice by 45 degrees
+with mitred joints (`AngledRunGeometry`; `art/models/control_desk/run_plan.py` is the same maths in Python and writes
+`data/bwr/angled_runs/pieces.json`, which the game reads for the cubes of every piece). In the frame of the unmirrored run (x to the
+operator's right, f from the back toward the operator, y up; the straight run A arrives from +x at bf = 0):
 
-**Tests.** `DeskCornerTests` (namespace `bwrcorner`): the frames, the face on the console, the shapes under every cell of the face
-and the knee space, the models under every cell, placing for every facing, refusal, breaking, mounting through a real block ray
-cast and the real `Place` and `Operate` packet handlers, wiring a component to another on the face, groups, finishes, saves. The
-panel client check (`-PbwrPanelClientCheck`, stages `corner-inside-*`, `corner-outside-*`) draws both corners with parts mounted
-and has the client's own aiming (`PanelClientInput.hoveredClaim`) find the dial at the middle of the face.
+    inside : t = min(f, (x + f - PHI) / sqrt 2, x - xwall)                    the console is where 0 < t < depth of the profile
+    outside: t = max(f, (PHI + tan(22.5) W - (x - f)) / sqrt 2, xwall - x)
 
-**Longer runs: corners one to four units long.** The angled section of a corner is built from *units* of 1.414 m (a run that advances
-one block along each axis), 1 to 4 of them: `control_panel_desk_corner_inside` / `_outside` are length 1 (the 2 x 2 piece above) and
-`..._2`, `..._3`, `..._4` are the same corner with that many units between the two bends (a (length + 1) square footprint, 7, 10 or 13
-blocks that hold console). One item places the whole run (a 3-block-long 45 degree desk is `..._3`); the bend vertices sit at
-`length + 0.75 / sqrt 2` so the diagonal between the mitres is exactly `length` units, and the faces' centres are exactly one block
-apart along the diagonal, which also guarantees that no two faces share a core block (one block entity per block). Every unit has its
-own 16 x 10 face; **each face is its own panel group**: a diagonal pitch of 1.414 m is not a multiple of the 16 cells of a metre,
-cells must stay square (a component model is drawn square from the frame), and a group's columns are the cells of one block, so the
-faces cannot share one cell space; they sit 1.414 m apart with 0.41 m of plain top between them. A block of the footprint is
-`left` / `deep` (0..4 each) from the origin; `DeskCornerBlock.faceEntity` resolves a click on any block to the face the view ray
-lands on (the faces of a long run reach into many blocks). The frame of face k is `PanelGeometry.cornerFrame(inside, length, k,
-facing)` (cached), `PanelGeometry.frame(PanelBlockEntity)` picks it from the block state; the 12 call sites that asked
-`frame(be.panelType(), be.facing())` now ask `frame(be)` (same result for every other block). Not piece by piece: a placed corner
-cannot be lengthened; the piece-by-piece scheme (a bend of two blocks, a 3-block column unit of pitch (1, -1) and a second bend of a
-different two-block shape, each in two hands) is described in the git history of this section but was not built.
+The diagonal advances one block in x and one in f per unit, so **a unit is the part of the console between two planes x = const**: the
+same shape each time, shifted by one chain step `(-1, +1)` (inside) or `(-1, -1)` (outside). Bend A is the column right of the first
+plane (it holds the first mitre and the end of the straight run A), bend B the column left of the last plane (the second mitre and the
+beginning of the straight run B, which runs along f). The blocks of every piece come from sampling the plan on a 16 x 16 grid per
+block; the pieces of a run of any n partition the console exactly (`thePiecesPartitionARunOfAnyLength...`, n = 0 to 3). A is never
+mirror-symmetric to B (the cut planes are x = const, so bend B holds a stub of straight run B along f where bend A holds one along x), which
+is why they are two items. **The origins of consecutive pieces are exactly one chain step apart** (bend A (0, 0); unit k at k steps; bend
+B at n + 1 steps), so a piece placed against the open end of another lands in line.
 
-**Tall panels (benchboard): not built.** The benchboard group is a staircase: each row is one block down and one block toward the
-operator, so its face is 45 degrees. A 45 degree *diagonal* run of the staircase would need each row to step 1 m along the
-diagonal normal, which is not a block-grid step: the grid steps (1, 1), 1.414 m, so a diagonal row stack can only be a 35 degree
-face (that is exactly the existing `CHAMFER_BENCH` normal), whose junction with the 45 degree straight runs would be a visible
-crease, or a single row (one block high) at 45 degrees. The existing `control_panel_corner_bench_*` blocks stay as they are (old
-saves use them). The same mechanism as the desk corners (a profile swept along mitred sections, models sliced per block, one
-face per unit) would build either; the choice between a 35 degree stack and a one-row 45 degree piece is the owner's.
+**Hand.** The mirror image of the whole plan (x to the operator's left) is the other hand: block state `mirror`; models are the exact
+mirror (`..._m.obj`). One item serves both hands and the four facings (the block state has `facing`, `mirror`, `part`, `finish`):
+the item reads the hand from what it is placed against, and when it is placed free standing it faces the placer and sneaking
+mirrors it. The face frames of a mirrored piece have their columns reversed along the diagonal, so a face reads to the operator's right
+exactly as on an unmirrored piece (a test compares the handedness of every frame with the straight panel's: no mirrored pictures).
+
+**Placing snaps** (`AngledRunItem.updatePlacementContext`, `AngledRunBlock.resolve`): a unit (or bend) placed against *any block* of a
+piece of the same family and kind goes to that piece's open end (exactly one chain step along) with the facing and hand of that piece,
+whichever block was clicked (a unit has two ends and goes to the one nearer the click). A bend placed against a straight desk (or
+benchboard) takes its facing from the straight run: bend A's facing is the desk's, bend B's follows from the second leg's, the hand from
+which side of the end block is free (or nearer the click). The first of those that fits wins; the whole piece is placed or nothing.
+Breaking any block removes that piece alone with one drop (the origin's loot) and releases its parts; the neighbouring pieces stay.
+A piece that loses a block another way falls apart. The finish (wrench) paints the piece.
+
+**Faces.** Only a unit has faces, one 16-column face per layer of the family (below), each **its own panel group of one block**
+(`PanelType.DESK_RUN`, `RUN_BENCH`, `RUN_VERTICAL`, `RUN_HEADER`: `hasRows` and `hasColumns` false): a unit is 1.414 m long and a face
+1.0 m wide, 0.41 m of plain surface between neighbours, and cells must stay square. The block that holds the middle of a face (its
+**core**) is a panel block with the usual block entity, claims and saves; the other blocks are body only (no entity, no cells), like the
+duplex board's body cells. A click on any block finds the face the view ray lands on (`AngledRunBlock.faceEntity`, reached through the
+same `DeskCornerBlock.faceEntity` every call site already used: the faces reach into the blocks of the pieces beside the unit, so the
+unit and the two neighbours are looked at, the nearest hit on a face wins, a hit on a face itself before one within half a cell of an
+edge). The faces of the four layers of a tall unit have their middles in four different blocks (checked: no two share a block). A
+frame (`AngledRunGeometry.faceFrame`, picked by `PanelGeometry.frame(be)`) is given in the local frame of the core.
+
+### 14.3 The desk run
+
+Family `DESK`: the profile of `control_panel_desk` (0.75 deep, the top 0.75 up, the overhang, the riser and the shelf, the knee front),
+one block layer, the level top of each unit a 16 x 10 face turned 45 degrees (1.0 m x 0.625 m, as a straight desk). PHI 6/16 inside,
+5/16 outside. Pieces of 2 (bend A), 3 (unit) and 2 (bend B) blocks. The 2 x 2 single corner keeps its own model files.
+
+### 14.4 The tall panel run: a true 45 degree angled section
+
+**What "tall panel" is.** The benchboard run as it stands in a control room is the bench (the 45 degree `control_panel_benchboard` wedge
+at the floor), two vertical boards above it and the header strip, which leans back 5 degrees (`FurnitureClientCheck`, the owner's
+reference pictures `5.png`, `6.webp`). Family `TALL` is exactly that profile, four layers high: layer 0 the bench wedge (the exact
+`BENCH_PROFILE` of the trim builder, toe-kick and all), layers 1 and 2 vertical boards (0.25 deep, face at 0.25), layer 3 the header
+(0.25 deep at its foot, leaning back 5 degrees). Fixed at that height: a taller or shorter run is built with the straight blocks, the
+angled section is the four rows of the owner's panel. (**Interpretation to confirm:** the first cut's analysis spoke of a *staircase* of
+benchboard blocks; the owner's own panels are bench + boards, and the references show that, so the section is built to match. A stack of 45
+degree wedge rows stepping forward would be another family of the same machinery.)
+
+**Why it is a true 45 degree section and not a 35 degree one.** The first cut concluded that a diagonal staircase of blocks cannot give
+the face angle of a straight run, because each block row would have to step a whole block. A multiblock whose rows are placed freely in
+block space has no such constraint: the profile is **swept along the diagonal** exactly as the desk's, so every layer's face angle is that of
+the straight panel (bench 45 degrees, boards 90, header 85: `everyUnitFaceLiesOnItsProfileAtTheRightAngle...` compares the normal, the cell
+shape and the handedness of every face with the straight `BENCHBOARD`, `VERTICAL` and `HEADER_TILT` frames, for both hands and all four
+facings) and the sections meet the straight runs at the mitre with **flat sides and no lip**: bend A's end and bend B's end are the plain
+profile caps of the straight run, plane to plane (the `control_panel_corner_bench_*` blocks stay as they are, old saves use them). Each face
+of a unit is its own group, owned by the block that contains the face's middle; the rows are not on the block grid (the faces of the three
+upper layers reach 0.07 m into the neighbouring pieces, the bench's up to 0.2 m), which is why a face is addressed through its core block.
+
+Hard 90 degree inside corner of two tall runs (`6.webp`): the section fills it, with a triangular void between the two walls and the
+diagonal back (the room stage of the client check shows it). PHI 8/16 inside, 1/16 outside. Pieces: bend A 5 blocks inside (8 outside),
+unit 9, bend B 8 inside (5 outside), at most 10 blocks per piece (the `part` property is 0..9).
+
+### 14.5 Models, shapes, recipes, tests
+
+* **Models** (`art/models/control_desk/build_angled_runs.py`, Blender, headless, procedural; `tools-export-angled-runs.py` writes the JSON): the
+  profile of each family swept along mitred sections, sliced into the cubes of each piece (x, f **and y**), a model per part and per hand
+  (128 OBJ files, `run_<fam>_<kind>_<role>_<part>[_m]`), caps only at the two real ends; polygons of five or more corners are split
+  (the game's OBJ loader drops them). The script asserts that units 1, 2 and 3 slice identically and that every face lattice lies on its
+  surface. Blender previews: `art/models/control_desk/previews/desk-run-*` and `tall-run-*` (built piece by piece, three units; `-pieces`
+  tints bend A, units and bend B).
+* **Shapes**: stepped per 1/16 cell from the same profile and built lazily (`AngledRunGeometry.shape`); the header's box is the whole block
+  (up to 0.09 m proud of its lean at the top), the bench's wedge is cut at the back of each cell.
+* **Recipes**: grid recipes (not Fabrication Desk ones: `FabricationDeskTests` pins the desk at 42 recipes), shapeless, each with a Mekanism
+  twin (an iron ingot is two steel ingots, a nugget one steel nugget): desk bend A inside = desk + nugget (outside: two nuggets), bend B = desk
+  + ingot (outside: + a nugget), unit = two desks + nugget (outside: two nuggets); tall pieces the same with a benchboard and one (bends) or three
+  (unit) vertical boards in place of the desks (`tools-write-angled-run-recipes.py`).
+* **Tests**: `DeskCornerTests` (the single corner) and `AngledRunTests` (namespace `bwrcorner`): the plan and the partition, the frames, the
+  shapes, the models of every part in both hands, placing every piece for every facing and hand, refusal, building a run by clicking (bend A
+  against a straight run, units against the open end, a fourth unit, bend B), the facing and hand taken from straight runs, free-standing
+  placement, breaking (one piece, one drop, the finish, the parts), mounting through a real block ray cast on every face of every unit (found
+  through the block under the crosshair) and the real `Place` and `Operate` handlers, wiring, groups, finishes, saves, registration. The
+  panel client check has the stages `angled-run-*` (`-PbwrPanelClientStages=angled-run`): the desk and the tall run, inside and outside,
+  piece by piece and close to a face, and a room corner filled by the angled tall panel; the client's own aiming finds the dial at the
+  middle of the face.

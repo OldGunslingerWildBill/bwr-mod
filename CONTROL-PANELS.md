@@ -467,8 +467,10 @@ same 16 columns as the top. Mount the indicators you want up high on a vertical 
 | --- | --- | --- | --- |
 | Control Panel (Desk, 1 m) | `bwr:control_panel_desk` | 1 x 1 x 1, one block | `DESK` |
 | Control Panel (Desk, 2 m) | `bwr:control_panel_desk_wide` | 2 x 1 x 1, two blocks | `DESK`, both blocks |
-| Control Panel (Desk, Inside Corner) | `bwr:control_panel_desk_corner_inside` | 2 x 1 x 2, four blocks | `DESK_CORNER_INSIDE`, the core block |
-| Control Panel (Desk, Outside Corner) | `bwr:control_panel_desk_corner_outside` | 2 x 1 x 2, four blocks | `DESK_CORNER_OUTSIDE`, the core block |
+| Control Panel (Desk, 45 Degree Single Corner, Inside) | `bwr:control_panel_desk_corner_inside` | 2 x 1 x 2, four blocks | `DESK_CORNER_INSIDE`, the core block |
+| Control Panel (Desk, 45 Degree Single Corner, Outside) | `bwr:control_panel_desk_corner_outside` | 2 x 1 x 2, four blocks | `DESK_CORNER_OUTSIDE`, the core block |
+| Control Panel (Desk, 45 Degree Run, Inside / Outside Bend A, Unit, Bend B) | `bwr:control_panel_desk_run_<inside\|outside>_<bend_a\|unit\|bend_b>` | 2 / 3 / 2 blocks each | `DESK_RUN`, the core of each unit |
+| Control Panel (Tall Panel, 45 Degree Run, Inside / Outside Bend A, Unit, Bend B) | `bwr:control_panel_tall_run_<inside\|outside>_<bend_a\|unit\|bend_b>` | 5 / 9 / 8 (inside), 8 / 9 / 5 (outside), 4 blocks high | `RUN_BENCH`, `RUN_VERTICAL`, `RUN_HEADER`: four cores per unit |
 
 * **Joining.** Desks of the `DESK` style and one facing join sideways, to the operator's right and left, into one face: a 1 m desk,
   a 2 m desk and another 1 m desk are one run 64 cells wide, and a part can span the seams. A desk is a single row (nothing joins in
@@ -487,31 +489,39 @@ same 16 columns as the top. Mount the indicators you want up high on a vertical 
   cells, in the same place (`ControlDeskTests.aDeskSavedBeforeTheOverhangLoadsWithEveryPartWhereItWas` loads a 1 m and a 2 m desk saved in
   the old form). No block, state or saved value changed.
 
-### 45 degree desk corners (inside and outside)
+### 45 degree corners and runs
 
-Two corner pieces turn a run of desks through two 45 degree bends, so a U-shaped console reads as one piece with chamfered corners,
-like a real control room. Each is **four blocks, placed by one item** (2 x 2, with the footprint going to the operator's left from
-the block you click and, for an inside corner, toward the operator, for an outside one, away from the operator). If any block is
-in the way nothing is placed. Break any block and the whole corner goes with one drop, and every part mounted on it drops.
+**The single corner** (`control_panel_desk_corner_inside` and `_outside`) is the one-item way to turn a desk run through two 45 degree bends:
+four blocks, placed by one item (2 x 2, the footprint going to the operator's left from the block you click and, for an inside corner,
+toward the operator, for an outside one, away). Inside: the console wraps around the operator (the U); outside: it wraps away. The
+straight run joins at the edge of the footprint with no seam. Its angled top is one 16 x 10 face (1.0 m x 0.625 m turned 45 degrees), its own
+group (it does not merge with the desks, and a part cannot span from a desk onto it). Three 1 m desks and an iron ingot make an inside
+corner, an outside corner takes a nugget as well (two steel ingots, and two steel nuggets, with Mekanism). If any block is in the way,
+nothing is placed; break any block and the whole corner goes with one drop.
 
-* **Inside corner**: the console wraps around the operator (the U). Place it at the end of a desk run, looking at the run, and
-  continue with desks turned 90 degrees at the far side of the footprint. **Outside corner**: the console wraps away from the
-  operator. The straight run joins the corner at the edge of its footprint with no seam; the four directions you can look give
-  all four orientations, left and right corners both.
-* **The angled section carries parts.** Its level top is a 16 x 10 cell face like a desk's (1.0 m wide, 0.625 m deep) turned 45
-  degrees: right-click it with a part to place one, aim at it, operate it, wire it with the linker or the Networking Wrench and move
-  signals to and from it like on any desk. Aim at any block of the corner: the face reaches into the other blocks and a click on
-  any of them finds it. The face is **its own group**: it does not merge its cells with the desks on either side, and a part
-  cannot span from a desk onto the corner (the short stubs at each end of the corner, 0.5 m, take no parts).
-* **Finish and recipes.** Same finishes as the desks (the wrench paints all four blocks together). Three 1 m desks and an iron ingot
-  make an inside corner; an outside corner takes an iron nugget as well. With Mekanism: two steel ingots instead of the iron ingot,
-  and two steel nuggets for the outside corner. They are grid recipes.
-* **Longer runs.** The corner comes in lengths 1 to 4 (`..._2`, `..._3`, `..._4` in the name; length 1 is the plain name): that many 1.414 m
-  angled units between the two bends, a 3-block-long 45 degree desk being the `_3` item (10 blocks, one item, placed whole). **Every unit has its own
-  face**, each its own group (the pitch of a diagonal is not a multiple of the 16 cells of a metre), so a part cannot span from one unit to the
-  next; 1.414 m apart, 0.41 m of plain top between. Aim at any block: the click finds the face the ray lands on. Recipes: length + 2 desks, an
-  iron ingot (two steel ingots with Mekanism), and for an outside corner a nugget.
-* The benchboard has its own 45 degree pieces (the corner pieces under "Trim blocks").
+**Runs built one piece at a time.** For a longer 45 degree section, or a tall panel, build the run from pieces: **bend A**, any number of
+**units**, **bend B**. Each piece has an inside and an outside item (the console wraps around the operator, or away), and there are two
+families, the **desk** and the **tall panel** (the bench, two vertical boards and the leaning header strip, four blocks high).
+
+* **How to build.** Place bend A against the end of a straight desk (or benchboard) run: it takes the run's facing, and the hand from the side
+  of the end block that is free. Then right-click any block of it with a unit: the unit snaps to its open end, exactly in line, with the same
+  facing and hand; another unit against that one, and so on, one at a time. Finish with bend B against the last unit and continue with the straight
+  blocks of the second run (they turn 90 degrees from the first). Bend A is the bend whose straight run arrives along the console's length; bend
+  B is the one for the second run, which leaves across it. Either end can start: bend B placed against a straight run takes its facing from it too.
+  A piece placed on its own faces you; sneak and it is the mirror image (the other hand). Whole or not at all: if any block is in the way,
+  nothing is placed. Breaking any block of a piece removes that piece with one drop and its parts; the rest of the run stays.
+* **Every unit carries parts.** A desk unit has one 16 x 10 face (the level top, turned 45 degrees); a tall panel unit has four 16 x 16 faces,
+  one per row (the bench's 45 degree face, two vertical boards and the header, which leans back 5 degrees), at **the same angles as the straight
+  panel**, with the faces of the rows stacked on one line. Right-click with a part to place it, aim at it, operate it, wire it with the linker
+  or the Networking Wrench, like on any panel; aim at any block of the run and the click finds the face under the crosshair. **Each face is its own
+  group** (a unit is 1.414 m long, a face 1.0 m wide: 0.41 m of plain surface between, and a part cannot span from one face to the next); the
+  bends carry no parts.
+* **Flat sides.** A tall panel run meets the straight benchboard run at the mitre with the plain profile of the straight panel, no lip; the older
+  `control_panel_corner_bench_*` blocks are unchanged. A hard 90 degree inside corner of two tall runs is filled by the angled section.
+* **Finish and recipes.** The wrench paints a whole piece. Grid recipes, each with a Mekanism twin: a desk bend A is a desk and a nugget, bend B
+  a desk and an iron ingot, a unit two desks and a nugget (the outside piece takes an extra nugget); the tall pieces take a benchboard and one
+  vertical board (bends) or three (unit) in place of the desks. Full table under "Control-room recipes" below.
+* The benchboard also has its older corner pieces (the corner pieces under "Trim blocks").
 
 ### Control-room recipes
 
@@ -543,6 +553,13 @@ dependencies; `ControlRoomRecipeTests` checks each desk and each of these pieces
 | Plinth: kick / apron / base | 3 ingots in a row / ingot, board, ingot in a row / ingot, board, ingot in a column | 6 / 2 / 2 | 0.5 / 2 / 2 |
 | Corner, vertical: inside / outside / chamfer | 2 boards / board + ingot / 2 boards + nugget (shapeless) | 2 | 2 / 1.5 / 2 |
 | Corner, bench: inside / outside / chamfer | 2 benchboards / benchboard + ingot / 2 benchboards + nugget (shapeless) | 2 | 6 / 3.5 / 6 |
+| 45 degree single corner: inside / outside | 3 desks + iron ingot / + iron ingot and nugget (shapeless) | 1 | 28 / 28.1 |
+| Desk run, bend A: inside / outside | desk + nugget / + 2 nuggets (shapeless) | 1 | 9.1 / 9.2 |
+| Desk run, bend B: inside / outside | desk + iron ingot / + ingot and nugget (shapeless) | 1 | 10 / 10.1 |
+| Desk run, unit: inside / outside | 2 desks + nugget / + 2 nuggets (shapeless) | 1 | 18.1 / 18.2 |
+| Tall run, bend A: inside / outside | benchboard + vertical board + nugget / + 2 nuggets (shapeless) | 1 | 8.1 / 8.2 |
+| Tall run, bend B: inside / outside | benchboard + vertical board + iron ingot / + ingot and nugget (shapeless) | 1 | 9 / 9.1 |
+| Tall run, unit: inside / outside | benchboard + 3 vertical boards + nugget / + 2 nuggets (shapeless) | 1 | 12.1 / 12.2 |
 | Operator desk | 5 iron ingots and a stick (three over iron, stick, iron; the plain three-over-two-legs shape is the vanilla iron helmet) | 2 | 2.5 |
 | Operator desk: round end / L corner | operator desk + iron nugget / + iron ingot (shapeless) | 1 | 2.6 / 3.5 |
 | **Supervisor desk** | 2 operator desks over 2 iron ingots | 1 | 7 (two blocks) |
