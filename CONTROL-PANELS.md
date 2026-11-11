@@ -182,7 +182,7 @@ chart, the nameplates and the mimic pieces are unchanged.
 | Lamp | 30.5 mm indicating light, 1.1 to 1.7 in (2.8 to 4.3 cm) | model README (pushbuttons, oiltight) | 1x1; **2x2** |
 | RPS trip assembly | the owner's CAD, 4.8 x 2.44 in (12.2 x 6.2 cm) | NEW-HARDWARE-SPEC.md | 2x1; **4x2** |
 | Push-to-turn switch | the owner's CAD, 2.3 x 2.2 in (5.8 x 5.6 cm) | NEW-HARDWARE-SPEC.md | 1x1 (retired); 2x2; the default is now **4x4** |
-| Annunciator window | tile 2.8125 x 2.625 in (7.1 x 6.7 cm); a double size window | CR-PANELS-BWR-RESEARCH.md; the double size is not real | 1x1, **2x2** |
+| Annunciator window | tile 2.8125 x 2.625 in (7.1 x 6.7 cm); a double size window | CR-PANELS-BWR-RESEARCH.md; the double size is not real. (This nearly square tile is not the 4 : 3 tile of Columbia's boxes: see "Columbia style", whose proportions come from photographs and whose real size is not known) | 1x1, **2x2** |
 | 7- and 16-segment display | a 4 digit panel meter window; each digit is made 1 x 2 cells (6 x 12.5 cm), larger than a real LED digit (about 1 x 1.4 cm) because a cell is the smallest step | estimate | 4x2 (4 digits), 1x2, 2x2, 3x2, 6x2, 8x2; **8x4** (4 digits) |
 | Thumbwheel | a real digit is under 1 cm wide; each digit is made 1 x 2 cells | estimate | 3x2 (3 digits), 1x2, 2x2, 4x2, 5x2, 6x2, 8x2; **6x4** (3 digits) |
 | Bar graph | an LED bar column or row, one cell thick | estimate | 1x3, 3x1, 1x6, 6x1; **2x6** |
