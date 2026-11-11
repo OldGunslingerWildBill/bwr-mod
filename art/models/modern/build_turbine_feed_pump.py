@@ -49,7 +49,7 @@ LPBLUE = paint('feed pump pedestal blue', (.24, .32, .40))
 # ---------------------------------------------------------------- build
 AY, AZ = 1.10, 1.50      # shaft centreline
 PAD, TOP = .12, .30      # concrete pad top, bedplate top
-PX = 2.50                # pump casing centre
+PX = 2.90                # pump casing centre
 
 
 def rounded_rect(axis_y, x0, x1, z0, z1, n=16):
@@ -130,9 +130,10 @@ def small_valve(s, name, c, flow, r, mat):
 
 def build():
     s = new_scene('BWR | turbine feed pump')
-    # ---- foundation: one concrete pad, separate bedplates for the pump and the turbine
+    # ---- foundation: one concrete pad; pedestal rails for the pump (the suction runs between them), a turbine bedplate
     box(s, 'concrete foundation pad', (.05, 0, .10), (8.95, PAD, 2.90), CONC)
-    bedplate(s, 'pump bedplate', 1.22, 4.44, .55, 2.45, BASEP, 4)
+    bedplate(s, 'pump bedplate north rail', 1.22, 4.44, .55, 1.20, BASEP, 3)
+    bedplate(s, 'pump bedplate south rail', 1.22, 4.44, 1.80, 2.45, BASEP, 3)
     bedplate(s, 'turbine bedplate', 4.52, 8.93, .42, 2.58, BASEP, 5)
 
     # ================= feed pump: horizontal, single-stage, double-suction, radially split, centreline mounted
@@ -148,34 +149,39 @@ def build():
         for z in (AZ - .26, AZ + .26):
             obox(s, 'bearing bracket arm', (x + sg * .07, AY, z), (x + sg * .44, AY, z), .05, .16, (0, 1, 0), LPBLUE)
         centreline_feet(s, PX + sg * .42, AY, AZ, .55, TOP, LPBLUE, .26)
-    cylinder(s, 'pump shaft', (1.40, AY, AZ), (3.74, AY, AZ), .07, SHAFT, 10)
-    bearing(s, 'pump thrust bearing housing', 1.30, 1.66, .25, FPUMP, cap=1.24)
-    bearing(s, 'pump inboard bearing housing', 3.34, 3.62, .23, FPUMP)
-    # Twin top nozzles side by side across the shaft: suction (south) splits to both sides of the impeller, discharge (north).
-    ZS, ZD, NY = AZ + .40, AZ - .40, 1.92
-    loft(s, 'suction nozzle and branch', rounded_rect(AY + .30, PX - .55, PX + .55, AZ + .16, AZ + .60), circle((PX, NY, ZS), .27), FPUMP)
-    frustum(s, 'discharge nozzle', (PX, AY + .42, ZD + .02), (PX, NY, ZD), .30, .24, FPUMP, 16)
-    for z, role, px in ((ZS, 'water_suction', 1.5), (ZD, 'water_discharge', 3.5)):
-        flange_ring(s, 'pump nozzle flange', (PX, NY + .03, z), (0, 1, 0), .345, .2, .06, FPUMP, 8, .30)
-        sleeve(s, 'spool flange', (PX, NY + .06, z), (PX, NY + .12, z), .345, .2, WPIPE, 14)
-        pipe(s, role + ' spool', [(PX, NY + .12, z), (PX, NY + .26, z), (px, 2.50, AZ), (px, 2.66, AZ)], .235, WPIPE, 12)
-        modern_port(s, role, [int(px), 2, 1], 'up', (px, 2.64, AZ))
-    gauge(s, (1.5, 2.56, AZ + .34), (0, 0, 1), .07, stem=(1.5, 2.56, AZ + .2))
+    cylinder(s, 'pump shaft', (1.80, AY, AZ), (4.06, AY, AZ), .07, SHAFT, 10)
+    bearing(s, 'pump thrust bearing housing', 1.80, 2.04, .25, FPUMP, cap=1.75)
+    bearing(s, 'pump inboard bearing housing', 3.76, 4.00, .23, FPUMP)
+    # Nozzles on the casing centre plane, opposite each other as in the reference cross sections: discharge on top,
+    # inlet underneath, where the inlet branch spreads to feed both sides of the impeller.
+    NY = 1.92
+    frustum(s, 'discharge nozzle', (PX, AY + .45, AZ), (PX, NY, AZ), .31, .24, FPUMP, 16)
+    flange_ring(s, 'pump nozzle flange', (PX, NY + .03, AZ), (0, 1, 0), .345, .2, .06, FPUMP, 8, .30)
+    sleeve(s, 'spool flange', (PX, NY + .06, AZ), (PX, NY + .12, AZ), .345, .2, WPIPE, 14)
+    pipe(s, 'water_discharge spool', [(PX, NY + .12, AZ), (PX, NY + .24, AZ), (3.5, 2.48, AZ), (3.5, 2.66, AZ)], .235, WPIPE, 12)
+    modern_port(s, 'water_discharge', [3, 2, 1], 'up', (3.5, 2.64, AZ))
+    loft(s, 'inlet nozzle and branch', rounded_rect(AY - .30, PX - .55, PX + .55, AZ - .34, AZ + .34), circle((PX, .34, AZ), .27), FPUMP)
+    # The suction line drops from its flange, turns under the thrust bearing and runs between the pedestal rails.
+    pipe(s, 'water_suction spool', [(1.5, 2.66, AZ), (1.5, .37, AZ), (PX - .30, .37, AZ)], .22, WPIPE, 12)
+    sleeve(s, 'suction spool flange', (1.5, 1.50, AZ), (1.5, 1.62, AZ), .33, .2, WPIPE, 14)
+    bolt_circle(s, (1.5, 1.62, AZ), (0, 1, 0), .285, 8, .04, .026)
+    modern_port(s, 'water_suction', [1, 2, 1], 'up', (1.5, 2.64, AZ))
+    gauge(s, (1.5, 2.20, AZ - .33), (0, 0, -1), .07, stem=(1.5, 2.20, AZ - .2))
     gauge(s, (3.5, 2.56, AZ - .34), (0, 0, -1), .07, stem=(3.5, 2.56, AZ - .2))
-    cylinder(s, 'casing vent', (PX, AY + R - .02, AZ), (PX, AY + R + .12, AZ), .025, STEEL, 8)
-    cylinder(s, 'casing vent valve', (PX, AY + R + .12, AZ), (PX, AY + R + .17, AZ), .045, HAND, 8)
+    cylinder(s, 'casing vent', (PX - .40, AY + .52, AZ), (PX - .40, AY + .70, AZ), .025, STEEL, 8)
+    cylinder(s, 'casing vent valve', (PX - .40, AY + .70, AZ), (PX - .40, AY + .75, AZ), .045, HAND, 8)
     plate(s, 'feed pump nameplate', (PX, AY - .05, AZ - R - .016), (0, 0, -1), (0, 1, 0), .30, .15, PLATE['feedpump'])
     # Minimum-flow recirculation: a small branch off the discharge spool with its valve, down through the floor.
-    pipe(s, 'minimum flow line', [(3.24, 2.34, AZ - .18), (3.24, 2.34, .78), (3.24, 1.30, .78)], .06, WPIPE, 10)
-    small_valve(s, 'minimum flow valve', (3.24, 1.20, .78), (0, 1, 0), .10, VALVE)
-    cylinder(s, 'minimum flow valve operator', (3.24, 1.22, .68), (3.24, 1.22, .50), .075, ACT, 12)
-    pipe(s, 'minimum flow line to condenser', [(3.24, 1.10, .78), (3.24, PAD, .78)], .06, WPIPE, 10)
+    pipe(s, 'minimum flow line', [(3.5, 2.48, AZ - .18), (3.5, 2.48, .58), (3.5, 1.30, .58)], .06, WPIPE, 10)
+    small_valve(s, 'minimum flow valve', (3.5, 1.20, .58), (0, 1, 0), .10, VALVE)
+    cylinder(s, 'minimum flow valve operator', (3.5, 1.22, .48), (3.5, 1.22, .30), .075, ACT, 12)
+    pipe(s, 'minimum flow line to condenser', [(3.5, 1.10, .58), (3.5, TOP, .58)], .06, WPIPE, 10)
     # Seal water injection to both shaft seals.
     for x in (PX - .72, PX + .72):
         pipe(s, 'seal injection tubing', [(x, AY + .20, AZ - .05), (x, AY + .34, AZ - .05), (x, AY + .34, .70), (x, TOP, .70)], .016, STEEL, 4)
 
     # ================= coupling
-    coupling(s, 3.70, 4.52, AY, AZ, .30, TOP)
+    coupling(s, 4.02, 4.52, AY, AZ, .30, TOP)
 
     # ================= turbine: multistage condensing, steam flows west to east, exhaust hood at the east end
     # front standard (thrust bearing, overspeed trip, speed pickup) between the coupling and the inlet end
@@ -289,7 +295,7 @@ def build():
     cylinder(s, 'reservoir vent', (.80, .83, 2.34), (.80, 1.0, 2.34), .04, BOLTM, 8)
     # supply header along the north side with risers to the four bearings
     pipe(s, 'oil supply header', [(.60, .83, .70), (.60, .95, .70), (.60, .95, .40), (.60, .42, .40), (8.49, .42, .40)], .028, OIL, 6)
-    for x in (1.48, 3.48, 4.78, 8.49):
+    for x in (1.92, 3.88, 4.78, 8.49):
         pipe(s, 'bearing oil riser', [(x, .42, .40), (x, AY - .10, .40), (x, AY - .10, AZ - .2)], .022, OIL, 4)
     # local gauge board beside the coupling
     box(s, 'gauge board post', (4.07, PAD, .30), (4.13, 1.22, .36), TURBD)
