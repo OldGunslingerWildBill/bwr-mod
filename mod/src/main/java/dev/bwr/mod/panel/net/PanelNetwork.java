@@ -35,6 +35,10 @@ public final class PanelNetwork {
         registrar.playToServer(PanelPayloads.LinkerOpen.TYPE, PanelPayloads.LinkerOpen.STREAM_CODEC,
                 PanelNetwork::handleLinkerOpen);
         registrar.playToServer(PanelPayloads.Bind.TYPE, PanelPayloads.Bind.STREAM_CODEC, PanelNetwork::handleBind);
+        registrar.playToServer(PanelPayloads.BoxListOpen.TYPE, PanelPayloads.BoxListOpen.STREAM_CODEC,
+                PanelNetwork::handleBoxListOpen);
+        registrar.playToClient(PanelPayloads.BoxNames.TYPE, PanelPayloads.BoxNames.STREAM_CODEC,
+                PanelNetwork::handleBoxNames);
         registrar.playToClient(PanelPayloads.LinkerScreen.TYPE, PanelPayloads.LinkerScreen.STREAM_CODEC,
                 PanelNetwork::handleLinkerScreen);
         registrar.playToClient(PanelPayloads.State.TYPE, PanelPayloads.State.STREAM_CODEC, PanelNetwork::handleState);
@@ -109,6 +113,18 @@ public final class PanelNetwork {
         }
     }
 
+    /** The box list screen asks for the names of the machines its box reads; a refusal is simply no answer. */
+    private static void handleBoxListOpen(PanelPayloads.BoxListOpen payload, IPayloadContext context) {
+        if (context.player() instanceof ServerPlayer sender
+                && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPEN_SCREEN)) {
+            PanelPayloads.BoxNames reply = dev.bwr.mod.panel.wiring.AnnunciatorBoxRows.names(sender, payload.pos(), payload.id(),
+                    PanelPayloads.MAX_BOX_DEVICES);
+            if (reply != null) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sender, reply);
+            }
+        }
+    }
+
     /** Public so the GameTests can drive the real handler with a decoded payload. */
     public static void handleBind(PanelPayloads.Bind payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender) {
@@ -124,6 +140,10 @@ public final class PanelNetwork {
 
     private static void handleLinkerScreen(PanelPayloads.LinkerScreen payload, IPayloadContext context) {
         dev.bwr.mod.panel.client.PanelClientHooks.openBind(payload);
+    }
+
+    private static void handleBoxNames(PanelPayloads.BoxNames payload, IPayloadContext context) {
+        dev.bwr.mod.panel.client.PanelClientHooks.boxNames(payload);
     }
 
     private static PanelBlockEntity panelAt(IPayloadContext context, BlockPos pos) {

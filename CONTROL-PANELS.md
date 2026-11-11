@@ -241,6 +241,25 @@ attenuation (16 blocks), placed among the group's blocks that hold a sounding wi
 window of the group is sounding: acknowledged, silenced, the panel unloaded or broken, or the level left. The sound
 file is the one exception among the placeholder control-room sounds (SOUND-CREDITS.md, *Annunciator horn*).
 
+**Box list.** The wrench screen of an annunciator window has a third button beside Done and Cancel, **Box list**, which
+opens one read-only screen for the whole box the window is in (the windows joined into one box, in any style, classic
+included; a window by itself is a box of one). It leaves the wrench screen as Cancel does. The heading is the box's name
+when a window carries one, with the counts *lights, wired, not wired, in alarm*. Each light takes two lines: its number as
+the box prints it (row-column, `3-2`), a swatch of its lens colour, its legend on one line and what it shows (*off*,
+*ALARM*, *acknowledged*, or *no signal* for a light that is off and has no input value); under them its light address
+or *none*, what its input is wired to, and its trigger (*below -129*). The source reads as in the wrench screen
+(*Plant level @ x, y, z*, *Redstone (back face)*, *Component output LP-1*, a constant), except *Computer* for a CC source,
+*not wired* for none, and a machine by name (*MSIV A - position*) once the server has answered. **Show** filters the list:
+*All*, *Not wired*, *In alarm* (every lit light, flashing or acknowledged, which is also what the count counts) and
+*Computer-driven*. The list scrolls; clicking a light opens that light's wrench screen. Everything is read from the panels
+the client already holds, again every half second, so settings, wiring and state are live; only the machine names are a
+snapshot, asked of the server once when the screen opens, and the screen says so. A box of more than 512 lights lists its
+first 512. For the names the server applies the wrench screen's rule to the window the list was opened from (allowed to
+edit, the Panel Wrench in hand, the panel block within reach, loaded and permitted), looks at the box's other windows
+only in blocks you are permitted for, names a machine only when it is loaded (it loads nothing) and permitted for you,
+and names at most 128 machines; a refusal is no answer, and the list then shows plant signals by position. (The network
+protocol version went from 27 to 28 for the request and its reply, `panel_box_list_open` and `panel_box_names`.)
+
 **Columbia style (the tile box).** An annunciator window has a **Style** in the wrench screen: *Classic (simple)*, the
 procedural look described above and the default, or *Columbia tile box (model)*, after the annunciator boxes of Columbia
 Generating Station's P800 boards (boxes "ANN PANEL P800-C5" and "P800-C1" in two owner-supplied photographs, which are not in
