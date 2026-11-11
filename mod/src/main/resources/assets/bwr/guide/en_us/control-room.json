@@ -132,7 +132,7 @@
       "text": [
         "An annunciator window flashes until you acknowledge it, then holds steady until its condition clears, then goes out. Bind its condition input to a signal and set its alarm test (input above a setpoint, for example) in its wrench screen. Windows that touch along a side draw as one box.",
         "",
-        "Add an Annunciator Control Module for ACK, RESET, SILENCE and TEST. ACK and RESET act on every window in the module's group, and TEST lights every window while you hold it. An annunciator only displays: it never commands the plant."
+        "Add an Annunciator Control Module for ACK, RESET, SILENCE and TEST. ACK and RESET act on every window in the module's group, SILENCE stops the horn a new alarm sounds, and TEST lights every window while you hold it. An annunciator only displays: it never commands the plant."
       ],
       "icons": [
         "bwr:annunciator",

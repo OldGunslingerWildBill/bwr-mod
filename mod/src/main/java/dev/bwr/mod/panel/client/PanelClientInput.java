@@ -121,6 +121,11 @@ public final class PanelClientInput {
             if (claim != null && !minecraft.player.isShiftKeyDown()) {
                 PacketDistributor.sendToServer(new PanelPayloads.LinkerOpen(claim.owner(), claim.id()));
                 event.setSwingHand(true);
+            } else if (claim != null && stack.getItem() instanceof PanelLinkerItem) {
+                // Sneaking with the Panel Linker selects the component instead, to be wired at a plant device: the same
+                // message, which the server reads as a selection because the player is sneaking.
+                PacketDistributor.sendToServer(new PanelPayloads.LinkerOpen(claim.owner(), claim.id()));
+                event.setSwingHand(true);
             } else if (claim == null && !minecraft.player.isShiftKeyDown()) {
                 // No component there: a mimic path under the crosshair is wired like one (its id is -localId).
                 dev.bwr.mod.panel.mimic.MimicPath path = pathUnderCrosshair(minecraft);

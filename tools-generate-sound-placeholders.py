@@ -16,8 +16,10 @@ import tempfile
 import wave
 
 
+# Not here: annunciator_horn. Its file is an audio clip the project owner supplied (SOUND-CREDITS.md "Annunciator horn"), so this
+# generator neither writes nor checks annunciator_horn.ogg; tools-audit-sounds.py audits it apart (OWNER_SUPPLIED).
 EVENTS = (
-    "annunciator_horn", "alarm_acknowledge", "relay_click", "contactor_click",
+    "alarm_acknowledge", "relay_click", "contactor_click",
     "control_switch_detent", "breaker_close", "breaker_trip", "pump_motor",
     "turbine_whine", "steam_flow", "srv_lift", "msiv_slam", "scram_buzzer",
     "edg_start", "edg_run", "geiger_click",

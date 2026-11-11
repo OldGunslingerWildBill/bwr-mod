@@ -16,6 +16,9 @@ package dev.bwr.mod.panel.component;
  *   <li>RESET only affects an acknowledged alarm whose condition has cleared;
  *       it never silences an alarm nobody has acknowledged.</li>
  *   <li>No signal ({@code NaN}) holds the current state.</li>
+ *   <li>The horn: a window is {@linkplain #audible() audible} from the moment it enters a new alarm until it is
+ *       acknowledged or its group is silenced (SILENCE stops the horn and nothing else: the window keeps flashing).
+ *       Only an unacknowledged alarm is ever audible, so a window that is off or steady never sounds.</li>
  * </ul>
  */
 public final class AnnunciatorLogic {
@@ -30,6 +33,7 @@ public final class AnnunciatorLogic {
     private State state = State.NORMAL;
     private boolean condition;
     private boolean manualReset;
+    private boolean audible;
 
     public State state() {
         return state;
@@ -46,6 +50,11 @@ public final class AnnunciatorLogic {
 
     public void setManualReset(boolean manualReset) {
         this.manualReset = manualReset;
+    }
+
+    /** Whether this window is sounding the horn: a new alarm nobody has acknowledged or silenced yet. */
+    public boolean audible() {
+        return audible && state == State.ALARM;
     }
 
     /** What the window shows. */
@@ -81,19 +90,31 @@ public final class AnnunciatorLogic {
         condition = now;
         if (now && state == State.NORMAL) {
             state = State.ALARM;
+            audible = true;
         } else if (!now && state == State.ACKED && !manualReset) {
             state = State.NORMAL;
+        }
+        if (state != State.ALARM) {
+            audible = false;
         }
         return state != before;
     }
 
-    /** ACK pressed. Returns whether the state changed. */
+    /** ACK pressed. Returns whether the state changed. Acknowledging also stops the horn for this window. */
     public boolean acknowledge() {
         if (state != State.ALARM) {
             return false;
         }
         state = condition || manualReset ? State.ACKED : State.NORMAL;
+        audible = false;
         return true;
+    }
+
+    /** SILENCE pressed: stops the horn for this window and leaves the alarm as it is. Returns whether it was sounding. */
+    public boolean silence() {
+        boolean was = audible();
+        audible = false;
+        return was;
     }
 
     /** RESET pressed. Returns whether the state changed. */
@@ -111,9 +132,15 @@ public final class AnnunciatorLogic {
         return state.ordinal();
     }
 
+    /** A state saved before the horn existed: nothing is audible, so an old save loads silent. */
     public void restore(int stateId, boolean condition) {
+        restore(stateId, condition, false);
+    }
+
+    public void restore(int stateId, boolean condition, boolean audible) {
         State[] all = State.values();
         this.state = stateId >= 0 && stateId < all.length ? all[stateId] : State.NORMAL;
         this.condition = condition;
+        this.audible = audible && state == State.ALARM;
     }
 }

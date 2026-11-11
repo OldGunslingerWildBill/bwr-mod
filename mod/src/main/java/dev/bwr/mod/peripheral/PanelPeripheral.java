@@ -7,6 +7,8 @@ import dan200.computercraft.api.peripheral.IPeripheral;
 import dev.bwr.mod.panel.PanelBlockEntity;
 import dev.bwr.mod.panel.PanelBus;
 import dev.bwr.mod.panel.PanelGroup;
+import dev.bwr.mod.panel.component.AnnunciatorData;
+import dev.bwr.mod.panel.component.AnnunciatorGroups;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.PanelDrawTarget;
 import dev.bwr.mod.panel.component.PanelTextTarget;
@@ -15,6 +17,7 @@ import dev.bwr.mod.panel.plant.PlantApi;
 import dev.bwr.mod.panel.plant.PlantState;
 import dev.bwr.mod.panel.plant.PlantTouch;
 import dev.bwr.mod.panel.component.PortSpec;
+import dev.bwr.mod.panel.wiring.AnnunciatorAddresses;
 import dev.bwr.mod.panel.wiring.CcSource;
 import dev.bwr.mod.panel.wiring.PanelWiring;
 import net.minecraft.core.BlockPos;
@@ -35,6 +38,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *   <li>{@code getInputs()}: the current output of every control (switches, knobs) by label and port;</li>
  *   <li>{@code set(label, value)} / {@code setPort(label, port, value)}: the value of a CC-sourced input;</li>
  *   <li>{@code setText(label, text)}: the text of a nameplate or text display;</li>
+ *   <li>annunciator lights by address (the optional five-digit address of a window, 0 to 10000):
+ *       {@code setAlarm(address, on)}, {@code setValue(address, number)}, {@code getAlarm(address)},
+ *       {@code annunciators()}, and {@code acknowledge(group)} / {@code reset(group)} for a group's ACK and RESET;</li>
  *   <li>drawing, for components whose data implements {@link PanelDrawTarget}: {@code getSize, clear,
  *       setPixel, fill, drawText, blit, setPalette, write};</li>
  *   <li>the plant computer calls ({@code plantList}, {@code plantInfo}, {@code plantClear}, {@code plantClearPage},
@@ -304,6 +310,78 @@ public final class PanelPeripheral implements IPeripheral {
             throw new LuaException("Input " + port + " of " + found.component.label() + " is not wired to CC");
         }
         return PanelWiring.setCc(found.owner, found.component, input, value);
+    }
+
+    // ---- annunciator lights by address (the rules are AnnunciatorAddresses', which uses no CC type)
+
+    private interface LightCall<T> {
+        T run();
+    }
+
+    private static <T> T lights(LightCall<T> call) throws LuaException {
+        try {
+            return call.run();
+        } catch (IllegalArgumentException refused) {
+            throw new LuaException(refused.getMessage());
+        }
+    }
+
+    /**
+     * Turns the annunciator light at {@code address} on or off: every window of the group with that address gets 1 or
+     * 0 on its input, as {@code set(label, 1)} would (so a window alarms on 1 with its default condition, above 0.5,
+     * and the alarm then follows the window's own sequence: it flashes and sounds until acknowledged). A window whose
+     * input has no source yet is wired to CC first; one wired to something else is an error naming that source.
+     * Returns how many windows were driven; an address no window has is an error.
+     */
+    @LuaFunction(mainThread = true)
+    public final int setAlarm(int address, boolean on) throws LuaException {
+        return lights(() -> AnnunciatorAddresses.drive(block, address, on ? 1.0 : 0.0));
+    }
+
+    /** As {@code setAlarm}, with any finite number for the window's own condition and setpoint to judge. */
+    @LuaFunction(mainThread = true)
+    public final int setValue(int address, double value) throws LuaException {
+        return lights(() -> AnnunciatorAddresses.drive(block, address, value));
+    }
+
+    /**
+     * What the light at {@code address} shows: {@code "off"}, {@code "alarm"} (a new alarm, flashing) or
+     * {@code "acknowledged"} (steady). Of several windows sharing the address, the most urgent.
+     */
+    @LuaFunction(mainThread = true)
+    public final String getAlarm(int address) throws LuaException {
+        return lights(() -> AnnunciatorAddresses.state(block, address));
+    }
+
+    /**
+     * Every annunciator window of the group: {@code {address, label, legend, color, group, state}}; {@code address} is
+     * absent for a window that has none, {@code legend} is its lines, {@code color} an RGB number.
+     */
+    @LuaFunction(mainThread = true)
+    public final List<Map<String, Object>> annunciators() {
+        return AnnunciatorAddresses.describe(block);
+    }
+
+    /** ACK for annunciator group {@code group} (1 to 8), as the pushbutton does. Returns how many windows changed. */
+    @LuaFunction(mainThread = true)
+    public final int acknowledge(int group) throws LuaException {
+        return AnnunciatorGroups.acknowledge(server(group), block, group);
+    }
+
+    /** RESET for annunciator group {@code group} (1 to 8), as the pushbutton does. Returns how many windows changed. */
+    @LuaFunction(mainThread = true)
+    public final int reset(int group) throws LuaException {
+        return AnnunciatorGroups.reset(server(group), block, group);
+    }
+
+    private ServerLevel server(int group) throws LuaException {
+        if (group < AnnunciatorData.MIN_GROUP || group > AnnunciatorData.MAX_GROUP) {
+            throw new LuaException("group must be " + AnnunciatorData.MIN_GROUP + " to " + AnnunciatorData.MAX_GROUP);
+        }
+        if (!(block.getLevel() instanceof ServerLevel server)) {
+            throw new LuaException("The panel is not loaded");
+        }
+        return server;
     }
 
     /** Sets the text of a nameplate or text display. Returns whether it changed. */

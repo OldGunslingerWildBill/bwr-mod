@@ -47,7 +47,6 @@ events or shared file paths. Subtitles are defined in `assets/bwr/lang/en_us.jso
 
 | Registered event ID | Silent placeholder | Subtitle key |
 | --- | --- | --- |
-| `bwr:annunciator_horn` | `annunciator_horn.ogg` | `subtitle.bwr.annunciator_horn` |
 | `bwr:alarm_acknowledge` | `alarm_acknowledge.ogg` | `subtitle.bwr.alarm_acknowledge` |
 | `bwr:relay_click` | `relay_click.ogg` | `subtitle.bwr.relay_click` |
 | `bwr:contactor_click` | `contactor_click.ogg` | `subtitle.bwr.contactor_click` |
@@ -79,7 +78,7 @@ shown above. `--output-dir <directory>` can target a separate review directory.
 The script launches a separate background Blender with factory settings and
 does not open, modify or save the user's current Blender scene. It generates
 one zero PCM source and checks that the encoded audio decodes to nonempty,
-exact-zero mono PCM before writing the sixteen files.
+exact-zero mono PCM before writing the fifteen files.
 
 To independently regenerate in temporary storage and compare every byte
 without overwriting the checked-in assets:
@@ -89,7 +88,7 @@ python .\tools-generate-sound-placeholders.py --blender 'C:\Program Files (x86)\
 ```
 
 Byte-identical checks require the pinned Blender build and encoder environment.
-A deliberate encoder upgrade must regenerate, decode and audit all sixteen
+A deliberate encoder upgrade must regenerate, decode and audit all fifteen
 files and update this provenance. Ogg stream IDs and checksums are deterministic;
 the source audio contains no randomness or timestamp-dependent samples.
 
@@ -110,6 +109,14 @@ cleanup and any necessary streaming choices. Playback may reflect plant state;
 it must not command or protect the plant. Update this file with the synthesis
 parameters, authoring provenance and applicable licenses when the silence is
 replaced. Do not add unlicensed recordings or samples.
+
+## Annunciator horn (not a placeholder)
+
+`annunciator_horn.ogg` (`bwr:annunciator_horn`, `subtitle.bwr.annunciator_horn`) is the one exception among the control-room events
+above: it is not silent and not generated, so it is not in the table, `tools-generate-sound-placeholders.py` neither writes nor checks
+it, and `tools-audit-sounds.py` audits it apart (`OWNER_SUPPLIED`). The file was converted from an audio clip the project owner supplied
+on 2026-11-11 (`Assets_Audio_CGSPanelAlarm.mp3`); its original source and licence are not recorded, and the owner is to confirm them
+before a public release.
 
 ## The two rumble loops (not silent)
 
