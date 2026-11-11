@@ -15,6 +15,8 @@ REGIONS = {
     'louvre': (128, 64, 192, 128), 'mesh': (192, 64, 256, 128), 'gauge': (128, 128, 192, 192),
     'caution': (192, 128, 256, 160), 'fan_grille': (192, 160, 256, 224), 'sight_glass': (0, 160, 32, 224),
     'conduit_tag': (32, 160, 128, 176), 'boron_placard': (0, 224, 128, 256),
+    'feed_plate': (32, 176, 128, 224), 'screen': (128, 192, 192, 256),
+    'tag_wlp': (192, 224, 256, 240), 'tag_trace': (192, 240, 256, 256),
 }
 
 
@@ -116,6 +118,22 @@ def main():
     for text, yy, size in (('SODIUM PENTABORATE', y0 + 5, 10), ('SOLUTION - KEEP HEATED', y0 + 18, 8)):
         f = font(size)
         d.text((x0 + (128 - d.textlength(text, font=f)) / 2, yy), text, font=f, fill=(15, 15, 15))
+    # Reactor feed pump plate, air-intake screen and two small tags (added with the reference-driven rebuild).
+    plate(d, REGIONS['feed_plate'], [(8, 'REACTOR FEED PUMP'), (7, 'SINGLE STAGE'), (7, 'DOUBLE SUCTION'), (7, 'NON-SAFETY')])
+    x0, y0, x1, y1 = REGIONS['screen']
+    tile = Image.new('RGB', (x1 - x0, y1 - y0), (14, 16, 18))
+    t = ImageDraw.Draw(tile)
+    for i in range(0, 64, 4):
+        t.line((i, 0, i, 63), fill=(104, 110, 114), width=1)
+        t.line((0, i, 63, i), fill=(104, 110, 114), width=1)
+    t.rectangle((0, 0, x1 - x0 - 1, y1 - y0 - 1), outline=(150, 156, 160), width=2)
+    img.paste(tile, (x0, y0))
+    for key, text in (('tag_wlp', 'WATER LEG'), ('tag_trace', 'HEAT TRACE')):
+        bx0, by0, bx1, by1 = REGIONS[key]
+        d.rectangle((bx0, by0, bx1 - 1, by1 - 1), fill=(236, 236, 230))
+        d.rectangle((bx0 + 1, by0 + 1, bx1 - 2, by1 - 2), outline=(20, 20, 20))
+        f = font(9)
+        d.text((bx0 + (bx1 - bx0 - d.textlength(text, font=f)) / 2, by0 + 2), text, font=f, fill=(15, 15, 15))
     OUT.parent.mkdir(parents=True, exist_ok=True)
     img.save(OUT, optimize=True)
     print('wrote', OUT)
