@@ -114,7 +114,8 @@ def run():
     images = {
         'tdp_gauge': gauge(),
         'tdp_plate_rfpt': nameplate(['FEED PUMP TURBINE', 'MULTISTAGE CONDENSING', 'RATED 5300 RPM  7 MW', 'SER 1A  BWR PLANT USE'], 11),
-        'tdp_plate_feedpump': nameplate(['REACTOR FEED PUMP', 'BARREL MULTISTAGE', 'RATED 1300 M HEAD', 'SER 1A  SEE MANUAL'], 12),
+        # Neutral wording: the plate is on both the rebuilt single-stage pump and the old barrel model that compact saves show.
+        'tdp_plate_feedpump': nameplate(['REACTOR FEED PUMP', 'TURBINE DRIVEN', 'RATED 5300 RPM', 'SER 1A  SEE MANUAL'], 12),
         'tdp_plate_rcic': nameplate(['RCIC TURBINE', 'SINGLE WHEEL IMPULSE', 'RATED 4500 RPM', 'TRIP 125 PCT SPEED'], 13),
         'tdp_plate_hpci': nameplate(['HPCI TURBINE', 'TWO ROW IMPULSE', 'RATED 4000 RPM', 'TRIP 125 PCT SPEED'], 14),
         'tdp_plate_eccspump': nameplate(['INJECTION PUMP', 'HORIZONTAL MULTISTAGE', 'DRIVEN BY TURBINE', 'SEE SYSTEM MANUAL'], 15),

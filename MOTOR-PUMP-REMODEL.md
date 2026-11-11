@@ -8,8 +8,8 @@ reference that could be opened describes it, so there was nothing to correct it 
 
 | Machine | Footprint (W x H x D) | Real form, per the references | How it fits the footprint |
 | --- | --- | --- | --- |
-| LPCS | 5 x 5 x 3 | Vertical can-type pump, 4160 V open vertical motor of about 1500 hp | Discharge head on a sole plate with in-line suction and discharge nozzles. Guarded motor stand with shaft, coupling, mechanical seal and cyclone separator. Mid-sized motor. Minimum-flow line with orifice and motor-operated valve. Water-leg pump piped from the suction to the discharge. |
-| RHR / LPCI | 7 x 3 x 3 | Vertical can-type pump with mechanical seal and cyclone separator, about 800 hp | Suction drops from the west flange to the can nozzle at floor level. Discharge leaves the head through a check valve and rises to the top flange. Smallest motor. Minimum-flow line, seal-water cooler and instrument rack. |
+| LPCS | 5 x 5 x 3 | Vertical pump with a vertical motor of about 1500 hp (a LaSalle figure, [S]). The can-type construction, 4160 V supply and open motor enclosure are carried over from the RHR and HPCS sources by analogy; no opened document describes the LPCS pump | Discharge head on a sole plate with in-line suction and discharge nozzles. Guarded motor stand with shaft, coupling, mechanical seal and cyclone separator. Mid-sized motor. Minimum-flow line with orifice and motor-operated valve. Water-leg pump piped from the suction to the discharge. |
+| RHR / LPCI | 7 x 3 x 3 | Vertical can-type pump with mechanical seal and cyclone separator; motor about 800 hp (a LaSalle figure, [S]) | Suction drops from the west flange to the can nozzle at floor level. Discharge leaves the head through a check valve and rises to the top flange. Smallest motor. Minimum-flow line, seal-water cooler and instrument rack. |
 | HPCS | 9 x 4 x 3 | Vertical motor-driven centrifugal pump, 3000 hp | Same arrangement as RHR with the largest motor. Minimum-flow line with restricting orifice and motor-operated valve. Water-leg (jockey) pump: a small horizontal single-stage pump taking suction from the main suction line and discharging downstream of the check valve. |
 | Motor feedwater | 7 x 3 x 3 | Single-stage double-suction reactor feed pump, speed-increasing gear, large horizontal motor | Short forged casing between two bolted end covers, bearing housings on brackets each side, centreline feet. Discharge nozzle on top, straight to its flange. Suction nozzle underneath; the line runs under the outboard bearing and rises to its flange. Gear case with offset shafts, box-frame motor with a top air housing, lube oil console, minimum-flow line with a control valve. |
 | SLC pump | 3 x 2 x 3 | Horizontal triplex plunger pump driven through a triple-reduction gear reducer | Liquid end with three plungers, stuffing boxes, discharge valve covers and manifold above, round suction manifold below. Power end with a sloped frame top and vent. Reducer with four shaft bearing caps stepping up in size. Heat tracing on the suction manifold. Strainer, pulsation dampener, relief valve and gauge as before. |
@@ -22,24 +22,34 @@ For the vertical pumps the can is implied to hang below the floor; only the moto
 - **ECCS motors.** The finned, fan-cooled frames are gone. The three motors are now open air-cooled vertical machines:
   screened air intakes in the lower bracket, a smooth stator frame with stiffening ribs, a louvred air housing under
   the top cover, and the upper thrust-bearing oil reservoir with a sight glass, fill cap and cooling-water tubes. The
-  terminal box is larger, as for a 4160 V machine. (Open, air-cooled motor: a Columbia event report describes the
-  HPCS motor's upper air deflector directing cooling air into the housing. Motor cooling water: NUREG/CR-5268 Table A-2.)
-- **Motor sizes.** HPCS is now the largest and RHR the smallest, following 3000 hp, about 1500 hp and 800 hp. The LPCS
+  terminal box is larger, as for a 4160 V machine. (Open, air-cooled motor: a search result for a Columbia event
+  report ([S], not opened) describes the HPCS motor's upper air deflector directing cooling air into the housing; the
+  LPCS and RHR motors follow it by analogy. Motor cooling water: NUREG/CR-5268 section 2.3.2 says a cooling water system
+  cools the RHR pump seals and motor bearings; Table A-2 gives plant examples but has no WNP-2 column. LPCS and HPCS
+  follow by analogy.)
+- **Motor sizes.** HPCS is now the largest and RHR the smallest, following 3000 hp (HPCS, [V]) and about 1500 hp and 800 hp (LPCS and RHR: LaSalle figures from a search result, [S]). The LPCS
   motor used to be the biggest of the three only because its footprint is the tallest. The footprints still limit this:
   the volumes are in a ratio of about 3.3 : 2.5 : 1 against 3.75 : 1.9 : 1 for the horsepower.
 - **Seal flush.** Each vertical pump has a cyclone separator on the motor stand, with tubing from the discharge head,
-  to the seal gland and back to the suction side (NUREG/CR-5268: "vertical can-type pumps with mechanical seals and
-  cyclone separators"). The seal-water cooler on RHR and HPCS stays (same report, Table A-2).
+  to the seal gland and back to the suction side. NUREG/CR-5268 says this of the RHR pumps only ("vertical can-type
+  pumps with mechanical seals and cyclone separators"); LPCS and HPCS follow by analogy. The seal-water cooler on RHR
+  stays (same report, Table A-2); the one on HPCS is kept by analogy.
 - **Minimum-flow lines.** RHR and LPCS gain one; all three now show a restricting orifice ahead of the motor-operated
-  valve (NUREG/CR-5462 Figure 8, NUREG/CR-5268 section 2.1.1).
-- **Water-leg pumps.** HPCS and LPCS each have a small horizontal single-stage pump on its own base (NUREG/CR-5462
-  section 2.3.2 and Figure 8). RHR has none in the model; no source that could be opened puts one on the RHR pump.
-- **Motor feedwater pump.** Rebuilt. The long multistage barrel casing and the variable-speed fluid coupling had no
-  support in the references. EPRI FP-754 describes reactor feed pumps as usually single-stage double-suction and
-  shows two sections (Figures 5 and 6) with the nozzles on the vertical centreline, a short casing and two end covers.
-  The drive is now a constant-speed motor through a speed-increasing gear, which FP-754 lists as one of the standard
-  arrangements. Search results agree: a geared constant-speed motor at Nine Mile Point 2, and flow control by regulating
-  valves rather than pump speed at LaSalle.
+  valve. The orifice and valve are from the HPCS flow diagram (NUREG/CR-5462 Figure 8). NUREG/CR-5268 section 2.1.1
+  gives the RHR minimum-flow line and its valve but no orifice, and no opened document describes an LPCS minimum-flow
+  line, so the RHR orifice and the whole LPCS line follow the HPCS diagram by analogy.
+- **Water-leg pumps.** HPCS and LPCS each have a small horizontal single-stage pump on its own base. Its form is from
+  NUREG/CR-5462 section 2.3.2 and Figure 8, which cover HPCS only; that LPCS has one rests on a search result naming
+  Columbia's LPCS-P-2 ([S]). RHR has none in the model: NUREG/CR-5268 section 2.3.4 says RHR discharge piping is
+  typically kept full from the condensate system, and at some plants by a small pump. Which one Columbia uses was not
+  verified.
+- **Motor feedwater pump.** Rebuilt in the usual reactor feed pump form. EPRI FP-754 describes reactor feed pumps as
+  usually single-stage double-suction, with a minority multistage, and shows two sections (Figures 5 and 6) with the
+  nozzles on the vertical centreline, a short casing and two end covers. The drive is now a constant-speed motor through
+  a speed-increasing gear. FP-754 lists a gear box and a variable-speed hydraulic coupling as equal options, so the old
+  fluid coupling was not wrong in kind; the gear was chosen on two search results: a geared constant-speed motor at Nine
+  Mile Point 2, and flow control by regulating valves rather than pump speed at LaSalle. The Nine Mile Point 2 pump in
+  that result is a two-stage barrel pump, so the search results support the gear, not the single-stage casing.
 - **SLC pump.** The single gear box became a triple-reduction reducer (SAND93-7045). The power end has the sloped
   frame top and vent of Figure 3-12. The suction manifold carries electric heat tracing (same report: the suction
   piping and plunger casing are heat traced). The liquid end already matched Figure 3-11 and was kept.
@@ -85,7 +95,7 @@ In that mode there is no GPU, so previews and icons render with Cycles on the CP
 - `--before SRC --preview DIR` renders an older source JSON from the same three views, for comparison.
 - `--only id,id` builds a subset; `--no-save` leaves `motor_pumps.blend` alone.
 
-Source triangles (the baked cell meshes carry the same count):
+Source triangles (the baked cell meshes carry more, because the exporter splits triangles at cell boundaries):
 
 | Machine | Before any remodel | Previous remodel | Now |
 | --- | ---: | ---: | ---: |
@@ -116,11 +126,13 @@ Columbia-specific number is therefore [S] at best.
 - [V] NUREG/CR-5462, *Aging Study of Boiling Water Reactor High Pressure Injection Systems* (INEL for the NRC): https://www.osti.gov/servlets/purl/34240
   - Section 2.3: the HPCS pump is a 3000 hp electric-driven centrifugal pump, 1550 gpm at 1147 psi and 6110 gpm at 200 psi reactor pressure.
   - Section 2.3.2: the system is kept full by a jockey pump, a single-stage horizontal centrifugal pump of at most 50 gpm.
-  - Figure 8 (typical HPCS flow diagram): pressure taps on suction and discharge, a discharge check valve, a minimum-flow line with restricting orifice and motor-operated valve, test lines, and the jockey pump piped from the main suction to the discharge.
+  - Figure 8 (typical HPCS flow diagram): pressure transmitters on the main pump discharge and at the jockey pump discharge (none on the suction; the suction gauge on the model is judgment), a discharge check valve, a minimum-flow line with restricting orifice and motor-operated valve, test lines, and the jockey pump piped from the main suction to the discharge.
 - [V] NUREG/CR-5268, *Aging Study of Boiling Water Reactor Residual Heat Removal System* (BNL for the NRC): https://www.osti.gov/servlets/purl/5960372
   - Section 2.1.1: "The RHR pumps are motor driven, vertical can-type pumps with mechanical seals and cyclone separators", driven by 4160 V three-phase motors; a minimum-flow line returns to the suppression chamber and its valve opens on low flow. LPCI flows run from about 7000 to 10,000 gpm.
   - Plant grouping table in section 2: Columbia (listed as WNP2) is in the group with three loops, three pumps and two heat exchangers.
-  - Table A-2: plant cooling water serves pump seal coolers, pump coolers and, at some plants, the pump motors.
+  - Section 2.3.2: a cooling water system cools the RHR pump seals and motor bearings.
+  - Section 2.3.4: RHR discharge piping is typically kept full from the condensate system; at some plants a small pump does it.
+  - Table A-2: plant cooling water serves pump seal coolers, pump coolers and, at some plants, the pump motors. The table has no WNP-2 column.
 - [V] INL/NRC High Pressure Core Spray system study, system description: https://nrcoe.inl.gov/publicdocs/SystemStudies/hpcs-system-description.pdf
   - One motor-driven centrifugal pump outside containment, 4160 V supply, suction from the condensate storage tank or the suppression pool; Figure 1 shows the minimum-flow and test lines. Columbia is one of the eight plants covered.
 - [S] Columbia FSAR section 8.3.1.1.7.2.2 (Amendments 61 and 66): HPCS pump motor nameplate 3000 hp at 4000 V. https://www.nrc.gov/docs/ML2134/ML21349B385.pdf
@@ -134,7 +146,7 @@ Columbia-specific number is therefore [S] at best.
 ### Motor-driven feedwater pump
 
 - [V] EPRI FP-754, *Survey of Feed Pump Outages* (1978): https://www.osti.gov/servlets/purl/7039347
-  - Section 3.1: nuclear feed pumps, called reactor feed pumps in a BWR, are usually single-stage double-suction; a small share are multistage. A pump may be driven by a constant-speed motor directly, through a gear box or through a variable-speed hydraulic coupling, or by a turbine.
+  - Section 3 (introduction, p. 3-1, and 3.1): nuclear feed pumps, called reactor feed pumps in a BWR, are usually single-stage double-suction; a minority are multistage (41 of the 135 nuclear feed pumps in its Table III). A pump may be driven by a constant-speed motor directly, through a gear box or through a variable-speed hydraulic coupling, or by a turbine.
   - Figure 5 (single-stage double-suction, forged case, diffuser type) and Figure 6 (forged outer casing, double-volute inner casing, double-suction impeller): the casing proportions, the two end covers with their studs, the nozzles on the vertical centreline and the bearing housings either side.
   - Minimum flow for feed pumps is usually not less than 25 % of design flow.
   - This is an industry report, not an NRC document. No NRC description of a BWR motor-driven feed pump could be opened.
@@ -147,7 +159,7 @@ Columbia-specific number is therefore [S] at best.
   - Section 3.4.5.2: SLC pumps are "typically stainless steel reciprocating triplex plunger type which are driven by electric motors through a triple reduction gear reducer"; the suction piping and plunger casing are electrically heat traced.
   - Pump data table in section 3: horizontal, 34 to 62 gpm, 650 to 1220 psi.
   - Figure 3-11 (liquid end: suction manifold and valve below, cylinder, stuffing box and plunger, discharge valve and manifold above) and Figure 3-12 (power end: crankshaft, crosshead, sloped frame, vent).
-  - The same report calls BWR core spray and RHR pumps "single stage, vertical". That reads as the older plants; it does not match the Grand Gulf stage counts above. The stages are below the floor either way.
+  - The same report calls BWR core spray and RHR pumps "single stage, vertical". That conflicts with the Grand Gulf stage counts above ([S]) and the conflict is not resolved. The stages are below the floor either way.
 
 ### Gaps
 

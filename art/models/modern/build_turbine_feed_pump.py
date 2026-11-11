@@ -152,8 +152,9 @@ def build():
     cylinder(s, 'pump shaft', (1.80, AY, AZ), (4.06, AY, AZ), .07, SHAFT, 10)
     bearing(s, 'pump thrust bearing housing', 1.80, 2.04, .25, FPUMP, cap=1.75)
     bearing(s, 'pump inboard bearing housing', 3.76, 4.00, .23, FPUMP)
-    # Nozzles on the casing centre plane, opposite each other as in the reference cross sections: discharge on top,
-    # inlet underneath, where the inlet branch spreads to feed both sides of the impeller.
+    # Nozzles on the casing centre plane, opposite each other: discharge on top, inlet underneath, where the inlet
+    # branch spreads to feed both sides of the impeller. That is the arrangement EPRI NP-1571 Figure II-1 labels; other
+    # opened sections have the inlet on top (see TURBINE-FEED-PUMP-REMODEL.md).
     NY = 1.92
     frustum(s, 'discharge nozzle', (PX, AY + .45, AZ), (PX, NY, AZ), .31, .24, FPUMP, 16)
     flange_ring(s, 'pump nozzle flange', (PX, NY + .03, AZ), (0, 1, 0), .345, .2, .06, FPUMP, 8, .30)

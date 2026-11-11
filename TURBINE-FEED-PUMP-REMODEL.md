@@ -1,7 +1,8 @@
 # Turbine-driven feed pump remodel
 
-The turbine-driven reactor feed pump, `bwr:turbine_feed_pump` (9 x 3 x 3), was rebuilt in Blender to look like the
-Columbia-type machine: a single-stage, double-suction feed pump driven by a dual-admission condensing steam turbine.
+The turbine-driven reactor feed pump, `bwr:turbine_feed_pump` (9 x 3 x 3), was rebuilt in Blender to look like a BWR
+feed pump set of the type Columbia is believed to have (see Gaps): a single-stage, double-suction feed pump driven by a
+dual-admission condensing steam turbine.
 The earlier model ([TURBINE-DRIVEN-PUMPS.md](TURBINE-DRIVEN-PUMPS.md)) showed a multistage barrel pump and a turbine
 with one steam train. Block ID, footprint, controller cell, port cells, port faces and flange centres are unchanged, so
 existing pipe runs still meet the flanges. Nothing about how the pump works changed.
@@ -14,7 +15,7 @@ Coordinates below are for a north-facing machine: west is the pump end, east the
 | --- | --- | --- |
 | Lube oil console | Reservoir, two AC motor-driven oil pumps and a smaller DC emergency pump, duplex filter with transfer handle, oil cooler, level glass and gauge. An ochre supply header runs along the north side with a riser to each of the four bearings. | A lube oil system feeding the thrust and radial bearings: V4. The console's make-up is general practice. |
 | Feed pump | Horizontal, single-stage, double-suction casing: a fat central volute between two suction chambers, with bolted end covers. Shaft seal housings, a thrust bearing housing outboard and a journal bearing inboard (drive end), both with split caps. Four centreline pedestals on two rails. | Pump type: V2, V3, V4. Casing, end covers, seals, outboard thrust bearing, inboard coupling end: the cross sections in V3 and V4. |
-| Pump nozzles | On the casing centre plane, opposite each other: the discharge nozzle on top, the inlet nozzle underneath, where a wide branch feeds both sides of the impeller. A short offset spool takes the discharge up to its flange. The suction line drops from its flange at the west end, turns under the thrust bearing and runs between the pedestal rails to the inlet nozzle. Each line has a pressure gauge. | Opposed top and bottom nozzles: all four cross sections in V3 and V4. Flange positions are the game's. |
+| Pump nozzles | On the casing centre plane, opposite each other: the discharge nozzle on top, the inlet nozzle underneath, where a wide branch feeds both sides of the impeller. A short offset spool takes the discharge up to its flange. The suction line drops from its flange at the west end, turns under the thrust bearing and runs between the pedestal rails to the inlet nozzle. Each line has a pressure gauge. | Opposed top and bottom nozzles: three of the four cross sections (V3 Figures 5 and 6, V4 Figure II-1). Discharge on top and inlet underneath: V4 Figure II-1, which labels them, and V3 Figure 5 by its flow passages. V4 Figure III-2 shows a single nozzle, the suction nozzle, on top, and the unlabelled V3 Figure 6 also reads as inlet on top, so the orientation varies between pumps. Flange positions are the game's. |
 | Pump auxiliaries | Casing vent, minimum-flow branch with its valve off the discharge spool, seal-water injection tubing to both seals, nameplate. | Minimum-flow recirculation, seal water injection, vents and drains: V4. |
 | Coupling | Spacer coupling under a yellow guard with caution labels. A three-gauge local board stands beside it. | General practice. |
 | Front standard | Bearing pedestal with split cover, red hand-trip knob, speed pickup and oil-pressure gauge. It carries the control-valve servomotor. | General practice. |
@@ -31,10 +32,10 @@ generic `tdp_*` ones. There are no maker names or logos.
 
 ### Where the game shape differs from the plant
 
-- **One steam port, two steam trains.** The real turbine has two separate supplies: low-pressure steam for normal running and high-pressure main steam for startup and low load. The block has a single steam inlet, so both trains hang off that one flange.
-- **Port positions.** The four flange centres are fixed by the block. Both water flanges face up, so the suction line comes down from above and sweeps under the pump; in a plant it would normally arrive from the piping below. The exhaust leaves sideways because the exhaust port is on the south face.
+- **One steam port, two steam trains.** BWR feed pump turbines of this type have two separate supplies: low-pressure steam for normal running and high-pressure main steam for startup and low load (the generic model plant in V2; for Columbia only R1, which was not opened). The block has a single steam inlet, so both trains hang off that one flange.
+- **Port positions.** The four flange centres are fixed by the block. Both water flanges face up, so the suction line comes down from above and sweeps under the pump. Where the suction line arrives in a real plant depends on which way up the pump is installed, which the opened sources show both ways. The exhaust leaves sideways because the exhaust port is on the south face.
 - **Size.** WNP-2's feed pump sets are listed as 9.5 x 4.0 x 3.7 m each (V1). The block's footprint is 9 x 3 x 3, so the model is close in length and a little narrow and low.
-- **Which end drives the pump.** The inlet port is west of the exhaust port, so the turbine's inlet end faces the pump and the exhaust hood and turning gear are at the free end. The WNP-2 plan and section in V1 show each set only as a small outline, too coarse to settle which end drives.
+- **Which end drives the pump.** The inlet port is west of the exhaust port, so the turbine's inlet end faces the pump and the exhaust hood and turning gear are at the free end. The WNP-2 plan and sections in V1 draw each set as a base carrying four in-line shapes (a large body at the north end, a small lobed body at the south end on a narrower extension of the base). The shapes were not identified, so they do not settle which end drives; comparing them with the model's console, pump, turbine order is still to do.
 
 ## Compatibility
 
@@ -97,8 +98,8 @@ which refuses automated requests, and the other two (R9, R11) were not retried. 
   - PDF p. 67 (C-1): the reference plant is described from the WNP-2 FSAR and from drawings supplied by the owner. WNP-2 is Columbia's earlier name.
   - PDF p. 71 (C-5): the auxiliaries include turbine-driven feedwater pumps.
   - PDF p. 132 (C-66), Table C.3-4: "Reactor Feedwater Pump (2)", 54,886 kg each, 9.5 x 4.0 x 3.7 m (L x W x H).
-  - PDF p. 95 (C-29), Figure C.2-7, turbine building plan at grade: the two sets stand side by side, each in its own walled room next to the condenser. Each is drawn as one long in-line outline.
-  - PDF p. 101 (C-35), Figure C.2-10, sections A-A and B-B: the sets sit on the grade floor on a low base. The outlines are small and schematic; no valve, nozzle or casing detail can be read from them.
+  - PDF p. 95 (C-29), Figure C.2-7, turbine building plan at grade: the two sets stand side by side, each in its own walled room next to the condenser. Each is drawn as a rectangular base carrying four separate shapes in line; the shapes are not labelled.
+  - PDF p. 101 (C-35), Figure C.2-10, sections A-A and B-B: the sets sit on the grade floor on a low base. Section B-B is a side elevation with the same four shapes and section A-A an end view. They are small and schematic; no valve, nozzle or casing detail can be read from them.
   - PDF pp. 136 and 138 (C-70, C-72): penetrations in the main condenser shell take the exhaust from the feedwater pump turbines.
 - V2 [V] *Energy Economic Data Base (EEDB) Program, Technical Reference Book* (United Engineers & Constructors for Oak Ridge National Laboratory, September 1983): https://www.osti.gov/servlets/purl/6021579
   - PDF p. 176 (4-46), the BWR model plant: two 50 % turbine-driven feed pumps "of the centrifugal single stage type", 17,500 gpm, 2,350 ft total head, 5,300 rpm, 10,300 brake horsepower. Each is driven by "a dual admission, multi-stage, condensing steam turbine" rated 10,300 hp at 5,300 rpm. The rest is said to be nearly identical to the PWR description.
@@ -109,13 +110,15 @@ which refuses automated requests, and the other two (R9, R11) were not retried. 
   - PDF pp. 70 and 71, Figures 5 and 6: cross sections of single-stage, double-suction reactor feed pumps with forged cases. Both show one large nozzle above the shaft and one below it, on the casing centre plane, with a bearing housing at each end.
 - V4 [V] EPRI NP-1571, *Evaluation of Basic Causes of Repetitive Failures of Nuclear and Fossil Feedwater Pumps* (October 1980): https://www.osti.gov/servlets/purl/6724584
   - PDF p. 19 (II-2), Figure II-1, labelled cross section: discharge nozzle on top, inlet nozzle underneath, single-stage double-suction impeller, inboard and outboard end covers, radial bearings, a double-acting thrust bearing at the outboard end and the shaft extension at the inboard end.
-  - PDF p. 65 (III-8), Figure III-2: another maker's single-stage, double-suction nuclear feed pump, again with opposed nozzles.
+  - PDF p. 65 (III-8), Figure III-2: another maker's single-stage, double-suction nuclear feed pump. The section shows one nozzle, above the shaft, which the bill of material names the suction nozzle (114-3); no discharge nozzle is drawn.
   - PDF p. 58 (III-1): all US nuclear feed pumps are horizontal centrifugal pumps, and the trend is to steam turbine-driven, single-stage, double-suction pumps.
   - PDF p. 61 (III-4), Table III-2, typical BWR feed pump: 2,800 ft head, 11,200 gpm, 5,500 rpm, 8,450 hp (ranges 3,600 to 7,000 rpm and 4,000 to 10,000 hp).
   - PDF p. 21 (II-4): the auxiliaries are minimum-flow recirculation, seal water injection and leak-off, a lube oil system for the thrust and radial bearings, vibration monitoring, warm-up, and vents and drains.
 
-The first build of this model had twin top nozzles side by side. The cross sections in V3 and V4 show opposed nozzles
-instead, so the pump was rebuilt with the discharge on top and the inlet underneath.
+The first build of this model had twin top nozzles side by side. Three of the four cross sections (V3 Figures 5 and 6,
+V4 Figure II-1) show opposed nozzles instead, so the pump was rebuilt with the discharge on top and the inlet
+underneath, as V4 Figure II-1 labels them. V4 Figure III-2 and, as far as an unlabelled figure can be read, V3 Figure 6
+have the inlet on top; nothing opened says which way up Columbia's pumps are.
 
 ### Not opened: every source from here on is [S]
 
@@ -164,5 +167,6 @@ instead, so the pump was rebuilt with the discharge on top and the inlet underne
 - **Columbia's ratings:** no flow, head, speed or horsepower was found for Columbia's own pumps or turbines. The numbers above are for model or typical BWR plants (V2, V4) and from R3 and R4. They did not set any dimension.
 - **Low-pressure steam source at Columbia:** R1 gives a low-pressure stop valve, but the search results did not show where its steam comes from. The model plant in V2 and other BWRs (R4) use crossover or moisture-separator steam.
 - **No source for the look of the turbine:** no drawing or photograph of a feed pump turbine was opened. The casing shape, the stop and control valve bodies, the bar-lift valve gear, the turning gear, the relief diaphragm, the exhaust expansion joint, the make-up of the lube oil console, the coupling, the pedestals and the bedplate follow general practice. The GE manual figure (R2) would settle most of this.
-- **Not modelled:** gland sealing-steam lines, the exhaust isolation valve, drains, and the second low-pressure supply pipe (see "One steam port" above).
+- **Pump nozzle orientation at Columbia:** not known. The model's discharge-up, inlet-down arrangement is one the opened sources show, not one confirmed for Columbia.
+- **Not modelled:** gland sealing-steam lines, an exhaust isolation valve (assumed from general practice, no source), drains, and the second low-pressure supply pipe (see "One steam port" above).
 - **Proportions:** these are game representations, not vendor drawings.
