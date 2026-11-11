@@ -185,6 +185,8 @@ public final class DeskCornerGeometry {
             for (int j = 0; j < n; j++) {
                 double ylo = Double.MAX_VALUE;
                 double yhi = -1;
+                // the top follows the depth at the middle of the cell, so a cell of the face is never covered by the riser's height
+                double tMid = depth(inside, bx + (i + 0.5) / n, bf + (j + 0.5) / n);
                 for (int a = 0; a < 3; a++) {
                     for (int b = 0; b < 3; b++) {
                         double x = bx + (i + a / 2.0) / n;
@@ -192,11 +194,12 @@ public final class DeskCornerGeometry {
                         double t = depth(inside, x, f);
                         if (t >= -1.0e-9 && t <= W + 1.0e-9) {
                             ylo = Math.min(ylo, yLow(Math.max(0, t)));
-                            yhi = Math.max(yhi, yHigh(Math.max(0, t)));
+                            yhi = Math.max(yhi, 0.0);
                         }
                     }
                 }
-                if (yhi > 0) {
+                if (yhi >= 0) {
+                    yhi = yHigh(Math.min(W, Math.max(0, tMid)));
                     on[i][j] = true;
                     lo[i][j] = Math.floor(ylo * 16.0 - 1.0e-9) / 16.0;
                     hi[i][j] = Math.ceil(yhi * 16.0 - 1.0e-9) / 16.0;

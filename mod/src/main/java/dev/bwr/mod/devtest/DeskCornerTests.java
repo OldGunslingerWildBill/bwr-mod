@@ -78,7 +78,7 @@ import java.util.UUID;
  * corner finds the face), operating it through the real operate packet handler, wiring a component to another on the
  * face, the finishes, and save/load. Fixtures live around 150,000 / 150,000.
  */
-@GameTestHolder("bwr")
+@GameTestHolder("bwrcorner")
 @PrefixGameTestTemplate(false)
 public final class DeskCornerTests {
     private DeskCornerTests() {
@@ -210,7 +210,7 @@ public final class DeskCornerTests {
         return new double[] {(1.0 - blockX) + DeskCornerGeometry.blockX(core), (1.0 - blockZ) + DeskCornerGeometry.blockF(core, inside)};
     }
 
-    @GameTest(template = "empty")
+    @GameTest(template = "empty", templateNamespace = "bwrcorner")
     public static void theCornerFramesAreLevelDiagonalTopsOnTheConsoleSixteenCellsAcrossAndTenDeep(GameTestHelper h) {
         for (boolean inside : KINDS) {
             for (Direction facing : Direction.Plane.HORIZONTAL) {
@@ -280,7 +280,7 @@ public final class DeskCornerTests {
         return null;
     }
 
-    @GameTest(template = "empty")
+    @GameTest(template = "empty", templateNamespace = "bwrcorner")
     public static void theShapesHoldEveryCellOfTheFaceAtItsHeightAndLeaveTheKneeSpace(GameTestHelper h) {
         for (boolean inside : KINDS) {
             PanelGeometry.Frame f = PanelGeometry.frame(type(inside), Direction.NORTH);
@@ -376,13 +376,13 @@ public final class DeskCornerTests {
         return in;
     }
 
-    @GameTest(template = "empty")
+    @GameTest(template = "empty", templateNamespace = "bwrcorner")
     public static void theFourBlockModelsTogetherCoverEveryCellOfTheMountingFace(GameTestHelper h) throws IOException {
         for (boolean inside : KINDS) {
             Map<CornerPart, List<Face>> models = new HashMap<>();
             for (CornerPart part : CornerPart.values()) {
                 List<Face> faces = readObj("/assets/bwr/models/block/control_panel/desk_corner_" + name(inside) + "_" + part.getSerializedName() + ".obj");
-                check(h, !faces.isEmpty() && faces.size() <= 24, name(inside) + " " + part + " is " + faces.size() + " faces");
+                check(h, !faces.isEmpty() && faces.size() <= 40, name(inside) + " " + part + " is " + faces.size() + " faces");
                 for (Face face : faces) {
                     for (double[] c : face.corners()) {
                         check(h, c[0] >= -1.0e-5 && c[0] <= 1.00001 && c[2] >= -1.0e-5 && c[2] <= 1.00001 && c[1] >= -1.0e-5 && c[1] <= 1.1001,
@@ -415,7 +415,7 @@ public final class DeskCornerTests {
 
     // ---- placing
 
-    @GameTest(template = "empty", timeoutTicks = 600)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 600)
     public static void aCornerIsFourBlocksOneBlockEntityAndOneItemForEveryFacing(GameTestHelper h) {
         fixture(h, 0, (level, floor) -> {
             FakePlayer player = player(level, "CornerPlace", GameType.SURVIVAL);
@@ -459,7 +459,7 @@ public final class DeskCornerTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 600)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 600)
     public static void aCornerIsRefusedWholeWhenAnyOfItsBlocksIsTaken(GameTestHelper h) {
         fixture(h, 1, (level, floor) -> {
             FakePlayer player = player(level, "CornerBlocked", GameType.SURVIVAL);
@@ -486,7 +486,7 @@ public final class DeskCornerTests {
 
     // ---- breaking
 
-    @GameTest(template = "empty", timeoutTicks = 1200)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
     public static void breakingAnyBlockRemovesTheCornerWithOneDropTheFinishAndItsComponents(GameTestHelper h) {
         fixture(h, 2, (level, floor) -> {
             FakePlayer player = player(level, "CornerBreak", GameType.SURVIVAL);
@@ -546,7 +546,7 @@ public final class DeskCornerTests {
                 ClipContext.Fluid.NONE, player));
     }
 
-    @GameTest(template = "empty", timeoutTicks = 1200)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
     public static void theAngledFaceIsFoundThroughAnyBlockOfTheCornerAndTakesComponentsThroughThePlayerPath(GameTestHelper h) {
         fixture(h, 3, (level, floor) -> {
             FakePlayer player = player(level, "CornerMount", GameType.SURVIVAL);
@@ -642,7 +642,7 @@ public final class DeskCornerTests {
         }
     }
 
-    @GameTest(template = "empty", timeoutTicks = 1200)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
     public static void aComponentOnTheAngledFaceIsOperatedWiredAndReachedLikeOnAnyDesk(GameTestHelper h) {
         fixture(h, 4, (level, floor) -> {
             FakePlayer player = player(level, "CornerOperate", GameType.SURVIVAL);
@@ -691,7 +691,7 @@ public final class DeskCornerTests {
 
     // ---- joining, finishes, saves
 
-    @GameTest(template = "empty", timeoutTicks = 600)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 600)
     public static void aCornerNeverJoinsTheStraightDesksItContinuesOrAnotherCorner(GameTestHelper h) {
         fixture(h, 5, (level, floor) -> {
             FakePlayer player = player(level, "CornerGroups", GameType.SURVIVAL);
@@ -703,7 +703,7 @@ public final class DeskCornerTests {
                 // a straight desk run on the corner's right where the run arrives, and one more corner of the other kind further on
                 BlockPos run = at.relative(facing.getCounterClockWise());
                 check(h, place(player, new ItemStack(BwrItems.CONTROL_PANEL_DESK.get()), run, facing)
-                        && place(player, new ItemStack(BwrItems.CONTROL_PANEL_DESK_WIDE.get()), run.relative(facing.getCounterClockWise()), facing),
+                        && place(player, new ItemStack(BwrItems.CONTROL_PANEL_DESK_WIDE.get()), run.relative(facing.getCounterClockWise(), 2), facing),
                         "desks not placed");
                 PanelBlockEntity corner = be(level, core(at, facing, inside));
                 PanelBlockEntity desk = be(level, run);
@@ -718,7 +718,7 @@ public final class DeskCornerTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 600)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 600)
     public static void thePanelWrenchPaintsTheWholeCornerAndItDropsAndPlacesWithThatFinish(GameTestHelper h) {
         fixture(h, 6, (level, floor) -> {
             FakePlayer player = player(level, "CornerPaint", GameType.CREATIVE);
@@ -742,7 +742,7 @@ public final class DeskCornerTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 600)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 600)
     public static void aMountedComponentOnTheAngledFaceAndEveryBlockStateSurviveASaveAndReload(GameTestHelper h) {
         fixture(h, 7, (level, floor) -> {
             var registries = level.registryAccess();
@@ -778,7 +778,7 @@ public final class DeskCornerTests {
         });
     }
 
-    @GameTest(template = "empty")
+    @GameTest(template = "empty", templateNamespace = "bwrcorner")
     public static void theCornersAreRegisteredWithItemsRecipesAndTheCreativeTab(GameTestHelper h) {
         for (boolean inside : KINDS) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath("bwr", "control_panel_desk_corner_" + name(inside));

@@ -89,6 +89,8 @@ public final class PanelClientCheck {
     private static final int PLANT_FIRST = INPUT_FIRST + PanelSwitchInputCheck.NAMES.length;
     /** The stages of the indicator sizes board (see {@link PanelIndicatorSizesShowcase}): the alpha.60 size table, after the plant computer. */
     private static final int SIZES_FIRST = PLANT_FIRST + PanelPlantShowcase.NAMES.length;
+    /** The stages of the 45 degree desk corners (see {@link PanelCornerShowcase}), after the indicator sizes. */
+    private static final int CORNER_FIRST = SIZES_FIRST + PanelIndicatorSizesShowcase.NAMES.length;
     private static final String[] NAMES = names();
 
     private static String[] names() {
@@ -98,7 +100,7 @@ public final class PanelClientCheck {
                 + PanelTrimShowcase.NAMES.length + PanelDuplexShowcase.NAMES.length + PanelRealScaleShowcase.NAMES.length
                 + PanelTextSizeShowcase.NAMES.length + PanelAngledShowcase.NAMES.length + PanelAnnunciatorShowcase.NAMES.length + PanelHardwareShowcase.NAMES.length + 1
                 + PanelDeskShowcase.NAMES.length + PanelRpsLegendShowcase.NAMES.length + PanelSwitchInputCheck.NAMES.length
-                + PanelPlantShowcase.NAMES.length + PanelIndicatorSizesShowcase.NAMES.length];
+                + PanelPlantShowcase.NAMES.length + PanelIndicatorSizesShowcase.NAMES.length + PanelCornerShowcase.NAMES.length];
         System.arraycopy(original, 0, all, 0, original.length);
         System.arraycopy(PanelModelShowcase.NAMES, 0, all, BAKED_FIRST, PanelModelShowcase.NAMES.length);
         System.arraycopy(PanelSlopeShowcase.NAMES, 0, all, BAKED_FIRST + PanelModelShowcase.NAMES.length,
@@ -118,6 +120,7 @@ public final class PanelClientCheck {
         System.arraycopy(PanelSwitchInputCheck.NAMES, 0, all, INPUT_FIRST, PanelSwitchInputCheck.NAMES.length);
         System.arraycopy(PanelPlantShowcase.NAMES, 0, all, PLANT_FIRST, PanelPlantShowcase.NAMES.length);
         System.arraycopy(PanelIndicatorSizesShowcase.NAMES, 0, all, SIZES_FIRST, PanelIndicatorSizesShowcase.NAMES.length);
+        System.arraycopy(PanelCornerShowcase.NAMES, 0, all, CORNER_FIRST, PanelCornerShowcase.NAMES.length);
         return all;
     }
     private static final String STAGE_FILTER = System.getProperty("bwr.panelClientStages", "");
@@ -241,13 +244,15 @@ public final class PanelClientCheck {
                         for (int i = 0; i < PanelSwitchInputCheck.NAMES.length; i++) PanelSwitchInputCheck.prepare(level, i);
                         PanelPlantShowcase.build(level);
                         PanelIndicatorSizesShowcase.build(level);
+                        PanelCornerShowcase.build(level);
                         built = true;
                     } catch (Throwable failure) {
                         buildFailure = failure;
                         return;
                     }
                 }
-                Vec3 camera = selected >= SIZES_FIRST ? PanelIndicatorSizesShowcase.camera(selected - SIZES_FIRST)
+                Vec3 camera = selected >= CORNER_FIRST ? PanelCornerShowcase.camera(selected - CORNER_FIRST)
+                        : selected >= SIZES_FIRST ? PanelIndicatorSizesShowcase.camera(selected - SIZES_FIRST)
                         : selected >= PLANT_FIRST ? PanelPlantShowcase.camera(selected - PLANT_FIRST)
                         : selected >= INPUT_FIRST ? PanelSwitchInputCheck.camera(selected - INPUT_FIRST)
                         : selected >= RPS_FIRST ? PanelRpsLegendShowcase.camera(selected - RPS_FIRST)
@@ -269,7 +274,8 @@ public final class PanelClientCheck {
                     case 3 -> new Vec3(93, 126, 71); // 29 blocks from the board, beyond the 24-block LOD cutoff
                     default -> new Vec3(93, 125, 81);
                 }).add(SHOWCASE_OFFSET, 0, SHOWCASE_OFFSET);
-                Vec3 target = selected >= SIZES_FIRST ? PanelIndicatorSizesShowcase.target(selected - SIZES_FIRST)
+                Vec3 target = selected >= CORNER_FIRST ? PanelCornerShowcase.target(selected - CORNER_FIRST)
+                        : selected >= SIZES_FIRST ? PanelIndicatorSizesShowcase.target(selected - SIZES_FIRST)
                         : selected >= PLANT_FIRST ? PanelPlantShowcase.target(selected - PLANT_FIRST)
                         : selected >= INPUT_FIRST ? PanelSwitchInputCheck.target(selected - INPUT_FIRST)
                         : selected >= RPS_FIRST ? PanelRpsLegendShowcase.target(selected - RPS_FIRST)
@@ -395,7 +401,10 @@ public final class PanelClientCheck {
         try {
             var directory = mc.gameDirectory.toPath().resolve("panel-client-check");
             Files.createDirectories(directory);
-            if (stage >= SIZES_FIRST) {
+            if (stage >= CORNER_FIRST) {
+                LogUtils.getLogger().info("PANEL CLIENT CHECK desk corners {}: {} on the client", NAMES[stage],
+                        PanelCornerShowcase.verify(mc, stage - CORNER_FIRST));
+            } else if (stage >= SIZES_FIRST) {
                 LogUtils.getLogger().info("PANEL CLIENT CHECK indicator sizes {}: {} on the client", NAMES[stage],
                         PanelIndicatorSizesShowcase.verify(mc, stage - SIZES_FIRST));
             } else if (stage >= PLANT_FIRST) {

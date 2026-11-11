@@ -401,9 +401,21 @@ def make_materials():
     return out
 
 
+def split(polys):
+    """The game's OBJ loader draws quads and triangles: a convex polygon of five or more corners becomes a fan of triangles."""
+    out = []
+    for mat, pts, uv in polys:
+        if len(pts) <= 4:
+            out.append((mat, pts, uv))
+            continue
+        for i in range(1, len(pts) - 1):
+            out.append((mat, [pts[0], pts[i], pts[i + 1]], [uv[0], uv[i], uv[i + 1]]))
+    return out
+
+
 def to_mesh(name, polys, materials, offset=(0.0, 0.0, 0.0), mapping=world):
     verts, index, faces, uvs, mats = [], {}, [], [], []
-    for mat, pts, uv in polys:
+    for mat, pts, uv in split(polys):
         loop = []
         for p in pts:
             wx, wy, wz = mapping(p)
@@ -533,12 +545,15 @@ def main():
         for label, runs in (("iso", False), ("arrangement", True)):
             polys = solid(kind, runs)
             obj = to_mesh("pv", orient(polys and [(m, pts, uv, out) for m, pts, uv, out in polys]), materials)
-            fx, ff = (1.6, 1.1) if kind == "inside" else (1.6, -0.1)
-            if runs:
-                fx, ff = (2.0, 2.0) if kind == "inside" else (2.0, -1.0)
-            centre = (1.0 - fx, ff - 1.0, 0.4)
-            sc = 6.6 if runs else 3.6
-            frm = (0.8, 1.0, 0.8) if kind == "inside" else (-0.8, 1.0, 0.8)
+            xs, ys, zs = [], [], []
+            for _, pts, _ in orient(polys):
+                for p in pts:
+                    w = world(p)
+                    xs.append(w[0]); ys.append(w[1]); zs.append(-w[2])
+            centre = ((min(xs) + max(xs)) / 2.0, (min(zs) + max(zs)) / 2.0, 0.35)
+            span = max(max(xs) - min(xs), max(zs) - min(zs))
+            sc = span * 1.75 + 0.6
+            frm = (0.9, 1.0, 0.85) if kind == "inside" else (-0.9, 1.0, 0.85)
             shoot(cam, centre, frm, sc, os.path.join(PREVIEW, "desk-corner-%s-%s.png" % (kind, label)))
             shoot(cam, centre, (0.0, 0.02, 1.0), sc, os.path.join(PREVIEW, "desk-corner-%s-%s-top.png" % (kind, label)))
             bpy.data.objects.remove(obj, do_unlink=True)
