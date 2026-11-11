@@ -268,17 +268,20 @@ skipped as for every component and a lamp is its coloured quad. Measurements and
 
 ## Annunciator family (as built)
 
-Two models (`art/models/panel/annunciator`, read its README: only the window tile size has a source, the rest is a generic
-lamp box). Neither goes through the style table or `BakedComponentModel`:
+Two models (`art/models/panel/annunciator`; read its README: the shapes follow owner-supplied photographs, the proportions
+are measured on them, and no real dimension or maker is known, so the inches are nominal). Neither goes through the style
+table or `BakedComponentModel`:
 
 | Model id | Used by | How |
 | --- | --- | --- |
-| `ann_window` | `annunciator`, Style `lampbox` | `AnnunciatorModel` records the model's frame and unlit lens through `AnnunciatorLampBox`, which stretches the model in nine pieces onto the window's cells (a window fills its cells and joins its neighbours, so it cannot keep one scale); the lit tile, flag and legend are the procedural window's |
-| `ann_control` | `annunciator_control`, Style `lampbox` | `AnnunciatorControlModel` fits it with the ordinary `Placement`, records `body` and `bezels`, and draws the four caps (`cap_ack`, `cap_reset`, `cap_silence`, `cap_test`) each frame: slid in and glowing while their output is 1 |
+| `ann_window` | `annunciator`, Style `columbia` | One tray tile. `AnnunciatorTileBox` cuts it at the outline of its `face` into `corner_tl/tr/bl/br`, `rim_top/bottom/left/right` and the `face`, and lays the pieces on the window's cells: gap and rim keep their share of the tile's width, the runs and the face stretch, the face is put at the procedural tile's elevation. A window at least twice as wide as tall is one alarm of a split tile and is drawn without the rim along the edge it shares with its partner. The model's `plate` gives the plate's elevation; its `divider` is for the model's own picture. The plate margins, the dividing line, the nameplate and the latch are drawn in code from the proportions in `AnnunciatorBox` (mirrored in `build.py`); the lit face, the flag, the legend, the margin numerals and the nameplate's words are drawn each frame by `AnnunciatorModel` |
+| `ann_control` | `annunciator_control`, Style `station` | `AnnunciatorControlModel` fits it with the ordinary `Placement`, records `rings` and `tags`, and draws the four caps (`cap_ack`, `cap_reset`, `cap_silence`, `cap_test`) each frame: black at rest, slid in and glowing in the button's colour while their output is 1. The legends are printed at the label anchors `ack`, `reset`, `silence`, `test`, at their cap height |
 
-The Style of these two types is their own field (`AnnunciatorData.STYLES`: `classic`, `lampbox`), saved only when it is not
-classic and classic for a new component, unlike the table's styles: a control module at its defaults must save nothing, and
-`classic` must stay what a save without the key means.
+The Style of these two types is their own field (`AnnunciatorData.STYLES`: `classic`, `columbia`; `AnnunciatorControlData.STYLES`:
+`classic`, `station`), saved only when it is not classic and classic for a new component, unlike the table's styles: a control
+module at its defaults must save nothing, and `classic` must stay what a save without the key means. The window's place in
+its box (row, column, which half of a split tile, the nameplate, the latch) is `AnnunciatorBox.layout`, a pure function the
+client runs over the windows of a panel group; it is part of the mesh key (`AnnunciatorModel.staticKey`).
 
 ## Sources (local copies for reading only)
 Scratch folder: `C:\Users\14238\AppData\Local\Temp\claude\C--Users-14238-Downloads-bwr-mod-handoff\418cd604-018d-4e92-a0cc-37a0e339a9c4\scratchpad\cr-refs\`

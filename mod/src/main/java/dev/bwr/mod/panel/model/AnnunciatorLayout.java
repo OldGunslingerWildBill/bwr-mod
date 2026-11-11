@@ -64,6 +64,25 @@ public final class AnnunciatorLayout {
         return shade(color, 0.85f);
     }
 
+    // ---- the Columbia style: an ivory tile whatever the window's colour, black lettering while it is dark
+
+    /** The face of an unlit Columbia tile (a little darker than its ivory rim), and the black of its lettering. */
+    public static final int COLUMBIA_FACE = 0xDDD5B8;
+    public static final int COLUMBIA_INK = 0x1E1E1C;
+    /** How much of the window's colour shows in its unlit face. */
+    public static final float COLUMBIA_TINT = 0.08f;
+
+    /**
+     * The unlit face of a Columbia tile whose window is {@code color}: ivory with a touch of the colour, so a red window
+     * can still be told from a white one while both are dark.
+     */
+    public static int columbiaFace(int color) {
+        int r = Math.round((COLUMBIA_FACE >> 16 & 0xFF) * (1.0f - COLUMBIA_TINT) + (color >> 16 & 0xFF) * COLUMBIA_TINT);
+        int g = Math.round((COLUMBIA_FACE >> 8 & 0xFF) * (1.0f - COLUMBIA_TINT) + (color >> 8 & 0xFF) * COLUMBIA_TINT);
+        int b = Math.round((COLUMBIA_FACE & 0xFF) * (1.0f - COLUMBIA_TINT) + (color & 0xFF) * COLUMBIA_TINT);
+        return Math.min(255, r) << 16 | Math.min(255, g) << 8 | Math.min(255, b);
+    }
+
     /** Whether a body colour is light enough to take dark lettering (white and amber are, red is not). */
     public static boolean lightBody(int rgb) {
         return luma(rgb) > 0.5f;

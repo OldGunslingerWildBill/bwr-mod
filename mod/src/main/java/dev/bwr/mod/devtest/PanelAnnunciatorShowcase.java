@@ -30,6 +30,9 @@ import java.util.List;
  *   <li>A box of 4 x 3 big windows (12 x 8 cells), three blocks wide, with the 24 x 6 module under it: the shape of the
  *       reference photos.</li>
  *   <li>The same real size box with the TEST button held (every window lit).</li>
+ *   <li>A box in the Columbia style, four blocks wide and three high above the others: 7 x 10 half height windows (8 x 3
+ *       cells), which is 7 x 5 split tiles, with legends after box P800-C5, a few alarms lit, the row and column numerals,
+ *       the nameplate and the latch, and under it the control module in the pushbutton station style. Whole, and close up.</li>
  *   <li>The real size duplex board of {@link PanelRealScaleShowcase} from 6 and from 14 blocks, with the text fade on and
  *       off (a stage whose name ends in {@code -nofade} turns the client option off).</li>
  * </ul>
@@ -43,18 +46,23 @@ final class PanelAnnunciatorShowcase {
     }
 
     static final String[] NAMES = {"annun-box-real-close", "annun-box-real", "annun-box-big", "annun-box-test",
-            "annun-mid-fade", "annun-mid-nofade", "annun-far-fade", "annun-far-nofade", "annun-side-vertical", "annun-side-header"};
+            "annun-mid-fade", "annun-mid-nofade", "annun-far-fade", "annun-far-nofade", "annun-side-vertical", "annun-side-header",
+            "annun-columbia", "annun-columbia-close"};
     private static final BlockPos REAL = new BlockPos(5518, 127, 5261);
     private static final BlockPos BIG = new BlockPos(5516, 127, 5261);
     private static final BlockPos TEST = new BlockPos(5512, 127, 5261);
+    /** The top left block of the Columbia box's wall: four blocks to the west (the viewer's right) and three down. */
+    private static final BlockPos COLUMBIA = new BlockPos(5520, 131, 5261);
+    private static final int COLUMBIA_COLUMNS = 4;
+    private static final int COLUMBIA_ROWS = 3;
     /** The real size duplex board's first bench (see {@link PanelRealScaleShowcase}); the fade stages look at it. */
     private static final double BOARD_X = 5443.0;
     private static final double[][] EYE = {{5518.5, 127.72, 5261.25}, {5518.5, 127.72, 5260.45}, {5515.5, 127.1, 5260.1},
             {5512.5, 127.72, 5261.25}, {BOARD_X, 128.4, 5252.0}, {BOARD_X, 128.4, 5252.0}, {BOARD_X, 128.4, 5244.0}, {BOARD_X, 128.4, 5244.0},
-            {5519.2, 127.78, 5261.3}, {5446.2, 129.55, 5260.2}};
+            {5519.2, 127.78, 5261.3}, {5446.2, 129.55, 5260.2}, {5519.0, 130.5, 5258.3}, {5520.2, 131.35, 5260.3}};
     private static final double[][] LOOK = {{5518.5, 127.72, 5262.5}, {5518.5, 127.72, 5262.5}, {5515.5, 127.1, 5262.5},
             {5512.5, 127.72, 5262.5}, {BOARD_X, 128.9, 5261.0}, {BOARD_X, 128.9, 5261.0}, {BOARD_X, 128.9, 5261.0}, {BOARD_X, 128.9, 5261.0},
-            {5518.4, 127.72, 5262.5}, {5443.9, 129.7, 5260.6}};
+            {5518.4, 127.72, 5262.5}, {5443.9, 129.7, 5260.6}, {5519.0, 130.5, 5262.5}, {5520.2, 131.35, 5262.5}};
 
     private static final List<BlockPos> PLACED = new ArrayList<>();
     private static int mounted;
@@ -87,6 +95,13 @@ final class PanelAnnunciatorShowcase {
             {"RPV", "LEVEL", "LOW", "L3"}, {"MSIV", "A", "NOT", "OPEN"}, {"HPCS", "INIT"}, {"DRYWELL", "PRESS", "HIGH"},
             {"SRV", "OPEN"}, {"RECIRC", "PUMP A", "TRIP"}, {"APRM", "UPSCALE", "TRIP"}, {"TURBINE", "TRIP"},
             {"BUS 4B", "UNDER", "VOLT"}, {"RCIC", "RUN"}, {"GEN", "LOCKOUT"}, {"SBGT", "START"}};
+    /** Legends in the manner of Columbia's box P800-C5 (diesel generator 2 and its buses), two lines of at most twelve letters. */
+    private static final String[][] COLUMBIA_LEGENDS = {
+            {"DG 2", "AUTO START"}, {"DG 2", "FAIL TO STRT"}, {"BUS 8", "LOSS OF VOLT"}, {"BUS 8", "DEGRADED V"},
+            {"BKR 8/81", "TRIP"}, {"BKR 8/81", "GND"}, {"DG 2", "VIB HIGH"}, {"DG 2", "GEN GND"},
+            {"BACKUP XFMR", "BKR B8 TRIP"}, {"DAY TANK", "OIL LVL HIGH"}, {"24 VDC BATT", "BLOWN FUSE"}, {"INVERTER", "TROUBLE"},
+            {"RPS BUS B", "TROUBLE"}, {"BUS 85", "UNDERVOLTAGE"}, {"125 VDC DIV2", "OUT OF SVC"}, {"XFMR TR-8/83", "WDG TEMP HI"},
+            {}, {"BUS 83", "MCC OL TRIP"}, {"DG 2", "OVERSPEED"}, {"ANNUNCIATORS", "125 VDC LOSS"}};
     /** The colour schemes of the references: lit white, amber and red. */
     private static final int[] SCHEMES = {0xFFF6D8, 0xFFDC50, 0xFF4A32};
 
@@ -154,9 +169,17 @@ final class PanelAnnunciatorShowcase {
             level.setBlock(pos, panel, 3);
             PLACED.add(pos);
         }
+        for (int row = 0; row < COLUMBIA_ROWS; row++) {
+            for (int column = 0; column < COLUMBIA_COLUMNS; column++) {
+                BlockPos pos = COLUMBIA.west(column).below(row);
+                level.setBlock(pos, panel, 3);
+                PLACED.add(pos);
+            }
+        }
         realBox(level, REAL, -1, true);
         realBox(level, TEST, AnnunciatorControlType.TEST, false);
         bigBox(level);
+        columbiaBox(level);
         for (BlockPos pos : PLACED) {
             if (level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
                 be.syncFull();
@@ -204,6 +227,31 @@ final class PanelAnnunciatorShowcase {
         module(level, BIG.below(), 0, 10, 24, 6, -1);
     }
 
+    /**
+     * Columbia's box: 7 columns by 10 rows of 8 x 3 windows (7 x 5 split tiles) starting 4 cells in and 3 down on the
+     * wall, so its plate margins (2.4 left, 2.5 right, 1.5 above, 3 below) stay on the wall; mostly dark, a few alarms
+     * flashing or acknowledged; the box is named on its first window. The station style module under it.
+     */
+    private static void columbiaBox(ServerLevel level) {
+        for (int i = 0; i < 70; i++) {
+            int gx = 4 + i % 7 * 8;
+            int gy = 3 + i / 7 * 3;
+            BlockPos owner = COLUMBIA.west(gx / 16).below(gy / 16);
+            int n = i * 11 % 17;
+            PanelComponent c = window(level, owner, gx % 16, gy % 16, 8, 3, i * 5 % 3 == 0 ? 0 : i * 5 % 3 == 1 ? 1 : 2,
+                    n == 0 ? 1 : n == 5 ? 2 : 0, COLUMBIA_LEGENDS[i % COLUMBIA_LEGENDS.length]);
+            AnnunciatorData d = (AnnunciatorData) c.data();
+            d.style = AnnunciatorData.STYLE_COLUMBIA;
+            if (i == 0) {
+                d.boxName = "P800-C5";
+            }
+            c.touch();
+        }
+        PanelComponent station = module(level, COLUMBIA.west(1).below(2), 0, 6, 32, 8, -1);
+        ((AnnunciatorControlData) station.data()).style = AnnunciatorControlData.STYLE_STATION;
+        station.touch();
+    }
+
     /** Every component is on the client: "blocks, components". */
     static String verify(Minecraft mc, int stage) {
         int components = 0;
@@ -218,7 +266,7 @@ final class PanelAnnunciatorShowcase {
                 }
             }
         }
-        if (components != mounted || modules != 4) {
+        if (components != mounted || modules != 5) {
             throw new AssertionError("Annunciator showcase " + NAMES[stage] + ": " + components + " of " + mounted
                     + " components on the client, " + modules + " modules");
         }

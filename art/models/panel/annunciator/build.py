@@ -1,5 +1,6 @@
-"""Family: annunciator lamp box window and the operator's annunciator control station,
-built from parameters and exported through panel_export.
+"""Family: the annunciator tile of Columbia Generating Station's P800 annunciator boxes
+and a pushbutton control station, built from parameters and exported through
+panel_export.
 
 Run headless from the repo root (either way):
 
@@ -16,15 +17,16 @@ Conventions are those of panel_export: inches, panel face Z = 0, +Z toward the
 operator, +Y up, footprint top-left at (0, 0) extending to (w, -h). The helpers below
 take y DOWN the face (as the game does) and flip it when a vertex is made.
 
-READ THE README FIRST: which annunciator make Columbia's boards carry could not be
-established, so this is a generic lamp box, and only the window size has a source.
+READ THE README FIRST. The shapes and proportions are read off three owner-supplied
+photographs (not in the repository). No real dimension and no maker is known: the
+inches below are a nominal scale, only the proportions mean anything.
 """
 import math
 import os
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
@@ -33,70 +35,91 @@ import panel_export as px  # noqa: E402
 PREVIEW_DIR = os.environ.get("BWR_PANEL_PREVIEW_DIR") or os.path.join(px.REPO, "tmp", "panel-models", "annunciator")
 
 # --------------------------------------------------------------------------
-# DIMENSIONS (inches). Sources:
-#   [DOC]  CONTROL-PANELS.md size table: window tile 2.8125 x 2.625 in, cited there to
-#          CR-PANELS-BWR-RESEARCH.md (that file is not in the repository, so the
-#          primary source behind it could not be re-read).
-#   [GAME] Chosen so the model lines up with what the game already draws: the
-#          elevations of AnnunciatorBox.java (tile 1.0, bezel lip 1.3, in 1/16 block)
-#          and the button layout of AnnunciatorControlModel.java.
-#   [CAT]  GE Control Catalog Sec. 9 (rev. 7/13) CR104P 30.5 mm oiltight operators, as
-#          used by ../pushbuttons/build.py (page cited per value there).
-#   [ASM]  Assumed: typical lamp box / control station proportions, no source found.
+# PROPORTIONS. Sources:
+#   [P3]   Owner-supplied photograph 3: box "ANN PANEL P800-C5" on Columbia's
+#          light-blue electrical board, well lit, nearly square on. Measured in pixels
+#          on the photograph; every value is a share of the tile pitch.
+#   [P1]   Owner-supplied photograph 1: box "ANN PANEL P800-C1", the same hardware in
+#          dim light, seen from below (used to check P3, not measured).
+#   [P2]   Owner-supplied photograph 2: a grey local panel of an unnamed plant with a
+#          box of unsplit windows and four pushbuttons under it. The pattern for the
+#          control station; NOT Columbia's control room.
+#   [EYE]  By eye from the photograph named, not measured.
+#   [NOM]  Nominal: a scale chosen so the model has a size in inches. No real dimension
+#          of this hardware is known.
+#   [GAME] Chosen so the model lines up with what the game draws: AnnunciatorBox.java
+#          (the lit face at 1.0, the legend at 1.17, in 1/16 block) and the button
+#          layout of AnnunciatorControlModel.java.
 # --------------------------------------------------------------------------
-TILE_W = 2.8125          # [DOC] one window tile, wide
-TILE_H = 2.625           # [DOC] one window tile, high
-FRAME = 0.375            # [ASM] trim frame of the lamp box round the outermost windows
-LENS_Z = 0.50            # [ASM] front of the lens above the panel face (the cabinet stands proud)
-LENS_BEVEL = 0.06        # [ASM] broken edge of the lens
-LENS_EDGE_Z = 0.44       # [ASM] where the lens meets the frame, behind its front
-FRAME_Z = 0.65           # [GAME] front of the trim frame: 1.3 x the lens, as the game's bezel lip
-FRAME_CHAMFER = 0.06     # [ASM] broken outer edge of the frame
-FRAME_LAND = 0.30        # [ASM] where the frame's flat front ends and its inner slope starts
-WIN_W = TILE_W + 2 * FRAME
-WIN_H = TILE_H + 2 * FRAME
+# ---- one tile (the model ann_window). Read by the game from the model file itself.
+TILE_W = 4.0             # [NOM] tile pitch, wide. By eye against the edgewise meters under the box in P3
+                         #       (if those are 6.5 in wide) a tile is roughly 4 in; not a measurement.
+TILE_H = 3.0             # [P3] pitch 143 x 107 px: 1.33 : 1, a 4 : 3 tile
+GAP = 0.03 * TILE_W      # [P3] black gap between two tiles, about 4 px of 143
+RIM = 0.07 * TILE_W      # [P3] raised rim of the tray, about 10 px of 143; the corner radius is the same [EYE]
+PLATE_Z = 0.35           # [EYE P3, P1] front of the black plate above the board (its edge is plainly thick)
+FACE_Z = 0.50            # [GAME] the recessed face that carries the legend (the game puts it at 1.0)
+RIM_Z = 0.65             # [EYE P3] front of the rim, proud of the face
+CORNER_SEGMENTS = 2      # the rounded corner as two flats: enough at a few blocks
 
-# Control station: four pushbuttons in a row, ACK / RESET / SILENCE / TEST, on one plate.
+# ---- the box, as shares of the tile pitch width. THE GAME DRAWS THESE IN CODE:
+# AnnunciatorBox.java holds the same numbers under the same names. Keep the two in step.
+MARGIN_LEFT = 0.30       # [P3] plate margin left of the tiles (holds the row numerals)
+MARGIN_RIGHT = 0.31      # [P3] right of the tiles (holds the latch)
+MARGIN_TOP = 0.19        # [P3] above the tiles: a quarter of a tile height (holds the column numerals)
+MARGIN_BOTTOM = 0.375    # [P3] below the tiles: half a tile height (holds the nameplate)
+DIVIDER = 0.02           # [P3] the dark line that splits a tile into two alarms, about 2 px of 143, drawn a little heavier
+NUMERAL_CAP = 0.085      # [P3] cap height of the white margin numerals, about 12 px
+NAMEPLATE_W = 0.95       # [P3] white nameplate, 135 px wide
+NAMEPLATE_H = 0.33       # [P3] 47 px high
+NAMEPLATE_GAP = 0.012    # [P3] it all but touches the bottom row of tiles
+NAMEPLATE_CAP = 0.095    # [P3] cap height of its two lines, about 14 px
+NAMEPLATE_T = 0.006      # [EYE] thickness of the nameplate
+LATCH_R = 0.10           # [P3] round bright knob in the right margin, 28 px across
+LATCH_H = 0.09           # [EYE P3] how far it stands off the plate
+
+# ---- the control station (the model ann_control), after P2
 ST_W = 10.0              # [GAME] 4 : 1, the proportion of the module's sizes (24x6, 16x4, 32x8)
 ST_H = 2.5               # [GAME]
 ST_PITCH = ST_W / 4      # [GAME] one button per quarter of the width (a click picks the quarter)
 ST_BUTTON_Y = 0.825      # [GAME] button centres: the middle of the top 60 %, 3 % down
 ST_LEGEND_Y = 1.8625     # [GAME] centre of the legend row (63 % to 86 % of the height)
-ST_LEGEND_H = 0.28       # [ASM] legend cap height
-ST_PLATE_T = 0.06        # [ASM] station plate thickness
-ST_PLATE_M = 0.03        # [ASM] plate inset from the footprint
-ST_EDGE = 0.05           # [ASM] plate edge chamfer
-ST_SCREW_R = 0.085       # [ASM] plate screws
-OCT_AF = 1.36            # [CAT, reduced] octagonal mounting ring across flats (1.42 on the drawing; kept
-                         #        inside the 1.5 in button row)
-OCT_H = 0.30             # [CAT] ring height
-LOCK_R = 0.70            # [CAT] round locking plate under the ring
-LOCK_T = 0.05            # [CAT]
-COLLAR_R = 0.60          # [CAT] round collar in front of the ring
-COLLAR_IN = 0.525        # [CAT] collar bore
-CAP_R = 0.49             # [CAT] flush cap
-CAP_FRONT = 0.53         # [CAT] flush operator front, from the panel
+ST_LEGEND_H = 0.26       # legend cap height
+RING_R = 0.25 * ST_PITCH     # [P2] bright bezel ring: half the button pitch across
+CAP_R = 0.165 * ST_PITCH     # [P2] black button: a third of the pitch across
+RING_Z = 0.22            # [EYE P2] front of the ring
+CAP_Z = 0.17             # [EYE P2] the button sits just inside the ring
 CAP_TRAVEL = 0.15        # [GAME] stroke used by the game while held (as ../pushbuttons)
+TAG_W = 0.80 * ST_PITCH  # [P2] black legend plate under each button
+TAG_H = 0.20 * ST_PITCH  # [P2]
+TAG_T = 0.03             # [EYE] its thickness
+TAG_EDGE = 0.035         # [EYE P2] the light edge of the engraved laminate
 
-SRC_WINDOW = ("Generic annunciator lamp box window, not a maker's drawing: tile 2.8125 x 2.625 in from "
-              "CONTROL-PANELS.md (CR-PANELS-BWR-RESEARCH.md); trim frame and depths assumed, elevations "
-              "matched to AnnunciatorBox.java (see annunciator/README.md)")
-SRC_STATION = ("Generic annunciator control station, not a maker's drawing: four 30.5 mm oiltight flush "
-               "pushbuttons (GE Control Catalog Sec. 9 CR104P outline p.9-49, as ../pushbuttons) on one plate, "
-               "laid out as AnnunciatorControlModel.java; plate assumed (see annunciator/README.md)")
+SRC_WINDOW = ("One annunciator tile after owner-supplied photographs of Columbia Generating Station's annunciator "
+              "boxes P800-C5 and P800-C1 (not in the repository): proportions measured on the photographs, "
+              "scale nominal, no maker's drawing (see annunciator/README.md)")
+SRC_STATION = ("Annunciator pushbutton station after an owner-supplied photograph of a local panel of an unnamed "
+               "plant (not in the repository): four round black pushbuttons in bright bezel rings, a legend plate "
+               "under each; laid out as AnnunciatorControlModel.java, scale nominal (see annunciator/README.md)")
 
-# Palette (sRGB). The frame colours are the ones the procedural window box already uses
-# (AnnunciatorModel.BOX_LIP / BOX_DARK), so a model window joins a box of them without a seam.
-FRAME_RGB = "3A413E"
-FRAME_SLOPE_RGB = "232827"
-LENS_RGB = "F0F0E0"      # white translucent lens (PANEL-MODELS-SPEC palette); the game recolours it
-PLATE_RGB = "23272C"     # station plate: ModelDraw.HOUSING, so the game's light legends read on it
-PLATE_EDGE_RGB = "3A4046"
+# Palette (sRGB)
+RIM_RGB = "E9E1C5"       # [P3] ivory moulded tile
+RIM_WALL_RGB = "D6CEB2"  # the tile's side, a tone down so the gap between tiles reads
+RIM_INNER_RGB = "D2CAAE" # the step from the rim down to the face
+FACE_RGB = "DDD5B8"      # [P3] the face, a little darker than the rim; the game recolours it
+PLATE_RGB = "17191A"     # [P3] black plate (the game's AnnunciatorModel.BOX_DARK)
+DIVIDER_RGB = "4A463C"   # [P3] the dark dividing line
+NAMEPLATE_RGB = "F4F2EA" # [P3] white nameplate
+LATCH_RGB = "C4C9CE"     # [P3] bright metal
+INK_RGB = "1E1E1C"       # [P3] black legends on an unlit tile
+NUMERAL_RGB = "E8E8E8"   # [P3] white margin numerals
 CHROME = "C8CCD0"
-HOUSING = "2A2C2E"
-SCREW = "B8BCC0"
-# Cap colours of the procedural module (AnnunciatorControlModel.CAPS): white, blue, amber, green.
-BUTTONS = (("ack", "E6E2D0"), ("reset", "4FA0E0"), ("silence", "E8A820"), ("test", "30B050"))
+BUTTON_RGB = "1A1A1A"
+TAG_RGB = "141414"
+TAG_EDGE_RGB = "D8D6CC"
+BUTTONS = ("ack", "reset", "silence", "test")
+
+WHOLE, UPPER, LOWER = 0, 1, 2
 
 
 # --------------------------------------------------------------------------
@@ -131,6 +154,18 @@ class Geo:
         self.f.append(tuple(range(base, base + len(clean))))
         self.fm.append(m)
 
+    def rect(self, x0, y0, x1, y1, z, m=0):
+        self.face([(x0, y0, z), (x1, y0, z), (x1, y1, z), (x0, y1, z)], (0, 0, 1), m)
+
+    def box(self, x0, y0, x1, y1, z0, z1, m=0, side=None):
+        """A block from z0 to z1: its front and four sides (side: their material slot, default m)."""
+        s = m if side is None else side
+        self.rect(x0, y0, x1, y1, z1, m)
+        self.face([(x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1)], (0, -1, 0), s)
+        self.face([(x0, y1, z0), (x1, y1, z0), (x1, y1, z1), (x0, y1, z1)], (0, 1, 0), s)
+        self.face([(x0, y0, z0), (x0, y1, z0), (x0, y1, z1), (x0, y0, z1)], (-1, 0, 0), s)
+        self.face([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], (1, 0, 0), s)
+
     def build(self, name, part="body", role="paint", **tagkw):
         me = bpy.data.meshes.new(name)
         me.from_pydata(self.v, [], self.f)
@@ -152,8 +187,7 @@ def lathe(g, cx, cy, profile, segs, mat=0, phase=0.0):
     for i in range(len(profile) - 1):
         (r0, z0), (r1, z1) = profile[i], profile[i + 1]
         m = mat[i] if isinstance(mat, (list, tuple)) else mat
-        # Outward normal of the segment in the (r, z) half plane.
-        nr, nz = z1 - z0, r0 - r1
+        nr, nz = z1 - z0, r0 - r1          # outward normal of the segment in the (r, z) half plane
         for j in range(segs):
             a0 = phase + 2 * math.pi * j / segs
             a1 = phase + 2 * math.pi * (j + 1) / segs
@@ -166,110 +200,197 @@ def lathe(g, cx, cy, profile, segs, mat=0, phase=0.0):
 
 
 # --------------------------------------------------------------------------
-# The window
+# The tile
 # --------------------------------------------------------------------------
-# Cross-section of the trim frame from its outer edge inward: (distance in, z).
-FRAME_PROFILE = [(0.0, 0.0), (0.0, FRAME_Z - FRAME_CHAMFER), (FRAME_CHAMFER, FRAME_Z), (FRAME_LAND, FRAME_Z),
-                 (FRAME, LENS_EDGE_Z)]
+def tile_materials(face_rgb=FACE_RGB, suffix=""):
+    """Slots: 0 rim front, 1 the tile's outer wall, 2 the step down to the face, 3 the face, 4 the divider."""
+    return [px.material("tile_rim", RIM_RGB, 0.55), px.material("tile_wall", RIM_WALL_RGB, 0.6),
+            px.material("tile_step", RIM_INNER_RGB, 0.6), px.material("tile_face" + suffix, face_rgb, 0.5),
+            px.material("tile_divider", DIVIDER_RGB, 0.7)]
 
 
-def window_materials():
-    return {"frame": px.material("frame", FRAME_RGB, 0.6), "slope": px.material("frame_slope", FRAME_SLOPE_RGB, 0.7),
-            "lens": px.material("lens_white", LENS_RGB, 0.4)}
+def tile_pieces(x0, y0, w, h, role, mats, k=1.0):
+    """The pieces of one tile on the cells (x0, y0, w, h), as {part name: Geo}.
 
+    role: WHOLE (rim all round), UPPER (the top alarm of a split tile: no rim along its bottom, where the
+    tile carries on into the LOWER one) or LOWER. k scales the gap and the rim (1 for a tile TILE_W wide).
+    This is the construction the game repeats from the model's parts (AnnunciatorTileBox.java): corners keep
+    their shape, the straight runs and the face stretch.
+    """
+    g, r, d = GAP / 2 * k, RIM * k, DIVIDER * TILE_W * k
+    top, bottom = role != LOWER, role != UPPER
+    ox0, ox1 = x0 + g, x0 + w - g
+    oy0 = y0 + g if top else y0
+    oy1 = y0 + h - g if bottom else y0 + h
+    fx0, fx1 = ox0 + r, ox1 - r
+    fy0 = oy0 + r if top else y0 + d / 2
+    fy1 = oy1 - r if bottom else y0 + h - d / 2
+    zp, zf, zr = PLATE_Z, FACE_Z, RIM_Z
+    out = {}
 
-def frame_side(M, name, x0, y0, x1, y1, ux, uy):
-    """One straight run of the frame: its outer edge from (x0, y0) to (x1, y1), (ux, uy) pointing inward."""
-    g = Geo(M["frame"], M["slope"])
-    for i in range(len(FRAME_PROFILE) - 1):
-        (d0, z0), (d1, z1) = FRAME_PROFILE[i], FRAME_PROFILE[i + 1]
-        nd, nz = -(z1 - z0), d1 - d0
-        pts = [(x0 + d0 * ux, y0 + d0 * uy, z0), (x1 + d0 * ux, y1 + d0 * uy, z0),
-               (x1 + d1 * ux, y1 + d1 * uy, z1), (x0 + d1 * ux, y0 + d1 * uy, z1)]
-        g.face(pts, (nd * ux, nd * uy, nz), 1 if i == len(FRAME_PROFILE) - 2 else 0)
-    return g.build(name, part=name)
+    def corner(name, cx, cy, sx, sy):
+        """The rounded corner whose inner corner (the arc's centre) is (cx, cy); (sx, sy) points outward."""
+        geo = Geo(*mats)
+        pts = []
+        for i in range(CORNER_SEGMENTS + 1):
+            a = math.pi / 2 * i / CORNER_SEGMENTS
+            pts.append((cx + sx * r * math.cos(a), cy + sy * r * math.sin(a)))
+        for a, b in zip(pts, pts[1:]):
+            mx, my = (a[0] + b[0]) / 2 - cx, (a[1] + b[1]) / 2 - cy
+            geo.face([(a[0], a[1], zp), (b[0], b[1], zp), (b[0], b[1], zr), (a[0], a[1], zr)], (mx, my, 0), 1)
+        geo.face([(p[0], p[1], zr) for p in pts] + [(cx, cy, zr)], (0, 0, 1), 0)
+        out[name] = geo
 
+    def run(name, ax, ay, bx, by, nx, ny):
+        """A straight run of rim: its outer edge from (ax, ay) to (bx, by), (nx, ny) pointing outward."""
+        geo = Geo(*mats)
+        ix0, iy0, ix1, iy1 = ax - nx * r, ay - ny * r, bx - nx * r, by - ny * r
+        geo.face([(ax, ay, zp), (bx, by, zp), (bx, by, zr), (ax, ay, zr)], (nx, ny, 0), 1)
+        geo.face([(ax, ay, zr), (bx, by, zr), (ix1, iy1, zr), (ix0, iy0, zr)], (0, 0, 1), 0)
+        geo.face([(ix0, iy0, zr), (ix1, iy1, zr), (ix1, iy1, zf), (ix0, iy0, zf)], (-nx, -ny, 0), 2)
+        out[name] = geo
 
-def frame_corner(M, name, cx, cy, sx, sy):
-    """A mitred corner of the frame: (cx, cy) its outer corner, (sx, sy) = +-1 pointing into the window."""
-    g = Geo(M["frame"], M["slope"])
-    for i in range(len(FRAME_PROFILE) - 1):
-        (d0, z0), (d1, z1) = FRAME_PROFILE[i], FRAME_PROFILE[i + 1]
-        nd, nz = -(z1 - z0), d1 - d0
-        m = 1 if i == len(FRAME_PROFILE) - 2 else 0
-        # The arm that runs along x (its outer edge is the horizontal side of the box) ...
-        g.face([(cx + sx * d0, cy + sy * d0, z0), (cx + sx * FRAME, cy + sy * d0, z0),
-                (cx + sx * FRAME, cy + sy * d1, z1), (cx + sx * d1, cy + sy * d1, z1)], (0, nd * sy, nz), m)
-        # ... and the arm that runs along y.
-        g.face([(cx + sx * d0, cy + sy * d0, z0), (cx + sx * d1, cy + sy * d1, z1),
-                (cx + sx * d1, cy + sy * FRAME, z1), (cx + sx * d0, cy + sy * FRAME, z0)], (nd * sx, 0, nz), m)
-    return g.build(name, part=name)
-
-
-def lens(M, x0, y0, x1, y1, name="lens"):
-    """The window lens: a flat front with a broken edge. Its outline is the tile, exactly."""
-    g = Geo(M["lens"])
-    b, zf, ze = LENS_BEVEL, LENS_Z, LENS_EDGE_Z
-    g.face([(x0 + b, y0 + b, zf), (x1 - b, y0 + b, zf), (x1 - b, y1 - b, zf), (x0 + b, y1 - b, zf)], (0, 0, 1))
-    g.face([(x0, y0, ze), (x1, y0, ze), (x1 - b, y0 + b, zf), (x0 + b, y0 + b, zf)], (0, -1, 1))
-    g.face([(x0, y1, ze), (x1, y1, ze), (x1 - b, y1 - b, zf), (x0 + b, y1 - b, zf)], (0, 1, 1))
-    g.face([(x0, y0, ze), (x0, y1, ze), (x0 + b, y1 - b, zf), (x0 + b, y0 + b, zf)], (-1, 0, 1))
-    g.face([(x1, y0, ze), (x1, y1, ze), (x1 - b, y1 - b, zf), (x1 - b, y0 + b, zf)], (1, 0, 1))
-    return g.build(name, part="lens", role="lamp", tint="white")
+    ry0 = oy0 + r if top else oy0
+    ry1 = oy1 - r if bottom else oy1
+    if top:
+        corner("corner_tl", fx0, oy0 + r, -1, -1)
+        corner("corner_tr", fx1, oy0 + r, 1, -1)
+        run("rim_top", fx0, oy0, fx1, oy0, 0, -1)
+    if bottom:
+        corner("corner_bl", fx0, oy1 - r, -1, 1)
+        corner("corner_br", fx1, oy1 - r, 1, 1)
+        run("rim_bottom", fx0, oy1, fx1, oy1, 0, 1)
+    run("rim_left", ox0, ry0, ox0, ry1, -1, 0)
+    run("rim_right", ox1, ry0, ox1, ry1, 1, 0)
+    geo = Geo(*mats)
+    geo.rect(fx0, fy0, fx1, fy1, zf, 3)
+    out["face"] = geo
+    if role != WHOLE:
+        geo = Geo(*mats)
+        if role == UPPER:
+            geo.rect(fx0, y0 + h - d / 2, fx1, y0 + h, zf + 0.01, 4)
+        else:
+            geo.rect(fx0, y0, fx1, y0 + d / 2, zf + 0.01, 4)
+        out["divider"] = geo
+    return out
 
 
 def build_window():
-    """One window with the whole trim frame round it: what a window standing alone is. The game
-    draws only the frame parts on the sides that are not joined to a neighbour (README)."""
+    """One whole tile on its piece of plate, split by the divider as Columbia's are. The game takes the
+    rim, the corners and the face from here and draws the divider and everything round the tiles in code."""
     px.clear_scene()
-    M = window_materials()
-    f, w, h = FRAME, WIN_W, WIN_H
-    frame_side(M, "frame_top", f, 0, w - f, 0, 0, 1)
-    frame_side(M, "frame_bottom", f, h, w - f, h, 0, -1)
-    frame_side(M, "frame_left", 0, f, 0, h - f, 1, 0)
-    frame_side(M, "frame_right", w, f, w, h - f, -1, 0)
-    frame_corner(M, "corner_tl", 0, 0, 1, 1)
-    frame_corner(M, "corner_tr", w, 0, -1, 1)
-    frame_corner(M, "corner_bl", 0, h, 1, -1)
-    frame_corner(M, "corner_br", w, h, -1, -1)
-    lens(M, f, f, w - f, h - f)
-    # Where the legend goes; the game lays out up to four centred lines over the lens itself.
-    px.label("legend", w / 2, -h / 2, LENS_Z + 0.002, 0.30)
+    mats = tile_materials()
+    pieces = tile_pieces(0.0, 0.0, TILE_W, TILE_H, WHOLE, mats)
+    for name, geo in pieces.items():
+        if name == "face":
+            geo.build(name, part=name, role="lamp", tint="white")
+        else:
+            geo.build(name, part=name)
+    g, r, d = GAP / 2, RIM, DIVIDER * TILE_W
+    geo = Geo(*mats)
+    geo.rect(g + r, TILE_H / 2 - d / 2, TILE_W - g - r, TILE_H / 2 + d / 2, FACE_Z + 0.01, 4)
+    geo.build("divider", part="divider")
+    plate = Geo(px.material("plate", PLATE_RGB, 0.8))
+    plate.box(0.0, 0.0, TILE_W, TILE_H, 0.0, PLATE_Z)
+    plate.build("plate", part="plate")
+    # Where the legends go: the game lays out up to four centred lines over the face of each window itself.
+    quarter = (TILE_H - GAP - 2 * RIM) / 4
+    px.label("upper", TILE_W / 2, -(TILE_H / 2 - quarter), FACE_Z + 0.002, 0.26)
+    px.label("lower", TILE_W / 2, -(TILE_H / 2 + quarter), FACE_Z + 0.002, 0.26)
 
 
-def build_box(cols, rows, lit=()):
-    """PREVIEW ONLY: a box of cols x rows windows as the game assembles it from the window model's
-    parts: one frame round the outside, a thin dark gap between the lenses."""
+# --------------------------------------------------------------------------
+# PREVIEW ONLY: a whole box as the game assembles it
+# --------------------------------------------------------------------------
+PREVIEW_LEGENDS = [("DG 2", "AUTO START"), ("DG 2", "FAIL TO START"), ("BUS 8", "LOSS OF VOLT"), ("BUS 8", "DEGRADED VOLT"),
+                   ("BKR 8/81", "TRIP"), ("BKR 8/81", "GND"), ("DG 2", "VIB HIGH"), ("DG 2", "GEN GND"),
+                   ("BACKUP XFMR", "BKR B8 TRIP"), ("DG 2 DAY TANK", "OIL LVL HIGH"), ("24 VDC BATT", "BLOWN FUSE"),
+                   ("INVERTER", "TROUBLE"), ("RPS BUS B", "TROUBLE"), ("BUS 85", "UNDERVOLTAGE"), ("125 VDC DIV 2", "OUT OF SVC"),
+                   ("XFMR TR-8/83", "WDG TEMP HI"), ("", ""), ("BUS 83", "MCC OL TRIP"), ("DG 2", "OVERSPEED"),
+                   ("ANNUNCIATORS", "125 VDC LOSS")]
+
+
+def text(body, x, y, z, cap, rgb, name):
+    """A line of preview text centred on (x, y_down). The game draws its own with the Minecraft font."""
+    curve = bpy.data.curves.new(name, "FONT")
+    curve.body = body
+    curve.align_x = "CENTER"
+    curve.align_y = "CENTER"
+    curve.size = cap / 0.69           # the cap height of Blender's built-in font is 0.69 of its size
+    obj = bpy.data.objects.new(name, curve)
+    obj.location = (x, -y, z)
+    curve.materials.append(px.material("ink_" + rgb, rgb, 0.8))
+    bpy.context.scene.collection.objects.link(obj)
+    return obj
+
+
+def build_box(cols, tile_rows, lit=None):
+    """A box of cols x tile_rows split tiles: 2 x tile_rows alarm windows down, laid out exactly as
+    AnnunciatorModel does from AnnunciatorBox.layout. lit: {(half row, column): rgb}. Returns its size."""
     px.clear_scene()
-    M = window_materials()
-    gap = 0.06 * TILE_H          # the game's gap between two windows: 6 % of the smaller side
-    f = FRAME
-    w, h = cols * TILE_W + 2 * f, rows * TILE_H + 2 * f
-    frame_side(M, "frame_top", f, 0, w - f, 0, 0, 1)
-    frame_side(M, "frame_bottom", f, h, w - f, h, 0, -1)
-    frame_side(M, "frame_left", 0, f, 0, h - f, 1, 0)
-    frame_side(M, "frame_right", w, f, w, h - f, -1, 0)
-    frame_corner(M, "corner_tl", 0, 0, 1, 1)
-    frame_corner(M, "corner_tr", w, 0, -1, 1)
-    frame_corner(M, "corner_bl", 0, h, 1, -1)
-    frame_corner(M, "corner_br", w, h, -1, -1)
-    back = Geo(px.material("box_dark", "17191A", 0.8))
-    back.face([(f, f, 0.40), (w - f, f, 0.40), (w - f, h - f, 0.40), (f, h - f, 0.40)], (0, 0, 1))
-    back.build("back")
-    lit_mat = px.material("lens_lit", "FFB000", 0.4)
-    bsdf = lit_mat.node_tree.nodes.get("Principled BSDF")
-    bsdf.inputs["Emission Color"].default_value = bsdf.inputs["Base Color"].default_value
-    bsdf.inputs["Emission Strength"].default_value = 1.2
-    off_mat = px.material("lens_off", "4D3500", 0.5)   # the game's unlit tile: 30 % of the colour
-    for r in range(rows):
-        for c in range(cols):
-            x0 = f + c * TILE_W + (gap / 2 if c > 0 else 0)
-            x1 = f + (c + 1) * TILE_W - (gap / 2 if c < cols - 1 else 0)
-            y0 = f + r * TILE_H + (gap / 2 if r > 0 else 0)
-            y1 = f + (r + 1) * TILE_H - (gap / 2 if r < rows - 1 else 0)
-            obj = lens({"lens": lit_mat if (r, c) in lit else off_mat}, x0, y0, x1, y1, name=f"lens_{r}_{c}")
-            obj["bwr_part"] = f"lens_{r}_{c}"
-    return w, h
+    u = TILE_W
+    ml, mr, mt, mb = MARGIN_LEFT * u, MARGIN_RIGHT * u, MARGIN_TOP * u, MARGIN_BOTTOM * u
+    half = TILE_H / 2
+    bw, bh = cols * u, tile_rows * TILE_H
+    plate = Geo(px.material("plate", PLATE_RGB, 0.8))
+    plate.box(0.0, 0.0, ml + bw + mr, mt + bh + mb, 0.0, PLATE_Z)
+    plate.build("plate")
+    mats = tile_materials()
+    lit_mats = {}
+    merged = Geo(*mats)
+    for row in range(2 * tile_rows):
+        for col in range(cols):
+            x0, y0 = ml + col * u, mt + row * half
+            role = UPPER if row % 2 == 0 else LOWER
+            rgb = (lit or {}).get((row, col))
+            for name, geo in tile_pieces(x0, y0, u, half, role, mats).items():
+                if name == "face" and rgb:
+                    if rgb not in lit_mats:
+                        m = px.material("face_lit_" + rgb, rgb, 0.4)
+                        bsdf = m.node_tree.nodes.get("Principled BSDF")
+                        bsdf.inputs["Emission Color"].default_value = list(bsdf.inputs["Base Color"].default_value)
+                        bsdf.inputs["Emission Strength"].default_value = 1.0
+                        bsdf.inputs["Base Color"].default_value = (0.0, 0.0, 0.0, 1.0)
+                        lit_mats[rgb] = Geo(m)
+                    # the game draws the lit face as a low block over the face: 1.0 to 1.12 of 1/16 block
+                    f = geo.v
+                    xs, ys = [p[0] for p in f], [-p[1] for p in f]
+                    lit_mats[rgb].box(min(xs), min(ys), max(xs), max(ys), FACE_Z, FACE_Z * 1.12)
+                    continue
+                base = len(merged.v)
+                merged.v.extend(geo.v)
+                merged.f.extend(tuple(i + base for i in f) for f in geo.f)
+                merged.fm.extend(geo.fm)
+            legend = PREVIEW_LEGENDS[(row * cols + col) % len(PREVIEW_LEGENDS)]
+            cy = y0 + half / 2 + (GAP / 4 + RIM / 2 if role == UPPER else -(GAP / 4 + RIM / 2))
+            ink = INK_RGB if not rgb or rgb != "E02A1E" else "FFE8E0"
+            for i, line in enumerate(legend):
+                if line:
+                    text(line, x0 + u / 2, cy + (i - 0.5) * 0.36, FACE_Z * (1.17 if rgb else 1.0) + 0.012, 0.19, ink,
+                         f"legend_{row}_{col}_{i}")
+    merged.build("tiles")
+    for rgb, geo in lit_mats.items():
+        geo.build("lit_" + rgb)
+    for row in range(2 * tile_rows):
+        text(str(row + 1), ml / 2, mt + (row + 0.5) * half, PLATE_Z + 0.01, NUMERAL_CAP * u, NUMERAL_RGB, f"row_{row}")
+    for col in range(cols):
+        text("-%d" % (col + 1), ml + (col + 0.5) * u, mt / 2, PLATE_Z + 0.01, NUMERAL_CAP * u, NUMERAL_RGB, f"col_{col}")
+    # The nameplate, centred under the box, and the latch, half way up its right margin.
+    cx = ml + bw / 2
+    ny0 = mt + bh + NAMEPLATE_GAP * u
+    name = Geo(px.material("nameplate", NAMEPLATE_RGB, 0.5))
+    name.box(cx - NAMEPLATE_W * u / 2, ny0, cx + NAMEPLATE_W * u / 2, ny0 + NAMEPLATE_H * u, PLATE_Z,
+             PLATE_Z + NAMEPLATE_T * u)
+    name.build("nameplate")
+    for i, line in enumerate(("ANN PANEL", "P800-C5")):
+        text(line, cx, ny0 + NAMEPLATE_H * u * (0.29 + 0.42 * i), PLATE_Z + NAMEPLATE_T * u + 0.01, NAMEPLATE_CAP * u,
+             INK_RGB, f"name_{i}")
+    latch = Geo(px.material("latch", LATCH_RGB, 0.3, 0.6))
+    lr, lz = LATCH_R * u, PLATE_Z + LATCH_H * u
+    lathe(latch, ml + bw + mr / 2, mt + bh / 2, [(lr, PLATE_Z), (lr, lz - lr * 0.3), (lr * 0.7, lz), (0, lz)], 8,
+          phase=math.radians(22.5))
+    latch.build("latch")
+    return ml + bw + mr, mt + bh + mb
 
 
 # --------------------------------------------------------------------------
@@ -277,88 +398,136 @@ def build_box(cols, rows, lit=()):
 # --------------------------------------------------------------------------
 def build_station():
     px.clear_scene()
-    plate_m = px.material("plate", PLATE_RGB, 0.6)
-    edge_m = px.material("plate_edge", PLATE_EDGE_RGB, 0.6)
-    chrome = px.material("chrome", CHROME, 0.3, 0.5)
-    housing = px.material("housing", HOUSING, 0.6)
-    screw = px.material("screw", SCREW, 0.5, 0.3)
-    # Plate with a broken edge.
-    g = Geo(plate_m, edge_m)
-    m, t, e = ST_PLATE_M, ST_PLATE_T, ST_EDGE
-    x0, y0, x1, y1 = m, m, ST_W - m, ST_H - m
-    g.face([(x0 + e, y0 + e, t), (x1 - e, y0 + e, t), (x1 - e, y1 - e, t), (x0 + e, y1 - e, t)], (0, 0, 1), 0)
-    g.face([(x0, y0, 0), (x1, y0, 0), (x1 - e, y0 + e, t), (x0 + e, y0 + e, t)], (0, -1, 1), 1)
-    g.face([(x0, y1, 0), (x1, y1, 0), (x1 - e, y1 - e, t), (x0 + e, y1 - e, t)], (0, 1, 1), 1)
-    g.face([(x0, y0, 0), (x0, y1, 0), (x0 + e, y1 - e, t), (x0 + e, y0 + e, t)], (-1, 0, 1), 1)
-    g.face([(x1, y0, 0), (x1, y1, 0), (x1 - e, y1 - e, t), (x1 - e, y0 + e, t)], (1, 0, 1), 1)
-    g.build("plate")
-    # Four plate screws, clear of the buttons and the legends.
-    g = Geo(screw)
-    for sx in (0.22, ST_W - 0.22):
-        for sy in (0.22, ST_H - 0.22):
-            lathe(g, sx, sy, [(ST_SCREW_R, t), (ST_SCREW_R, t + 0.03), (ST_SCREW_R - 0.03, t + 0.05), (0, t + 0.05)], 6)
-    g.build("screws")
-    rc = OCT_AF / 2 / math.cos(math.radians(22.5))
-    for i, (name, rgb) in enumerate(BUTTONS):
+    chrome = px.material("chrome", CHROME, 0.3, 0.6)
+    dark = px.material("ring_bore", "2A2C2E", 0.6)
+    tag_m = px.material("tag", TAG_RGB, 0.6)
+    edge_m = px.material("tag_edge", TAG_EDGE_RGB, 0.6)
+    button_m = px.material("button", BUTTON_RGB, 0.5)
+    for i, name in enumerate(BUTTONS):
         cx, cy = ST_PITCH * (i + 0.5), ST_BUTTON_Y
-        g = Geo(chrome, housing)
-        z = t
-        lathe(g, cx, cy, [(LOCK_R, z), (LOCK_R, z + LOCK_T), (OCT_AF / 2 - 0.05, z + LOCK_T)], 12)
-        z += LOCK_T
-        lathe(g, cx, cy, [(rc - 0.03, z), (rc, z + 0.03), (rc, z + OCT_H - 0.045), (rc - 0.055, z + OCT_H),
-                          (COLLAR_R - 0.02, z + OCT_H)], 8, phase=math.radians(22.5))
-        z += OCT_H
-        lathe(g, cx, cy, [(COLLAR_R, z), (COLLAR_R, CAP_FRONT - 0.035), (COLLAR_R - 0.035, CAP_FRONT),
-                          (COLLAR_IN, CAP_FRONT), (COLLAR_IN, 0.25), (0.40, 0.25)], 12, [0, 0, 0, 0, 1])
-        g.build(f"bezel_{name}", part="bezels")
-        g = Geo(px.material(f"cap_{name}", rgb, 0.6))
-        lathe(g, cx, cy, [(CAP_R, 0.30), (CAP_R, CAP_FRONT - 0.042), (CAP_R - 0.03, CAP_FRONT - 0.012),
-                          (0, CAP_FRONT)], 12)
-        g.build(f"cap_{name}", part=f"cap_{name}", travel=CAP_TRAVEL, axis=(0, 0, -1))
-        px.label(name, cx, -ST_LEGEND_Y, t + 0.002, ST_LEGEND_H)
+        ring = Geo(chrome, dark)
+        lathe(ring, cx, cy, [(RING_R, 0.0), (RING_R, RING_Z * 0.45), (RING_R - 0.07, RING_Z), (CAP_R + 0.07, RING_Z),
+                             (CAP_R + 0.015, RING_Z - 0.06), (CAP_R + 0.015, 0.0)], 16, [0, 0, 0, 0, 1])
+        ring.build(f"ring_{name}", part="rings")
+        cap = Geo(button_m)
+        lathe(cap, cx, cy, [(CAP_R, 0.0), (CAP_R, CAP_Z - 0.03), (CAP_R - 0.035, CAP_Z), (0, CAP_Z)], 16)
+        cap.build(f"cap_{name}", part=f"cap_{name}", travel=CAP_TRAVEL, axis=(0, 0, -1))
+        tag = Geo(tag_m, edge_m)
+        x0, x1 = cx - TAG_W / 2, cx + TAG_W / 2
+        y0, y1 = ST_LEGEND_Y - TAG_H / 2, ST_LEGEND_Y + TAG_H / 2
+        e, t = TAG_EDGE, TAG_T
+        tag.rect(x0 + e, y0 + e, x1 - e, y1 - e, t, 0)
+        tag.face([(x0, y0, 0), (x1, y0, 0), (x1 - e, y0 + e, t), (x0 + e, y0 + e, t)], (0, -1, 1), 1)
+        tag.face([(x0, y1, 0), (x1, y1, 0), (x1 - e, y1 - e, t), (x0 + e, y1 - e, t)], (0, 1, 1), 1)
+        tag.face([(x0, y0, 0), (x0, y1, 0), (x0 + e, y1 - e, t), (x0 + e, y0 + e, t)], (-1, 0, 1), 1)
+        tag.face([(x1, y0, 0), (x1, y1, 0), (x1 - e, y1 - e, t), (x1 - e, y0 + e, t)], (1, 0, 1), 1)
+        tag.build(f"tag_{name}", part="tags")
+        px.label(name, cx, -ST_LEGEND_Y, TAG_T + 0.002, ST_LEGEND_H)
 
 
 # --------------------------------------------------------------------------
 # Previews
 # --------------------------------------------------------------------------
-def set_lens(state):
-    """Preview only: the window lens as the game shows an amber window, unlit (30 %) or lit."""
-    mat = bpy.data.materials["lens_white"]
+def set_face(state):
+    """Preview only: the tile's face unlit as modelled, or lit amber as the game lights an amber window."""
+    mat = bpy.data.materials["tile_face"]
     bsdf = mat.node_tree.nodes.get("Principled BSDF")
     if "authored_base" not in mat:
         mat["authored_base"] = list(bsdf.inputs["Base Color"].default_value)
-    amber = px.material("tmp_amber", "FFB000").node_tree.nodes.get("Principled BSDF").inputs["Base Color"].default_value
     bsdf.inputs["Emission Strength"].default_value = 0.0
+    bsdf.inputs["Base Color"].default_value = mat["authored_base"]
     if state == "lit":
+        amber = px.material("tmp_amber", "FFB000").node_tree.nodes.get("Principled BSDF").inputs["Base Color"].default_value
         bsdf.inputs["Emission Color"].default_value = list(amber)
-        bsdf.inputs["Emission Strength"].default_value = 1.2
+        bsdf.inputs["Emission Strength"].default_value = 1.0
         bsdf.inputs["Base Color"].default_value = (0.0, 0.0, 0.0, 1.0)
-    elif state == "off":
-        bsdf.inputs["Base Color"].default_value = (amber[0] * 0.3, amber[1] * 0.3, amber[2] * 0.3, 1.0)
+
+
+def render(path, w, h, view, res_x=1600):
+    """One preview of the current scene framed on its w x h footprint. panel_export.preview frames a square
+    round the larger side from far off, which leaves a wide box a small strip; this looks at it as it hangs
+    on a board: "front" square on, "below" from the operator's eye, under it and a little to the left."""
+    scene = bpy.context.scene
+    scene.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in [e.identifier for e in
+        bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items] else "BLENDER_EEVEE"
+    if os.environ.get("BWR_PANEL_PREVIEW_ENGINE"):
+        scene.render.engine = os.environ["BWR_PANEL_PREVIEW_ENGINE"]
+        if scene.render.engine == "CYCLES":
+            scene.cycles.device = "CPU"
+            scene.cycles.samples = 24
+    if scene.world is None:
+        scene.world = bpy.data.worlds.new("w")
+    bg = scene.world.node_tree.nodes.get("Background") if scene.world.node_tree else None
+    if bg is not None:
+        bg.inputs["Color"].default_value = (0.18, 0.2, 0.19, 1.0)
+    scene.view_settings.view_transform = "Standard"
+    cx, cy = w / 2, -h / 2
+    pad = 0.1 * h
+    bpy.ops.mesh.primitive_plane_add(size=6 * max(w, h), location=(cx, cy, -0.06))
+    backdrop = bpy.context.active_object
+    backdrop.data.materials.append(px.material("backdrop", "A7BCAE", 0.8))
+    sun = bpy.data.objects.new("sun", bpy.data.lights.new("sun", "SUN"))
+    sun.data.energy = 3.5
+    sun.rotation_euler = (math.radians(-40), math.radians(-25), math.radians(20))
+    scene.collection.objects.link(sun)
+    cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam"))
+    scene.collection.objects.link(cam)
+    scene.camera = cam
+    scene.render.resolution_x = res_x
+    if view == "front":
+        scene.render.resolution_y = int(res_x * (h + 2 * pad) / (w + 2 * pad))
+        cam.data.type = "ORTHO"
+        cam.data.ortho_scale = w + 2 * pad
+        cam.location = (cx, cy, 40)
+        cam.rotation_euler = (0, 0, 0)
     else:
-        bsdf.inputs["Base Color"].default_value = mat["authored_base"]
+        scene.render.resolution_y = int(res_x * 0.62)
+        cam.data.type = "PERSP"
+        cam.data.lens = 45
+        cam.location = (cx - 0.22 * w, cy - 0.5 * w, 1.5 * w)
+        # Look at the middle with the board's up (+Y) as the picture's up, as someone standing in front of it would.
+        forward = (Vector((cx, cy, 0.0)) - cam.location).normalized()
+        right = forward.cross(Vector((0.0, 1.0, 0.0))).normalized()
+        up = right.cross(forward)
+        cam.rotation_euler = Matrix((right, up, -forward)).transposed().to_euler()
+    scene.render.filepath = f"{path}_{view}.png"
+    bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(backdrop)
+    light, camera = sun.data, cam.data
+    bpy.data.objects.remove(sun)
+    bpy.data.objects.remove(cam)
+    bpy.data.lights.remove(light)
+    bpy.data.cameras.remove(camera)
 
 
 def previews():
     os.makedirs(PREVIEW_DIR, exist_ok=True)
     build_window()
     base = os.path.join(PREVIEW_DIR, "ann_window")
-    px.preview(base, WIN_W, WIN_H)
-    for state in ("off", "lit"):
-        set_lens(state)
-        px.preview(base + "_" + state, WIN_W, WIN_H, views=("front", "three_quarter"))
-    w, h = build_box(4, 3, lit={(0, 1), (1, 2), (2, 0)})
-    px.preview(os.path.join(PREVIEW_DIR, "ann_box_4x3"), w, h, views=("front", "three_quarter"))
+    px.preview(base, TILE_W, TILE_H)
+    set_face("lit")
+    px.preview(base + "_lit", TILE_W, TILE_H, views=("front", "three_quarter"))
+    w, h = build_box(7, 5)
+    for view in ("front", "below"):
+        render(os.path.join(PREVIEW_DIR, "ann_box_7x5"), w, h, view)
+    w, h = build_box(7, 5, lit={(0, 1): "FFB000", (1, 1): "FFB000", (4, 3): "FFF6D8", (7, 5): "E02A1E", (8, 0): "FFB000"})
+    for view in ("front", "below"):
+        render(os.path.join(PREVIEW_DIR, "ann_box_7x5_lit"), w, h, view)
     build_station()
+    # The legends the game prints on the plates, for the picture only.
+    for i, (name, word) in enumerate(zip(BUTTONS, ("ACK", "RESET", "SILENCE", "TEST"))):
+        text(word, ST_PITCH * (i + 0.5), ST_LEGEND_Y, TAG_T + 0.01, ST_LEGEND_H, NUMERAL_RGB, f"legend_{name}")
     base = os.path.join(PREVIEW_DIR, "ann_control")
-    px.preview(base, ST_W, ST_H)
-    for name, _ in BUTTONS:
-        cap = bpy.data.objects[f"cap_{name}"]
-        cap.location.z -= CAP_TRAVEL
-    px.preview(base + "_pressed", ST_W, ST_H, views=("three_quarter", "side"))
+    for view in ("front", "below"):
+        render(base, ST_W, ST_H, view)
+    px.preview(base, ST_W, ST_H, views=("side",), res=1024)
+    for name in BUTTONS:
+        bpy.data.objects[f"cap_{name}"].location.z -= CAP_TRAVEL
+    render(base + "_pressed", ST_W, ST_H, "below")
+    px.preview(base + "_pressed", ST_W, ST_H, views=("side",), res=1024)
 
 
-MODELS = {"ann_window": (build_window, WIN_W, WIN_H, SRC_WINDOW),
+MODELS = {"ann_window": (build_window, TILE_W, TILE_H, SRC_WINDOW),
           "ann_control": (build_station, ST_W, ST_H, SRC_STATION)}
 
 

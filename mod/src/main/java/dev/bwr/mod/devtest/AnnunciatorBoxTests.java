@@ -7,6 +7,7 @@ import dev.bwr.mod.panel.PanelOps;
 import dev.bwr.mod.panel.client.AnnunciatorBoxes;
 import dev.bwr.mod.panel.client.ComponentModel;
 import dev.bwr.mod.panel.client.ComponentModels;
+import dev.bwr.mod.panel.client.QuadSink;
 import dev.bwr.mod.panel.client.RenderCache;
 import dev.bwr.mod.panel.component.AnnunciatorControlData;
 import dev.bwr.mod.panel.component.AnnunciatorControlType;
@@ -22,7 +23,9 @@ import dev.bwr.mod.panel.component.PanelStyles;
 import dev.bwr.mod.panel.model.AnnunciatorBox;
 import dev.bwr.mod.panel.model.AnnunciatorLayout;
 import dev.bwr.mod.panel.model.BakedPanelModel;
+import dev.bwr.mod.panel.model.Legends;
 import dev.bwr.mod.panel.model.PanelModelParser;
+import dev.bwr.mod.panel.model.PanelModels;
 import dev.bwr.mod.panel.model.TextFade;
 import dev.bwr.mod.registry.BwrBlocks;
 import dev.bwr.mod.registry.BwrItems;
@@ -479,59 +482,255 @@ public final class AnnunciatorBoxTests {
         });
     }
 
-    // ---- the lamp box style (the window and control station models)
+    // ---- the Columbia style: boxes of split tiles (a pure layout), the settings, the models and the mesh
+
+    /** How many of {@code tiles} in box {@code box} draw the nameplate ({@code latch} false) or the latch. */
+    private static int count(AnnunciatorBox.Tile[] tiles, int box, boolean latch) {
+        int n = 0;
+        for (AnnunciatorBox.Tile tile : tiles) {
+            if (tile.box() == box && (latch ? tile.latch() : tile.nameplate())) {
+                n++;
+            }
+        }
+        return n;
+    }
 
     @GameTest(template = "empty")
-    public static void lampBoxStyleIsSavedOnlyWhenChosenAndItsModelsLoad(GameTestHelper helper) throws java.io.IOException {
+    public static void aGridOfHalfWindowsIsSplitTilesWithRowsColumnsOneNameplateAndOneLatch(GameTestHelper helper) {
+        // Columbia's box: 7 tiles across and 5 down, every tile two alarms, so 7 x 10 windows of 8 x 3 cells.
+        int left = 3;
+        int top = 2;
+        AnnunciatorBox.Rect[] rects = new AnnunciatorBox.Rect[70];
+        for (int i = 0; i < 70; i++) {
+            rects[i] = r(left + i % 7 * 8, top + i / 7 * 3, 8, 3);
+        }
+        AnnunciatorBox.Tile[] tiles = AnnunciatorBox.layout(rects);
+        helper.assertTrue(tiles.length == 70, "a place for every window");
+        for (int i = 0; i < 70; i++) {
+            AnnunciatorBox.Tile tile = tiles[i];
+            int row = i / 7;
+            int column = i % 7;
+            helper.assertTrue(tile.box() == 0 && tile.row() == row && tile.column() == column && tile.unit() == 8,
+                    "window " + column + "," + row + " is " + tile);
+            helper.assertTrue(tile.role() == (row % 2 == 0 ? AnnunciatorBox.UPPER : AnnunciatorBox.LOWER),
+                    "even rows are the upper alarm of a tile, odd rows the lower: " + column + "," + row + " is " + tile.role());
+            // The nameplate: the bottom window of the middle column, centred on the box. The latch: the right column, at
+            // the box's mid height, which is the line between rows 4 and 5.
+            helper.assertTrue(tile.nameplate() == (row == 9 && column == 3), "nameplate at " + column + "," + row + ": " + tile.nameplate());
+            helper.assertTrue(tile.latch() == (row == 4 && column == 6), "latch at " + column + "," + row + ": " + tile.latch());
+            if (tile.nameplate()) {
+                helper.assertTrue(2 * rects[i].x() + tile.nameX2() == 2 * left + 56, "the nameplate is centred under the box: " + tile.nameX2());
+            }
+            if (tile.latch()) {
+                helper.assertTrue(2 * rects[i].y() + tile.latchY2() == 2 * top + 30, "the latch is half way up the box: " + tile.latchY2());
+            }
+        }
+        helper.assertTrue(count(tiles, 0, false) == 1 && count(tiles, 0, true) == 1, "exactly one nameplate and one latch");
+        // The order the windows are given in does not matter.
+        AnnunciatorBox.Rect[] reversed = new AnnunciatorBox.Rect[70];
+        for (int i = 0; i < 70; i++) {
+            reversed[i] = rects[69 - i];
+        }
+        AnnunciatorBox.Tile[] again = AnnunciatorBox.layout(reversed);
+        for (int i = 0; i < 70; i++) {
+            helper.assertTrue(again[i].equals(tiles[69 - i]), "the same layout whatever the order: " + again[i] + " / " + tiles[69 - i]);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void aLoneWindowAndAGridOfWholeTilesAreWholeTiles(GameTestHelper helper) {
+        AnnunciatorBox.Tile[] lone = AnnunciatorBox.layout(new AnnunciatorBox.Rect[] {r(5, 5, 8, 6)});
+        helper.assertTrue(lone.length == 1 && lone[0].equals(AnnunciatorBox.Tile.lone(8, 6)), "a lone window is a box by itself: " + lone[0]);
+        helper.assertTrue(lone[0].role() == AnnunciatorBox.WHOLE && lone[0].nameplate() && lone[0].latch() && lone[0].nameX2() == 8
+                && lone[0].latchY2() == 6 && lone[0].row() == 0 && lone[0].column() == 0, "with its own nameplate and latch, centred on it");
+        // A half height window with nothing under it is a whole (flat) tile, not half of one.
+        AnnunciatorBox.Tile[] flat = AnnunciatorBox.layout(new AnnunciatorBox.Rect[] {r(0, 0, 8, 3)});
+        helper.assertTrue(flat[0].role() == AnnunciatorBox.WHOLE, "a lone half height window is a whole tile");
+        helper.assertTrue(AnnunciatorBox.layout(new AnnunciatorBox.Rect[0]).length == 0, "no windows, no layout");
+        helper.assertTrue(AnnunciatorBox.halfShaped(8, 3) && AnnunciatorBox.halfShaped(12, 4) && AnnunciatorBox.halfShaped(16, 6)
+                && !AnnunciatorBox.halfShaped(8, 6) && !AnnunciatorBox.halfShaped(12, 8) && !AnnunciatorBox.halfShaped(1, 1),
+                "the half height sizes are halves, the others are not");
+        // Whole tiles in a grid stay whole and are numbered one row each.
+        AnnunciatorBox.Rect[] rects = new AnnunciatorBox.Rect[6];
+        for (int i = 0; i < 6; i++) {
+            rects[i] = r(i % 3 * 8, i / 3 * 6, 8, 6);
+        }
+        AnnunciatorBox.Tile[] whole = AnnunciatorBox.layout(rects);
+        for (int i = 0; i < 6; i++) {
+            helper.assertTrue(whole[i].role() == AnnunciatorBox.WHOLE && whole[i].row() == i / 3 && whole[i].column() == i % 3,
+                    "whole tile " + i + ": " + whole[i]);
+        }
+        helper.assertTrue(count(whole, 0, false) == 1 && count(whole, 0, true) == 1 && whole[4].nameplate() && whole[2].latch(),
+                "one nameplate under the middle column, one latch in the right column");
+        // The mesh key tells the halves, a whole tile and the window with the nameplate apart.
+        AnnunciatorBox.Tile upper = new AnnunciatorBox.Tile(0, 0, 0, AnnunciatorBox.UPPER, 8, false, 8, false, 3);
+        AnnunciatorBox.Tile lower = new AnnunciatorBox.Tile(0, 1, 0, AnnunciatorBox.LOWER, 8, false, 8, false, 3);
+        AnnunciatorBox.Tile named = new AnnunciatorBox.Tile(0, 1, 0, AnnunciatorBox.LOWER, 8, true, 8, false, 3);
+        AnnunciatorBox.Tile wide = new AnnunciatorBox.Tile(0, 1, 0, AnnunciatorBox.LOWER, 12, false, 8, false, 3);
+        helper.assertTrue(upper.key() != lower.key() && lower.key() != named.key() && lower.key() != wide.key()
+                && upper.key() >= 0 && named.key() >= 0, "the key follows the half, the nameplate and the tile width");
+        helper.assertTrue(lower.key() == new AnnunciatorBox.Tile(3, 7, 2, AnnunciatorBox.LOWER, 8, false, 8, false, 3).key(),
+                "and not the row and column, which only the numerals show");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void separateBoxesAreNumberedIndependently(GameTestHelper helper) {
+        // Two 2 x 2 boxes of half windows a cell apart, the second a row lower, and a lone window: three boxes, numbered
+        // in reading order of their first windows (the lone window starts on the top row, so it comes second).
+        AnnunciatorBox.Rect[] rects = {r(0, 0, 8, 3), r(8, 0, 8, 3), r(0, 3, 8, 3), r(8, 3, 8, 3),
+                r(17, 1, 8, 3), r(25, 1, 8, 3), r(17, 4, 8, 3), r(25, 4, 8, 3), r(40, 0, 12, 8)};
+        AnnunciatorBox.Tile[] tiles = AnnunciatorBox.layout(rects);
+        for (int i = 0; i < 8; i++) {
+            int box = i < 4 ? 0 : 2;
+            helper.assertTrue(tiles[i].box() == box && tiles[i].row() == i % 4 / 2 && tiles[i].column() == i % 2,
+                    "window " + i + " is in box " + box + " at its own row and column: " + tiles[i]);
+            helper.assertTrue(tiles[i].role() == (i % 4 < 2 ? AnnunciatorBox.UPPER : AnnunciatorBox.LOWER), "window " + i + ": " + tiles[i]);
+        }
+        helper.assertTrue(tiles[8].box() == 1 && tiles[8].row() == 0 && tiles[8].column() == 0 && tiles[8].unit() == 12
+                && tiles[8].role() == AnnunciatorBox.WHOLE, "the lone window is a box of its own: " + tiles[8]);
+        for (int box = 0; box < 3; box++) {
+            helper.assertTrue(count(tiles, box, false) == 1 && count(tiles, box, true) == 1, "box " + box + " has one nameplate and one latch");
+        }
+        // Two windows that touch only at a corner are not one box.
+        AnnunciatorBox.Tile[] corner = AnnunciatorBox.layout(new AnnunciatorBox.Rect[] {r(0, 0, 8, 3), r(8, 3, 8, 3)});
+        helper.assertTrue(corner[0].box() != corner[1].box(), "a shared corner does not join two windows");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void anLShapeAnOddNumberOfRowsAndMixedSizesStillLayOut(GameTestHelper helper) {
+        // An L: a column of three half windows and one more beside the top one.
+        AnnunciatorBox.Rect[] l = {r(0, 0, 8, 3), r(8, 0, 8, 3), r(0, 3, 8, 3), r(0, 6, 8, 3)};
+        AnnunciatorBox.Tile[] tiles = AnnunciatorBox.layout(l);
+        helper.assertTrue(tiles[0].role() == AnnunciatorBox.UPPER && tiles[2].role() == AnnunciatorBox.LOWER,
+                "the first two of the column are one split tile: " + tiles[0] + " " + tiles[2]);
+        helper.assertTrue(tiles[3].role() == AnnunciatorBox.WHOLE && tiles[1].role() == AnnunciatorBox.WHOLE,
+                "the odd one out and the one with nothing under it are whole tiles: " + tiles[3] + " " + tiles[1]);
+        helper.assertTrue(tiles[0].box() == 0 && tiles[1].box() == 0 && tiles[2].box() == 0 && tiles[3].box() == 0, "the L is one box");
+        helper.assertTrue(tiles[3].row() == 2 && tiles[1].column() == 1 && tiles[1].row() == 0, "rows and columns of the L");
+        helper.assertTrue(count(tiles, 0, false) == 1 && count(tiles, 0, true) == 1 && tiles[3].nameplate() && tiles[1].latch(),
+                "the nameplate goes under the bottom window, the latch beside the right one");
+        helper.assertTrue(tiles[3].nameX2() == 8 && tiles[1].latchY2() == 3,
+                "each centred on its own window where the box's centre line misses it");
+        // Five rows: two split tiles and a whole one at the bottom.
+        AnnunciatorBox.Rect[] five = new AnnunciatorBox.Rect[5];
+        for (int i = 0; i < 5; i++) {
+            five[i] = r(4, 1 + i * 4, 12, 4);
+        }
+        AnnunciatorBox.Tile[] odd = AnnunciatorBox.layout(five);
+        int[] expect = {AnnunciatorBox.UPPER, AnnunciatorBox.LOWER, AnnunciatorBox.UPPER, AnnunciatorBox.LOWER, AnnunciatorBox.WHOLE};
+        for (int i = 0; i < 5; i++) {
+            helper.assertTrue(odd[i].role() == expect[i] && odd[i].row() == i && odd[i].unit() == 12, "row " + i + " of five: " + odd[i]);
+        }
+        // Sizes mixed in one box, a window beside the tall side of another, windows offset by half a tile: every window
+        // still gets a place, and each box exactly one nameplate and one latch.
+        AnnunciatorBox.Rect[] mixed = {r(0, 0, 8, 3), r(0, 3, 8, 3), r(8, 0, 8, 6), r(16, 0, 12, 4), r(16, 4, 12, 4), r(16, 8, 1, 1),
+                r(28, 2, 8, 3), r(28, 5, 8, 3), r(60, 60, 2, 2), r(62, 61, 16, 6)};
+        AnnunciatorBox.Tile[] any = AnnunciatorBox.layout(mixed);
+        int boxes = 0;
+        for (AnnunciatorBox.Tile tile : any) {
+            helper.assertTrue(tile != null && tile.row() >= 0 && tile.column() >= 0 && tile.unit() >= 1, "a place for every window: " + tile);
+            boxes = Math.max(boxes, tile.box() + 1);
+        }
+        for (int box = 0; box < boxes; box++) {
+            helper.assertTrue(count(any, box, false) == 1 && count(any, box, true) == 1, "mixed box " + box + " has one nameplate and one latch");
+        }
+        helper.assertTrue(boxes == 2 && any[2].role() == AnnunciatorBox.WHOLE && any[0].role() == AnnunciatorBox.UPPER
+                && any[6].role() == AnnunciatorBox.UPPER && any[7].role() == AnnunciatorBox.LOWER, "two boxes; the offset column pairs off by itself");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void columbiaStyleAndBoxNameAreSavedOnlyWhenSetAndTheModelsLoad(GameTestHelper helper) throws java.io.IOException {
         AnnunciatorData window = new AnnunciatorData();
-        helper.assertTrue(window.style.equals(PanelStyles.CLASSIC) && !window.toTag().contains("Style"),
-                "a new window is classic and saves no style: " + window.toTag());
+        helper.assertTrue(window.style.equals(PanelStyles.CLASSIC) && !window.overhangs() && !window.toTag().contains("Style")
+                && !window.toTag().contains("BoxName"), "a new window is classic and saves neither a style nor a box name: " + window.toTag());
+        helper.assertTrue(AnnunciatorData.STYLES.equals(List.of("classic", "columbia"))
+                && AnnunciatorControlData.STYLES.equals(List.of("classic", "station")), "the styles on offer, classic first");
         CompoundTag edit = new CompoundTag();
-        edit.putString("Style", AnnunciatorData.STYLE_LAMPBOX);
+        edit.putString("Style", AnnunciatorData.STYLE_COLUMBIA);
+        edit.putString("BoxName", "P800-C5");
         window.load(ConfigSchema.merge(ComponentTypes.ANNUNCIATOR.configSchema(), window.toTag(), edit));
-        helper.assertTrue(window.style.equals(AnnunciatorData.STYLE_LAMPBOX) && window.toTag().getString("Style").equals("lampbox"),
-                "the wrench sets the lamp box style and it is saved: " + window.toTag());
+        helper.assertTrue(window.style.equals("columbia") && window.overhangs() && window.boxName.equals("P800-C5")
+                && window.toTag().getString("Style").equals("columbia") && window.toTag().getString("BoxName").equals("P800-C5"),
+                "the wrench sets the Columbia style and the box name, and both are saved: " + window.toTag());
         AnnunciatorData reloaded = new AnnunciatorData();
         reloaded.load(window.toTag());
-        helper.assertTrue(reloaded.style.equals(AnnunciatorData.STYLE_LAMPBOX) && reloaded.toTag().equals(window.toTag()), "and it round trips");
-        CompoundTag odd = window.toTag();
-        odd.putString("Style", "no_such_style");
-        AnnunciatorData unknown = new AnnunciatorData();
-        unknown.load(odd);
-        helper.assertTrue(unknown.style.equals(PanelStyles.CLASSIC), "an unknown style loads as classic");
+        helper.assertTrue(reloaded.style.equals("columbia") && reloaded.boxName.equals("P800-C5") && reloaded.toTag().equals(window.toTag()),
+                "and they round trip");
+        // A style this version does not know (the lamp box of an unreleased build, or anything else) loads as classic.
+        for (String unknownStyle : new String[] {"lampbox", "ge", "no_such_style"}) {
+            CompoundTag odd = window.toTag();
+            odd.putString("Style", unknownStyle);
+            AnnunciatorData unknown = new AnnunciatorData();
+            unknown.load(odd);
+            helper.assertTrue(unknown.style.equals(PanelStyles.CLASSIC) && !unknown.overhangs(), unknownStyle + " loads as classic");
+        }
         CompoundTag back = new CompoundTag();
         back.putString("Style", PanelStyles.CLASSIC);
+        back.putString("BoxName", "");
         window.load(ConfigSchema.merge(ComponentTypes.ANNUNCIATOR.configSchema(), window.toTag(), back));
-        helper.assertTrue(window.style.equals(PanelStyles.CLASSIC) && !window.toTag().contains("Style"), "classic again saves no style");
+        helper.assertTrue(window.style.equals(PanelStyles.CLASSIC) && !window.toTag().contains("Style") && !window.toTag().contains("BoxName"),
+                "classic again, and no name, save neither key");
+        CompoundTag longName = new CompoundTag();
+        longName.putString("BoxName", "x".repeat(40));
+        helper.assertTrue(ConfigSchema.merge(ComponentTypes.ANNUNCIATOR.configSchema(), new CompoundTag(), longName).getString("BoxName").length()
+                == AnnunciatorData.MAX_TEXT, "the box name is cut like a legend line");
 
         AnnunciatorControlData module = new AnnunciatorControlData();
-        module.load(ConfigSchema.merge(ComponentTypes.ANNUNCIATOR_CONTROL.configSchema(), module.toTag(), edit));
-        helper.assertTrue(module.style.equals(AnnunciatorData.STYLE_LAMPBOX) && module.toTag().getString("Style").equals("lampbox")
-                && !module.toTag().contains("AnnGroup"), "the control module takes the style too: " + module.toTag());
+        CompoundTag station = new CompoundTag();
+        station.putString("Style", AnnunciatorControlData.STYLE_STATION);
+        module.load(ConfigSchema.merge(ComponentTypes.ANNUNCIATOR_CONTROL.configSchema(), module.toTag(), station));
+        helper.assertTrue(module.style.equals("station") && module.toTag().getString("Style").equals("station")
+                && !module.toTag().contains("AnnGroup"), "the control module takes the station style: " + module.toTag());
         AnnunciatorControlData moduleAgain = new AnnunciatorControlData();
         moduleAgain.load(module.toTag());
-        helper.assertTrue(moduleAgain.style.equals(AnnunciatorData.STYLE_LAMPBOX) && moduleAgain.group == 1, "and reloads with it");
+        helper.assertTrue(moduleAgain.style.equals("station") && moduleAgain.group == 1, "and reloads with it");
+        module.load(ConfigSchema.merge(ComponentTypes.ANNUNCIATOR_CONTROL.configSchema(), module.toTag(), edit));
+        helper.assertTrue(module.style.equals("station"), "a window's style is not one of the module's: " + module.style);
+
+        // The half height sizes are on the list, after everything that was there.
+        List<Footprint> sizes = ComponentTypes.ANNUNCIATOR.footprints();
+        helper.assertTrue(sizes.subList(sizes.size() - 3, sizes.size()).equals(List.of(Footprint.of(8, 3), Footprint.of(12, 4), Footprint.of(16, 6)))
+                && sizes.indexOf(Footprint.of(8, 6)) == 4 && sizes.indexOf(Footprint.of(12, 8)) == 0, "the half height windows are appended: " + sizes);
+
+        // The words the wrench screen and the nameplate show.
+        String lang;
+        try (java.io.InputStream in = AnnunciatorBoxTests.class.getResourceAsStream("/assets/bwr/lang/en_us.json")) {
+            helper.assertTrue(in != null, "lang file on the classpath");
+            lang = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
+        for (String key : new String[] {"component.bwr.option.Style.columbia", "component.bwr.option.Style.station",
+                "component.bwr.field.box_name", "text.bwr.annunciator.box_title"}) {
+            helper.assertTrue(lang.contains("\"" + key + "\""), "lang has " + key);
+        }
 
         // The two model files are accepted by the loader and have the parts and anchors the renderer looks for.
-        BakedPanelModel windowModel = shipped(helper, AnnunciatorData.WINDOW_MODEL);
-        for (String part : List.of("lens", "frame_top", "frame_bottom", "frame_left", "frame_right",
-                "corner_tl", "corner_tr", "corner_bl", "corner_br")) {
-            helper.assertTrue(windowModel.part(part) != null && windowModel.part(part).faceCount > 0, "the window model has " + part);
+        BakedPanelModel tile = shipped(helper, AnnunciatorData.WINDOW_MODEL);
+        int whole = 1; // the plate under the window
+        int half = 2;  // the plate, and half the dividing line
+        for (String part : List.of("face", "rim_top", "rim_bottom", "rim_left", "rim_right", "corner_tl", "corner_tr", "corner_bl", "corner_br")) {
+            helper.assertTrue(tile.part(part) != null && tile.part(part).faceCount > 0, "the tile model has " + part);
+            whole += tile.part(part).faceCount;
+            if (!part.endsWith("bottom") && !part.startsWith("corner_b")) {
+                half += tile.part(part).faceCount;
+            }
         }
-        BakedPanelModel.Part lens = windowModel.part("lens");
-        helper.assertTrue(lens.role == BakedPanelModel.Role.LAMP && lens.faceCount <= 5,
-                "a window inside a box draws its lens only, no more quads than the procedural tile: " + lens.faceCount);
-        helper.assertTrue(windowModel.faceTotal() <= 64, "a window is placed by the hundred: " + windowModel.faceTotal() + " faces");
-        BakedPanelModel station = shipped(helper, AnnunciatorControlData.STATION_MODEL);
-        helper.assertTrue(Math.abs(station.footprintW / station.footprintH - 4.0f) < 1.0e-3f,
-                "the station is four buttons wide, like the module's sizes: " + station);
+        helper.assertTrue(tile.part("plate") != null && tile.part("face").role == BakedPanelModel.Role.LAMP && tile.part("face").faceCount == 1,
+                "the tile has its plate, and its face is one quad that lights");
+        helper.assertTrue(whole <= 40 && half <= 24, "a tile is placed by the hundred: " + whole + " quads whole, " + half + " as one alarm of a split tile");
+        BakedPanelModel stationModel = shipped(helper, AnnunciatorControlData.STATION_MODEL);
+        helper.assertTrue(Math.abs(stationModel.footprintW / stationModel.footprintH - 4.0f) < 1.0e-3f,
+                "the station is four buttons wide, like the module's sizes: " + stationModel);
         String[] buttons = {"ack", "reset", "silence", "test"};
         for (int i = 0; i < buttons.length; i++) {
-            BakedPanelModel.Part cap = station.part("cap_" + buttons[i]);
-            BakedPanelModel.Label label = station.label(buttons[i]);
+            BakedPanelModel.Part cap = stationModel.part("cap_" + buttons[i]);
+            BakedPanelModel.Label label = stationModel.label(buttons[i]);
             helper.assertTrue(cap != null && cap.hasTravel && cap.travel > 0.0f && label != null, "the station has the " + buttons[i] + " cap and legend");
             // Each cap and its legend lie in their own quarter of the width: the quarter a click picks.
-            float quarter = station.footprintW / buttons.length;
+            float quarter = stationModel.footprintW / buttons.length;
             for (int f = 0; f < cap.faceCount; f++) {
                 for (int c = 0; c < 4; c++) {
                     helper.assertTrue(cap.corner(f, c, 0) > quarter * i && cap.corner(f, c, 0) < quarter * (i + 1),
@@ -540,7 +739,7 @@ public final class AnnunciatorBoxTests {
             }
             helper.assertTrue(label.x > quarter * i && label.x < quarter * (i + 1), buttons[i] + " legend is under its cap");
         }
-        helper.assertTrue(station.faceTotal() <= 800, "the station is within the face budget: " + station.faceTotal());
+        helper.assertTrue(stationModel.faceTotal() <= 800, "the station is within the face budget: " + stationModel.faceTotal());
         helper.succeed();
     }
 
@@ -549,6 +748,117 @@ public final class AnnunciatorBoxTests {
             helper.assertTrue(in != null, "the model " + id + " ships in the mod");
             return PanelModelParser.parse(id, new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
         }
+    }
+
+    /** A sink that keeps what it is given: the twelve coordinates of each quad. */
+    private static final class Quads implements QuadSink {
+        final List<float[]> quads = new ArrayList<>();
+
+        @Override
+        public void quad(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2,
+                         float x3, float y3, float z3, int rgb, int normal, boolean emissive) {
+            quads.add(new float[] {x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3});
+        }
+
+        /** {least x, least y, greatest x, greatest y, greatest z} of everything recorded. */
+        float[] bounds() {
+            float[] b = {Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+            for (float[] q : quads) {
+                for (int c = 0; c < 4; c++) {
+                    b[0] = Math.min(b[0], q[c * 3]);
+                    b[1] = Math.min(b[1], q[c * 3 + 1]);
+                    b[2] = Math.max(b[2], q[c * 3]);
+                    b[3] = Math.max(b[3], q[c * 3 + 1]);
+                    b[4] = Math.max(b[4], q[c * 3 + 2]);
+                }
+            }
+            return b;
+        }
+    }
+
+    private static boolean near(float a, float b) {
+        return Math.abs(a - b) < 1.0e-3f;
+    }
+
+    /**
+     * The mesh of a Columbia window through the registered model, with the shipped tile model: inside a box it is the
+     * tile on its own cells, no heavier than the budget; by itself it is a whole box, with the plate margins outside its
+     * cells; and the classic window is what it always was.
+     */
+    @GameTest(template = "empty")
+    public static void aColumbiaWindowDrawsItsTileAndThePlateMarginsOfItsBox(GameTestHelper helper) {
+        PanelModels.setFixtures(java.util.Map.of(AnnunciatorData.WINDOW_MODEL, HardwareStage.shipped(AnnunciatorData.WINDOW_MODEL)));
+        try {
+            ComponentModel model = ComponentModels.get(ComponentTypes.ANNUNCIATOR.id());
+            PanelComponent window = new PanelComponent(1, ComponentTypes.ANNUNCIATOR, 0, 0, Footprint.of(8, 3), "");
+            AnnunciatorData data = (AnnunciatorData) window.data();
+            data.line1 = "BUS 8";
+            data.line2 = "LOSS OF VOLT";
+            RenderCache cache = RenderCache.of(window);
+            // Classic, in the middle of a box: the dark base and the tile, as ever, and the mesh key is the edge word.
+            cache.boxEdges = AnnunciatorBox.SIDES;
+            Quads classic = new Quads();
+            model.buildStatic(classic, window, 1.0f);
+            long classicKey = model.staticKey(window);
+            helper.assertTrue(classic.quads.size() == 10 && classicKey == AnnunciatorBox.SIDES,
+                    "the classic window is untouched: " + classic.quads.size() + " quads, key " + classicKey);
+
+            // Columbia, in the middle of a box, the upper alarm of a split tile.
+            data.style = AnnunciatorData.STYLE_COLUMBIA;
+            cache.boxTile = new AnnunciatorBox.Tile(0, 2, 1, AnnunciatorBox.UPPER, 8, false, 8, false, 3);
+            Quads upper = new Quads();
+            model.buildStatic(upper, window, 1.0f);
+            float[] ub = upper.bounds();
+            helper.assertTrue(upper.quads.size() > classic.quads.size() && upper.quads.size() <= 24,
+                    "one alarm of a split tile is at most 24 quads: " + upper.quads.size());
+            helper.assertTrue(ub[0] > -1.0e-3f && ub[1] > -1.0e-3f && ub[2] < 8.001f && ub[3] < 3.001f,
+                    "a window inside a box draws on its own cells only: " + java.util.Arrays.toString(ub));
+            helper.assertTrue(near(ub[4], AnnunciatorBox.LIP_Z), "the rim stands where the classic bezel lip does: " + ub[4]);
+            long upperKey = model.staticKey(window);
+            cache.boxTile = new AnnunciatorBox.Tile(0, 3, 1, AnnunciatorBox.LOWER, 8, false, 8, false, 3);
+            helper.assertTrue(upperKey != classicKey && model.staticKey(window) != upperKey,
+                    "the mesh is rebuilt when the window becomes the other half of its tile");
+            Quads lower = new Quads();
+            model.buildStatic(lower, window, 1.0f);
+            helper.assertTrue(lower.quads.size() == upper.quads.size(), "the lower alarm mirrors the upper: " + lower.quads.size());
+            // The legend is laid out in the face of the tile: inside the rim, clear of the dividing line.
+            cache.boxTile = new AnnunciatorBox.Tile(0, 2, 1, AnnunciatorBox.UPPER, 8, false, 8, false, 3);
+            List<Legends.Item> legend = model.textLayout(window, 1.0f);
+            helper.assertTrue(legend.size() == 2, "both legend lines are placed: " + legend.size());
+            for (Legends.Item item : legend) {
+                float[] box = Legends.box(item, 1.0, 1.0f);
+                helper.assertTrue(box[0] > 0.5f && box[2] < 7.5f && box[1] > 0.5f && box[3] < 3.0f,
+                        "'" + item.text() + "' lies in the tile's face: " + java.util.Arrays.toString(box));
+            }
+
+            // By itself (and before its panel group has been scanned): a whole box, its plate overhanging the window.
+            cache.boxEdges = 0;
+            cache.boxTile = null;
+            Quads lone = new Quads();
+            model.buildStatic(lone, window, 1.0f);
+            float[] lb = lone.bounds();
+            helper.assertTrue(near(lb[0], -AnnunciatorBox.MARGIN_LEFT * 8) && near(lb[1], -AnnunciatorBox.MARGIN_TOP * 8)
+                    && near(lb[2], 8 + AnnunciatorBox.MARGIN_RIGHT * 8) && near(lb[3], 3 + AnnunciatorBox.MARGIN_BOTTOM * 8),
+                    "the plate margins of a lone window: " + java.util.Arrays.toString(lb));
+            helper.assertTrue(-lb[0] <= AnnunciatorBox.MAX_OVERHANG && lb[3] - 3 <= AnnunciatorBox.MAX_OVERHANG,
+                    "the overhang is within what the render bounds allow for");
+            helper.assertTrue(lone.quads.size() > upper.quads.size() && lone.quads.size() <= 70,
+                    "a lone window carries its tile, margins, nameplate and latch: " + lone.quads.size());
+            helper.assertTrue(model.staticKey(window) != upperKey, "and its mesh key is its own");
+        } finally {
+            PanelModels.setFixtures(java.util.Map.of());
+        }
+        // Without the tile model the style draws the classic window rather than nothing.
+        if (!PanelModels.has(AnnunciatorData.WINDOW_MODEL)) {
+            ComponentModel model = ComponentModels.get(ComponentTypes.ANNUNCIATOR.id());
+            PanelComponent window = new PanelComponent(2, ComponentTypes.ANNUNCIATOR, 0, 0, Footprint.of(8, 3), "");
+            ((AnnunciatorData) window.data()).style = AnnunciatorData.STYLE_COLUMBIA;
+            RenderCache.of(window).boxEdges = AnnunciatorBox.SIDES;
+            Quads fallback = new Quads();
+            model.buildStatic(fallback, window, 1.0f);
+            helper.assertTrue(fallback.quads.size() == 10, "no tile model: the classic window is drawn: " + fallback.quads.size());
+        }
+        helper.succeed();
     }
 
     // ---- the distance fade (pure)
