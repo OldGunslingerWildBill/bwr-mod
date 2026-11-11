@@ -1,0 +1,404 @@
+{
+  "variants": {
+    "facing=north,left=0,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=0,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=0,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=0,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=0,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_1",
+      "y": 0
+    },
+    "facing=east,left=0,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_1",
+      "y": 90
+    },
+    "facing=south,left=0,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_1",
+      "y": 180
+    },
+    "facing=west,left=0,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_1",
+      "y": 270
+    },
+    "facing=north,left=1,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_0",
+      "y": 0
+    },
+    "facing=east,left=1,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_0",
+      "y": 90
+    },
+    "facing=south,left=1,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_0",
+      "y": 180
+    },
+    "facing=west,left=1,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_0",
+      "y": 270
+    },
+    "facing=north,left=1,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_1",
+      "y": 0
+    },
+    "facing=east,left=1,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_1",
+      "y": 90
+    },
+    "facing=south,left=1,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_1",
+      "y": 180
+    },
+    "facing=west,left=1,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_1",
+      "y": 270
+    },
+    "facing=north,left=1,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_2",
+      "y": 0
+    },
+    "facing=east,left=1,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_2",
+      "y": 90
+    },
+    "facing=south,left=1,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_2",
+      "y": 180
+    },
+    "facing=west,left=1,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_1_2",
+      "y": 270
+    },
+    "facing=north,left=2,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_2_1",
+      "y": 0
+    },
+    "facing=east,left=2,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_2_1",
+      "y": 90
+    },
+    "facing=south,left=2,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_2_1",
+      "y": 180
+    },
+    "facing=west,left=2,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_2_1",
+      "y": 270
+    },
+    "facing=north,left=2,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_2_2",
+      "y": 0
+    },
+    "facing=east,left=2,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_2_2",
+      "y": 90
+    },
+    "facing=south,left=2,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_2_2",
+      "y": 180
+    },
+    "facing=west,left=2,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_2_2",
+      "y": 270
+    },
+    "facing=north,left=0,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=0,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=0,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=0,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=0,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=0,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=0,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=0,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=0,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=0,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=0,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=0,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=1,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=1,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=1,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=1,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=1,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=1,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=1,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=1,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=2,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=2,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=2,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=2,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=2,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=2,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=2,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=2,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=2,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=2,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=2,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=2,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=3,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=3,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=3,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=3,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=3,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=3,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=3,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=3,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=3,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=3,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=3,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=3,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=3,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=3,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=3,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=3,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=3,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=3,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=3,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=3,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=4,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=4,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=4,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=4,deep=0": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=4,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=4,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=4,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=4,deep=1": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=4,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=4,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=4,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=4,deep=2": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=4,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=4,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=4,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=4,deep=3": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    },
+    "facing=north,left=4,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 0
+    },
+    "facing=east,left=4,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 90
+    },
+    "facing=south,left=4,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 180
+    },
+    "facing=west,left=4,deep=4": {
+      "model": "bwr:block/control_panel/desk_corner_inside_2_0_0",
+      "y": 270
+    }
+  }
+}

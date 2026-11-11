@@ -25,6 +25,8 @@
         "bwr:control_panel_desk_wide",
         "bwr:control_panel_desk_corner_inside",
         "bwr:control_panel_desk_corner_outside",
+        "bwr:control_panel_desk_corner_inside_3",
+        "bwr:control_panel_desk_corner_outside_3",
         "bwr:board_blueprint"
       ]
     },

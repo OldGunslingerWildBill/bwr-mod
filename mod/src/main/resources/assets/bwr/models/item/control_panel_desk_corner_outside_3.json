@@ -1,0 +1,60 @@
+{
+  "parent": "bwr:block/control_panel/desk_corner_outside_3_item",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.21,
+        0.21,
+        0.21
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.139,
+        0.139,
+        0.139
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.181,
+        0.181,
+        0.181
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ],
+      "scale": [
+        0.109,
+        0.109,
+        0.109
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.139,
+        0.139,
+        0.139
+      ]
+    }
+  }
+}

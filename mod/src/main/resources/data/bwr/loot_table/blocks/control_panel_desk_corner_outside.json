@@ -111,7 +111,8 @@
           "condition": "minecraft:block_state_property",
           "block": "bwr:control_panel_desk_corner_outside",
           "properties": {
-            "part": "origin"
+            "left": "0",
+            "deep": "0"
           }
         },
         {

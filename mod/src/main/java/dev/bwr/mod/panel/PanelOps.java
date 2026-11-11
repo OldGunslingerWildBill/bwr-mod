@@ -93,7 +93,7 @@ public final class PanelOps {
     public static boolean cellAt(PanelBlockEntity be, Vec3 eye, Vec3 look, int[] out) {
         double[] cell = new double[2];
         BlockPos pos = be.getBlockPos();
-        PanelGeometry.Frame frame = PanelGeometry.frame(be.panelType(), be.facing());
+        PanelGeometry.Frame frame = PanelGeometry.frame(be);
         if (!PanelGeometry.rayToCell(frame, pos.getX(), pos.getY(), pos.getZ(), eye.x, eye.y, eye.z,
                 look.x, look.y, look.z, cell)) {
             return false;

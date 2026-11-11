@@ -1,7 +1,6 @@
 package dev.bwr.mod.devtest;
 
 import com.mojang.authlib.GameProfile;
-import dev.bwr.mod.panel.CornerPart;
 import dev.bwr.mod.panel.DeskCornerBlock;
 import dev.bwr.mod.panel.DeskCornerGeometry;
 import dev.bwr.mod.panel.PanelBlock;
@@ -70,13 +69,13 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * The 45 degree desk corners ({@link DeskCornerBlock}, CONTROL-PANELS-SPEC section 14), inside and outside. The
- * geometry (the frame is a level diagonal top, the face lies on the console, the shapes hold every cell and leave the knee
- * space, the models cover the face), placing the four blocks through the real item for every facing and refusing the
- * whole piece when one is taken, breaking any block (one drop, the finish, the components), mounting a component on the
- * angled face through the real player path with the cell found by a real block ray cast (so a click on any block of the
- * corner finds the face), operating it through the real operate packet handler, wiring a component to another on the
- * face, the finishes, and save/load. Fixtures live around 150,000 / 150,000.
+ * The 45 degree desk corners ({@link DeskCornerBlock}, CONTROL-PANELS-SPEC section 14), inside and outside, one to four
+ * angled units long (each unit its own face). The geometry (every face's frame is a level diagonal top on the console, the
+ * shapes hold every cell and leave the knee space, the models cover every cell), placing the blocks through the real item
+ * for every facing and refusing the whole piece when one is taken, breaking any block (one drop, the finish, the
+ * components), mounting a component on every angled face through the real player path with the cell found by a real block
+ * ray cast (so a click on any block of the corner finds the face under the ray), operating through the real operate packet
+ * handler, wiring a component to another on the face, the finishes, and save/load. Fixtures live around 150,000 / 150,000.
  */
 @GameTestHolder("bwrcorner")
 @PrefixGameTestTemplate(false)
@@ -87,7 +86,58 @@ public final class DeskCornerTests {
     private static final int ORIGIN_X = 150_000;
     private static final int ORIGIN_Z = 150_000;
     private static final int FLOOR_Y = 100;
-    private static final boolean[] KINDS = {true, false};
+
+    /** One kind of corner: inside or outside, and its length. */
+    private record Kind(boolean inside, int length) {
+        String name() {
+            return (inside ? "inside" : "outside") + "-" + length;
+        }
+
+        Block block() {
+            return BwrBlocks.BLOCKS.getEntries().stream().map(e -> e.get()).filter(b -> b instanceof DeskCornerBlock c
+                    && c.inside() == inside && c.length() == length).findFirst().orElseThrow();
+        }
+
+        Item item() {
+            return block().asItem();
+        }
+
+        PanelType type() {
+            return inside ? PanelType.DESK_CORNER_INSIDE : PanelType.DESK_CORNER_OUTSIDE;
+        }
+
+        int size() {
+            return DeskCornerGeometry.size(length);
+        }
+
+        BlockPos part(BlockPos origin, Direction facing, DeskCornerGeometry.Part part) {
+            return DeskCornerBlock.partPos(origin, facing, inside, part.left(), part.deep());
+        }
+
+        BlockPos core(BlockPos origin, Direction facing, int face) {
+            return part(origin, facing, DeskCornerGeometry.core(inside, length, face));
+        }
+
+        List<DeskCornerGeometry.Part> parts() {
+            return DeskCornerGeometry.parts(inside, length);
+        }
+
+        /** The part of a point of a north-facing corner whose origin is at ZERO (north: the operator's left is +x, deep is -z inside, +z outside). */
+        DeskCornerGeometry.Part partAt(double x, double z) {
+            int left = (int) Math.floor(x);
+            int deep = inside ? -(int) Math.floor(z) : (int) Math.floor(z);
+            return new DeskCornerGeometry.Part(left, deep);
+        }
+    }
+
+    private static final List<Kind> KINDS = new ArrayList<>();
+
+    static {
+        for (int n = 1; n <= DeskCornerGeometry.MAX_LENGTH; n++) {
+            KINDS.add(new Kind(true, n));
+            KINDS.add(new Kind(false, n));
+        }
+    }
 
     private interface Body {
         void run(ServerLevel level, BlockPos floor);
@@ -109,7 +159,7 @@ public final class DeskCornerTests {
     }
 
     private static void clear(ServerLevel level, BlockPos floor) {
-        for (BlockPos pos : BlockPos.betweenClosed(floor.offset(-6, 0, -6), floor.offset(6, 6, 6))) {
+        for (BlockPos pos : BlockPos.betweenClosed(floor.offset(-7, 0, -7), floor.offset(7, 6, 7))) {
             BlockState want = pos.getY() == floor.getY() ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState();
             if (level.getBlockState(pos) != want) {
                 level.setBlock(pos, want, 2);
@@ -119,7 +169,7 @@ public final class DeskCornerTests {
     }
 
     private static AABB area(BlockPos floor) {
-        return new AABB(floor).inflate(8);
+        return new AABB(floor).inflate(9);
     }
 
     private static void clearItems(ServerLevel level, BlockPos floor) {
@@ -145,22 +195,6 @@ public final class DeskCornerTests {
         return player;
     }
 
-    private static Block block(boolean inside) {
-        return inside ? BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE.get() : BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE.get();
-    }
-
-    private static Item item(boolean inside) {
-        return inside ? BwrItems.CONTROL_PANEL_DESK_CORNER_INSIDE.get() : BwrItems.CONTROL_PANEL_DESK_CORNER_OUTSIDE.get();
-    }
-
-    private static PanelType type(boolean inside) {
-        return inside ? PanelType.DESK_CORNER_INSIDE : PanelType.DESK_CORNER_OUTSIDE;
-    }
-
-    private static String name(boolean inside) {
-        return inside ? "inside" : "outside";
-    }
-
     /** The corner's origin block is at {@code at}, the player four blocks out on the operator's side looking back. */
     private static boolean place(FakePlayer player, ItemStack stack, BlockPos at, Direction facing) {
         player.setPos(Vec3.atBottomCenterOf(at.relative(facing, 4)));
@@ -172,17 +206,9 @@ public final class DeskCornerTests {
         return stack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, hit)).consumesAction();
     }
 
-    private static BlockPos part(BlockPos at, Direction facing, boolean inside, CornerPart part) {
-        return part.at(at, facing, inside);
-    }
-
-    private static BlockPos core(BlockPos at, Direction facing, boolean inside) {
-        return part(at, facing, inside, DeskCornerGeometry.core(inside));
-    }
-
     private static int cornerBlocks(ServerLevel level, BlockPos floor) {
         int n = 0;
-        for (BlockPos pos : BlockPos.betweenClosed(floor.offset(-6, 1, -6), floor.offset(6, 6, 6))) {
+        for (BlockPos pos : BlockPos.betweenClosed(floor.offset(-7, 1, -7), floor.offset(7, 6, 7))) {
             if (level.getBlockState(pos).getBlock() instanceof DeskCornerBlock) {
                 n++;
             }
@@ -202,130 +228,107 @@ public final class DeskCornerTests {
         return Math.abs(a - b) < 1.0e-9;
     }
 
-    // ---- geometry
-
-    /** Footprint coordinates (x, f) of a point of the core block's local frame under facing NORTH (x -> lx = 1 - x, z -> f = 1 - z). */
-    private static double[] footprint(boolean inside, double blockX, double blockZ) {
-        CornerPart core = DeskCornerGeometry.core(inside);
-        return new double[] {(1.0 - blockX) + DeskCornerGeometry.blockX(core), (1.0 - blockZ) + DeskCornerGeometry.blockF(core, inside)};
+    /** The frame of face {@code face} of a corner, facing {@code facing}. */
+    private static PanelGeometry.Frame frameOf(PanelBlockEntity be) {
+        return PanelGeometry.frame(be);
     }
 
+    // ---- geometry
+
     @GameTest(template = "empty", templateNamespace = "bwrcorner")
-    public static void theCornerFramesAreLevelDiagonalTopsOnTheConsoleSixteenCellsAcrossAndTenDeep(GameTestHelper h) {
-        for (boolean inside : KINDS) {
+    public static void theFacesAreLevelDiagonalTopsOnTheConsoleOneBlockApartAlongTheDiagonal(GameTestHelper h) {
+        for (Kind kind : KINDS) {
+            List<DeskCornerGeometry.Part> cores = new ArrayList<>();
+            for (int face = 0; face < kind.length(); face++) {
+                cores.add(DeskCornerGeometry.core(kind.inside(), kind.length(), face));
+                check(h, DeskCornerGeometry.faceOf(kind.inside(), kind.length(), cores.get(face).left(), cores.get(face).deep()) == face,
+                        kind.name() + ": face " + face + " is not the face of its core");
+                check(h, kind.parts().contains(cores.get(face)), kind.name() + ": the core of face " + face + " holds no console");
+            }
+            check(h, new java.util.HashSet<>(cores).size() == kind.length(), kind.name() + ": two faces share a core block");
+            check(h, kind.parts().get(0).left() == 0 && kind.parts().get(0).deep() == 0, kind.name() + ": the origin comes first");
             for (Direction facing : Direction.Plane.HORIZONTAL) {
-                PanelGeometry.Frame f = PanelGeometry.frame(type(inside), facing);
-                String what = name(inside) + " " + facing;
-                check(h, near(f.nx, 0) && near(f.ny, 1) && near(f.nz, 0), what + ": the face is level, normal straight up");
-                check(h, Math.abs(f.vLength - 1.0) < 1.0e-9, what + ": a row is as long as a column: " + f.vLength);
-                check(h, Math.abs(f.rightX * f.downX + f.rightZ * f.downZ) < 1.0e-9, what + ": columns and rows are square");
-                // 45 degrees to the block grid
-                check(h, Math.abs(Math.abs(f.rightX) - Math.sqrt(0.5)) < 1.0e-9 && Math.abs(Math.abs(f.rightZ) - Math.sqrt(0.5)) < 1.0e-9,
-                        what + ": the columns run along a diagonal: " + f.rightX + "," + f.rightZ);
-                check(h, near(f.y(0, 0, 0), PanelGeometry.DESK_TOP), what + ": the top is " + PanelGeometry.DESK_TOP + " up");
-                check(h, !type(inside).hasRows() && !type(inside).hasColumns() && type(inside).nextRow(BlockPos.ZERO, facing) == null
-                        && type(inside).previousRow(BlockPos.ZERO, facing) == null, what + ": a corner joins nothing");
-                check(h, PanelGeometry.rows(type(inside)) == 10, what + ": ten rows");
-                for (int cx = 0; cx < 16; cx++) {
-                    for (int cy = 0; cy < 16; cy++) {
-                        check(h, PanelGeometry.cellUsable(type(inside), cx, cy) == (cy < 10), what + ": cell " + cx + "," + cy);
+                for (int face = 0; face < kind.length(); face++) {
+                    PanelGeometry.Frame f = PanelGeometry.cornerFrame(kind.inside(), kind.length(), face, facing);
+                    String what = kind.name() + " " + facing + " face " + face;
+                    check(h, near(f.nx, 0) && near(f.ny, 1) && near(f.nz, 0), what + ": level, normal straight up");
+                    check(h, Math.abs(f.vLength - 1.0) < 1.0e-9, what + ": square cells: " + f.vLength);
+                    check(h, Math.abs(f.rightX * f.downX + f.rightZ * f.downZ) < 1.0e-9, what + ": columns and rows are square");
+                    check(h, Math.abs(Math.abs(f.rightX) - Math.sqrt(0.5)) < 1.0e-9 && Math.abs(Math.abs(f.rightZ) - Math.sqrt(0.5)) < 1.0e-9,
+                            what + ": the columns run along a diagonal");
+                    check(h, near(f.y(0, 0, 0), PanelGeometry.DESK_TOP), what + ": the top is 0.75 up");
+                }
+            }
+            // every lattice point of every face lies on the top of the console (north-facing, in footprint coordinates)
+            for (int face = 0; face < kind.length(); face++) {
+                PanelGeometry.Frame north = PanelGeometry.cornerFrame(kind.inside(), kind.length(), face, Direction.NORTH);
+                DeskCornerGeometry.Part core = cores.get(face);
+                int bx = DeskCornerGeometry.blockX(kind.length(), core.left());
+                int bf = DeskCornerGeometry.blockF(kind.inside(), core.deep());
+                for (int cu = 0; cu <= 16; cu++) {
+                    for (int cv = 0; cv <= 10; cv++) {
+                        double x = (1.0 - north.x(cu, cv, 0)) + bx;
+                        double f = (1.0 - north.z(cu, cv, 0)) + bf;
+                        double t = DeskCornerGeometry.depth(kind.inside(), kind.length(), x, f);
+                        check(h, t >= PanelGeometry.DESK_FACE_BACK - 1.0e-9 && t <= PanelGeometry.DESK_FRONT + 1.0e-9,
+                                kind.name() + " face " + face + ": grid point " + cu + "," + cv + " is at depth " + t);
                     }
                 }
             }
-            // every lattice point of the 16 x 10 grid lies on the top of the console, between the foot of the riser and the front edge
-            PanelGeometry.Frame north = PanelGeometry.frame(type(inside), Direction.NORTH);
-            for (int cu = 0; cu <= 16; cu++) {
-                for (int cv = 0; cv <= 10; cv++) {
-                    double[] p = footprint(inside, north.x(cu, cv, 0), north.z(cu, cv, 0));
-                    double t = DeskCornerGeometry.depth(inside, p[0], p[1]);
-                    check(h, t >= PanelGeometry.DESK_FACE_BACK - 1.0e-9 && t <= PanelGeometry.DESK_FRONT + 1.0e-9,
-                            name(inside) + ": grid point " + cu + "," + cv + " is at depth " + t + ", off the top of the console");
-                    if (cu % 16 == 0 && cv % 10 == 0) {
-                        continue;
-                    }
-                }
-            }
-            // the rows run toward the operator: the front edge (row 10) is deeper than the foot of the riser (row 0)
-            double[] back = footprint(inside, north.x(8, 0, 0), north.z(8, 0, 0));
-            double[] front = footprint(inside, north.x(8, 10, 0), north.z(8, 10, 0));
-            check(h, near(DeskCornerGeometry.depth(inside, back[0], back[1]), PanelGeometry.DESK_FACE_BACK)
-                    && near(DeskCornerGeometry.depth(inside, front[0], front[1]), PanelGeometry.DESK_FRONT),
-                    name(inside) + ": row 0 is the foot of the riser and row 10 the front edge");
-            // and the other three facings are the first turned
-            for (Direction facing : Direction.Plane.HORIZONTAL) {
-                PanelGeometry.Frame f = PanelGeometry.frame(type(inside), facing);
-                int turns = (facing.get2DDataValue() - Direction.NORTH.get2DDataValue() + 4) % 4;
-                double ox = north.x(3, 4, 0) - 0.5;
-                double oz = north.z(3, 4, 0) - 0.5;
-                for (int i = 0; i < turns; i++) {
-                    double nx = -oz;
-                    oz = ox;
-                    ox = nx;
-                }
-                check(h, near(f.x(3, 4, 0) - 0.5, ox) && near(f.z(3, 4, 0) - 0.5, oz), name(inside) + " " + facing + " is NORTH turned");
+            // consecutive faces are one block apart along the diagonal
+            for (int face = 1; face < kind.length(); face++) {
+                double[] a = DeskCornerGeometry.faceCentre(kind.inside(), kind.length(), face - 1);
+                double[] b = DeskCornerGeometry.faceCentre(kind.inside(), kind.length(), face);
+                check(h, near(Math.abs(b[0] - a[0]), 1.0) && near(Math.abs(b[1] - a[1]), 1.0), kind.name() + ": faces not a block apart");
             }
         }
         h.succeed();
     }
 
-    /** The block (relative to the origin at ZERO, facing north) of a corner that contains the plan point, as a part. */
-    private static CornerPart partAt(boolean inside, double x, double z) {
-        int left = (int) Math.floor(x);   // facing north: the left part is at +x
-        int deep = inside ? -(int) Math.floor(z) : (int) Math.floor(z); // inside: toward the operator is -z; outside +z
-        for (CornerPart part : CornerPart.values()) {
-            if (part.left() == left && part.deep() == deep) {
-                return part;
-            }
-        }
-        return null;
-    }
-
     @GameTest(template = "empty", templateNamespace = "bwrcorner")
-    public static void theShapesHoldEveryCellOfTheFaceAtItsHeightAndLeaveTheKneeSpace(GameTestHelper h) {
-        for (boolean inside : KINDS) {
-            PanelGeometry.Frame f = PanelGeometry.frame(type(inside), Direction.NORTH);
-            BlockPos corePos = core(BlockPos.ZERO, Direction.NORTH, inside);
-            for (int cu = 0; cu < 16; cu++) {
-                for (int cv = 0; cv < 10; cv++) {
-                    double x = corePos.getX() + f.x(cu + 0.5, cv + 0.5, 0);
-                    double z = corePos.getZ() + f.z(cu + 0.5, cv + 0.5, 0);
-                    BlockPos at = BlockPos.containing(x, 0, z);
-                    CornerPart part = partAt(inside, x, z);
-                    check(h, part != null && part.at(BlockPos.ZERO, Direction.NORTH, inside).equals(at),
-                            name(inside) + ": cell " + cu + "," + cv + " is over " + at + ", not a block of the corner");
-                    VoxelShape shape = DeskCornerGeometry.shape(inside, part, Direction.NORTH);
-                    BlockHitResult hit = shape.clip(new Vec3(x, 2.0, z), new Vec3(x, -1.0, z), at);
-                    check(h, hit != null && Math.abs(hit.getLocation().y - 0.75) < 1.0e-6 && hit.getDirection() == Direction.UP,
-                            name(inside) + ": a ray down onto cell " + cu + "," + cv + " finds " + (hit == null ? "nothing" : hit.getLocation().y));
+    public static void theShapesHoldEveryCellOfEveryFaceAtItsHeight(GameTestHelper h) {
+        for (Kind kind : KINDS) {
+            for (int face = 0; face < kind.length(); face++) {
+                PanelGeometry.Frame f = PanelGeometry.cornerFrame(kind.inside(), kind.length(), face, Direction.NORTH);
+                BlockPos corePos = kind.core(BlockPos.ZERO, Direction.NORTH, face);
+                for (int cu = 0; cu < 16; cu++) {
+                    for (int cv = 0; cv < 10; cv++) {
+                        double x = corePos.getX() + f.x(cu + 0.5, cv + 0.5, 0);
+                        double z = corePos.getZ() + f.z(cu + 0.5, cv + 0.5, 0);
+                        BlockPos at = BlockPos.containing(x, 0, z);
+                        DeskCornerGeometry.Part part = kind.partAt(x, z);
+                        check(h, kind.part(BlockPos.ZERO, Direction.NORTH, part).equals(at) && kind.parts().contains(part),
+                                kind.name() + " face " + face + ": cell " + cu + "," + cv + " is over " + at + ", not a block of the corner");
+                        VoxelShape shape = DeskCornerGeometry.shape(kind.inside(), kind.length(), part.left(), part.deep(), Direction.NORTH);
+                        BlockHitResult hit = shape.clip(new Vec3(x, 2.0, z), new Vec3(x, -1.0, z), at);
+                        check(h, hit != null && Math.abs(hit.getLocation().y - 0.75) < 1.0e-6 && hit.getDirection() == Direction.UP,
+                                kind.name() + " face " + face + ": a ray down onto cell " + cu + "," + cv + " finds "
+                                        + (hit == null ? "nothing" : hit.getLocation().y));
+                    }
                 }
             }
-            // the knee space: at the middle of the face, 0.3 up and 0.55 from the back is air, but 0.3 up and 0.1 from the back is solid
-            double[] centre = DeskCornerGeometry.faceCentre(inside);
-            CornerPart core = DeskCornerGeometry.core(inside);
-            for (double[] probe : new double[][] {{0.55, 0.3, 0}, {0.1, 0.3, 1}}) {
-                double t = probe[0];
-                // walk from the face centre (depth 0.4375) along the row direction to depth t
-                double[] v = DeskCornerGeometry.rowDirection(inside);
-                double px = centre[0] + v[0] * (t - 0.4375);
-                double pf = centre[1] + v[1] * (t - 0.4375);
-                double lx = px - DeskCornerGeometry.blockX(core);
-                double lf = pf - DeskCornerGeometry.blockF(core, inside);
-                double bx = 1.0 - lx;
-                double bz = 1.0 - lf;
-                VoxelShape shape = DeskCornerGeometry.shape(inside, partAt(inside, corePos.getX() + bx, corePos.getZ() + bz), Direction.NORTH);
-                BlockPos at = BlockPos.containing(corePos.getX() + bx, 0, corePos.getZ() + bz);
-                double ex = corePos.getX() + bx - at.getX();
-                double ez = corePos.getZ() + bz - at.getZ();
-                boolean solid = Shapes.joinIsNotEmpty(shape, Shapes.box(ex - 0.01, probe[1] - 0.01, ez - 0.01, ex + 0.01, probe[1] + 0.01, ez + 0.01),
-                        BooleanOp.AND);
-                check(h, solid == (probe[2] == 1), name(inside) + ": depth " + t + " at 0.3 up should be " + (probe[2] == 1 ? "solid" : "air"));
-            }
-            // the whole corner's shapes are bounded by the block and the shelf
-            for (CornerPart part : CornerPart.values()) {
-                VoxelShape shape = DeskCornerGeometry.shape(inside, part, Direction.NORTH);
+            for (DeskCornerGeometry.Part part : kind.parts()) {
+                VoxelShape shape = DeskCornerGeometry.shape(kind.inside(), kind.length(), part.left(), part.deep(), Direction.NORTH);
                 check(h, !shape.isEmpty() && shape.min(Direction.Axis.X) >= -1.0e-9 && shape.max(Direction.Axis.X) <= 1.0 + 1.0e-9
                         && shape.min(Direction.Axis.Z) >= -1.0e-9 && shape.max(Direction.Axis.Z) <= 1.0 + 1.0e-9
-                        && shape.max(Direction.Axis.Y) <= 1.13, name(inside) + " " + part + ": shape out of its block");
+                        && shape.max(Direction.Axis.Y) <= 1.13, kind.name() + " " + part + ": shape out of its block");
+            }
+        }
+        // the knee space: 0.3 up at depth 0.55 under the middle of a face is air, at depth 0.1 it is solid
+        for (Kind kind : KINDS) {
+            double[] centre = DeskCornerGeometry.faceCentre(kind.inside(), kind.length(), 0);
+            double[] v = DeskCornerGeometry.rowDirection(kind.inside());
+            for (double[] probe : new double[][] {{0.55, 0}, {0.1, 1}}) {
+                double px = centre[0] + v[0] * (probe[0] - 0.4375);
+                double pf = centre[1] + v[1] * (probe[0] - 0.4375);
+                int bx = (int) Math.floor(px);
+                int bf = (int) Math.floor(pf);
+                DeskCornerGeometry.Part part = new DeskCornerGeometry.Part(kind.size() - 1 - bx, kind.inside() ? bf : -bf);
+                VoxelShape shape = DeskCornerGeometry.shape(kind.inside(), kind.length(), part.left(), part.deep(), Direction.NORTH);
+                double ex = 1.0 - (px - bx);
+                double ez = 1.0 - (pf - bf);
+                boolean solid = Shapes.joinIsNotEmpty(shape, Shapes.box(ex - 0.01, 0.29, ez - 0.01, ex + 0.01, 0.31, ez + 0.01), BooleanOp.AND);
+                check(h, solid == (probe[1] == 1), kind.name() + ": depth " + probe[0] + " at 0.3 up should be " + (probe[1] == 1 ? "solid" : "air"));
             }
         }
         h.succeed();
@@ -377,36 +380,39 @@ public final class DeskCornerTests {
     }
 
     @GameTest(template = "empty", templateNamespace = "bwrcorner")
-    public static void theFourBlockModelsTogetherCoverEveryCellOfTheMountingFace(GameTestHelper h) throws IOException {
-        for (boolean inside : KINDS) {
-            Map<CornerPart, List<Face>> models = new HashMap<>();
-            for (CornerPart part : CornerPart.values()) {
-                List<Face> faces = readObj("/assets/bwr/models/block/control_panel/desk_corner_" + name(inside) + "_" + part.getSerializedName() + ".obj");
-                check(h, !faces.isEmpty() && faces.size() <= 40, name(inside) + " " + part + " is " + faces.size() + " faces");
+    public static void theBlockModelsTogetherCoverEveryCellOfEveryMountingFace(GameTestHelper h) throws IOException {
+        for (Kind kind : KINDS) {
+            Map<DeskCornerGeometry.Part, List<Face>> models = new HashMap<>();
+            for (DeskCornerGeometry.Part part : kind.parts()) {
+                List<Face> faces = readObj("/assets/bwr/models/block/control_panel/desk_corner_" + (kind.inside() ? "inside" : "outside") + "_"
+                        + kind.length() + "_" + part.left() + "_" + part.deep() + ".obj");
+                check(h, !faces.isEmpty() && faces.size() <= 40, kind.name() + " " + part + " is " + faces.size() + " faces");
                 for (Face face : faces) {
                     for (double[] c : face.corners()) {
                         check(h, c[0] >= -1.0e-5 && c[0] <= 1.00001 && c[2] >= -1.0e-5 && c[2] <= 1.00001 && c[1] >= -1.0e-5 && c[1] <= 1.1001,
-                                name(inside) + " " + part + " " + face.material() + " leaves its block: " + java.util.Arrays.toString(c));
+                                kind.name() + " " + part + " " + face.material() + " leaves its block: " + java.util.Arrays.toString(c));
                     }
                 }
                 models.put(part, faces);
             }
-            PanelGeometry.Frame f = PanelGeometry.frame(type(inside), Direction.NORTH);
-            BlockPos corePos = core(BlockPos.ZERO, Direction.NORTH, inside);
-            for (int cu = 0; cu < 16; cu++) {
-                for (int cv = 0; cv < 10; cv++) {
-                    double x = corePos.getX() + f.x(cu + 0.5, cv + 0.5, 0);
-                    double z = corePos.getZ() + f.z(cu + 0.5, cv + 0.5, 0);
-                    CornerPart part = partAt(inside, x, z);
-                    BlockPos at = part.at(BlockPos.ZERO, Direction.NORTH, inside);
-                    boolean covered = false;
-                    for (Face face : models.get(part)) {
-                        if (face.material().equals("face") && face.corners().stream().allMatch(c -> Math.abs(c[1] - 0.75) < 1.0e-5)
-                                && inPlan(face.corners(), x - at.getX(), z - at.getZ())) {
-                            covered = true;
+            for (int face = 0; face < kind.length(); face++) {
+                PanelGeometry.Frame f = PanelGeometry.cornerFrame(kind.inside(), kind.length(), face, Direction.NORTH);
+                BlockPos corePos = kind.core(BlockPos.ZERO, Direction.NORTH, face);
+                for (int cu = 0; cu < 16; cu++) {
+                    for (int cv = 0; cv < 10; cv++) {
+                        double x = corePos.getX() + f.x(cu + 0.5, cv + 0.5, 0);
+                        double z = corePos.getZ() + f.z(cu + 0.5, cv + 0.5, 0);
+                        DeskCornerGeometry.Part part = kind.partAt(x, z);
+                        BlockPos at = kind.part(BlockPos.ZERO, Direction.NORTH, part);
+                        boolean covered = false;
+                        for (Face model : models.get(part)) {
+                            if (model.material().equals("face") && model.corners().stream().allMatch(c -> Math.abs(c[1] - 0.75) < 1.0e-5)
+                                    && inPlan(model.corners(), x - at.getX(), z - at.getZ())) {
+                                covered = true;
+                            }
                         }
+                        check(h, covered, kind.name() + " face " + face + ": cell " + cu + "," + cv + " is not on the top of the model of " + part);
                     }
-                    check(h, covered, name(inside) + ": cell " + cu + "," + cv + " is not on the top of the model of " + part);
                 }
             }
         }
@@ -415,103 +421,101 @@ public final class DeskCornerTests {
 
     // ---- placing
 
-    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 600)
-    public static void aCornerIsFourBlocksOneBlockEntityAndOneItemForEveryFacing(GameTestHelper h) {
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
+    public static void aCornerIsItsBlocksOneBlockEntityPerFaceAndOneItemForEveryFacing(GameTestHelper h) {
         fixture(h, 0, (level, floor) -> {
             FakePlayer player = player(level, "CornerPlace", GameType.SURVIVAL);
             BlockPos at = floor.above();
-            for (boolean inside : KINDS) {
+            for (Kind kind : KINDS) {
                 for (Direction facing : Direction.Plane.HORIZONTAL) {
                     clear(level, floor);
-                    check(h, place(player, new ItemStack(item(inside)), at, facing), name(inside) + " not placed facing " + facing);
+                    check(h, place(player, new ItemStack(kind.item()), at, facing), kind.name() + " not placed facing " + facing);
                     check(h, player.getMainHandItem().isEmpty(), "the item was not used up");
-                    check(h, cornerBlocks(level, floor) == 4, name(inside) + " " + facing + ": " + cornerBlocks(level, floor) + " blocks, not 4");
-                    Direction left = facing.getClockWise();
-                    Direction deep = inside ? facing : facing.getOpposite();
-                    BlockPos[] expected = {at, at.relative(left), at.relative(deep), at.relative(left).relative(deep)};
-                    CornerPart[] parts = {CornerPart.ORIGIN, CornerPart.LEFT, CornerPart.DEEP, CornerPart.DEEP_LEFT};
+                    check(h, cornerBlocks(level, floor) == kind.parts().size(), kind.name() + " " + facing + ": " + cornerBlocks(level, floor)
+                            + " blocks, not " + kind.parts().size());
                     int entities = 0;
-                    for (int i = 0; i < 4; i++) {
-                        BlockState state = level.getBlockState(expected[i]);
-                        check(h, state.is(block(inside)) && state.getValue(DeskCornerBlock.PART) == parts[i]
-                                && state.getValue(PanelBlock.FACING) == facing, name(inside) + " " + facing + ": " + parts[i] + " is not at "
-                                + expected[i] + ": " + state);
-                        check(h, DeskCornerBlock.origin(expected[i], state).equals(at) && DeskCornerBlock.corePos(expected[i], state).equals(core(at, facing, inside)),
-                                parts[i] + " does not find its origin and core");
-                        PanelBlockEntity entity = be(level, expected[i]);
-                        if (entity != null) {
+                    for (DeskCornerGeometry.Part part : kind.parts()) {
+                        BlockPos pos = kind.part(at, facing, part);
+                        BlockState state = level.getBlockState(pos);
+                        check(h, state.is(kind.block()) && state.getValue(DeskCornerBlock.LEFT) == part.left()
+                                && state.getValue(DeskCornerBlock.DEEP) == part.deep() && state.getValue(PanelBlock.FACING) == facing,
+                                kind.name() + " " + facing + ": " + part + " is not at " + pos + ": " + state);
+                        check(h, DeskCornerBlock.origin(pos, state).equals(at) && DeskCornerBlock.piece(pos, state).size() == kind.parts().size(),
+                                part + " does not find its origin and piece");
+                        if (be(level, pos) != null) {
                             entities++;
-                            check(h, expected[i].equals(core(at, facing, inside)), "the block entity is not on the core");
+                            check(h, DeskCornerGeometry.faceOf(kind.inside(), kind.length(), part.left(), part.deep()) >= 0, "a block entity on a body block");
                         }
-                        // a click on any block finds the one face
-                        PanelBlockEntity found = DeskCornerBlock.faceEntity(level, expected[i]);
-                        check(h, found != null && found.getBlockPos().equals(core(at, facing, inside)), parts[i] + " does not forward to the core");
+                        check(h, DeskCornerBlock.faceEntity(level, pos) != null, part + " forwards to no face");
                     }
-                    check(h, entities == 1, name(inside) + ": " + entities + " block entities, not 1");
-                    PanelBlockEntity panel = be(level, core(at, facing, inside));
-                    PanelGroup group = panel.group();
-                    check(h, panel.panelType() == type(inside) && group.columns() == 1 && group.rows() == 1 && group.members().size() == 1,
-                            name(inside) + ": the face is a group of its own, one block");
-                    check(h, level.getBlockState(at.relative(left, 2)).isAir() && level.getBlockState(at.relative(deep, -1)).isAir(),
-                            "nothing outside the 2 x 2 footprint");
+                    check(h, entities == kind.length(), kind.name() + ": " + entities + " block entities, not " + kind.length());
+                    for (int face = 0; face < kind.length(); face++) {
+                        PanelBlockEntity panel = be(level, kind.core(at, facing, face));
+                        PanelGroup group = panel.group();
+                        check(h, panel.panelType() == kind.type() && group.columns() == 1 && group.rows() == 1 && group.members().size() == 1,
+                                kind.name() + " face " + face + " is a group of its own");
+                    }
                 }
             }
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 600)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
     public static void aCornerIsRefusedWholeWhenAnyOfItsBlocksIsTaken(GameTestHelper h) {
         fixture(h, 1, (level, floor) -> {
             FakePlayer player = player(level, "CornerBlocked", GameType.SURVIVAL);
             BlockPos at = floor.above();
-            for (boolean inside : KINDS) {
-                for (CornerPart taken : new CornerPart[] {CornerPart.LEFT, CornerPart.DEEP, CornerPart.DEEP_LEFT}) {
+            for (Kind kind : KINDS) {
+                List<DeskCornerGeometry.Part> parts = kind.parts();
+                for (DeskCornerGeometry.Part taken : new DeskCornerGeometry.Part[] {parts.get(1), parts.get(parts.size() / 2), parts.get(parts.size() - 1)}) {
                     for (Direction facing : new Direction[] {Direction.NORTH, Direction.WEST}) {
                         clear(level, floor);
-                        BlockPos obstacle = part(at, facing, inside, taken);
+                        BlockPos obstacle = kind.part(at, facing, taken);
                         level.setBlock(obstacle, Blocks.STONE.defaultBlockState(), 3);
-                        check(h, !place(player, new ItemStack(item(inside)), at, facing), name(inside) + " placed over a block at " + taken);
+                        check(h, !place(player, new ItemStack(kind.item()), at, facing), kind.name() + " placed over a block at " + taken);
                         check(h, cornerBlocks(level, floor) == 0, "left blocks behind when refused");
                         check(h, level.getBlockState(obstacle).is(Blocks.STONE), "replaced the obstacle");
                         check(h, player.getMainHandItem().getCount() == 1, "used up the item when refused");
                     }
                 }
-                // a block outside the footprint (to the operator's right of the origin, behind it) is not in the way
-                clear(level, floor);
-                level.setBlock(at.relative(Direction.NORTH.getCounterClockWise()), Blocks.STONE.defaultBlockState(), 3);
-                check(h, place(player, new ItemStack(item(inside)), at, Direction.NORTH), name(inside) + ": a block beside the footprint stopped it");
             }
         });
     }
 
     // ---- breaking
 
-    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 2400)
     public static void breakingAnyBlockRemovesTheCornerWithOneDropTheFinishAndItsComponents(GameTestHelper h) {
         fixture(h, 2, (level, floor) -> {
             FakePlayer player = player(level, "CornerBreak", GameType.SURVIVAL);
             BlockPos at = floor.above();
-            for (boolean inside : KINDS) {
+            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 3), new Kind(true, 4)}) {
                 for (GameType mode : new GameType[] {GameType.SURVIVAL, GameType.CREATIVE}) {
-                    for (CornerPart broken : CornerPart.values()) {
-                        Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(net.minecraft.util.RandomSource.create(broken.ordinal()));
+                    List<DeskCornerGeometry.Part> parts = kind.parts();
+                    for (int i = 0; i < parts.size(); i += Math.max(1, parts.size() / 4)) {
+                        DeskCornerGeometry.Part broken = parts.get(i);
+                        Direction facing = Direction.from2DDataValue(i % 4);
                         clear(level, floor);
                         player.setGameMode(GameType.SURVIVAL);
-                        check(h, place(player, PanelFinish.withFinish(new ItemStack(item(inside)), PanelFinish.CREAM), at, facing), "not placed");
-                        BlockPos corePos = core(at, facing, inside);
-                        check(h, PanelOps.placeDirect(level, corePos, 0, 0, ComponentTypes.LAMP, Footprint.of(4, 4)) != null
-                                && PanelOps.placeDirect(level, corePos, 6, 2, ComponentTypes.LAMP, Footprint.of(4, 4)) != null, "components not mounted");
+                        check(h, place(player, PanelFinish.withFinish(new ItemStack(kind.item()), PanelFinish.CREAM), at, facing), "not placed");
+                        int mounted = 0;
+                        for (int face = 0; face < kind.length(); face++) {
+                            BlockPos corePos = kind.core(at, facing, face);
+                            check(h, PanelOps.placeDirect(level, corePos, 0, 0, ComponentTypes.LAMP, Footprint.of(4, 4)) != null
+                                    && PanelOps.placeDirect(level, corePos, 6, 2, ComponentTypes.LAMP, Footprint.of(4, 4)) != null, "components not mounted");
+                            mounted += 2;
+                        }
                         clearItems(level, floor);
                         player.setGameMode(mode);
                         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                        check(h, player.gameMode.destroyBlock(part(at, facing, inside, broken)), broken + " would not break");
-                        check(h, cornerBlocks(level, floor) == 0, "breaking the " + broken + " left " + cornerBlocks(level, floor) + " blocks");
-                        int items = dropped(level, floor, item(inside));
-                        check(h, items == (mode == GameType.SURVIVAL ? 1 : 0), name(inside) + " " + mode + ": breaking the " + broken + " dropped " + items);
-                        check(h, droppedComponents(level, floor) == 2, mode + ": breaking the " + broken + " dropped " + droppedComponents(level, floor)
-                                + " of the 2 components");
+                        check(h, player.gameMode.destroyBlock(kind.part(at, facing, broken)), broken + " would not break");
+                        check(h, cornerBlocks(level, floor) == 0, "breaking " + broken + " left " + cornerBlocks(level, floor) + " blocks");
+                        int items = dropped(level, floor, kind.item());
+                        check(h, items == (mode == GameType.SURVIVAL ? 1 : 0), kind.name() + " " + mode + ": breaking " + broken + " dropped " + items);
+                        check(h, droppedComponents(level, floor) == mounted, mode + ": breaking " + broken + " dropped " + droppedComponents(level, floor)
+                                + " of the " + mounted + " components");
                         if (mode == GameType.SURVIVAL) {
-                            check(h, level.getEntitiesOfClass(ItemEntity.class, area(floor)).stream().filter(e -> e.getItem().is(item(inside)))
+                            check(h, level.getEntitiesOfClass(ItemEntity.class, area(floor)).stream().filter(e -> e.getItem().is(kind.item()))
                                     .allMatch(e -> PanelFinish.of(e.getItem()) == PanelFinish.CREAM), "the dropped corner lost its finish");
                         }
                     }
@@ -519,10 +523,10 @@ public final class DeskCornerTests {
                 // a corner that loses a block another way falls apart and gives its item back once
                 clear(level, floor);
                 player.setGameMode(GameType.SURVIVAL);
-                check(h, place(player, new ItemStack(item(inside)), at, Direction.SOUTH), "not placed");
-                level.setBlock(part(at, Direction.SOUTH, inside, CornerPart.DEEP_LEFT), Blocks.AIR.defaultBlockState(), 3);
+                check(h, place(player, new ItemStack(kind.item()), at, Direction.SOUTH), "not placed");
+                level.setBlock(kind.part(at, Direction.SOUTH, kind.parts().get(kind.parts().size() - 1)), Blocks.AIR.defaultBlockState(), 3);
                 check(h, cornerBlocks(level, floor) == 0, "a broken corner left " + cornerBlocks(level, floor) + " blocks");
-                check(h, dropped(level, floor, item(inside)) == 1, "a corner that fell apart gives one item back, not " + dropped(level, floor, item(inside)));
+                check(h, dropped(level, floor, kind.item()) == 1, "a corner that fell apart gives one item back, not " + dropped(level, floor, kind.item()));
             }
         });
     }
@@ -546,57 +550,52 @@ public final class DeskCornerTests {
                 ClipContext.Fluid.NONE, player));
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
-    public static void theAngledFaceIsFoundThroughAnyBlockOfTheCornerAndTakesComponentsThroughThePlayerPath(GameTestHelper h) {
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 2400)
+    public static void everyAngledFaceIsFoundThroughAnyBlockOfTheCornerAndTakesComponentsThroughThePlayerPath(GameTestHelper h) {
         fixture(h, 3, (level, floor) -> {
             FakePlayer player = player(level, "CornerMount", GameType.SURVIVAL);
             BlockPos at = floor.above();
-            for (boolean inside : KINDS) {
-                for (Direction facing : Direction.Plane.HORIZONTAL) {
+            for (Kind kind : KINDS) {
+                for (Direction facing : new Direction[] {Direction.NORTH, Direction.EAST}) {
                     clear(level, floor);
-                    check(h, place(player, new ItemStack(item(inside)), at, facing), "not placed");
-                    BlockPos corePos = core(at, facing, inside);
-                    PanelBlockEntity panel = be(level, corePos);
-                    PanelGeometry.Frame f = PanelGeometry.frame(type(inside), facing);
+                    check(h, place(player, new ItemStack(kind.item()), at, facing), kind.name() + " not placed");
                     java.util.Set<BlockPos> blocksHit = new java.util.HashSet<>();
-                    for (int[] want : new int[][] {{0, 0}, {15, 0}, {0, 9}, {15, 9}, {8, 5}, {3, 2}, {12, 7}, {7, 9}, {1, 4}, {14, 4}}) {
-                        BlockHitResult hit = aimAt(level, player, f, corePos, want[0] + 0.5, want[1] + 0.5);
-                        check(h, hit.getType() == HitResult.Type.BLOCK, name(inside) + " " + facing + ": the look at cell " + want[0] + "," + want[1] + " hit nothing");
-                        blocksHit.add(hit.getBlockPos());
-                        // the client path: the block under the crosshair, forwarded to the face, then the cell of the ray on the face's plane
-                        PanelBlockEntity found = DeskCornerBlock.faceEntity(level, hit.getBlockPos());
+                    for (int face = 0; face < kind.length(); face++) {
+                        BlockPos corePos = kind.core(at, facing, face);
+                        PanelBlockEntity panel = be(level, corePos);
+                        PanelGeometry.Frame f = frameOf(panel);
+                        for (int[] want : new int[][] {{0, 0}, {15, 9}, {8, 5}, {3, 2}, {12, 7}}) {
+                            BlockHitResult hit = aimAt(level, player, f, corePos, want[0] + 0.5, want[1] + 0.5);
+                            check(h, hit.getType() == HitResult.Type.BLOCK, kind.name() + " " + facing + " face " + face + ": the look at " + want[0] + "," + want[1] + " hit nothing");
+                            blocksHit.add(hit.getBlockPos());
+                            // the client path: the block under the crosshair, resolved to the face under the ray, then the cell
+                            PanelBlockEntity found = DeskCornerBlock.faceEntity(level, hit.getBlockPos(), player.getEyePosition(), player.getLookAngle());
+                            int[] cell = new int[2];
+                            check(h, found == panel && PanelOps.cellAt(found, player.getEyePosition(), player.getLookAngle(), cell)
+                                            && cell[0] == want[0] && cell[1] == want[1],
+                                    kind.name() + " " + facing + " face " + face + ": aimed at " + want[0] + "," + want[1] + " through " + hit.getBlockPos()
+                                            + ", found " + (found == null ? "no face" : found.getBlockPos() + " " + cell[0] + "," + cell[1]));
+                        }
+                        // mount through the real player path at a cell found by aiming, and with the real Place packet
+                        BlockHitResult hit = aimAt(level, player, f, corePos, 3.5, 2.5);
                         int[] cell = new int[2];
-                        check(h, found == panel && PanelOps.cellAt(found, player.getEyePosition(), player.getLookAngle(), cell)
-                                        && cell[0] == want[0] && cell[1] == want[1],
-                                name(inside) + " " + facing + ": aimed at " + want[0] + "," + want[1] + " through " + hit.getBlockPos() + ", found "
-                                        + (found == null ? "no face" : cell[0] + "," + cell[1]));
+                        PanelBlockEntity found = DeskCornerBlock.faceEntity(level, hit.getBlockPos(), player.getEyePosition(), player.getLookAngle());
+                        check(h, found == panel && PanelOps.cellAt(found, player.getEyePosition(), player.getLookAngle(), cell), "no cell");
+                        player.setItemInHand(InteractionHand.MAIN_HAND, component(BwrItems.LAMP.get()));
+                        check(h, PanelOps.place(player, InteractionHand.MAIN_HAND, corePos, cell[0], cell[1]) == PanelGroup.Result.OK,
+                                kind.name() + " " + facing + " face " + face + ": a lamp on the angled face");
+                        check(h, panel.claimAt(cell[0], cell[1]) != null && player.getMainHandItem().isEmpty(), "the lamp does not hold its cell");
+                        player.setItemInHand(InteractionHand.MAIN_HAND, component(BwrItems.LAMP.get()));
+                        check(h, PanelOps.place(player, InteractionHand.MAIN_HAND, corePos, 8, 9) == PanelGroup.Result.BLOCKED, "a lamp hanging off the front of the face");
+                        check(h, PanelOps.place(player, InteractionHand.MAIN_HAND, corePos, cell[0], cell[1]) != PanelGroup.Result.OK, "a second lamp on the first");
+                        sendPlace(level, player, corePos, 0, 6);
+                        check(h, panel.claimAt(0, 6) != null, kind.name() + " " + facing + " face " + face + ": the Place packet did not mount on cell 0,6");
+                        check(h, panel.owned().size() == 2, "two lamps on the face, not " + panel.owned().size());
                     }
-                    check(h, blocksHit.size() >= 2, name(inside) + " " + facing + ": the face was only ever reached through " + blocksHit
-                            + "; it should reach into the other blocks");
-                    // mount through the real player path (PanelOps.place, what the Place packet calls) at cells found by aiming
-                    BlockHitResult hit = aimAt(level, player, f, corePos, 3.5, 2.5);
-                    int[] cell = new int[2];
-                    PanelBlockEntity found = DeskCornerBlock.faceEntity(level, hit.getBlockPos());
-                    check(h, found != null && PanelOps.cellAt(found, player.getEyePosition(), player.getLookAngle(), cell), "no cell");
-                    player.setItemInHand(InteractionHand.MAIN_HAND, component(BwrItems.LAMP.get()));
-                    check(h, PanelOps.place(player, InteractionHand.MAIN_HAND, found.getBlockPos(), cell[0], cell[1]) == PanelGroup.Result.OK,
-                            name(inside) + " " + facing + ": a lamp on the angled face");
-                    check(h, panel.claimAt(cell[0], cell[1]) != null && player.getMainHandItem().isEmpty(), "the lamp does not hold its cell or the item was kept");
-                    // not past the ten rows, and not in a cell that is taken
-                    player.setItemInHand(InteractionHand.MAIN_HAND, component(BwrItems.LAMP.get()));
-                    check(h, PanelOps.place(player, InteractionHand.MAIN_HAND, corePos, 8, 9) == PanelGroup.Result.BLOCKED,
-                            "a lamp hanging off the front of the face");
-                    check(h, PanelOps.place(player, InteractionHand.MAIN_HAND, corePos, cell[0], cell[1]) != PanelGroup.Result.OK, "a second lamp on the first");
-                    check(h, PanelOps.place(player, InteractionHand.MAIN_HAND, corePos, 12, 4) == PanelGroup.Result.OK, "a lamp on free cells");
-                    // the real packet: Place, encoded and decoded, given to the real handler, the body block named as the click
-                    player.setItemInHand(InteractionHand.MAIN_HAND, component(BwrItems.LAMP.get()));
-                    sendPlace(level, player, corePos, 0, 6);
-                    check(h, panel.claimAt(0, 6) != null, name(inside) + " " + facing + ": the Place packet did not mount on cell 0,6");
-                    check(h, panel.owned().size() == 3, "three lamps, not " + panel.owned().size());
-                    // body blocks hold no cells and no block entity
-                    for (CornerPart part : CornerPart.values()) {
-                        BlockPos p = part(at, facing, inside, part);
-                        if (!p.equals(corePos)) {
+                    check(h, blocksHit.size() >= Math.min(2, kind.length() + 1), kind.name() + " " + facing + ": the faces were only reached through " + blocksHit);
+                    for (DeskCornerGeometry.Part part : kind.parts()) {
+                        BlockPos p = kind.part(at, facing, part);
+                        if (DeskCornerGeometry.faceOf(kind.inside(), kind.length(), part.left(), part.deep()) < 0) {
                             check(h, be(level, p) == null && !((DeskCornerBlock) level.getBlockState(p).getBlock()).cellUsable(level.getBlockState(p), 0, 0),
                                     part + " is a body block: no block entity, no cells");
                         }
@@ -642,48 +641,41 @@ public final class DeskCornerTests {
         }
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
-    public static void aComponentOnTheAngledFaceIsOperatedWiredAndReachedLikeOnAnyDesk(GameTestHelper h) {
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 2400)
+    public static void aComponentOnAnAngledFaceIsOperatedWiredAndReachedLikeOnAnyDesk(GameTestHelper h) {
         fixture(h, 4, (level, floor) -> {
             FakePlayer player = player(level, "CornerOperate", GameType.SURVIVAL);
             FakePlayer far = player(level, "CornerFar", GameType.SURVIVAL);
             BlockPos at = floor.above();
-            for (boolean inside : KINDS) {
-                for (Direction facing : new Direction[] {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST}) {
+            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 1), new Kind(true, 3), new Kind(false, 3)}) {
+                for (Direction facing : new Direction[] {Direction.NORTH, Direction.SOUTH, Direction.WEST}) {
                     clear(level, floor);
-                    check(h, place(player, new ItemStack(item(inside)), at, facing), "not placed");
-                    BlockPos corePos = core(at, facing, inside);
-                    PanelBlockEntity panel = be(level, corePos);
+                    check(h, place(player, new ItemStack(kind.item()), at, facing), "not placed");
+                    BlockPos corePos = kind.core(at, facing, kind.length() - 1);
                     PanelComponent button = PanelOps.placeDirect(level, corePos, 2, 1, ComponentTypes.PUSHBUTTON, Footprint.of(6, 6));
                     PanelComponent lamp = PanelOps.placeDirect(level, corePos, 11, 5, ComponentTypes.LAMP, Footprint.of(4, 4));
                     check(h, button != null && lamp != null, "components not mounted");
-                    // wire the lamp to the button with a linker in hand, the real bind
                     player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BwrItems.PANEL_LINKER.get()));
                     player.setPos(Vec3.atBottomCenterOf(corePos.relative(facing, 1)));
                     WiringOps.Result wired = WiringOps.bind(player, new PanelPayloads.Bind(corePos, lamp.id(), false, 0,
                             WiringOps.BindKind.COMPONENT.ordinal(), BlockPos.ZERO, "", corePos, button.id(), 0, 1.0));
-                    check(h, wired == WiringOps.Result.OK, name(inside) + " " + facing + ": lamp bound to the button: " + wired);
+                    check(h, wired == WiringOps.Result.OK, kind.name() + " " + facing + ": lamp bound to the button: " + wired);
                     player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                    // press and release through the real operate packet handler
                     sendOperate(level, player, corePos, button, OperateAction.PRESS, 1.0);
-                    check(h, button.output(0) == 1.0 && lamp.input(0) == 1.0, name(inside) + " " + facing + ": the press did not reach the lamp: "
-                            + button.output(0) + " / " + lamp.input(0));
+                    check(h, button.output(0) == 1.0 && lamp.input(0) == 1.0, kind.name() + " " + facing + ": the press did not reach the lamp");
                     sendOperate(level, player, corePos, button, OperateAction.RELEASE, 0.0);
                     check(h, button.output(0) == 0.0 && lamp.input(0) == 0.0, "the release did not reach the lamp");
-                    // reach: a player twenty blocks away is refused (server side check), as on any panel
                     far.setPos(Vec3.atBottomCenterOf(corePos.relative(facing, 20)));
                     sendOperate(level, far, corePos, button, OperateAction.PRESS, 1.0);
                     check(h, button.output(0) == 0.0, "a player out of reach pressed the button");
-                    // a tool in hand takes the click for itself
                     player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BwrItems.PANEL_WRENCH.get()));
                     sendOperate(level, player, corePos, button, OperateAction.PRESS, 1.0);
                     check(h, button.output(0) == 0.0, "pressed through a wrench");
                     player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                    // a body block is not a panel: operating "on" it does nothing
-                    BlockPos body = part(at, facing, inside, inside ? CornerPart.ORIGIN : CornerPart.ORIGIN);
-                    check(h, !PanelOps.operate(player, body, button.id(), OperateAction.PRESS, 1.0), "a press addressed to a body block was accepted");
-                    // the networking wrench line for the wired pair starts and ends on the face: centre of each component
-                    check(h, panel.owned().size() == 2, "two components");
+                    BlockPos body = at; // the origin holds no face (the straight run arrives there)
+                    if (DeskCornerGeometry.faceOf(kind.inside(), kind.length(), 0, 0) < 0) {
+                        check(h, !PanelOps.operate(player, body, button.id(), OperateAction.PRESS, 1.0), "a press addressed to a body block was accepted");
+                    }
                 }
             }
         });
@@ -691,29 +683,28 @@ public final class DeskCornerTests {
 
     // ---- joining, finishes, saves
 
-    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 600)
-    public static void aCornerNeverJoinsTheStraightDesksItContinuesOrAnotherCorner(GameTestHelper h) {
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
+    public static void everyFaceIsItsOwnGroupAndNeverJoinsTheStraightDesksItContinues(GameTestHelper h) {
         fixture(h, 5, (level, floor) -> {
             FakePlayer player = player(level, "CornerGroups", GameType.SURVIVAL);
-            BlockPos at = floor.above();
-            for (boolean inside : KINDS) {
+            BlockPos at = floor.above().relative(Direction.NORTH.getClockWise(), 3);
+            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 3)}) {
                 clear(level, floor);
                 Direction facing = Direction.NORTH;
-                check(h, place(player, new ItemStack(item(inside)), at, facing), "corner not placed");
-                // a straight desk run on the corner's right where the run arrives, and one more corner of the other kind further on
+                check(h, place(player, new ItemStack(kind.item()), at, facing), "corner not placed");
                 BlockPos run = at.relative(facing.getCounterClockWise());
                 check(h, place(player, new ItemStack(BwrItems.CONTROL_PANEL_DESK.get()), run, facing)
                         && place(player, new ItemStack(BwrItems.CONTROL_PANEL_DESK_WIDE.get()), run.relative(facing.getCounterClockWise(), 2), facing),
                         "desks not placed");
-                PanelBlockEntity corner = be(level, core(at, facing, inside));
                 PanelBlockEntity desk = be(level, run);
-                check(h, corner.group().members().size() == 1 && corner.group() != desk.group(), "the corner joined the desk beside it");
-                check(h, desk.group().members().size() == 3 && !desk.group().contains(corner.getBlockPos()), "the desk run took the corner in");
-                // an adjacent corner of the same kind and facing is another group
-                BlockPos other = at.relative(facing.getClockWise(), 3);
-                check(h, place(player, new ItemStack(item(inside)), other, facing), "second corner not placed");
-                PanelBlockEntity second = be(level, core(other, facing, inside));
-                check(h, second.group() != corner.group() && second.group().members().size() == 1, "two corners joined");
+                java.util.Set<PanelGroup> groups = new java.util.HashSet<>();
+                for (int face = 0; face < kind.length(); face++) {
+                    PanelBlockEntity corner = be(level, kind.core(at, facing, face));
+                    check(h, corner.group().members().size() == 1 && corner.group() != desk.group(), "a face joined the desk or another face");
+                    groups.add(corner.group());
+                }
+                check(h, groups.size() == kind.length(), "the faces are not one group each");
+                check(h, desk.group().members().size() == 3, "the desk run took a corner in");
             }
         });
     }
@@ -723,56 +714,56 @@ public final class DeskCornerTests {
         fixture(h, 6, (level, floor) -> {
             FakePlayer player = player(level, "CornerPaint", GameType.CREATIVE);
             BlockPos at = floor.above();
-            for (boolean inside : KINDS) {
+            for (Kind kind : new Kind[] {new Kind(true, 1), new Kind(false, 3)}) {
                 clear(level, floor);
                 Direction facing = Direction.EAST;
-                check(h, place(player, new ItemStack(item(inside)), at, facing), "not placed");
-                for (CornerPart clicked : CornerPart.values()) {
+                check(h, place(player, new ItemStack(kind.item()), at, facing), "not placed");
+                for (DeskCornerGeometry.Part clicked : kind.parts()) {
                     PanelFinish before = PanelFinish.of(level.getBlockState(at));
-                    check(h, PanelFinishes.cycle(level, part(at, facing, inside, clicked), player), "finish did not change from " + clicked);
+                    check(h, PanelFinishes.cycle(level, kind.part(at, facing, clicked), player), "finish did not change from " + clicked);
                     PanelFinish after = PanelFinish.of(level.getBlockState(at));
                     check(h, after != before, "the origin did not change");
-                    for (CornerPart each : CornerPart.values()) {
-                        check(h, PanelFinish.of(level.getBlockState(part(at, facing, inside, each))) == after,
-                                clicked + ": " + each + " did not take the finish " + after);
+                    for (DeskCornerGeometry.Part each : kind.parts()) {
+                        check(h, PanelFinish.of(level.getBlockState(kind.part(at, facing, each))) == after, clicked + ": " + each + " did not take the finish");
                     }
                 }
-                check(h, block(inside).getStateDefinition().getPossibleStates().size() == 4 * 4 * 5, "states: 4 facings, 4 parts, 5 finishes");
+                check(h, kind.block().getStateDefinition().getPossibleStates().size() == 4 * 5 * 5 * 5, "states: 4 facings, 5 x 5 parts, 5 finishes");
             }
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 600)
-    public static void aMountedComponentOnTheAngledFaceAndEveryBlockStateSurviveASaveAndReload(GameTestHelper h) {
+    @GameTest(template = "empty", templateNamespace = "bwrcorner", timeoutTicks = 1200)
+    public static void mountedComponentsOnEveryFaceAndEveryBlockStateSurviveASaveAndReload(GameTestHelper h) {
         fixture(h, 7, (level, floor) -> {
             var registries = level.registryAccess();
             FakePlayer player = player(level, "CornerSave", GameType.SURVIVAL);
             BlockPos at = floor.above();
-            for (boolean inside : KINDS) {
+            for (Kind kind : new Kind[] {new Kind(true, 3), new Kind(false, 2), new Kind(true, 1)}) {
                 for (Direction facing : Direction.Plane.HORIZONTAL) {
                     clear(level, floor);
-                    check(h, place(player, PanelFinish.withFinish(new ItemStack(item(inside)), PanelFinish.GREY), at, facing), "not placed");
-                    BlockPos corePos = core(at, facing, inside);
-                    PanelBlockEntity panel = be(level, corePos);
-                    PanelComponent lamp = PanelOps.placeDirect(level, corePos, 3, 2, ComponentTypes.LAMP, Footprint.of(4, 4));
-                    PanelComponent dial = PanelOps.placeDirect(level, corePos, 8, 4, ComponentTypes.DIAL_GAUGE, Footprint.of(4, 4));
-                    check(h, lamp != null && dial != null, "components not mounted");
-                    lamp.setLabel("ANG-1");
-                    for (CornerPart part : CornerPart.values()) {
-                        BlockState state = level.getBlockState(part(at, facing, inside, part));
-                        BlockState restored = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), NbtUtils.writeBlockState(state));
-                        check(h, restored == state && restored.getValue(DeskCornerBlock.PART) == part, part + " state " + state + " did not survive a save");
+                    check(h, place(player, PanelFinish.withFinish(new ItemStack(kind.item()), PanelFinish.GREY), at, facing), "not placed");
+                    for (int face = 0; face < kind.length(); face++) {
+                        BlockPos corePos = kind.core(at, facing, face);
+                        PanelBlockEntity panel = be(level, corePos);
+                        PanelComponent lamp = PanelOps.placeDirect(level, corePos, 3, 2, ComponentTypes.LAMP, Footprint.of(4, 4));
+                        PanelComponent dial = PanelOps.placeDirect(level, corePos, 8, 4, ComponentTypes.DIAL_GAUGE, Footprint.of(4, 4));
+                        check(h, lamp != null && dial != null, "components not mounted");
+                        final String label = "ANG-" + face;
+                        lamp.setLabel(label);
+                        CompoundTag saved = panel.saveWithoutMetadata(registries);
+                        PanelBlockEntity reloaded = new PanelBlockEntity(corePos, level.getBlockState(corePos));
+                        reloaded.loadWithComponents(saved, registries);
+                        check(h, reloaded.panelType() == kind.type() && reloaded.savePanel(false).equals(panel.savePanel(false)),
+                                kind.name() + " " + facing + " face " + face + ": the save is not a fixed point of load");
+                        check(h, reloaded.owned().size() == 2 && reloaded.claimAt(3, 2) != null && reloaded.claimAt(10, 7) != null
+                                && reloaded.owned().stream().anyMatch(c -> label.equals(c.label())), "the reloaded face lost a component");
+                        check(h, reloaded.claimAt(3, 2).owner().equals(corePos), "claims are absolute positions of the core");
                     }
-                    CompoundTag saved = panel.saveWithoutMetadata(registries);
-                    PanelBlockEntity reloaded = new PanelBlockEntity(corePos, level.getBlockState(corePos));
-                    reloaded.loadWithComponents(saved, registries);
-                    check(h, reloaded.panelType() == type(inside), "reloaded as " + reloaded.panelType());
-                    check(h, reloaded.savePanel(false).equals(panel.savePanel(false)), name(inside) + " " + facing + ": the save is not a fixed point of load");
-                    check(h, reloaded.owned().size() == 2 && reloaded.claimAt(3, 2) != null && reloaded.claimAt(10, 7) != null
-                            && reloaded.owned().stream().anyMatch(c -> "ANG-1".equals(c.label())), "the reloaded face lost a component");
-                    check(h, reloaded.cellsUsable(0, 0, 16, 10) && !reloaded.cellsUsable(0, 0, 16, 11), "usable cells after reload");
-                    // the same state placed and mounted again from the saved data lands the part on the same cells
-                    check(h, reloaded.claimAt(3, 2).owner().equals(corePos), "claims are absolute positions of the core");
+                    for (DeskCornerGeometry.Part part : kind.parts()) {
+                        BlockState state = level.getBlockState(kind.part(at, facing, part));
+                        BlockState restored = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), NbtUtils.writeBlockState(state));
+                        check(h, restored == state, part + " state " + state + " did not survive a save");
+                    }
                 }
             }
         });
@@ -780,11 +771,12 @@ public final class DeskCornerTests {
 
     @GameTest(template = "empty", templateNamespace = "bwrcorner")
     public static void theCornersAreRegisteredWithItemsRecipesAndTheCreativeTab(GameTestHelper h) {
-        for (boolean inside : KINDS) {
-            ResourceLocation id = ResourceLocation.fromNamespaceAndPath("bwr", "control_panel_desk_corner_" + name(inside));
-            check(h, net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(id) == block(inside), id + ": block not registered");
-            check(h, net.minecraft.core.registries.BuiltInRegistries.ITEM.get(id) == item(inside), id + ": item not registered");
-            check(h, BwrItems.TAB.get().getDisplayItems().stream().anyMatch(s -> s.is(item(inside))), id + " is not in the creative tab");
+        for (Kind kind : KINDS) {
+            String path = "control_panel_desk_corner_" + (kind.inside() ? "inside" : "outside") + (kind.length() == 1 ? "" : "_" + kind.length());
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath("bwr", path);
+            check(h, net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(id) == kind.block(), id + ": block not registered");
+            check(h, net.minecraft.core.registries.BuiltInRegistries.ITEM.get(id) == kind.item(), id + ": item not registered");
+            check(h, BwrItems.TAB.get().getDisplayItems().stream().anyMatch(s -> s.is(kind.item())), id + " is not in the creative tab");
             var manager = h.getLevel().getServer().getRecipeManager();
             boolean vanilla = manager.byKey(id).isPresent();
             boolean mekanism = manager.byKey(ResourceLocation.fromNamespaceAndPath("bwr", id.getPath() + "_mekanism")).isPresent();

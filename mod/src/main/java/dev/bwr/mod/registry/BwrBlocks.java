@@ -699,13 +699,31 @@ public final class BwrBlocks {
     public static final DeferredBlock<dev.bwr.mod.panel.DeskPanelBlock> CONTROL_PANEL_DESK_WIDE =
             BLOCKS.register("control_panel_desk_wide",
                     () -> new dev.bwr.mod.panel.DeskPanelBlock(panelBoard()));
-    /** The 45 degree desk corners (four blocks each, DeskCornerBlock): the console wraps around the operator, or away. */
+    /** The 45 degree desk corners, one to four angled units long (four to many blocks each, DeskCornerBlock): the console wraps around the operator, or away. */
     public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_INSIDE =
             BLOCKS.register("control_panel_desk_corner_inside",
-                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true));
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true, 1));
+    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_INSIDE_2 =
+            BLOCKS.register("control_panel_desk_corner_inside_2",
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true, 2));
+    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_INSIDE_3 =
+            BLOCKS.register("control_panel_desk_corner_inside_3",
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true, 3));
+    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_INSIDE_4 =
+            BLOCKS.register("control_panel_desk_corner_inside_4",
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), true, 4));
     public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_OUTSIDE =
             BLOCKS.register("control_panel_desk_corner_outside",
-                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false));
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false, 1));
+    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_OUTSIDE_2 =
+            BLOCKS.register("control_panel_desk_corner_outside_2",
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false, 2));
+    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_OUTSIDE_3 =
+            BLOCKS.register("control_panel_desk_corner_outside_3",
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false, 3));
+    public static final DeferredBlock<dev.bwr.mod.panel.DeskCornerBlock> CONTROL_PANEL_DESK_CORNER_OUTSIDE_4 =
+            BLOCKS.register("control_panel_desk_corner_outside_4",
+                    () -> new dev.bwr.mod.panel.DeskCornerBlock(panelBoard(), false, 4));
     /** The duplex board: one item places a 1 x 2 x 4 column (bench, board, tilted header); see DuplexPanelBlock. */
     public static final DeferredBlock<dev.bwr.mod.panel.DuplexPanelBlock> CONTROL_PANEL_DUPLEX =
             BLOCKS.register("control_panel_duplex",

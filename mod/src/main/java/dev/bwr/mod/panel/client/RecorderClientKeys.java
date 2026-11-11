@@ -38,7 +38,7 @@ public final class RecorderClientKeys {
         PaperlessRecorderData data = (PaperlessRecorderData) component.data();
         RecorderLayout layout = RecorderClientStats.layout(component);
         if (layout == null) {
-            float aspect = (float) PanelGeometry.frame(owner.panelType(), owner.facing()).vLength;
+            float aspect = (float) PanelGeometry.frame(owner).vLength;
             layout = RecorderLayout.of(data.style, PanelModels.get(data.style.id()), component.w(), component.h(), aspect);
         }
         return layout.keyAt(cellX, cellY, data.style.hasCover() && !data.coverOpen);

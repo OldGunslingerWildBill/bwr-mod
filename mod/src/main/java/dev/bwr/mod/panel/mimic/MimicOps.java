@@ -133,7 +133,7 @@ public final class MimicOps {
         }
         MimicDraft next = hasLast ? draft.with(point[0], point[1]) : new MimicDraft(anchor, List.of(point[0], point[1]));
         stack.set(BwrDataComponents.MIMIC_DRAFT.get(), next);
-        double aspect = PanelGeometry.frame(block.panelType(), block.facing()).vLength;
+        double aspect = PanelGeometry.frame(block).vLength;
         say(player, BwrText.tr("message.bwr.mimic_tape.point", "Point %s, %s cells long", next.pointCount(),
                 Math.round(MimicGeometry.length(next.toArray(), aspect))));
         return Result.POINT_ADDED;
@@ -178,7 +178,7 @@ public final class MimicOps {
             say(player, BwrText.tr("message.bwr.mimic_tape.not_loaded", "The board is not loaded; path cancelled"));
             return Result.NOT_LOADED;
         }
-        double aspect = PanelGeometry.frame(anchor.panelType(), anchor.facing()).vLength;
+        double aspect = PanelGeometry.frame(anchor).vLength;
         int cost = MimicGeometry.cost(MimicGeometry.length(points, aspect));
         boolean free = player.getAbilities().instabuild;
         if (!free && stack.getCount() < cost) {
@@ -239,7 +239,7 @@ public final class MimicOps {
                 return new Placed(Result.OFF_BOARD, 0L, 0);
             }
         }
-        double aspect = PanelGeometry.frame(anchorBlock.panelType(), anchorBlock.facing()).vLength;
+        double aspect = PanelGeometry.frame(anchorBlock).vLength;
         List<PanelBlockEntity> touched = touchedBlocks(level, group, anchor, points, style, aspect);
         if (touched.isEmpty()) {
             return new Placed(Result.OFF_BOARD, 0L, 0);
@@ -391,7 +391,7 @@ public final class MimicOps {
      * elsewhere opens the path's style screen.
      */
     private static Result edit(ServerPlayer player, PanelBlockEntity block, double cu, double cv) {
-        double aspect = PanelGeometry.frame(block.panelType(), block.facing()).vLength;
+        double aspect = PanelGeometry.frame(block).vLength;
         Grab grab = GRABS.remove(player.getUUID());
         if (grab != null) {
             return moveWaypoint(player, grab, block, cu, cv);
@@ -564,7 +564,7 @@ public final class MimicOps {
 
     /** The path under a cursor on this block, by the same rule the client uses for its highlight. */
     public static MimicPath pick(PanelBlockEntity block, double cu, double cv) {
-        double aspect = PanelGeometry.frame(block.panelType(), block.facing()).vLength;
+        double aspect = PanelGeometry.frame(block).vLength;
         return MimicGeometry.pick(block.mimicPaths(), cu, cv, aspect);
     }
 
@@ -624,7 +624,7 @@ public final class MimicOps {
         }
         MimicStyle next = path.style().copy();
         next.apply(edit);
-        double aspect = PanelGeometry.frame(block.panelType(), block.facing()).vLength;
+        double aspect = PanelGeometry.frame(block).vLength;
         if (!sameBlocks(level, block, path.points(), path.style(), next, aspect)) {
             // The new shape or arrows reach other blocks: the path is placed again with the new style, keeping its
             // points and binding, so it has a copy exactly where it now draws.

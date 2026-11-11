@@ -63,57 +63,81 @@ END_QUADS = [[(0.0, 0.0), (KNEE_FOOT, 0.0), (KNEE_TOP, UNDER), (FACE_BACK, TOP)]
 MATERIALS = ["face", "paint", "bezel", "back", "kick", "cheek", "hood", "apron", "cabinet", "annunciator",
              "annunciator_lit", "vent"]
 
-# --- the corner plan (DeskCornerGeometry.java) ---
-INSIDE_BEND = 1.5
-OUTSIDE_BEND = 1.5
-INSIDE_BACK = INSIDE_BEND + W - W * SQ2
-OUTSIDE_BACK = OUTSIDE_BEND - W + W * SQ2
+# --- the corner plan (DeskCornerGeometry.java); n is the length: the number of angled units (faces), 1 to 4 ---
 OUTSIDE_B_FRONT = 0.25
 OUTSIDE_B_BACK = 1.0
-CORE = {"inside": "left", "outside": "deep"}
-PARTS = {"origin": (0, 0), "left": (1, 0), "deep": (0, 1), "deep_left": (1, 1)}   # (left, deep)
+LENGTHS = (1, 2, 3, 4)
 
 
-def block_x(part):
-    return 1 - PARTS[part][0]
+def size(n):
+    return n + 1
 
 
-def block_f(kind, part):
-    return PARTS[part][1] if kind == "inside" else -PARTS[part][1]
+def bend(n):
+    return n + W / SQ2
 
 
-def depth(kind, x, f):
+def inside_back(n):
+    return bend(n) + W - W * SQ2
+
+
+def outside_back(n):
+    return bend(n) - W + W * SQ2
+
+
+def block_x(n, left):
+    return size(n) - 1 - left
+
+
+def block_f(kind, deep):
+    return deep if kind == "inside" else -deep
+
+
+def depth(kind, n, x, f):
     if kind == "inside":
-        return min(f, x, (x + f - INSIDE_BACK) / SQ2)
-    return max(f, OUTSIDE_B_BACK - x, (OUTSIDE_BACK - (x - f)) / SQ2)
+        return min(f, x, (x + f - inside_back(n)) / SQ2)
+    return max(f, OUTSIDE_B_BACK - x, (outside_back(n) - (x - f)) / SQ2)
 
 
-def face_frame(kind):
-    """(origin (x, f) in footprint coordinates of cell (0,0), unit column step, unit row step) of the mounting face."""
+def parts(kind, n):
+    """The blocks (left, deep) that hold console, origin first: the same 9 x 9 sampling as DeskCornerGeometry.parts."""
+    out = []
+    for left in range(size(n)):
+        for deep in range(size(n)):
+            bx, bf = block_x(n, left), block_f(kind, deep)
+            if any(-1e-9 <= depth(kind, n, bx + i / 8.0, bf + j / 8.0) <= W + 1e-9 for i in range(9) for j in range(9)):
+                out.append((left, deep))
+    return out
+
+
+def face_frame(kind, n, k):
+    """(origin (x, f) in footprint coordinates of cell (0,0), unit column step, unit row step) of face k."""
     mid = FACE_BACK + (W - FACE_BACK) / 2.0
     r = math.sqrt(0.5)
+    shift = k - (n - 1) / 2.0
     if kind == "inside":
-        xf = (INSIDE_BACK + mid * SQ2) / 2.0
-        centre, u, v = (xf, xf), (r, -r), (r, r)
+        xf = (inside_back(n) + mid * SQ2) / 2.0
+        centre, u, v = (xf + shift, xf - shift), (r, -r), (r, r)
     else:
-        diff = OUTSIDE_BACK - mid * SQ2
-        centre, u, v = ((1.0 + diff) / 2.0, (1.0 - diff) / 2.0), (r, r), (-r, r)
+        diff = outside_back(n) - mid * SQ2
+        centre, u, v = ((1.0 + diff) / 2.0 + shift, (1.0 - diff) / 2.0 + shift), (r, r), (-r, r)
     origin = (centre[0] - u[0] * 0.5 - v[0] * 0.3125, centre[1] - u[1] * 0.5 - v[1] * 0.3125)
     return origin, u, v
 
 
-def check_face(kind):
-    """The 16 x 10 grid of the frame lies on the top of the console (between the foot of the riser and the front edge)."""
-    origin, u, v = face_frame(kind)
+def check_face(kind, n):
+    """Every grid of every face lies on the top of the console (between the foot of the riser and the front edge)."""
     worst = 1e9
-    for i in range(0, 17):
-        for j in range(0, 11):
-            x = origin[0] + (u[0] * i + v[0] * j) / 16.0
-            f = origin[1] + (u[1] * i + v[1] * j) / 16.0
-            t = depth(kind, x, f)
-            worst = min(worst, t - FACE_BACK + 1e-12, W - t + 1e-12)
+    for k in range(n):
+        origin, u, v = face_frame(kind, n, k)
+        for i in range(0, 17):
+            for j in range(0, 11):
+                x = origin[0] + (u[0] * i + v[0] * j) / 16.0
+                f = origin[1] + (u[1] * i + v[1] * j) / 16.0
+                t = depth(kind, n, x, f)
+                worst = min(worst, t - FACE_BACK + 1e-12, W - t + 1e-12)
     if worst < -1e-9:
-        raise AssertionError("%s: the face grid leaves the top of the console by %g" % (kind, -worst))
+        raise AssertionError("%s-%d: a face grid leaves the top of the console by %g" % (kind, n, -worst))
     return worst
 
 
@@ -194,34 +218,37 @@ class Section:
         return [(base[0] + d[0] * lo, base[1] + d[1] * lo), (base[0] + d[0] * hi, base[1] + d[1] * hi)]
 
 
-def sections(kind, runs):
+def sections(kind, n, runs):
     r = 1.0 / SQ2
+    S = size(n)
     out = []
     if kind == "inside":
-        po, pi = (INSIDE_BACK, 0.0), (INSIDE_BEND, W)
-        qo, qi = (0.0, INSIDE_BACK), (W, INSIDE_BEND)
-        centre = (0.9, 0.9)
+        po, pi = (inside_back(n), 0.0), (bend(n), W)
+        qo, qi = (0.0, inside_back(n)), (W, bend(n))
+        centre = (S / 2.0 - 0.1, S / 2.0 - 0.1)
         mit_a = lambda ref: through(po, pi, ref)
         mit_b = lambda ref: through(qo, qi, ref)
-        out.append(Section([(-1, 0, -2.0), mit_a((2.0, 0.3))], (0.0, 1.0, 0.0), end=(lambda t: (2.0, t), (1.0, 0.0))))
-        out.append(Section([mit_a(centre), mit_b(centre)], (r, r, -INSIDE_BACK * r)))
-        out.append(Section([(0, -1, -2.0), mit_b((0.3, 2.0))], (1.0, 0.0, 0.0), end=(lambda t: (t, 2.0), (0.0, 1.0))))
+        out.append(Section([(-1, 0, -float(S)), mit_a((float(S), 0.3))], (0.0, 1.0, 0.0), end=(lambda t: (float(S), t), (1.0, 0.0))))
+        out.append(Section([mit_a(centre), mit_b(centre)], (r, r, -inside_back(n) * r)))
+        out.append(Section([(0, -1, -float(S)), mit_b((0.3, float(S)))], (1.0, 0.0, 0.0), end=(lambda t: (t, float(S)), (0.0, 1.0))))
         if runs:
-            out.append(Section([(1, 0, 2.0), (-1, 0, -4.0)], (0.0, 1.0, 0.0), end=(lambda t: (4.0, t), (1.0, 0.0))))
-            out.append(Section([(0, 1, 2.0), (0, -1, -4.0)], (1.0, 0.0, 0.0), end=(lambda t: (t, 4.0), (0.0, 1.0))))
+            out.append(Section([(1, 0, float(S)), (-1, 0, -float(S + 2))], (0.0, 1.0, 0.0), end=(lambda t: (float(S + 2), t), (1.0, 0.0))))
+            out.append(Section([(0, 1, float(S)), (0, -1, -float(S + 2))], (1.0, 0.0, 0.0), end=(lambda t: (t, float(S + 2)), (0.0, 1.0))))
     else:
-        f_o = W - (OUTSIDE_BEND - OUTSIDE_B_FRONT)
-        po, pi = (OUTSIDE_BACK, 0.0), (OUTSIDE_BEND, W)
-        qo, qi = (OUTSIDE_B_BACK, 1.0 - OUTSIDE_BACK), (OUTSIDE_B_FRONT, f_o)
-        centre = (1.1, -0.1)
+        f_o = W - (bend(n) - OUTSIDE_B_FRONT)
+        po, pi = (outside_back(n), 0.0), (bend(n), W)
+        qo, qi = (OUTSIDE_B_BACK, 1.0 - outside_back(n)), (OUTSIDE_B_FRONT, f_o)
+        centre = (S / 2.0 + 0.1, -(S - 2) / 2.0 - 0.1)
         mit_a = lambda ref: through(po, pi, ref)
         mit_b = lambda ref: through(qo, qi, ref)
-        out.append(Section([(-1, 0, -2.0), mit_a((2.0, 0.3))], (0.0, 1.0, 0.0), end=(lambda t: (2.0, t), (1.0, 0.0))))
-        out.append(Section([mit_a(centre), mit_b(centre)], (-r, r, OUTSIDE_BACK * r)))
-        out.append(Section([(0, 1, -1.0), mit_b((0.6, -2.0))], (-1.0, 0.0, 1.0), end=(lambda t: (1.0 - t, -1.0), (0.0, -1.0))))
+        out.append(Section([(-1, 0, -float(S)), mit_a((float(S), 0.3))], (0.0, 1.0, 0.0), end=(lambda t: (float(S), t), (1.0, 0.0))))
+        out.append(Section([mit_a(centre), mit_b(centre)], (-r, r, outside_back(n) * r)))
+        out.append(Section([(0, 1, float(1 - S)), mit_b((0.6, float(-S)))], (-1.0, 0.0, 1.0),
+                           end=(lambda t: (1.0 - t, float(1 - S)), (0.0, -1.0))))
         if runs:
-            out.append(Section([(1, 0, 2.0), (-1, 0, -4.0)], (0.0, 1.0, 0.0), end=(lambda t: (4.0, t), (1.0, 0.0))))
-            out.append(Section([(0, -1, 1.0), (0, 1, -3.0)], (-1.0, 0.0, 1.0), end=(lambda t: (1.0 - t, -3.0), (0.0, -1.0))))
+            out.append(Section([(1, 0, float(S)), (-1, 0, -float(S + 2))], (0.0, 1.0, 0.0), end=(lambda t: (float(S + 2), t), (1.0, 0.0))))
+            out.append(Section([(0, -1, float(S - 1)), (0, 1, -float(S + 1))], (-1.0, 0.0, 1.0),
+                               end=(lambda t: (1.0 - t, float(-S - 1)), (0.0, -1.0))))
     return out
 
 
@@ -262,13 +289,13 @@ def with_uv(mat, pts):
     return [(a, p[1] / SHELF) for a, p in zip(along, pts)]
 
 
-def solid(kind, runs=False):
+def solid(kind, n, runs=False):
     polys = []
-    n = len(PROFILE)
-    for sec in sections(kind, runs):
+    count = len(PROFILE)
+    for sec in sections(kind, n, runs):
         g = sec.gradient()
-        for i in range(n):
-            a, b = PROFILE[i], PROFILE[(i + 1) % n]
+        for i in range(count):
+            a, b = PROFILE[i], PROFILE[(i + 1) % count]
             dt, dy = b[0] - a[0], b[1] - a[1]
             length = math.hypot(dt, dy)
             n_t, n_y = dy / length, -dt / length          # outward in (t, y)
@@ -515,48 +542,57 @@ def main():
     clear_scene()
     materials = make_materials()
     report = {}
+    plan = {}
     cam = setup_render()
     for kind in ("inside", "outside"):
-        margin = check_face(kind)
-        polys = solid(kind)
-        for part in PARTS:
-            sliced = orient(part_polys(polys, block_x(part), block_f(kind, part)))
-            piece = to_mesh("part", sliced, materials)
-            report["%s_%s" % (kind, part)] = export(piece, "desk_corner_%s_%s" % (kind, part))
-            bpy.data.objects.remove(piece, do_unlink=True)
-        # the item: the whole piece in the frame of the origin block, centred on its cube
-        shift_f = block_f(kind, "origin")
-        whole = orient([(m, [(p[0] - 1.0, p[1], p[2] - shift_f) for p in pts], uv, out) for m, pts, uv, out in polys])
-        xs, ys, zs = [], [], []
-        for _, pts, _ in whole:
-            for p in pts:
-                w = world(p)
-                xs.append(w[0]); ys.append(w[1]); zs.append(w[2])
-        offset = (0.5 - (min(xs) + max(xs)) / 2.0, 0.5 - (min(ys) + max(ys)) / 2.0, 0.5 - (min(zs) + max(zs)) / 2.0)
-        item = to_mesh("item", whole, materials, offset)
-        report["%s_item" % kind] = export(item, "desk_corner_%s_item" % kind)
-        bpy.data.objects.remove(item, do_unlink=True)
-        print("FACE %s: grid margin inside the top %.4f block" % (kind, margin))
+        for n in LENGTHS:
+            margin = check_face(kind, n)
+            polys = solid(kind, n)
+            blocks = parts(kind, n)
+            plan["%s_%d" % (kind, n)] = blocks
+            for left, deep in blocks:
+                sliced = orient(part_polys(polys, block_x(n, left), block_f(kind, deep)))
+                piece = to_mesh("part", sliced, materials)
+                report["%s_%d_%d_%d" % (kind, n, left, deep)] = export(piece, "desk_corner_%s_%d_%d_%d" % (kind, n, left, deep))
+                bpy.data.objects.remove(piece, do_unlink=True)
+            # the item: the whole piece in the frame of the origin block, centred on its cube
+            whole = orient([(m, [(p[0] - float(size(n) - 1), p[1], p[2]) for p in pts], uv, out) for m, pts, uv, out in polys])
+            xs, ys, zs = [], [], []
+            for _, pts, _ in whole:
+                for p in pts:
+                    w = world(p)
+                    xs.append(w[0]); ys.append(w[1]); zs.append(w[2])
+            offset = (0.5 - (min(xs) + max(xs)) / 2.0, 0.5 - (min(ys) + max(ys)) / 2.0, 0.5 - (min(zs) + max(zs)) / 2.0)
+            item = to_mesh("item", whole, materials, offset)
+            report["%s_%d_item" % (kind, n)] = export(item, "desk_corner_%s_%d_item" % (kind, n))
+            bpy.data.objects.remove(item, do_unlink=True)
+            print("FACE %s-%d: %d blocks, grid margin inside the top %.4f block" % (kind, n, len(blocks), margin))
+    import json
+    with open(os.path.join(HERE, "desk_corner_parts.json"), "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(plan, fh, indent=1)
     if "--no-preview" in sys.argv:
         return report
     for kind in ("inside", "outside"):
         # the corner alone, then a run + corner + run (two straight desk blocks each side); in game orientation (facing
-        # north, operator toward +Y of Blender), seen from the operator's side above
-        for label, runs in (("iso", False), ("arrangement", True)):
-            polys = solid(kind, runs)
-            obj = to_mesh("pv", orient(polys and [(m, pts, uv, out) for m, pts, uv, out in polys]), materials)
-            xs, ys, zs = [], [], []
-            for _, pts, _ in orient(polys):
-                for p in pts:
-                    w = world(p)
-                    xs.append(w[0]); ys.append(w[1]); zs.append(-w[2])
-            centre = ((min(xs) + max(xs)) / 2.0, (min(zs) + max(zs)) / 2.0, 0.35)
-            span = max(max(xs) - min(xs), max(zs) - min(zs))
-            sc = span * 1.75 + 0.6
-            frm = (0.9, 1.0, 0.85) if kind == "inside" else (-0.9, 1.0, 0.85)
-            shoot(cam, centre, frm, sc, os.path.join(PREVIEW, "desk-corner-%s-%s.png" % (kind, label)))
-            shoot(cam, centre, (0.0, 0.02, 1.0), sc, os.path.join(PREVIEW, "desk-corner-%s-%s-top.png" % (kind, label)))
-            bpy.data.objects.remove(obj, do_unlink=True)
+        # north, operator toward +Y of Blender), seen from the operator side above; lengths 1 and 3
+        for n in (1, 3):
+            for label, runs in (("iso", False), ("arrangement", True)):
+                polys = solid(kind, n, runs)
+                oriented = orient(polys)
+                obj = to_mesh("pv", oriented, materials)
+                xs, ys, zs = [], [], []
+                for _, pts, _ in oriented:
+                    for p in pts:
+                        w = world(p)
+                        xs.append(w[0]); ys.append(w[1]); zs.append(-w[2])
+                centre = ((min(xs) + max(xs)) / 2.0, (min(zs) + max(zs)) / 2.0, 0.35)
+                span = max(max(xs) - min(xs), max(zs) - min(zs))
+                sc = span * 1.75 + 0.6
+                frm = (0.9, 1.0, 0.85) if kind == "inside" else (-0.9, 1.0, 0.85)
+                name = "desk-corner-%s-%d-%s" % (kind, n, label)
+                shoot(cam, centre, frm, sc, os.path.join(PREVIEW, name + ".png"))
+                shoot(cam, centre, (0.0, 0.02, 1.0), sc, os.path.join(PREVIEW, name + "-top.png"))
+                bpy.data.objects.remove(obj, do_unlink=True)
     return report
 
 

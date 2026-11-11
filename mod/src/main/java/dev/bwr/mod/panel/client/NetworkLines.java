@@ -185,7 +185,7 @@ public final class NetworkLines {
 
     /** The middle of a component's face, lifted off it a little, in world coordinates. */
     public static Vec3 faceCenter(PanelBlockEntity owner, PanelComponent component) {
-        PanelGeometry.Frame frame = PanelGeometry.frame(owner.panelType(), owner.facing());
+        PanelGeometry.Frame frame = PanelGeometry.frame(owner);
         double cu = component.x() + component.w() / 2.0;
         double cv = component.y() + component.h() / 2.0;
         BlockPos pos = owner.getBlockPos();

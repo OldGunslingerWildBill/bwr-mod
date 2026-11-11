@@ -1,6 +1,5 @@
 package dev.bwr.mod.devtest;
 
-import dev.bwr.mod.panel.CornerPart;
 import dev.bwr.mod.panel.DeskCornerBlock;
 import dev.bwr.mod.panel.DeskCornerGeometry;
 import dev.bwr.mod.panel.PanelBlock;
@@ -50,80 +49,99 @@ final class PanelCornerShowcase {
     }
 
     private static final Direction FACING = Direction.NORTH;
-    private static final int X = 6210;
-    private static final int INSIDE_Z = 5600;
-    private static final int OUTSIDE_Z = 5612;
+    /** The corners built: inside or outside, length, origin x and z, whether room walls stand behind it, and whether the picture is the close one. */
+    private record Spec(boolean inside, int length, int x, int z, boolean walls, boolean face) {
+    }
+
+    private static final Spec[] SPECS = {new Spec(true, 1, 6210, 5600, false, false), new Spec(true, 1, 6210, 5600, false, true),
+            new Spec(false, 1, 6210, 5614, false, false), new Spec(false, 1, 6210, 5614, false, true),
+            new Spec(true, 3, 6210, 5632, false, false), new Spec(true, 3, 6210, 5632, false, true),
+            new Spec(false, 3, 6210, 5650, false, false), new Spec(false, 3, 6210, 5650, false, true),
+            new Spec(true, 3, 6240, 5632, true, false)};
     /** The dial of the middle of the face, covering cell (8, 5): what the crosshair of the close stages finds. */
     private static final int AIM_X = 8;
     private static final int AIM_Y = 5;
 
     static final String[] NAMES = {"corner-inside-run-corner-run", "corner-inside-face", "corner-outside-run-corner-run",
-            "corner-outside-face"};
+            "corner-outside-face", "corner-inside-3-run-corner-run", "corner-inside-3-face", "corner-outside-3-run-corner-run",
+            "corner-outside-3-face", "corner-room-inside-3-fills-the-corner"};
 
     static boolean night(int stage) {
         return false;
     }
 
-    private static boolean inside(int stage) {
-        return stage < 2;
+    private static BlockPos origin(Spec spec) {
+        return new BlockPos(spec.x(), 126, spec.z());
     }
 
-    private static boolean close(int stage) {
-        return stage % 2 == 1;
+    /** The face the close stages look at: the middle one. */
+    private static int aimFace(Spec spec) {
+        return (spec.length() - 1) / 2;
     }
 
-    private static BlockPos origin(boolean inside) {
-        return new BlockPos(X, 126, inside ? INSIDE_Z : OUTSIDE_Z);
+    private static BlockPos core(Spec spec, int face) {
+        DeskCornerGeometry.Part part = DeskCornerGeometry.core(spec.inside(), spec.length(), face);
+        return DeskCornerBlock.partPos(origin(spec), FACING, spec.inside(), part.left(), part.deep());
     }
 
-    private static BlockPos core(boolean inside) {
-        return DeskCornerGeometry.core(inside).at(origin(inside), FACING, inside);
+    private static PanelGeometry.Frame frameOf(Spec spec, int face) {
+        return PanelGeometry.cornerFrame(spec.inside(), spec.length(), face, FACING);
     }
 
-    private static Vec3 faceAt(boolean inside, double cu, double cv, double lift) {
-        PanelGeometry.Frame f = PanelGeometry.frame(inside ? PanelType.DESK_CORNER_INSIDE : PanelType.DESK_CORNER_OUTSIDE, FACING);
-        BlockPos core = core(inside);
-        return new Vec3(core.getX() + f.x(cu, cv, lift), core.getY() + f.y(cu, cv, lift), core.getZ() + f.z(cu, cv, lift));
+    private static Vec3 faceAt(Spec spec, int face, double cu, double cv) {
+        PanelGeometry.Frame f = frameOf(spec, face);
+        BlockPos core = core(spec, face);
+        return new Vec3(core.getX() + f.x(cu, cv, 0), core.getY() + f.y(cu, cv, 0), core.getZ() + f.z(cu, cv, 0));
     }
 
     static Vec3 camera(int stage) {
-        boolean inside = inside(stage);
-        PanelGeometry.Frame f = PanelGeometry.frame(inside ? PanelType.DESK_CORNER_INSIDE : PanelType.DESK_CORNER_OUTSIDE, FACING);
+        Spec spec = SPECS[stage];
+        PanelGeometry.Frame f = frameOf(spec, aimFace(spec));
         Vec3 target = target(stage);
-        if (close(stage)) {
-            // a metre and a bit out on the operator's side of the face, looking down at its middle
+        if (spec.face()) {
+            // a metre and a bit out on the operator side of the face, looking down at its middle
             return new Vec3(target.x + f.downX * 1.15, target.y + 0.9 - 1.62, target.z + f.downZ * 1.15);
         }
-        // from the operator's side, above, far enough back to see both runs and the corner
-        return new Vec3(target.x + f.downX * 3.4 - f.rightX * 2.2, target.y + 2.4 - 1.62, target.z + f.downZ * 3.4 - f.rightZ * 2.2);
+        // from the operator side, above, far enough back to see both runs and the corner
+        double back = 3.4 + (spec.length() - 1) * 1.1;
+        double side = spec.walls() ? 0.0 : 2.2;
+        return new Vec3(target.x + f.downX * back - f.rightX * side,
+                target.y + 2.4 + (spec.length() - 1) * 0.5 - 1.62, target.z + f.downZ * back - f.rightZ * side);
     }
 
     static Vec3 target(int stage) {
-        boolean inside = inside(stage);
-        return close(stage) ? faceAt(inside, AIM_X + 0.5, AIM_Y + 0.5, 0) : faceAt(inside, 8, 4, 0).add(0, -0.15, 0);
+        Spec spec = SPECS[stage];
+        int face = aimFace(spec);
+        return spec.face() ? faceAt(spec, face, AIM_X + 0.5, AIM_Y + 0.5) : faceAt(spec, face, 8, 4).add(0, -0.15, 0);
     }
 
     // ---- building (server)
 
     private static final List<BlockPos> PLACED = new ArrayList<>();
     private static final List<BlockPos> CORES = new ArrayList<>();
+    private static final java.util.Map<BlockPos, Integer> AIM_IDS = new java.util.HashMap<>();
     private static int mounted;
-    private static int aimId;
 
     private static void desk(ServerLevel level, BlockPos pos, Direction facing) {
         level.setBlock(pos, BwrBlocks.CONTROL_PANEL_DESK.get().defaultBlockState().setValue(PanelBlock.FACING, facing)
                 .setValue(PanelFinish.FINISH, PanelFinish.SEAFOAM), 3);
     }
 
-    private static void corner(ServerLevel level, boolean inside) {
-        Block block = inside ? BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE.get() : BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE.get();
-        BlockState state = block.defaultBlockState().setValue(PanelBlock.FACING, FACING).setValue(PanelFinish.FINISH, PanelFinish.SEAFOAM);
-        for (CornerPart part : CornerPart.values()) {
-            BlockPos at = part.at(origin(inside), FACING, inside);
-            level.setBlock(at, state.setValue(DeskCornerBlock.PART, part), 3);
+    private static Block cornerBlock(Spec spec) {
+        return BwrBlocks.BLOCKS.getEntries().stream().map(e -> e.get()).filter(b -> b instanceof DeskCornerBlock c
+                && c.inside() == spec.inside() && c.length() == spec.length()).findFirst().orElseThrow();
+    }
+
+    private static void corner(ServerLevel level, Spec spec) {
+        BlockState state = cornerBlock(spec).defaultBlockState().setValue(PanelBlock.FACING, FACING).setValue(PanelFinish.FINISH, PanelFinish.SEAFOAM);
+        for (DeskCornerGeometry.Part part : DeskCornerGeometry.parts(spec.inside(), spec.length())) {
+            BlockPos at = DeskCornerBlock.partPos(origin(spec), FACING, spec.inside(), part.left(), part.deep());
+            level.setBlock(at, state.setValue(DeskCornerBlock.LEFT, part.left()).setValue(DeskCornerBlock.DEEP, part.deep()), 3);
             PLACED.add(at);
         }
-        CORES.add(core(inside));
+        for (int face = 0; face < spec.length(); face++) {
+            CORES.add(core(spec, face));
+        }
     }
 
     private static PanelComponent real(ServerLevel level, BlockPos pos, int cx, int cy, ComponentType type) {
@@ -170,7 +188,7 @@ final class PanelCornerShowcase {
         }
         PanelComponent aimed = real(level, pos, 6, 2, ComponentTypes.DIAL_GAUGE);
         reading(level, pos, aimed, 64);
-        aimId = aimed.id();
+        AIM_IDS.put(pos.immutable(), aimed.id());
         PanelComponent dial = real(level, pos, 2, 2, ComponentTypes.DIAL_GAUGE);
         reading(level, pos, dial, 31);
         PanelComponent third = real(level, pos, 10, 2, ComponentTypes.DIAL_GAUGE);
@@ -201,30 +219,49 @@ final class PanelCornerShowcase {
     static void build(ServerLevel level) {
         PLACED.clear();
         CORES.clear();
+        AIM_IDS.clear();
         mounted = 0;
-        for (int x = 6196; x <= 6222; x++) {
-            for (int z = 5590; z <= 5622; z++) {
+        for (int x = 6190; x <= 6270; x++) {
+            for (int z = 5585; z <= 5675; z++) {
                 level.setBlock(new BlockPos(x, 125, z), Blocks.SMOOTH_STONE.defaultBlockState(), 2);
                 for (int y = 126; y <= 133; y++) {
                     level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 2);
                 }
             }
         }
-        for (boolean inside : new boolean[] {true, false}) {
-            BlockPos origin = origin(inside);
-            corner(level, inside);
-            // the run the corner continues arrives on the operator's right (west) of the origin, in the same row, facing the same way
+        java.util.Set<String> built = new java.util.HashSet<>();
+        for (Spec spec : SPECS) {
+            if (!built.add(spec.inside() + ":" + spec.length() + ":" + spec.x() + ":" + spec.z())) {
+                continue;
+            }
+            BlockPos origin = origin(spec);
+            corner(level, spec);
+            // the run the corner continues arrives on the operator right (west) of the origin, in the same row, facing the same way
             for (int i = 1; i <= 2; i++) {
                 desk(level, origin.relative(FACING.getCounterClockWise(), i), FACING);
             }
-            // the second run leaves at the far side of the footprint, turned: left column, beyond the second block
-            Direction turned = inside ? FACING.getCounterClockWise() : FACING.getClockWise();
-            Direction away = inside ? FACING : FACING.getOpposite();
-            BlockPos second = origin.relative(FACING.getClockWise()).relative(away, 2);
+            // the second run leaves at the far side of the footprint, turned
+            Direction turned = spec.inside() ? FACING.getCounterClockWise() : FACING.getClockWise();
+            Direction away = spec.inside() ? FACING : FACING.getOpposite();
+            BlockPos second = origin.relative(FACING.getClockWise(), spec.length()).relative(away, spec.length() + 1);
             for (int i = 0; i < 2; i++) {
                 desk(level, second.relative(away, i), turned);
             }
-            loadFace(level, core(inside), inside ? 0 : 1);
+            for (int face = 0; face < spec.length(); face++) {
+                loadFace(level, core(spec, face), face + (spec.inside() ? 0 : 1));
+            }
+            if (spec.walls()) {
+                // a room corner behind the runs: the wall behind the first run (south) and the wall at the end of the second (east)
+                BlockState brick = Blocks.STONE_BRICKS.defaultBlockState();
+                for (int y = 126; y <= 131; y++) {
+                    for (int dx = -4; dx <= spec.length() + 1; dx++) {
+                        level.setBlock(new BlockPos(origin.getX() + dx, y, origin.getZ() + 1), brick, 2);
+                    }
+                    for (int dz = -spec.length() - 5; dz <= 1; dz++) {
+                        level.setBlock(new BlockPos(origin.getX() + spec.length() + 1, y, origin.getZ() + dz), brick, 2);
+                    }
+                }
+            }
         }
         for (BlockPos pos : CORES) {
             if (level.getBlockEntity(pos) instanceof PanelBlockEntity be) {
@@ -270,16 +307,17 @@ final class PanelCornerShowcase {
             throw new AssertionError("Corner showcase " + NAMES[stage] + ": " + components + " of " + mounted + " components on the client");
         }
         String aimed = "";
-        if (close(stage)) {
+        if (SPECS[stage].face()) {
             if (!(mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK)) {
                 throw new AssertionError("Corner showcase " + NAMES[stage] + ": the crosshair is on no block");
             }
             var claim = PanelClientInput.hoveredClaim(mc);
-            boolean inside = inside(stage);
-            if (claim == null || !claim.owner().equals(core(inside)) || claim.id() != aimId) {
+            Spec spec = SPECS[stage];
+            BlockPos expected = core(spec, aimFace(spec));
+            if (claim == null || !claim.owner().equals(expected) || claim.id() != AIM_IDS.get(expected)) {
                 throw new AssertionError("Corner showcase " + NAMES[stage] + ": the crosshair on the middle of the face (cell " + AIM_X + "," + AIM_Y
                         + ") found " + claim + " through " + ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos()
-                        + ", expected the dial " + aimId + " of the core at " + core(inside));
+                        + ", expected the dial " + AIM_IDS.get(expected) + " of the core at " + expected);
             }
             aimed = ", the crosshair through " + ((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos() + " finds the dial";
         }

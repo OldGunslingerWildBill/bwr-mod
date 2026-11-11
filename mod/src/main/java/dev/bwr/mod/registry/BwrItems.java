@@ -83,8 +83,20 @@ public final class BwrItems {
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_WIDE);
     public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_CORNER_INSIDE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_CORNER_INSIDE_2 =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE_2);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_CORNER_INSIDE_3 =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE_3);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_CORNER_INSIDE_4 =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_CORNER_INSIDE_4);
     public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_CORNER_OUTSIDE =
             ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_CORNER_OUTSIDE_2 =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE_2);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_CORNER_OUTSIDE_3 =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE_3);
+    public static final DeferredItem<BlockItem> CONTROL_PANEL_DESK_CORNER_OUTSIDE_4 =
+            ITEMS.registerSimpleBlockItem(BwrBlocks.CONTROL_PANEL_DESK_CORNER_OUTSIDE_4);
     public static final DeferredItem<dev.bwr.mod.panel.PanelWrenchItem> PANEL_WRENCH =
             ITEMS.register("panel_wrench", () -> new dev.bwr.mod.panel.PanelWrenchItem(new Item.Properties().stacksTo(1)));
     // One item per component type, registered under the type's own id. Add a line per new type.
@@ -760,7 +772,13 @@ public final class BwrItems {
                         output.accept(CONTROL_PANEL_DESK.get());
                         output.accept(CONTROL_PANEL_DESK_WIDE.get());
                         output.accept(CONTROL_PANEL_DESK_CORNER_INSIDE.get());
+                        output.accept(CONTROL_PANEL_DESK_CORNER_INSIDE_2.get());
+                        output.accept(CONTROL_PANEL_DESK_CORNER_INSIDE_3.get());
+                        output.accept(CONTROL_PANEL_DESK_CORNER_INSIDE_4.get());
                         output.accept(CONTROL_PANEL_DESK_CORNER_OUTSIDE.get());
+                        output.accept(CONTROL_PANEL_DESK_CORNER_OUTSIDE_2.get());
+                        output.accept(CONTROL_PANEL_DESK_CORNER_OUTSIDE_3.get());
+                        output.accept(CONTROL_PANEL_DESK_CORNER_OUTSIDE_4.get());
                         output.accept(PANEL_WRENCH.get());
                         output.accept(PANEL_LINKER.get());
                         output.accept(NETWORKING_WRENCH.get());

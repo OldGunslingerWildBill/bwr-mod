@@ -1,5 +1,5 @@
 {
-  "parent": "bwr:block/control_panel/desk_corner_inside_item",
+  "parent": "bwr:block/control_panel/desk_corner_inside_1_item",
   "display": {
     "gui": {
       "rotation": [
@@ -15,16 +15,16 @@
     },
     "ground": {
       "scale": [
-        0.28,
-        0.28,
-        0.28
+        0.277,
+        0.277,
+        0.277
       ]
     },
     "fixed": {
       "scale": [
-        0.36,
-        0.36,
-        0.36
+        0.361,
+        0.361,
+        0.361
       ]
     },
     "thirdperson_righthand": {
@@ -39,9 +39,9 @@
         0
       ],
       "scale": [
-        0.22,
-        0.22,
-        0.22
+        0.218,
+        0.218,
+        0.218
       ]
     },
     "firstperson_righthand": {
@@ -51,9 +51,9 @@
         0
       ],
       "scale": [
-        0.28,
-        0.28,
-        0.28
+        0.277,
+        0.277,
+        0.277
       ]
     }
   }

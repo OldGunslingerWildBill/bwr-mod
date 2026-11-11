@@ -44,12 +44,8 @@ public final class PanelFinishes {
             for (DeskHalf half : DeskHalf.values()) {
                 cells.add(half.at(origin, facing));
             }
-        } else if (block instanceof DeskCornerBlock corner) {
-            Direction facing = state.getValue(PanelBlock.FACING);
-            BlockPos origin = DeskCornerBlock.origin(pos, state);
-            for (CornerPart part : CornerPart.values()) {
-                cells.add(part.at(origin, facing, corner.inside()));
-            }
+        } else if (block instanceof DeskCornerBlock) {
+            cells.addAll(DeskCornerBlock.piece(pos, state));
         } else if (block instanceof AssemblyBlock assembly && assembly.cellCount() > 1) {
             Direction facing = state.getValue(AssemblyBlock.FACING);
             BlockPos origin = assembly.origin(pos, state);
