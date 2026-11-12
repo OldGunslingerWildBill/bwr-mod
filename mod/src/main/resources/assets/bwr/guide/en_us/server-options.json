@@ -86,6 +86,7 @@
         "maxComponentsPerBlock = 256, maxLabelLength = 16",
         "sampleTicks = 2, linkRange = 64",
         "networkLineShareDistance = 32, feToJoules = 2.5",
+        "customAlarmSounds = true",
         "",
         "bwr-visuals.toml (client only):",
         "visualEffects = \"AUTO\", panelGpuCache = true",

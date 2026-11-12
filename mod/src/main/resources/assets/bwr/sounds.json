@@ -3,6 +3,10 @@
     "subtitle": "subtitle.bwr.annunciator_horn",
     "sounds": [{"name": "bwr:annunciator_horn", "stream": false}]
   },
+  "annunciator_horn_synth": {
+    "subtitle": "subtitle.bwr.annunciator_horn_synth",
+    "sounds": [{"name": "bwr:annunciator_horn_synth", "stream": false}]
+  },
   "alarm_acknowledge": {
     "subtitle": "subtitle.bwr.alarm_acknowledge",
     "sounds": [{"name": "bwr:alarm_acknowledge", "stream": false}]

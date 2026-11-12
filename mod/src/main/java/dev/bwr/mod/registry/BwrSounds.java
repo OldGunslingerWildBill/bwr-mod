@@ -11,6 +11,8 @@ public final class BwrSounds {
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, BwrMod.MOD_ID);
 
     public static final DeferredHolder<SoundEvent, SoundEvent> ANNUNCIATOR_HORN = register("annunciator_horn");
+    /** The synthesised horn an annunciator window can sound instead of the panel alarm (tools-make-annunciator-sounds.py). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> ANNUNCIATOR_HORN_SYNTH = register("annunciator_horn_synth");
     public static final DeferredHolder<SoundEvent, SoundEvent> ALARM_ACKNOWLEDGE = register("alarm_acknowledge");
     public static final DeferredHolder<SoundEvent, SoundEvent> RELAY_CLICK = register("relay_click");
     public static final DeferredHolder<SoundEvent, SoundEvent> CONTACTOR_CLICK = register("contactor_click");

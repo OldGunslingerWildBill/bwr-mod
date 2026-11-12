@@ -157,7 +157,7 @@ public final class RumbleClientCheck {
             REPORT.addProperty(blast + "_high_share_clear_distant_muffled", String.format("%.4f %.4f %.4f", clear, distant, muffled));
             require(clear > distant * 1.3 && distant > muffled * 1.3 && muffled < 0.5 * clear, blast + " variants lose their highs in turn: " + clear + " " + distant + " " + muffled);
         }
-        for (String name : new String[]{"turbine_missile_impact", "turbine_overspeed_whine", "turbine_fire_oil_a", "turbine_fire_oil_b", "turbine_fire_hydrogen_a", "turbine_fire_hydrogen_b"}) {
+        for (String name : new String[]{"annunciator_horn_synth", "turbine_missile_impact", "turbine_overspeed_whine", "turbine_fire_oil_a", "turbine_fire_oil_b", "turbine_fire_hydrogen_a", "turbine_fire_hydrogen_b"}) {
             decode(name, 0.5, 4.0);
         }
         BlastSoundClient.reset();

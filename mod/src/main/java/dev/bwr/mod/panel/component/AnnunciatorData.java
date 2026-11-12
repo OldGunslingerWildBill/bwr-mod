@@ -35,6 +35,9 @@ public final class AnnunciatorData extends ComponentData {
     public static final String KEY_ADDRESS = "Address";
     /** NBT key of the horn bit ({@link AnnunciatorLogic#audible()}), present only while the window is sounding. */
     public static final String KEY_AUDIBLE = "Audible";
+    /** NBT and wrench-screen keys of the alarm sound: the choice (present only when it is not the panel alarm) and the custom id. */
+    public static final String KEY_SOUND = "AlarmSound";
+    public static final String KEY_CUSTOM_SOUND = "CustomSound";
     /** {@link #address} of a window that has none. */
     public static final int NO_ADDRESS = -1;
     public static final int MIN_ADDRESS = 0;
@@ -68,6 +71,13 @@ public final class AnnunciatorData extends ComponentData {
      * windows may share one (they are then driven together). Saved only when set, as five digits.
      */
     public int address = NO_ADDRESS;
+    /**
+     * What the horn is when this window sounds it ({@link AnnunciatorSounds}): the panel alarm, the synthesised horn, or
+     * {@link #customSound}. Saved only when it is not the panel alarm.
+     */
+    public String alarmSound = AnnunciatorSounds.PANEL;
+    /** The sound id of the custom choice, as typed ({@code namespace:path}); kept whatever the choice is, saved only when not empty. */
+    public String customSound = "";
     public String condition = AnnunciatorLogic.ABOVE;
     public double setpoint = 0.5;
     public int group = MIN_GROUP;
@@ -77,6 +87,31 @@ public final class AnnunciatorData extends ComponentData {
     /** Whether this window draws outside its own cells (the plate margin of its box): the Columbia style does. */
     public boolean overhangs() {
         return STYLE_COLUMBIA.equals(style);
+    }
+
+    /**
+     * The id of the sound this window's horn is, by its setting; the panel alarm for anything that cannot be played as
+     * chosen. A client still asks its own sound manager whether it knows a custom sound.
+     */
+    public String soundId(boolean customAllowed) {
+        return AnnunciatorSounds.resolve(alarmSound, customSound, customAllowed);
+    }
+
+    /**
+     * Server, on what is sent to clients while custom alarm sounds are switched off: a window's custom choice is left
+     * out of its entry, so every client takes the window for one that sounds the panel alarm. The save keeps it.
+     *
+     * @param entry a component's network entry, with the window's data under {@code Data}
+     */
+    public static void withoutCustomSound(CompoundTag entry) {
+        if (entry == null || !entry.contains("Data", Tag.TAG_COMPOUND)) {
+            return;
+        }
+        CompoundTag data = entry.getCompound("Data");
+        if (AnnunciatorSounds.CUSTOM.equals(data.getString(KEY_SOUND))) {
+            data.remove(KEY_SOUND);
+            data.remove(KEY_CUSTOM_SOUND);
+        }
     }
 
     /** {@link #address} as the wrench screen and the save hold it: five digits, or empty when there is none. */
@@ -139,6 +174,12 @@ public final class AnnunciatorData extends ComponentData {
         if (address >= MIN_ADDRESS) {
             tag.putString(KEY_ADDRESS, addressText());
         }
+        if (!AnnunciatorSounds.PANEL.equals(alarmSound)) {
+            tag.putString(KEY_SOUND, alarmSound);
+        }
+        if (!customSound.isEmpty()) {
+            tag.putString(KEY_CUSTOM_SOUND, customSound);
+        }
         tag.putString("Condition", condition);
         tag.putDouble("Setpoint", setpoint);
         tag.putInt("AnnGroup", group);
@@ -161,6 +202,9 @@ public final class AnnunciatorData extends ComponentData {
         style = STYLES.contains(savedStyle) ? savedStyle : PanelStyles.CLASSIC;
         boxName = ConfigSchema.cleanText(tag.getString(KEY_BOX_NAME), MAX_TEXT);
         address = parseAddress(tag.getString(KEY_ADDRESS));
+        String savedSound = tag.getString(KEY_SOUND);
+        alarmSound = AnnunciatorSounds.CHOICES.contains(savedSound) ? savedSound : AnnunciatorSounds.PANEL;
+        customSound = AnnunciatorSounds.cleanId(ConfigSchema.cleanText(tag.getString(KEY_CUSTOM_SOUND), AnnunciatorSounds.MAX_ID));
         String savedCondition = tag.getString("Condition");
         condition = CONDITIONS.contains(savedCondition) ? savedCondition : AnnunciatorLogic.ABOVE;
         double savedSetpoint = tag.getDouble("Setpoint");

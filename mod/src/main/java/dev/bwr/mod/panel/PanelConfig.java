@@ -37,11 +37,19 @@ public final class PanelConfig {
     public static final ModConfigSpec.DoubleValue FE_TO_JOULES = BUILDER
             .comment("Joules in one FE, for the gauge power units: 100 FE/t is 100 x 20 x 2.5 = 5000 W = 5 kW at the default. A pack can match another mod's ratio")
             .defineInRange("feToJoules", 2.5, 0.001, 1000.0);
+    public static final ModConfigSpec.BooleanValue CUSTOM_ALARM_SOUNDS = BUILDER
+            .comment("Whether an annunciator window may sound a custom alarm: a sound id typed in its wrench screen, for a sound a resource pack adds. When false, a window's custom choice is not sent to clients and the window sounds the panel alarm")
+            .define("customAlarmSounds", true);
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     /** Defensive reads: a GameTest or a very early caller may run before the file is loaded. */
     public static int maxColumns() {
         return SPEC.isLoaded() ? MAX_GROUP_COLUMNS.get() : 16;
+    }
+
+    /** Whether a custom alarm sound is played as chosen; true before the file is loaded. */
+    public static boolean customAlarmSounds() {
+        return !SPEC.isLoaded() || CUSTOM_ALARM_SOUNDS.get();
     }
 
     public static int maxRows() {

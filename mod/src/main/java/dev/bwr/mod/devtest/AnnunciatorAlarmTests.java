@@ -2,6 +2,7 @@ package dev.bwr.mod.devtest;
 
 import dev.bwr.mod.fuel.BwrDataComponents;
 import dev.bwr.mod.panel.LinkSelection;
+import dev.bwr.mod.panel.PanelConfig;
 import dev.bwr.mod.panel.PanelLinkerItem;
 import dev.bwr.mod.panel.PanelOps;
 import dev.bwr.mod.panel.PanelPlayerCleanup;
@@ -9,6 +10,7 @@ import dev.bwr.mod.panel.component.AnnunciatorControlType;
 import dev.bwr.mod.panel.component.AnnunciatorData;
 import dev.bwr.mod.panel.component.AnnunciatorHorns;
 import dev.bwr.mod.panel.component.AnnunciatorLogic;
+import dev.bwr.mod.panel.component.AnnunciatorSounds;
 import dev.bwr.mod.panel.component.AnnunciatorTrigger;
 import dev.bwr.mod.panel.component.ComponentTypes;
 import dev.bwr.mod.panel.component.ConfigField;
@@ -37,8 +39,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The annunciator's alarm features that work on a server: the lens swatches and the light address of a window (saved
@@ -148,7 +152,7 @@ public final class AnnunciatorAlarmTests {
             s.be().setInput(a, 0, 1.0);
             helper.assertTrue(alarm.state() == AnnunciatorLogic.State.ALARM && alarm.audible()
                     && data(a).toTag().getBoolean(AnnunciatorData.KEY_AUDIBLE), "a new alarm sounds, and that is saved");
-            Map<BlockPos, AnnunciatorHorns.Horn> horns = AnnunciatorHorns.sounding(panels, s.level);
+            Map<String, AnnunciatorHorns.Horn> horns = AnnunciatorHorns.sounding(panels, s.level);
             helper.assertTrue(horns.size() == 1 && Math.abs(horns.values().iterator().next().x() - (s.origin.getX() + 0.5)) < 1e-9,
                     "one horn for the group, at the panel: " + horns);
             AnnunciatorData reloaded = new AnnunciatorData();
@@ -192,6 +196,130 @@ public final class AnnunciatorAlarmTests {
             helper.assertTrue(!logic.audible(), "an acknowledged alarm cannot be restored sounding");
             logic.restore(AnnunciatorLogic.State.ALARM.ordinal(), true, true);
             helper.assertTrue(logic.audible() && logic.silence() && !logic.audible() && !logic.silence(), "silence reports whether it was sounding");
+        });
+    }
+
+    /** The data of component {@code id} in a panel's saved or sent form. */
+    private static CompoundTag entryData(CompoundTag panel, int id) {
+        var components = panel.getList("Components", 10);
+        for (int i = 0; i < components.size(); i++) {
+            if (components.getCompound(i).getInt("Id") == id) {
+                return components.getCompound(i).getCompound("Data");
+            }
+        }
+        throw new AssertionError("component " + id + " is not in the panel's tag");
+    }
+
+    private static Set<String> sounds(Map<String, AnnunciatorHorns.Horn> horns) {
+        Set<String> sounds = new HashSet<>();
+        for (AnnunciatorHorns.Horn horn : horns.values()) {
+            sounds.add(horn.sound());
+        }
+        return sounds;
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void aWindowSoundsThePanelAlarmUnlessSetToAnotherSoundThatCanBePlayed(GameTestHelper helper) {
+        HardwareStage.run(helper, ORIGIN_X + 320, ORIGIN_Z, "aa-sound", s -> {
+            PanelComponent a = window(s, 0, 0, 1);
+            PanelComponent b = window(s, 1, 0, 1);
+            PanelComponent c = window(s, 2, 0, 1);
+            AnnunciatorData data = data(a);
+            CompoundTag fresh = data.toTag();
+            helper.assertTrue(!fresh.contains(AnnunciatorData.KEY_SOUND) && !fresh.contains(AnnunciatorData.KEY_CUSTOM_SOUND)
+                    && AnnunciatorSounds.PANEL.equals(data.alarmSound) && AnnunciatorSounds.PANEL_ID.equals(data.soundId(true)),
+                    "a window nobody set sounds the panel alarm and saves nothing about it: " + fresh);
+
+            helper.assertTrue(dev.bwr.mod.registry.BwrSounds.ANNUNCIATOR_HORN.getId().toString().equals(AnnunciatorSounds.PANEL_ID)
+                    && dev.bwr.mod.registry.BwrSounds.ANNUNCIATOR_HORN_SYNTH.getId().toString().equals(AnnunciatorSounds.SYNTH_ID)
+                    && net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.containsKey(dev.bwr.mod.registry.BwrSounds.ANNUNCIATOR_HORN_SYNTH.getId()),
+                    "the two shipped horns are the registered sounds of those ids");
+
+            // The wrench screen sets it; it is saved only when it is not the panel alarm.
+            s.wrench();
+            helper.assertTrue(PanelOps.configure(s.player, s.origin, a.id(), config(AnnunciatorData.KEY_SOUND, AnnunciatorSounds.SYNTH))
+                    && AnnunciatorSounds.SYNTH.equals(data.alarmSound) && AnnunciatorSounds.SYNTH_ID.equals(data.soundId(true))
+                    && AnnunciatorSounds.SYNTH_ID.equals(data.soundId(false)), "the synthesised horn, whatever the server allows");
+            helper.assertTrue(AnnunciatorSounds.SYNTH.equals(data.toTag().getString(AnnunciatorData.KEY_SOUND))
+                    && !data.toTag().contains(AnnunciatorData.KEY_CUSTOM_SOUND), "saved: " + data.toTag());
+            AnnunciatorData loaded = new AnnunciatorData();
+            loaded.load(data.toTag());
+            helper.assertTrue(AnnunciatorSounds.SYNTH.equals(loaded.alarmSound), "and read back");
+
+            CompoundTag custom = config(AnnunciatorData.KEY_SOUND, AnnunciatorSounds.CUSTOM);
+            custom.getCompound("Config").putString(AnnunciatorData.KEY_CUSTOM_SOUND, " MyPack:Alarm/Horn ");
+            helper.assertTrue(PanelOps.configure(s.player, s.origin, a.id(), custom) && AnnunciatorSounds.CUSTOM.equals(data.alarmSound)
+                    && "mypack:alarm/horn".equals(data.customSound) && "mypack:alarm/horn".equals(data.soundId(true)),
+                    "a custom id is kept tidy and is what sounds: " + data.customSound);
+            helper.assertTrue(AnnunciatorSounds.PANEL_ID.equals(data.soundId(false)), "unless custom sounds are not allowed");
+            loaded.load(data.toTag());
+            helper.assertTrue(AnnunciatorSounds.CUSTOM.equals(loaded.alarmSound) && "mypack:alarm/horn".equals(loaded.customSound)
+                    && "mypack:alarm/horn".equals(data.toTag().getString(AnnunciatorData.KEY_CUSTOM_SOUND)), "both are saved and read back");
+
+            // What is no sound id sounds the panel alarm, never nothing.
+            for (String bad : new String[] {"", "nocolon", "a:b:c", "bad id:x", ":x", "x:", "ns:pa th", "ns:p\u00e4th", "Ns/x:y"}) {
+                PanelOps.configure(s.player, s.origin, a.id(), config(AnnunciatorData.KEY_CUSTOM_SOUND, bad));
+                helper.assertTrue(AnnunciatorSounds.PANEL_ID.equals(data.soundId(true)), "'" + bad + "' is no sound id: " + data.soundId(true));
+            }
+            helper.assertTrue(AnnunciatorSounds.validId("minecraft:block.note_block.bell") && AnnunciatorSounds.validId("my-pack:alarms/horn_1")
+                    && !AnnunciatorSounds.validId("x".repeat(60) + ":toolong") && AnnunciatorSounds.cleanId("  A:B ").equals("a:b"), "ids");
+            String kept = data.alarmSound;
+            PanelOps.configure(s.player, s.origin, a.id(), config(AnnunciatorData.KEY_SOUND, "bogus"));
+            helper.assertTrue(kept.equals(data.alarmSound), "a choice that does not exist changes nothing");
+            PanelOps.configure(s.player, s.origin, a.id(), config(AnnunciatorData.KEY_SOUND, AnnunciatorSounds.PANEL));
+            helper.assertTrue(!data.toTag().contains(AnnunciatorData.KEY_SOUND) && AnnunciatorSounds.PANEL_ID.equals(data.soundId(true)),
+                    "back on the panel alarm the choice is no longer saved");
+
+            // One horn per group and sound: three audible windows with three sounds are three horns.
+            data(a).alarmSound = AnnunciatorSounds.SYNTH;
+            data(c).alarmSound = AnnunciatorSounds.CUSTOM;
+            data(c).customSound = "mypack:alarm";
+            s.be().setInput(a, 0, 1.0);
+            s.be().setInput(b, 0, 1.0);
+            s.be().setInput(c, 0, 1.0);
+            List<dev.bwr.mod.panel.PanelBlockEntity> panels = List.of(s.be());
+            Map<String, AnnunciatorHorns.Horn> horns = AnnunciatorHorns.sounding(panels, s.level);
+            helper.assertTrue(horns.size() == 3 && sounds(horns).equals(Set.of(AnnunciatorSounds.PANEL_ID, AnnunciatorSounds.SYNTH_ID, "mypack:alarm")),
+                    "the panel alarm, the synthesised horn and the custom sound each loop: " + sounds(horns));
+            for (AnnunciatorHorns.Horn horn : horns.values()) {
+                helper.assertTrue(horn.key().equals(horns.entrySet().stream().filter(e -> e.getValue() == horn).findFirst().orElseThrow().getKey())
+                        && Math.abs(horn.x() - (s.origin.getX() + 0.5)) < 1e-9, "each at the panel, under its own key");
+            }
+            // A client that does not have the custom sound hears the panel alarm for it: two loops, never a silent light.
+            Map<String, AnnunciatorHorns.Horn> without = AnnunciatorHorns.sounding(panels, s.level,
+                    window -> "mypack:alarm".equals(window.soundId(true)) ? AnnunciatorSounds.PANEL_ID : window.soundId(true));
+            helper.assertTrue(without.size() == 2 && sounds(without).equals(Set.of(AnnunciatorSounds.PANEL_ID, AnnunciatorSounds.SYNTH_ID)),
+                    "an unknown custom sound joins the panel alarm: " + sounds(without));
+            helper.assertTrue(sounds(AnnunciatorHorns.sounding(panels, s.level, window -> null)).equals(Set.of(AnnunciatorSounds.PANEL_ID))
+                    && sounds(AnnunciatorHorns.sounding(panels, s.level, window -> {
+                        throw new IllegalStateException("no sound");
+                    })).equals(Set.of(AnnunciatorSounds.PANEL_ID)), "no answer, or a failure, is the panel alarm");
+            data(c).alarmSound = AnnunciatorSounds.SYNTH;
+            helper.assertTrue(AnnunciatorHorns.sounding(panels, s.level).size() == 2, "two windows with the same sound are one loop");
+            data(c).alarmSound = AnnunciatorSounds.CUSTOM;
+
+            // The server switch: with custom sounds off the custom choice is not sent to clients, and sounds the panel alarm.
+            boolean before = PanelConfig.CUSTOM_ALARM_SOUNDS.get();
+            try {
+                PanelConfig.CUSTOM_ALARM_SOUNDS.set(true);
+                helper.assertTrue(PanelConfig.customAlarmSounds()
+                        && AnnunciatorSounds.CUSTOM.equals(entryData(s.be().savePanel(true), c.id()).getString(AnnunciatorData.KEY_SOUND)),
+                        "allowed: clients are told the custom choice");
+                PanelConfig.CUSTOM_ALARM_SOUNDS.set(false);
+                helper.assertTrue(!PanelConfig.customAlarmSounds() && sounds(AnnunciatorHorns.sounding(panels, s.level))
+                        .equals(Set.of(AnnunciatorSounds.PANEL_ID, AnnunciatorSounds.SYNTH_ID)), "switched off: the custom window sounds the panel alarm");
+                CompoundTag sent = entryData(s.be().savePanel(true), c.id());
+                CompoundTag saved = entryData(s.be().savePanel(false), c.id());
+                helper.assertTrue(!sent.contains(AnnunciatorData.KEY_SOUND) && !sent.contains(AnnunciatorData.KEY_CUSTOM_SOUND),
+                        "and clients are not told of it: " + sent);
+                helper.assertTrue(AnnunciatorSounds.CUSTOM.equals(saved.getString(AnnunciatorData.KEY_SOUND))
+                        && "mypack:alarm".equals(saved.getString(AnnunciatorData.KEY_CUSTOM_SOUND))
+                        && AnnunciatorSounds.CUSTOM.equals(data(c).alarmSound), "while the save and the window itself keep it");
+                helper.assertTrue(AnnunciatorSounds.SYNTH.equals(entryData(s.be().savePanel(true), a.id()).getString(AnnunciatorData.KEY_SOUND)),
+                        "the synthesised horn is not a custom sound and is still sent");
+            } finally {
+                PanelConfig.CUSTOM_ALARM_SOUNDS.set(before);
+            }
         });
     }
 

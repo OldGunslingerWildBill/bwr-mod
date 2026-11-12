@@ -241,13 +241,32 @@ attenuation (16 blocks), placed among the group's blocks that hold a sounding wi
 window of the group is sounding: acknowledged, silenced, the panel unloaded or broken, or the level left. The sound
 file is the one exception among the placeholder control-room sounds (SOUND-CREDITS.md, *Annunciator horn*).
 
+**Alarm sound.** *Alarm sound* in a window's wrench screen chooses what the horn is when that window sounds it:
+*Panel alarm* (the default, `bwr:annunciator_horn`), *Synthesised horn* (`bwr:annunciator_horn_synth`, a two-tone warble
+shipped with the mod) or *Custom*, the sound whose id is typed in **Custom sound id** below it: `namespace:path`, lower
+case, at most 64 characters, any sound the game knows (`minecraft:block.note_block.bell`) or one a resource pack adds.
+The setting is saved only when it is not the panel alarm. Each client loops one horn per panel group **and sound**, so
+two audible lights with different sounds are both heard, and any number with the same sound are one loop; range,
+category, start and stop are the horn's as described above. A horn is never silent because of its setting: an id that
+is not an id, and a sound the client playing it does not have (no resource pack there defines it), is the panel alarm.
+A server can switch custom sounds off with `customAlarmSounds = false` in `bwr-panels.toml`: it then does not tell
+clients of a window's custom choice, the window shows and sounds as the panel alarm, and saving its wrench screen
+while the switch is off stores what is shown; the synthesised horn is not affected. *A custom sound through a resource
+pack:* put a **mono** Ogg Vorbis file at `assets/mypack/sounds/alarm.ogg` (a stereo file is not placed in the world and
+does not fade with distance), define it in `assets/mypack/sounds.json` as
+`{"alarm": {"sounds": [{"name": "mypack:alarm", "stream": false}]}}`, enable the pack, and type `mypack:alarm` as the
+Custom sound id. The file is looped end to start, so cut it to loop. Everyone within the horn's 16 blocks who has the
+pack hears it, for as long as the alarm is neither acknowledged nor silenced; a player without the pack hears the panel
+alarm.
+
 **Box list.** The wrench screen of an annunciator window has a third button beside Done and Cancel, **Box list**, which
 opens one read-only screen for the whole box the window is in (the windows joined into one box, in any style, classic
 included; a window by itself is a box of one). It leaves the wrench screen as Cancel does. The heading is the box's name
 when a window carries one, with the counts *lights, wired, not wired, in alarm*. Each light takes two lines: its number as
 the box prints it (row-column, `3-2`), a swatch of its lens colour, its legend on one line and what it shows (*off*,
 *ALARM*, *acknowledged*, or *no signal* for a light that is off and has no input value); under them its light address
-or *none*, what its input is wired to, and its trigger (*below -129*). The source reads as in the wrench screen
+or *none*, what its input is wired to (followed by *sound: ...* when the light's alarm sound is not the panel alarm
+and the line has room for it whole), and its trigger (*below -129*). The source reads as in the wrench screen
 (*Plant level @ x, y, z*, *Redstone (back face)*, *Component output LP-1*, a constant), except *Computer* for a CC source,
 *not wired* for none, and a machine by name (*MSIV A - position*) once the server has answered. **Show** filters the list:
 *All*, *Not wired*, *In alarm* (every lit light, flashing or acknowledged, which is also what the count counts) and
@@ -1214,7 +1233,8 @@ same wired network make that port read no signal; the wrench Networking screen s
   its own output, so it cannot latch itself.
 * Mimic paths: at most 64 points per path and 128 paths per panel block (fixed, not configurable); see section 2d.
 * `bwr-panels.toml`: `sampleTicks` (2), `linkRange` (64), `maxGroupColumns` (16), `maxGroupRows` (8),
-  `maxComponentsPerBlock` (256; 64 before real sizes), `maxLabelLength` (16).
+  `maxComponentsPerBlock` (256; 64 before real sizes), `maxLabelLength` (16), `customAlarmSounds` (true; an annunciator
+  window's custom alarm sound, see *Alarm sound*).
 * Network protocol version 22 (22 added the size picker's `panel_set_size`, client to server: the hand, and an index into the held component item's sizes, refused for any other item or index; 21 the Networking Wrench; 20 the mimic tape's `mimic_use`, `mimic_mode`, `mimic_configure` and `mimic_open_config`; 19 added the recorder's free message packet `panel_recorder_message`). Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
   reach, claim permission, the linker's own device, dimension, range, key exists, momentary value within the
   command's range), `panel_linker_screen`
