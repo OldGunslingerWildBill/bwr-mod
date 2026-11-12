@@ -2,6 +2,16 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **Annunciator box list** (CONTROL-PANELS.md; the owner asked for it after a with-and-without comparison). An annunciator window's wrench
+  screen has a **Box list** button beside Done and Cancel. It opens one read-only screen for every light of the box the window is in, two
+  lines a light: its number as the box numbers it (3-2), lens colour, legend and state, then its light address, what it is wired to
+  (machine name and signal, Computer, redstone, a component, a constant, or not wired) and its trigger. The heading has the box name and
+  counts (lights, wired, not wired, in alarm: every lit light, flashing or acknowledged); **Show** filters to All, Not wired, In alarm or
+  Computer-driven. It updates twice a second while open and a click on a light opens that light's wrench screen. Machine names are asked
+  from the server once, when the list opens (two new packets, **network protocol 28**, so client and server must match); the server
+  answers only a player holding the Panel Wrench with the opening window in reach, and only for machines loaded and permitted for them.
+  Opening the list drops unsaved edits on the wrench screen, as Cancel does. Not yet compiled by CI (GitHub Actions is not starting runs
+  on the repository) and not seen in the game.
 - **Annunciator lights: lens swatches, addresses for computers, a horn, and linking in either order** (CONTROL-PANELS.md; the owner asked
   for all four).
   - **Lens colour.** The window's colour field has White, Yellow and Red swatches. Any colour still loads and the default is unchanged.
