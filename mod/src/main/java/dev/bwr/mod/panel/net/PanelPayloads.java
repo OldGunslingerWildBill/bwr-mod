@@ -206,6 +206,75 @@ public final class PanelPayloads {
         }
     }
 
+    /** The most machines one {@link BoxNames} reply names. */
+    public static final int MAX_BOX_DEVICES = 128;
+    /** The longest machine name a {@link BoxNames} reply carries (a machine's own name is shorter). */
+    public static final int MAX_BOX_NAME = 32;
+
+    /**
+     * Client to server: the box list screen was opened for the annunciator box that component {@code id} of the panel
+     * block at {@code pos} is in, and asks what the machines its windows read are called. The client already holds
+     * every window's settings, wiring and state; a machine's own name is the one thing it does not.
+     */
+    public record BoxListOpen(BlockPos pos, int id) implements CustomPacketPayload {
+        public static final Type<BoxListOpen> TYPE = new Type<>(BwrMod.id("panel_box_list_open"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, BoxListOpen> STREAM_CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, BoxListOpen::pos,
+                ByteBufCodecs.VAR_INT, BoxListOpen::id,
+                BoxListOpen::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * One machine a window of the box reads: where it is, its own name ("" when it has none) and its block's
+     * translation key, which the client shows when there is no name.
+     */
+    public record DeviceName(BlockPos device, String name, String blockKey) {
+    }
+
+    /**
+     * Server to client, the answer to {@link BoxListOpen}: the machines the windows of that box read, at most
+     * {@link #MAX_BOX_DEVICES}. A machine that is not loaded, or not the player's to see, is simply not in it.
+     */
+    public record BoxNames(BlockPos pos, int id, List<DeviceName> names) implements CustomPacketPayload {
+        public static final Type<BoxNames> TYPE = new Type<>(BwrMod.id("panel_box_names"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, BoxNames> STREAM_CODEC = StreamCodec.of(
+                (buf, reply) -> {
+                    buf.writeBlockPos(reply.pos);
+                    buf.writeVarInt(reply.id);
+                    int count = Math.min(reply.names.size(), MAX_BOX_DEVICES);
+                    buf.writeVarInt(count);
+                    for (int i = 0; i < count; i++) {
+                        DeviceName entry = reply.names.get(i);
+                        buf.writeBlockPos(entry.device);
+                        buf.writeUtf(entry.name, MAX_BOX_NAME);
+                        buf.writeUtf(entry.blockKey, MAX_LABEL);
+                    }
+                },
+                buf -> {
+                    BlockPos pos = buf.readBlockPos();
+                    int id = buf.readVarInt();
+                    int count = buf.readVarInt();
+                    if (count < 0 || count > MAX_BOX_DEVICES) {
+                        throw new io.netty.handler.codec.DecoderException("panel box name list too large: " + count);
+                    }
+                    List<DeviceName> names = new ArrayList<>(count);
+                    for (int i = 0; i < count; i++) {
+                        names.add(new DeviceName(buf.readBlockPos(), buf.readUtf(MAX_BOX_NAME), buf.readUtf(MAX_LABEL)));
+                    }
+                    return new BoxNames(pos, id, names);
+                });
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     /**
      * Bind or unbind one port of a component. {@code kind} is a {@link dev.bwr.mod.panel.wiring.WiringOps.BindKind}
      * ordinal; the fields a kind does not use are ignored. {@code refOutput} doubles as the sink position for a

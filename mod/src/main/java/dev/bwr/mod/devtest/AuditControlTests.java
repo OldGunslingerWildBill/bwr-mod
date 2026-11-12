@@ -199,6 +199,8 @@ public final class AuditControlTests {
                         PanelPayloads.Operate.class, new PanelPayloads.Operate(nowhere, 0, 0, 0.0, 0), p)),
                 new RateCase("panel_linker_open", PanelRateLimit.Kind.OPEN_SCREEN, 6, p -> invoke(PanelNetwork.class, "handleLinkerOpen",
                         PanelPayloads.LinkerOpen.class, new PanelPayloads.LinkerOpen(nowhere, 0), p)),
+                new RateCase("panel_box_list_open", PanelRateLimit.Kind.OPEN_SCREEN, 6, p -> invoke(PanelNetwork.class, "handleBoxListOpen",
+                        PanelPayloads.BoxListOpen.class, new PanelPayloads.BoxListOpen(nowhere, 0), p)),
                 new RateCase("network_name_linked", PanelRateLimit.Kind.NAME_LINKED, 6,
                         p -> NetworkingNet.handleNameLinked(new NetworkingPayloads.NameLinked(nowhere), context(p))),
                 new RateCase("network_open", PanelRateLimit.Kind.OPEN_SCREEN, 6,
