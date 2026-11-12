@@ -954,6 +954,10 @@ public final class PanelBlockEntity extends BlockEntity {
             CompoundTag entry = network ? component.saveWithValues() : component.save();
             if (network) {
                 dev.bwr.mod.panel.wiring.MeasuresCheck.annotate(level, this, component, entry);
+                if (component.data() instanceof dev.bwr.mod.panel.component.AnnunciatorData && !PanelConfig.customAlarmSounds()) {
+                    // Custom alarm sounds are switched off on this server: clients are not told of a window's custom choice.
+                    dev.bwr.mod.panel.component.AnnunciatorData.withoutCustomSound(entry);
+                }
             }
             components.add(entry);
         }

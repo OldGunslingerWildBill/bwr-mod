@@ -43,7 +43,9 @@ public final class AnnunciatorType extends ComponentType {
             ConfigField.integer("AnnGroup", "component.bwr.field.ann_group", AnnunciatorData.MIN_GROUP, AnnunciatorData.MAX_GROUP),
             ConfigField.choice("Reset", "component.bwr.field.reset_mode", AnnunciatorData.RESET_MODES),
             // Text, not an integer: an integer field reads a missing key as 0, which would give every window address 0.
-            ConfigField.text(AnnunciatorData.KEY_ADDRESS, "component.bwr.field.light_address", 5));
+            ConfigField.text(AnnunciatorData.KEY_ADDRESS, "component.bwr.field.light_address", 5),
+            ConfigField.choice(AnnunciatorData.KEY_SOUND, "component.bwr.field.alarm_sound", AnnunciatorSounds.CHOICES),
+            ConfigField.text(AnnunciatorData.KEY_CUSTOM_SOUND, "component.bwr.field.custom_sound", AnnunciatorSounds.MAX_ID));
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("input"));
 
     AnnunciatorType() {

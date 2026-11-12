@@ -28,7 +28,8 @@ import java.util.Map;
 /**
  * The box list: every light of one annunciator box (windows joined into a box, in any style) on one read-only
  * screen. Per light: its number as the box prints it, its legend, its lens colour, its light address, what its input
- * is wired to, its trigger and what it shows now. A filter narrows the list to the lights that are not wired, lit, or
+ * is wired to (and its alarm sound when that is not the panel alarm and there is room), its trigger and what it shows
+ * now. A filter narrows the list to the lights that are not wired, lit, or
  * driven by a computer; clicking a light opens its wrench screen the way the wrench does.
  *
  * <p>Everything but one thing is read from the panels the client already holds, again every half second, so the
@@ -182,6 +183,19 @@ public final class AnnunciatorBoxListScreen extends Screen {
         }
     }
 
+    /** A light's alarm sound when it is not the default: "sound: Synthesised horn", "sound: mypack:alarm". Empty for the panel alarm. */
+    private static String soundNote(AnnunciatorData data) {
+        if (dev.bwr.mod.panel.component.AnnunciatorSounds.SYNTH.equals(data.alarmSound)) {
+            return Component.translatable("screen.bwr.box_list.sound",
+                    Component.translatable("component.bwr.option.AlarmSound.synth")).getString();
+        }
+        if (dev.bwr.mod.panel.component.AnnunciatorSounds.CUSTOM.equals(data.alarmSound)) {
+            return Component.translatable("screen.bwr.box_list.sound", data.customSound.isEmpty()
+                    ? Component.translatable("component.bwr.option.AlarmSound.custom").getString() : data.customSound).getString();
+        }
+        return "";
+    }
+
     private static Component stateText(AnnunciatorBoxList.Show show) {
         return Component.translatable("screen.bwr.box_list.state." + show.name().toLowerCase(Locale.ROOT));
     }
@@ -293,7 +307,13 @@ public final class AnnunciatorBoxListScreen extends Screen {
                     graphics.drawString(font, addressed ? font.plainSubstrByWidth(data.addressText(), BoxListLayout.NUMBER_WIDTH - 2)
                             : clip(Component.translatable("screen.bwr.box_list.none"), BoxListLayout.NUMBER_WIDTH - 2), left + 2, second,
                             addressed ? 0x9FE0FF : 0x808080);
-                    graphics.drawString(font, clip(sourceText(light), middleWidth), middleX, second, wired ? 0xB0D0B0 : 0x808080);
+                    // the source, and after it the alarm sound when it is not the panel alarm and there is room for it whole
+                    String source = sourceText(light).getString();
+                    String sound = soundNote(data);
+                    if (!sound.isEmpty() && font.width(source + "  " + sound) <= middleWidth) {
+                        source = source + "  " + sound;
+                    }
+                    graphics.drawString(font, font.plainSubstrByWidth(source, middleWidth), middleX, second, wired ? 0xB0D0B0 : 0x808080);
                     graphics.drawString(font, clip(Component.translatable("screen.bwr.box_list.trigger." + data.condition,
                             AnnunciatorTrigger.format(data.setpoint)), BoxListLayout.SIDE_WIDTH), sideX, second, 0xB0B0B0);
                 } catch (RuntimeException failure) {
