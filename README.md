@@ -122,7 +122,7 @@ with or without a shader pack ([notes](docs/shader-packs.md)).
 ### Water and steam
 
 - Electric and turbine-driven pumps with real-looking models: vertical can-type ECCS pumps like
-  Columbia's, the recirc pumps, barrel feed pumps, the feed pump turbines, RCIC and HPCI.
+  Columbia's, the recirc pumps, single-stage feed pumps, the feed pump turbines, RCIC and HPCI.
   [PUMP-MODELS.md](PUMP-MODELS.md), [WATER-PLUMBING.md](WATER-PLUMBING.md)
 - MSIVs, safety relief valves, steam stop and control valves, bypass valves, and motor-operated water
   valves. [MAIN-STEAM-VALVES.md](MAIN-STEAM-VALVES.md), [STEAM-VALVES.md](STEAM-VALVES.md)

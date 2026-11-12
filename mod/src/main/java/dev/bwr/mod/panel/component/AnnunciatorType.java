@@ -21,7 +21,10 @@ public final class AnnunciatorType extends ComponentType {
             // real sizes: one window tile, 2.8125 x 2.625 in, and a double size one (both retired)
             Footprint.of(1, 1), Footprint.of(2, 2),
             // alpha.60 size table: 8x6, where a new item starts, and 8x8
-            Footprint.of(8, 6), Footprint.of(8, 8));
+            Footprint.of(8, 6), Footprint.of(8, 8),
+            // half height windows: one alarm of a split tile (the Columbia style pairs two, one above the other, into a
+            // tile of 8x6, 12x8 or 16x12)
+            Footprint.of(8, 3), Footprint.of(12, 4), Footprint.of(16, 6));
     /** Retired: 1x1 and 2x2. */
     private static final java.util.Set<Integer> RETIRED = java.util.Set.of(2, 3);
     private static final List<ConfigField> SCHEMA = List.of(
@@ -29,11 +32,20 @@ public final class AnnunciatorType extends ComponentType {
             ConfigField.text("Line2", "component.bwr.field.line2", AnnunciatorData.MAX_TEXT),
             ConfigField.text("Line3", "component.bwr.field.line3", AnnunciatorData.MAX_TEXT),
             ConfigField.text("Line4", "component.bwr.field.line4", AnnunciatorData.MAX_TEXT),
-            ConfigField.color("Color", "component.bwr.field.tile_color"),
+            ConfigField.color("Color", "component.bwr.field.tile_color", List.of(
+                    ConfigField.swatch("white", AnnunciatorData.COLOR_WHITE),
+                    ConfigField.swatch("yellow", AnnunciatorData.COLOR_YELLOW),
+                    ConfigField.swatch("red", AnnunciatorData.COLOR_RED))),
+            ConfigField.choice(PanelStyles.KEY_STYLE, "component.bwr.field.style", AnnunciatorData.STYLES),
+            ConfigField.text(AnnunciatorData.KEY_BOX_NAME, "component.bwr.field.box_name", AnnunciatorData.MAX_TEXT),
             ConfigField.choice("Condition", "component.bwr.field.condition", AnnunciatorData.CONDITIONS),
             ConfigField.decimal("Setpoint", "component.bwr.field.setpoint", -AnnunciatorData.LIMIT, AnnunciatorData.LIMIT),
             ConfigField.integer("AnnGroup", "component.bwr.field.ann_group", AnnunciatorData.MIN_GROUP, AnnunciatorData.MAX_GROUP),
-            ConfigField.choice("Reset", "component.bwr.field.reset_mode", AnnunciatorData.RESET_MODES));
+            ConfigField.choice("Reset", "component.bwr.field.reset_mode", AnnunciatorData.RESET_MODES),
+            // Text, not an integer: an integer field reads a missing key as 0, which would give every window address 0.
+            ConfigField.text(AnnunciatorData.KEY_ADDRESS, "component.bwr.field.light_address", 5),
+            ConfigField.choice(AnnunciatorData.KEY_SOUND, "component.bwr.field.alarm_sound", AnnunciatorSounds.CHOICES),
+            ConfigField.text(AnnunciatorData.KEY_CUSTOM_SOUND, "component.bwr.field.custom_sound", AnnunciatorSounds.MAX_ID));
     private static final List<PortSpec> INPUTS = List.of(PortSpec.of("input"));
 
     AnnunciatorType() {
@@ -51,10 +63,13 @@ public final class AnnunciatorType extends ComponentType {
         return Footprint.of(8, 6);
     }
 
-    /** Sizes added after the real sizes (the alpha.60 size table); see {@link ComponentType#appendedSizes()}. */
+    /**
+     * Sizes added after the real sizes (the two of the alpha.60 size table, then the three half height windows); see
+     * {@link ComponentType#appendedSizes()}.
+     */
     @Override
     public int appendedSizes() {
-        return 2;
+        return 5;
     }
 
     /** Retired sizes, by index into {@link #FOOTPRINTS}: still placeable from an old stack or a saved part, no longer offered ({@link Footprints}). */

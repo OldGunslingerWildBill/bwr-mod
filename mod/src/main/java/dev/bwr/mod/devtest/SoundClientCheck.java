@@ -24,7 +24,7 @@ import java.util.HashSet;
 @EventBusSubscriber(modid = BwrMod.MOD_ID, value = Dist.CLIENT)
 public final class SoundClientCheck {
     private static final int SAMPLE_RATE = 48_000;
-    // Calibrated on all 16 files with the pinned Minecraft JOrbis decoder: its 12,000
+    // Calibrated on the silent placeholder files with the pinned Minecraft JOrbis decoder: its 12,000
     // output frames equal each EOS granule. Other decoders may handle priming differently.
     private static final long MIN_FRAMES = 12_000;
     private static final long MAX_FRAMES = 12_000;
@@ -55,6 +55,9 @@ public final class SoundClientCheck {
             var resolvedFiles = new HashSet<>();
             for (String path : PhaseLSoundTests.PATHS) {
                 var id = BwrMod.id(path);
+                // The annunciator horn is the owner's clip, not a placeholder: it must decode, be mono 48 kHz, last
+                // between half a second and two, and not be silent.
+                boolean real = PhaseLSoundTests.OWNER_SUPPLIED.contains(path);
                 require(BuiltInRegistries.SOUND_EVENT.containsKey(id), "unregistered event " + id);
                 var event = mc.getSoundManager().getSoundEvent(id);
                 require(event != null && event.getWeight() == 1, "missing/non-single sound resource event " + id);
@@ -83,18 +86,28 @@ public final class SoundClientCheck {
                     require(format.getChannels() == 1 && format.getSampleRate() == SAMPLE_RATE,
                             "unexpected decoded format " + id + ": " + format);
                     long[] frames = {0};
+                    long[] audible = {0};
                     int chunks = 0;
                     while (decoded.readChunk(sample -> {
                         ++frames[0];
-                        require(Float.isFinite(sample) && sample == 0.0f,
+                        require(Float.isFinite(sample) && (real || sample == 0.0f),
                                 "nonzero/nonfinite PCM in " + id + " at frame " + frames[0] + ": " + sample);
+                        if (sample != 0.0f) ++audible[0];
                         require(frames[0] <= SAMPLE_RATE * 2L, "unexpectedly long placeholder " + id);
                     })) {
                         require(++chunks <= 4096, "unbounded decoder packet stream " + id);
                     }
                     entry.addProperty("decoded_frames", frames[0]);
                     entry.addProperty("decoded_seconds", frames[0] / (double) SAMPLE_RATE);
-                    entry.addProperty("all_samples_exact_zero", true);
+                    entry.addProperty("all_samples_exact_zero", audible[0] == 0);
+                    if (real) {
+                        require(frames[0] >= SAMPLE_RATE / 2 && audible[0] > frames[0] / 2,
+                                "the owner-supplied sound is too short or silent " + id + ": " + frames[0] + " frames, "
+                                        + audible[0] + " not zero");
+                        LogUtils.getLogger().info("SOUND CLIENT PASS {}: {} mono frames at {} Hz; audible (owner-supplied)",
+                                id, frames[0], SAMPLE_RATE);
+                        continue;
+                    }
                     require(frames[0] >= MIN_FRAMES && frames[0] <= MAX_FRAMES,
                             "decoded frame count outside calibrated bounds for " + id + ": " + frames[0]
                                     + " (expected " + MIN_FRAMES + ".." + MAX_FRAMES + ")");

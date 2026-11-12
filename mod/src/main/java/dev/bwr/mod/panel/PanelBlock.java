@@ -159,6 +159,8 @@ public class PanelBlock extends BaseEntityBlock {
             PanelBlockEntity.Claim claim = be.claimAt(cell[0], cell[1]);
             if (claim != null && !sender.isShiftKeyDown()) {
                 dev.bwr.mod.panel.wiring.WiringOps.openScreen(sender, claim.owner(), claim.id());
+            } else if (claim != null && stack.getItem() instanceof PanelLinkerItem) {
+                LinkSelection.select(sender, claim.owner(), claim.id()); // sneaking: component first, the device next
             } else if (claim == null && !sender.isShiftKeyDown()) {
                 var path = mimicUnderCursor(be, sender);
                 if (path != null) {

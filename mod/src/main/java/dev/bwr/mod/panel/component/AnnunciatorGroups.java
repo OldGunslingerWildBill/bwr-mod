@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Group-level ACK and RESET: every annunciator window of one number in the
+ * Group-level ACK, RESET and SILENCE: every annunciator window of one number in the
  * panel group that contains {@code from}. Only loaded blocks are visited (a
  * chunk is never loaded for this), and every block whose windows changed is
  * saved and re-sent to watchers once.
@@ -18,17 +18,38 @@ public final class AnnunciatorGroups {
     private AnnunciatorGroups() {
     }
 
-    /** Acknowledges every alarming window of {@code number}; returns how many changed. */
+    private static final int ACKNOWLEDGE = 0;
+    private static final int RESET = 1;
+    private static final int SILENCE = 2;
+
+    /** Acknowledges every alarming window of {@code number} (which also stops their horn); returns how many changed. */
     public static int acknowledge(ServerLevel level, PanelBlockEntity from, int number) {
-        return apply(level, from, number, true);
+        return apply(level, from, number, ACKNOWLEDGE);
     }
 
     /** Resets every acknowledged, cleared window of {@code number}; returns how many changed. */
     public static int reset(ServerLevel level, PanelBlockEntity from, int number) {
-        return apply(level, from, number, false);
+        return apply(level, from, number, RESET);
     }
 
-    private static int apply(ServerLevel level, PanelBlockEntity from, int number, boolean acknowledge) {
+    /**
+     * Stops the horn of every sounding window of {@code number} and changes nothing else: the windows keep flashing
+     * until they are acknowledged. Returns how many were sounding.
+     */
+    public static int silence(ServerLevel level, PanelBlockEntity from, int number) {
+        return apply(level, from, number, SILENCE);
+    }
+
+    private static boolean act(AnnunciatorLogic logic, int action) {
+        return switch (action) {
+            case ACKNOWLEDGE -> logic.acknowledge();
+            case RESET -> logic.reset();
+            default -> logic.silence();
+        };
+    }
+
+    private static int apply(ServerLevel level, PanelBlockEntity from, int number, int action) {
+        boolean acknowledge = action == ACKNOWLEDGE;
         PanelGroup group = from.group();
         List<BlockPos> members = group == null ? List.of(from.getBlockPos()) : group.members();
         int changed = 0;
@@ -44,7 +65,7 @@ public final class AnnunciatorGroups {
                     changed++; // the recorder's own patch carries the change; no full resend
                 }
                 if (component.type() instanceof AnnunciatorType && component.data() instanceof AnnunciatorData data
-                        && data.group == number && (acknowledge ? data.logic.acknowledge() : data.logic.reset())) {
+                        && data.group == number && act(data.logic, action)) {
                     component.touch();
                     changed++;
                     any = true;

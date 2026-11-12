@@ -35,6 +35,10 @@ public final class PanelNetwork {
         registrar.playToServer(PanelPayloads.LinkerOpen.TYPE, PanelPayloads.LinkerOpen.STREAM_CODEC,
                 PanelNetwork::handleLinkerOpen);
         registrar.playToServer(PanelPayloads.Bind.TYPE, PanelPayloads.Bind.STREAM_CODEC, PanelNetwork::handleBind);
+        registrar.playToServer(PanelPayloads.BoxListOpen.TYPE, PanelPayloads.BoxListOpen.STREAM_CODEC,
+                PanelNetwork::handleBoxListOpen);
+        registrar.playToClient(PanelPayloads.BoxNames.TYPE, PanelPayloads.BoxNames.STREAM_CODEC,
+                PanelNetwork::handleBoxNames);
         registrar.playToClient(PanelPayloads.LinkerScreen.TYPE, PanelPayloads.LinkerScreen.STREAM_CODEC,
                 PanelNetwork::handleLinkerScreen);
         registrar.playToClient(PanelPayloads.State.TYPE, PanelPayloads.State.STREAM_CODEC, PanelNetwork::handleState);
@@ -73,7 +77,10 @@ public final class PanelNetwork {
     private static void handleConfigure(PanelPayloads.Configure payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender
                 && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.CONFIGURE)) {
-            PanelOps.configure(sender, payload.pos(), payload.id(), payload.edit());
+            if (!PanelOps.configure(sender, payload.pos(), payload.id(), payload.edit())) {
+                // Not the wrench's edit: the binding screen sends an annunciator window's trigger with a wiring tool in hand.
+                WiringOps.setTrigger(sender, payload.pos(), payload.id(), payload.edit());
+            }
         }
     }
 
@@ -97,7 +104,24 @@ public final class PanelNetwork {
     private static void handleLinkerOpen(PanelPayloads.LinkerOpen payload, IPayloadContext context) {
         if (context.player() instanceof ServerPlayer sender
                 && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPEN_SCREEN)) {
-            WiringOps.openScreen(sender, payload.pos(), payload.id());
+            if (sender.isShiftKeyDown() && payload.id() >= 0 && !dev.bwr.mod.panel.PanelLinkerItem.held(sender).isEmpty()) {
+                // Sneaking with the Panel Linker: the component is selected, to be wired at a plant device.
+                dev.bwr.mod.panel.LinkSelection.select(sender, payload.pos(), payload.id());
+            } else {
+                WiringOps.openScreen(sender, payload.pos(), payload.id());
+            }
+        }
+    }
+
+    /** The box list screen asks for the names of the machines its box reads; a refusal is simply no answer. */
+    private static void handleBoxListOpen(PanelPayloads.BoxListOpen payload, IPayloadContext context) {
+        if (context.player() instanceof ServerPlayer sender
+                && dev.bwr.mod.panel.PanelRateLimit.tryAcquire(sender, dev.bwr.mod.panel.PanelRateLimit.Kind.OPEN_SCREEN)) {
+            PanelPayloads.BoxNames reply = dev.bwr.mod.panel.wiring.AnnunciatorBoxRows.names(sender, payload.pos(), payload.id(),
+                    PanelPayloads.MAX_BOX_DEVICES);
+            if (reply != null) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sender, reply);
+            }
         }
     }
 
@@ -116,6 +140,10 @@ public final class PanelNetwork {
 
     private static void handleLinkerScreen(PanelPayloads.LinkerScreen payload, IPayloadContext context) {
         dev.bwr.mod.panel.client.PanelClientHooks.openBind(payload);
+    }
+
+    private static void handleBoxNames(PanelPayloads.BoxNames payload, IPayloadContext context) {
+        dev.bwr.mod.panel.client.PanelClientHooks.boxNames(payload);
     }
 
     private static PanelBlockEntity panelAt(IPayloadContext context, BlockPos pos) {

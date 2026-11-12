@@ -954,6 +954,10 @@ public final class PanelBlockEntity extends BlockEntity {
             CompoundTag entry = network ? component.saveWithValues() : component.save();
             if (network) {
                 dev.bwr.mod.panel.wiring.MeasuresCheck.annotate(level, this, component, entry);
+                if (component.data() instanceof dev.bwr.mod.panel.component.AnnunciatorData && !PanelConfig.customAlarmSounds()) {
+                    // Custom alarm sounds are switched off on this server: clients are not told of a window's custom choice.
+                    dev.bwr.mod.panel.component.AnnunciatorData.withoutCustomSound(entry);
+                }
             }
             components.add(entry);
         }
@@ -1213,9 +1217,13 @@ public final class PanelBlockEntity extends BlockEntity {
             AABB bounds = new AABB(worldPosition);
             PanelGeometry.Frame frame = PanelGeometry.frame(this);
             for (PanelComponent component : owned) {
+                // An annunciator window of the Columbia style draws the plate margin of its box outside its own cells
+                // (numerals, nameplate, latch): room for that, so the margin is not culled while its window is off screen.
+                double over = component.data() instanceof dev.bwr.mod.panel.component.AnnunciatorData window && window.overhangs()
+                        ? dev.bwr.mod.panel.model.AnnunciatorBox.MAX_OVERHANG : 0.0;
                 for (int corner = 0; corner < 8; corner++) {
-                    double cu = component.x() + ((corner & 1) == 0 ? 0 : component.w());
-                    double cv = component.y() + ((corner & 2) == 0 ? 0 : component.h());
+                    double cu = component.x() + ((corner & 1) == 0 ? -over : component.w() + over);
+                    double cv = component.y() + ((corner & 2) == 0 ? -over : component.h() + over);
                     double cz = (corner & 4) == 0 ? 0 : 16;
                     bounds = bounds.minmax(new AABB(worldPosition.getX() + frame.x(cu, cv, cz),
                             worldPosition.getY() + frame.y(cu, cv, cz),

@@ -1,6 +1,8 @@
 """Motor-driven pump remodel: LPCS, RHR/LPCI, HPCS, motor feedwater and SLC (pump and boron tank).
 
 Headless: blender.exe --background --factory-startup --python art/models/modern/build_motor_pumps.py [-- --preview DIR]
+or, with the bpy module from PyPI and no Blender binary: python3 art/models/modern/build_motor_pumps.py -- [--preview DIR]
+(previews then render with Cycles on the CPU; --cycles forces that under Blender too).
 Writes the source meshes art/models/modern/<id>.json (alpha/ for SLC) read by tools-export-modern.py /
 tools-export-alpha.py, and saves the editable scenes to art/models/modern/motor_pumps.blend. It never opens or edits
 modern_pumps_and_pipes.blend (the turbine feed pump and the round pipe fittings stay there).
@@ -11,9 +13,11 @@ pipes meet them where they did. The compact single-block models that old saves u
 that model's original materials first (legacy_compact_materials.json), so materials.mtl keeps mat_0.. as compact.obj
 expects, and 'frozen_compact' tells the exporters not to regenerate compact.*.
 
-Reference forms (see MOTOR-PUMP-REMODEL.md): BWR/5 RHR, LPCS and HPCS pumps are vertical multistage can pumps with a
-tall vertical induction motor on a discharge head; the can hangs below the floor. Motor feedwater: horizontal barrel
-pump, fluid coupling, horizontal motor. SLC: horizontal triplex plunger pump, gear reducer and motor beside the tank.
+Reference forms (see MOTOR-PUMP-REMODEL.md, REFERENCES): BWR/5 RHR, LPCS and HPCS pumps are vertical can-type pumps
+with a mechanical seal and cyclone separator and an open 4160 V vertical motor on the discharge head (HPCS 3000 hp, LPCS
+about 1500 hp, RHR about 800 hp); the can hangs below the floor. Each has a minimum-flow line; HPCS and LPCS have a
+water-leg pump. Motor feedwater: single-stage double-suction reactor feed pump, speed-increasing gear, large horizontal
+motor. SLC: horizontal triplex plunger pump driven through a triple-reduction gear reducer, heat-traced suction.
 """
 import ast
 import bpy
@@ -34,6 +38,7 @@ _tex_src = (MODERN / 'make_motor_pump_texture.py').read_text(encoding='utf-8')
 REGIONS = ast.literal_eval(_tex_src.split('REGIONS = ', 1)[1].split('\n}\n', 1)[0] + '\n}')
 LEGACY = json.loads((MODERN / 'legacy_compact_materials.json').read_text(encoding='utf-8'))
 TAU = math.tau
+CYCLES_PREVIEW = '--cycles' in sys.argv or bool(getattr(bpy.app, 'module', False)) or not bpy.app.binary_path
 
 
 def new_scene(name):
@@ -285,8 +290,8 @@ def gauge(s, name, p, stem_dir, face_dir, length=.22):
     obox(s, name + ' root valve', vb, d * .035, basis(d)[1] * .03, basis(d)[2] * .03, BRASS)
     torus(s, name + ' handwheel', vb + basis(d)[1] * .06, basis(d)[1], .035, .007, WHEEL, 10, 4)
     g = p + d * (length + .07)
-    cyl(s, name + ' case', g - f * .035, g + f * .02, .075, BLACK, 20)
-    tube(s, name + ' bezel', g + f * .02, g + f * .03, .076, .066, SS, 20)
+    cyl(s, name + ' case', g - f * .035, g + f * .02, .075, BLACK, 12)
+    tube(s, name + ' bezel', g + f * .02, g + f * .03, .076, .066, SS, 12)
     up = d if abs(d.dot(f)) < .5 else basis(f)[1]
     decal(s, name + ' dial', g + f * .022, f, up, .118, .118, 'gauge')
 
@@ -296,8 +301,10 @@ def conduit(s, name, points, bend=.12):
 
 
 # ---------------------------------------------------------------- assemblies
-def vertical_motor(s, X, Z, y0, h, r, mat, jbox_angle, plate_angle, lug_count=3):
-    """Weather-protected vertical induction motor: base flange, finned frame, louvred top hat, cap and lifting eyes."""
+def vertical_motor(s, X, Z, y0, h, r, mat, jbox_angle, plate_angle, lug_count=3, cool_angle=-math.pi / 2 - .35, cool_floor=.03):
+    """Open (weather-protected) vertical induction motor, as on the ECCS pumps: screened air intakes in the lower
+    bracket, a smooth stator frame, a louvred air-discharge housing, the upper thrust-bearing oil reservoir with its
+    sight glass and cooling-water tubes, lifting eyes and the 4160 V terminal box."""
     def at(a, rr, y):
         return V(X + rr * math.cos(a), y, Z + rr * math.sin(a))
 
@@ -307,76 +314,105 @@ def vertical_motor(s, X, Z, y0, h, r, mat, jbox_angle, plate_angle, lug_count=3)
     def tangent(a):
         return V(-math.sin(a), 0, math.cos(a))
 
+    def near(a, *others):
+        return min(abs((a - k + math.pi) % TAU - math.pi) for k in others)
+
+    def panel(name, a0, a1, rr, ylo, yhi, key, k=4):
+        # A textured panel wrapped round the frame in k flat strips, so it stays proud of the faceted cylinder.
+        # Seen from outside, "right" is toward decreasing angle, so a1 is the left edge.
+        (u0, vb), (u1, _), (_, vt), _ = region_uv(key)
+        for i in range(k):
+            al, ar = a1 - (a1 - a0) * i / k, a1 - (a1 - a0) * (i + 1) / k
+            ul, ur = u0 + (u1 - u0) * i / k, u0 + (u1 - u0) * (i + 1) / k
+            quad(s, name, [at(al, rr, ylo), at(ar, rr, ylo), at(ar, rr, yhi), at(al, rr, yhi)], [(ul, vb), (ur, vb), (ur, vt), (ul, vt)], DETAIL)
+
     up = V(0, 1, 0)
     c = lambda y: (X, y, Z)
-    lathe(s, 'motor base flange', c(y0), up, [(0, r * 1.04), (.07, r * 1.04), (.07, r * .9)], mat, 40)
+    lathe(s, 'motor base flange', c(y0), up, [(0, r * 1.04), (.07, r * 1.04), (.07, r * .9)], mat, 28)
     bolt_ring(s, 'motor hold-down nut', c(y0 + .07), up, r * .98, 8, .03, .045)
-    yb, yt = y0 + .07 + h * .05, y0 + h * .62
-    lathe(s, 'motor lower end bracket', c(y0 + .07), up, [(0, r * .86), (yb - y0 - .07, r * .93)], mat, 40, cap=False)
-    cyl(s, 'motor frame', c(yb), c(yt), r * .93, mat, 40)
-    band(s, 'motor frame lower band', c(yb), c(yb + .05), r * 1.0, r * .9, mat, 40)
-    band(s, 'motor frame upper band', c(yt - .05), c(yt), r * 1.0, r * .9, mat, 40)
-    fins = 36
-    for i in range(fins):
-        a = i * TAU / fins
-        if min(abs((a - k + math.pi) % TAU - math.pi) for k in (jbox_angle, plate_angle)) < .28:
+    y1 = y0 + .07
+    ya, yt = y1 + h * .16, y0 + h * .64
+    # Lower end bracket: cooling air enters through screens all round.
+    cyl(s, 'motor lower bracket', c(y1), c(ya), r * .86, mat, 28)
+    panels = 8
+    for i in range(panels):
+        a0, a1 = (i + .1) * TAU / panels, (i + .9) * TAU / panels
+        rr = r * .872
+        panel('motor air intake screen', a0, a1, rr, y1 + .03, ya - .03, 'screen')
+    cyl(s, 'motor stator frame', c(ya), c(yt), r * .93, mat, 32)
+    band(s, 'motor frame lower ring', c(ya), c(ya + .06), r * 1.0, r * .84, mat, 28)
+    ribs = 8
+    for i in range(ribs):
+        a = (i + .5) * TAU / ribs
+        if near(a, jbox_angle, plate_angle, jbox_angle + .55) < .3:
             continue
-        mid = at(a, r * .965, (yb + yt) / 2)
-        obox(s, 'motor cooling fin', mid, radial(a) * r * .045, tangent(a) * .011, up * ((yt - yb) / 2 - .05), mat)
-    # Air outlet top hat with louvred openings all round.
-    yh = yt + h * .13
-    cyl(s, 'motor top hat', c(yt), c(yh), r * 1.0, mat, 40)
+        obox(s, 'motor frame rib', at(a, r * .955, (ya + yt) / 2), radial(a) * r * .035, tangent(a) * .022, up * ((yt - ya) / 2 - .06), mat)
+    # Upper air housing: warm air leaves through louvres under the top cover.
+    yh = yt + h * .14
+    cyl(s, 'motor air housing', c(yt), c(yh), r * 1.0, mat, 32)
     panels = 12
     for i in range(panels):
         a0, a1 = (i + .12) * TAU / panels, (i + .88) * TAU / panels
-        rr = r * 1.004
-        y0p, y1p = yt + .05, yh - .05
-        # Seen from outside, "right" is toward decreasing angle, so a1 is the left edge.
-        quad(s, 'motor air opening', [at(a1, rr, y0p), at(a0, rr, y0p), at(a0, rr, y1p), at(a1, rr, y1p)], region_uv('louvre'), DETAIL)
-    band(s, 'motor hat rim', c(yh - .02), c(yh + .02), r * 1.03, r * .9, mat, 40)
-    lathe(s, 'motor top cover', c(yh), up, [(0, r * .99), (h * .04, r * .93), (h * .09, r * .56)], mat, 40, cap=False)
-    yc = yh + h * .09
-    cyl(s, 'motor drip cap', c(yc - .01), c(yc + h * .07), r * .58, mat, 32)
-    band(s, 'motor drip cap rim', c(yc + h * .055), c(yc + h * .07), r * .61, r * .55, mat, 32)
-    cyl(s, 'motor thrust bearing vent', c(yc + h * .07), c(yc + h * .085), r * .12, BLACK, 16)
+        rr = r * 1.008
+        panel('motor air opening', a0, a1, rr, yt + .05, yh - .05, 'louvre')
+    band(s, 'motor hat rim', c(yh - .02), c(yh + .02), r * 1.03, r * .9, mat, 28)
+    lathe(s, 'motor top cover', c(yh), up, [(0, r * .99), (h * .03, r * .9), (h * .06, r * .52)], mat, 28, cap=False)
+    yc = yh + h * .06
+    # Upper (thrust) bearing oil reservoir.
+    cyl(s, 'upper bearing oil reservoir', c(yc - .01), c(yc + h * .1), r * .5, mat, 24)
+    band(s, 'oil reservoir cover rim', c(yc + h * .085), c(yc + h * .1), r * .54, r * .46, mat, 24)
+    cyl(s, 'motor thrust bearing vent', c(yc + h * .1), c(yc + h * .1 + .04), r * .1, BLACK, 12)
+    sg = plate_angle + .9
+    decal(s, 'bearing oil sight glass', at(sg, r * .5 + .012, yc + h * .045), radial(sg), up, .05, .1, 'sight_glass', back=SS)
+    fill = at(sg + .7, r * .36, yc + h * .1)
+    cyl(s, 'bearing oil fill cap', fill, fill + up * .045, .035, WHEEL, 10)
+    # Bearing oil cooler: cooling-water supply and return down the frame to the floor.
+    for da in (-.09, .09):
+        a = cool_angle + da
+        top = at(a, r * .5, yc + h * .03)
+        run = [top, at(a, r * 1.09, yc + h * .03), at(a, r * 1.09, yt - .2), at(a, r * 1.09, cool_floor)]
+        sweep(s, 'bearing cooling water tube', fillet(run, .06, 4), .017, SS, 6)
+        cyl(s, 'cooling water union', at(a, r * 1.09, yt - .1), at(a, r * 1.09, yt - .04), .028, BRASS, 8)
     for i in range(lug_count):
         a = (i + .25) * TAU / lug_count
-        base = at(a, r * .62, yh + h * .07)
+        base = at(a, r * .74, yh + h * .042)
         obox(s, 'motor lifting lug base', base, radial(a) * .06, tangent(a) * .02, up * .03, mat)
         torus(s, 'motor lifting eye', base + up * .075, tangent(a), .05, .016, mat, 10, 5)
-    # Main terminal box with conduit to the floor.
-    jb = at(jbox_angle, r * .93 + .13, yb + h * .2)
-    obox(s, 'motor terminal box', jb, radial(jbox_angle) * .13, tangent(jbox_angle) * .17, up * .2, JBOX)
-    obox(s, 'motor terminal box lid', jb + radial(jbox_angle) * .135, radial(jbox_angle) * .01, tangent(jbox_angle) * .15, up * .18, JBOX)
+    # Main (4160 V) terminal box with conduit to the floor.
+    ym = (ya + yt) / 2
+    jb = at(jbox_angle, r * .93 + .15, ym)
+    hb = min(.26, (yt - ya) / 2 - .08)
+    obox(s, 'motor terminal box', jb, radial(jbox_angle) * .15, tangent(jbox_angle) * .2, up * hb, JBOX)
+    obox(s, 'motor terminal box lid', jb + radial(jbox_angle) * .155, radial(jbox_angle) * .01, tangent(jbox_angle) * .18, up * (hb - .02), JBOX)
     for sx in (-1, 1):
         for sy in (-1, 1):
-            nut(s, 'terminal box screw', jb + radial(jbox_angle) * .145 + tangent(jbox_angle) * .13 * sx + up * .16 * sy, radial(jbox_angle), .012, .012)
-    bottom = jb - up * .2
+            nut(s, 'terminal box screw', jb + radial(jbox_angle) * .165 + tangent(jbox_angle) * .16 * sx + up * (hb - .04) * sy, radial(jbox_angle), .012, .012)
+    bottom = jb - up * hb
     cyl(s, 'terminal box hub', bottom, bottom - up * .05, .05, GALV, 10)
-    flr = at(jbox_angle, r * .93 + .27, .0)
+    flr = at(jbox_angle, r * .93 + .29, .0)
     conduit(s, 'motor power conduit', [bottom - up * .05, bottom - up * .25, (flr.x, bottom.y - .45, flr.z), (flr.x, .02, flr.z)])
     cyl(s, 'conduit floor seal', (flr.x, 0, flr.z), (flr.x, .05, flr.z), .06, GALV, 10)
     decal(s, 'conduit voltage tag', (bottom - up * .32 + radial(jbox_angle) * .035), radial(jbox_angle), up, .1, .02, 'conduit_tag')
     # Space heater / RTD box with flexible conduit.
-    sb = at(jbox_angle + .55, r * .93 + .07, yb + h * .1)
+    sb = at(jbox_angle + .55, r * .93 + .07, ya + .2)
     obox(s, 'motor auxiliary box', sb, radial(jbox_angle + .55) * .07, tangent(jbox_angle + .55) * .08, up * .08, JBOX)
-    sweep(s, 'auxiliary flex conduit', fillet([sb - up * .08, sb - up * .2, jb + tangent(jbox_angle) * .17 - up * .12], .06, 4), .02, FLEX, 6, True)
-    # Nameplate between fins.
-    pn = at(plate_angle, r * .93 + .004, (yb + yt) / 2 + h * .06)
+    sweep(s, 'auxiliary flex conduit', fillet([sb - up * .08, sb - up * .17, jb + tangent(jbox_angle) * .2 - up * (hb - .06)], .05, 4), .02, FLEX, 6, True)
+    pn = at(plate_angle, r * .93 + .004, ym + h * .05)
     decal(s, 'motor nameplate', pn, radial(plate_angle), up, .3, .15, 'motor_plate', back=SS)
-    return yc + h * .085
+    return yc + h * .1 + .04
 
 
 def motor_stand(s, X, Z, y0, y1, r, mat, coupling=True):
-    """Discharge-head motor stand: four posts, top ring, shaft, spacer coupling, seal housing and bar guards."""
+    """Discharge-head motor stand: four posts, top ring, shaft, spacer coupling, mechanical seal with its cyclone
+    separator, and bar guards."""
     up = V(0, 1, 0)
     c = lambda y: (X, y, Z)
     for i in range(4):
         a = (i + .5) * TAU / 4
         rad, tan = V(math.cos(a), 0, math.sin(a)), V(-math.sin(a), 0, math.cos(a))
         obox(s, 'motor stand post', V(X, (y0 + y1) / 2, Z) + rad * r * .88, rad * .06, tan * .085, up * (y1 - y0) / 2, mat)
-    band(s, 'motor stand top ring', c(y1 - .07), c(y1), r * 1.0, r * .55, mat, 40)
-    band(s, 'motor stand base ring', c(y0), c(y0 + .05), r * .98, r * .5, mat, 40)
+    band(s, 'motor stand top ring', c(y1 - .07), c(y1), r * 1.0, r * .55, mat, 28)
+    band(s, 'motor stand base ring', c(y0), c(y0 + .05), r * .98, r * .5, mat, 28)
     cyl(s, 'pump shaft', c(y0 - .05), c(y1), .05, STEEL, 12)
     hs = y0 + .05
     cyl(s, 'mechanical seal housing', c(hs), c(hs + .12), .17, CAST, 20)
@@ -401,8 +437,15 @@ def motor_stand(s, X, Z, y0, y1, r, mat, coupling=True):
             obox(s, 'guard bar', cc + tan * k * half_w / 2.6, rad * .006, tan * .006, up * half_h, GUARD)
         for k in (-1, 0, 1):
             obox(s, 'guard bar', cc + up * k * half_h / 2, rad * .006, tan * half_w, up * .006, GUARD)
-    # Seal flush tubing out through a window.
-    sweep(s, 'seal flush tube', fillet([(X + .17, hs + .06, Z), (X + r * .95, hs + .06, Z), (X + r * .95, y0 - .15, Z)], .06, 4), .014, SS, 6)
+    # Seal flush: pump discharge water is cleaned in a cyclone separator on the stand; clean water goes to the
+    # seal gland, the dirty underflow returns to the suction side.
+    cx, cz = X + r * .98, Z - .2
+    cy = hs + .2
+    lathe(s, 'cyclone separator', (cx, cy - .2, cz), up, [(0, .016), (.12, .05), (.2, .05), (.215, .022)], SS, 10)
+    obox(s, 'separator bracket', (cx - .04, cy - .03, cz + .06), (.045, 0, 0), (0, .012, 0), (0, 0, .03), mat)
+    sweep(s, 'seal flush tube', fillet([(cx, cy + .015, cz), (cx, cy + .09, cz), (X + .1, cy + .09, Z - .1), (X + .1, hs + .08, Z - .1)], .04, 3), .012, SS, 6)
+    sweep(s, 'separator inlet tube', fillet([(cx + .05, cy - .03, cz), (cx + .11, cy - .03, cz), (cx + .11, y0 - .16, cz), (cx - .1, y0 - .16, cz)], .04, 3), .012, SS, 6)
+    sweep(s, 'separator underflow tube', fillet([(cx, cy - .2, cz), (cx, y0 - .3, cz), (cx - .16, y0 - .3, cz)], .04, 3), .012, SS, 6)
 
 
 def sole_plate(s, X, Z, half, y=.07):
@@ -494,6 +537,58 @@ def instrument_rack(s, x0, x1, z0, z1, top=1.6):
     decal(s, 'station label', cs + V(0, -.09, .071), (0, 0, 1), (0, 1, 0), .18, .03, 'conduit_tag')
 
 
+def min_flow_line(s, bx, y, Z=1.5, zv=.45):
+    """Minimum-flow bypass off the pump discharge: tee, restricting orifice, motor-operated valve, then down through
+    the floor toward the suppression pool."""
+    cyl(s, 'minimum flow tee', (bx, y, Z), (bx, y, Z - .32), .11, BODY, 16)
+    zo = Z - .55
+    for k in (-1, 1):
+        cyl(s, 'restricting orifice flange', (bx, y, zo + k * .008), (bx, y, zo + k * .05), .16, STEEL, 12)
+    cyl(s, 'restricting orifice plate', (bx, y, zo - .008), (bx, y, zo + .008), .15, SS, 12)
+    obox(s, 'orifice plate tab', (bx, y + .2, zo), (.03, 0, 0), (0, .05, 0), (0, 0, .006), SS)
+    if y >= .9:
+        pipe(s, 'minimum flow line', [(bx, y, Z - .3), (bx, y, zv), (bx, .0, zv)], .085, BODY, .2, 12)
+        cyl(s, 'min flow valve body', (bx, .62, zv), (bx, .38, zv), .13, CAST, 16)
+        cyl(s, 'min flow valve bonnet', (bx, .5, zv), (bx, .5, zv - .16), .08, CAST, 12)
+        for k in (-1, 1):
+            box(s, 'min flow yoke arm', (bx + k * .07 - .015, .44, zv - .28), (bx + k * .07 + .015, .56, zv - .14), CAST)
+        box(s, 'min flow valve actuator', (bx - .14, .34, zv - .5), (bx + .14, .66, zv - .28), JBOX)
+        cyl(s, 'actuator motor', (bx, .66, zv - .39), (bx, .86, zv - .39), .075, JBOX, 12)
+        torus(s, 'actuator handwheel', (bx + .17, .5, zv - .39), (1, 0, 0), .1, .012, WHEEL, 14, 4)
+    else:
+        # Low discharge line: valve in the horizontal leg with the actuator above it.
+        zb = zv + .1
+        pipe(s, 'minimum flow line', [(bx, y, Z - .3), (bx, y, zb - .28), (bx, .0, zb - .28)], .085, BODY, .16, 12)
+        cyl(s, 'min flow valve body', (bx, y, zb + .13), (bx, y, zb - .11), .13, CAST, 16)
+        cyl(s, 'min flow valve bonnet', (bx, y, zb), (bx, y + .2, zb), .08, CAST, 12)
+        for k in (-1, 1):
+            box(s, 'min flow yoke arm', (bx + k * .07 - .015, y + .2, zb - .03), (bx + k * .07 + .015, y + .36, zb + .03), CAST)
+        box(s, 'min flow valve actuator', (bx - .14, y + .36, zb - .12), (bx + .14, y + .62, zb + .12), JBOX)
+        cyl(s, 'actuator motor', (bx - .14, y + .5, zb), (bx - .34, y + .5, zb), .075, JBOX, 12)
+        torus(s, 'actuator handwheel', (bx, y + .5, zb + .15), (0, 0, 1), .1, .012, WHEEL, 14, 4)
+
+
+def water_leg_pump(s, x, z, suction_from, discharge_to, mat):
+    """Water-leg (jockey) pump: a small horizontal single-stage centrifugal pump that keeps the discharge line full.
+    Suction from the main pump suction line, discharge through a check valve into the discharge line."""
+    y = .22
+    box(s, 'water leg pump base', (x - .36, 0, z - .13), (x + .3, .05, z + .13), BASE)
+    cyl(s, 'water leg pump motor', (x - .33, y, z), (x - .05, y, z), .095, mat, 14)
+    cyl(s, 'water leg motor fan cover', (x - .36, y, z), (x - .33, y, z), .085, BLACK, 14)
+    box(s, 'water leg motor foot', (x - .28, .05, z - .08), (x - .1, y - .07, z + .08), mat)
+    box(s, 'water leg motor box', (x - .25, y + .08, z - .05), (x - .13, y + .15, z + .05), JBOX)
+    cyl(s, 'water leg pump frame', (x - .05, y, z), (x + .08, y, z), .05, CAST, 10)
+    cyl(s, 'water leg pump casing', (x + .08, y, z), (x + .17, y, z), .12, CAST, 16)
+    box(s, 'water leg casing foot', (x + .09, .05, z - .06), (x + .16, y - .09, z + .06), CAST)
+    cyl(s, 'water leg suction nozzle', (x + .17, y, z), (x + .27, y, z), .05, CAST, 10)
+    cyl(s, 'water leg discharge nozzle', (x + .125, y + .08, z), (x + .125, y + .2, z), .042, CAST, 10)
+    sweep(s, 'water leg suction line', fillet([V(p) for p in suction_from] + [V(x + .27, y, z)], .06, 3), .034, BODY, 6)
+    pts = [V(x + .125, y + .2, z)] + [V(p) for p in discharge_to]
+    sweep(s, 'water leg discharge line', fillet(pts, .06, 3), .03, BODY, 6)
+    cyl(s, 'water leg check valve', (x + .125, y + .3, z), (x + .125, y + .42, z), .055, BRASS, 10)
+    decal(s, 'water leg tag', (x - .03, .025, z + .131), (0, 0, 1), (0, 1, 0), .16, .04, 'tag_wlp')
+
+
 GREEN_LAMP = paint('green pushbutton', '#2e8b3d', .0, .4)
 RED_LAMP = paint('red pushbutton', '#b3261e', .0, .4)
 
@@ -534,6 +629,8 @@ def eccs_vertical(s, kind, X, can, head, stand_top, motor_r, suction_lane, disch
     pipe(s, 'discharge riser', [(cvx - .33, discharge_y, Z), (riser_x + .5, discharge_y, Z), (riser_x + .5, top_y - .5, Z)], .25, BODY, .5)
     gauge(s, 'discharge pressure gauge', (riser_x + .5, top_y - 1.0, Z + .25), (0, 0, 1), (0, 0, 1), .14)
     gauge(s, 'suction pressure gauge', (.72, 1.12, Z + .25), (0, 0, 1), (0, 0, 1), .12)
+    # Minimum-flow bypass between the pump and the check valve.
+    min_flow_line(s, (cvx + .33 + dn.x) / 2 + .02, discharge_y, Z, .6)
     # Vent on the head, equipment tag and caution label.
     cyl(s, 'head vent', (X + rh * .5, yh, Z - rh * .3), (X + rh * .5, yh + .12, Z - rh * .3), .022, SS, 8)
     tag = {'rhr': 'tag_rhr', 'hpcs': 'tag_hpcs'}[kind]
@@ -544,35 +641,29 @@ def eccs_vertical(s, kind, X, can, head, stand_top, motor_r, suction_lane, disch
 
 
 def build_rhr():
+    """RHR / LPCI: the smallest of the three motors (about 800 hp)."""
     s = new_scene('BWR | motor pump rhr_pump')
     X = 4.3
-    eccs_vertical(s, 'rhr', X, (.46, .62), (.55, 1.34), 1.76, .7, .42, 1.04, 1, 3)
+    eccs_vertical(s, 'rhr', X, (.46, .62), (.55, 1.34), 1.76, .62, .42, 1.04, 1, 3)
     seal_cooler(s, 5.55, 6.55, .5, .55, [(5.2, .5, .55), (5.2, 1.0, .55), (X + .2, 1.0, .9), (X + .2, 1.45, 1.1)])
     instrument_rack(s, 5.95, 6.95, 2.25, 2.7, 1.62)
     return s
 
 
 def build_hpcs():
+    """HPCS: the largest motor (3000 hp), with its water-leg (jockey) pump."""
     s = new_scene('BWR | motor pump hpcs_pump')
     X = 5.75
-    eccs_vertical(s, 'hpcs', X, (.52, .64), (.62, 1.5), 2.06, .86, .42, 1.1, 2, 4)
-    # Minimum flow line with a motor-operated globe valve, dropping to the floor penetration.
-    bx = 4.55
-    cyl(s, 'minimum flow tee', (bx, 1.1, 1.5), (bx, 1.1, 1.18), .11, BODY, 16)
-    pipe(s, 'minimum flow line', [(bx, 1.1, 1.2), (bx, 1.1, .45), (bx, .0, .45)], .085, BODY, .2, 12)
-    cyl(s, 'min flow valve body', (bx, .62, .45), (bx, .38, .45), .13, CAST, 16)
-    cyl(s, 'min flow valve yoke', (bx, .62, .45), (bx, .66, .45), .1, CAST, 16)
-    for k in (-1, 1):
-        box(s, 'min flow yoke arm', (bx + k * .07 - .015, .58, .3), (bx + k * .07 + .015, .9, .32), CAST)
-    box(s, 'min flow valve actuator', (bx - .14, .3, .05), (bx + .14, .6, .3), JBOX)
-    pipe(s, 'actuator yoke link', [(bx, .66, .45), (bx, .9, .45), (bx, .9, .31)], .03, STEEL, .05, 8)
-    torus(s, 'actuator handwheel', (bx + .17, .45, .18), (1, 0, 0), .1, .012, WHEEL, 14, 4)
+    eccs_vertical(s, 'hpcs', X, (.52, .64), (.62, 1.5), 2.06, .9, .42, 1.1, 2, 4)
+    water_leg_pump(s, 3.3, 2.45, [(3.95, .42, 1.72), (3.95, .42, 2.45), (3.95, .22, 2.45)],
+                   [(3.425, 1.75, 2.45), (2.5, 1.75, 2.45), (2.5, 1.75, 1.74)], MOTOR['hpcs'])
     seal_cooler(s, 7.0, 8.0, .5, .55, [(6.75, .5, .55), (6.75, 1.1, .55), (X + .2, 1.1, .82), (X + .2, 1.6, 1.0)])
     instrument_rack(s, 7.65, 8.9, 2.25, 2.72, 1.9)
     return s
 
 
 def build_lpcs():
+    """LPCS: in-line nozzles on the discharge head, a mid-sized motor (about 1500 hp) and a water-leg pump."""
     s = new_scene('BWR | motor pump lpcs_pump')
     X, Z = 2.5, 1.5
     up = V(0, 1, 0)
@@ -588,8 +679,8 @@ def build_lpcs():
         obox(s, 'head stiffening rib', V(X, .52, Z) + rad * rh * .93, rad * .05, V(-math.sin(a), 0, math.cos(a)) * .018, up * .36, CAST)
     sn = nozzle(s, 'suction nozzle', (X, .5, Z), (-1, 0, 0), rh + .18, .3, .42, CAST, 10)
     dn = nozzle(s, 'discharge nozzle', (X, .5, Z), (1, 0, 0), rh + .18, .29, .42, CAST, 10)
-    motor_stand(s, X, Z, 1.04, 1.95, .76, CAST)
-    vertical_motor(s, X, Z, 1.95, 2.98, .86, MOTOR['lpcs'], math.pi / 2, -math.pi / 2 + .5, 4)
+    motor_stand(s, X, Z, 1.04, 1.9, .68, CAST)
+    vertical_motor(s, X, Z, 1.9, 2.45, .7, MOTOR['lpcs'], math.pi / 2, -math.pi / 2 + .5, 4, cool_floor=.16)
     port(s, 'water_suction', (0, 0, 1), 'west', .3)
     port(s, 'water_discharge', (4, 0, 1), 'east', 4.7)
     pipe(s, 'suction spool', [(.29, .5, Z), (sn.x - .07, .5, Z)], .25, BODY)
@@ -598,20 +689,25 @@ def build_lpcs():
     cone(s, 'discharge reducer', (dn.x + .07, .5, Z), (dn.x + .3, .5, Z), .29, .25, BODY, 24)
     gauge(s, 'discharge pressure gauge', (4.2, .75, Z), (0, 1, 0), (0, 0, 1), .25)
     gauge(s, 'suction pressure gauge', (.85, .75, Z), (0, 1, 0), (0, 0, 1), .25)
-    cyl(s, 'discharge drain', (4.0, .25, Z), (4.0, .1, Z), .03, SS, 8)
+    cyl(s, 'discharge drain', (4.45, .25, Z), (4.45, .1, Z), .03, SS, 8)
     cyl(s, 'head vent', (X + .3, 1.04, Z - .3), (X + .3, 1.16, Z - .3), .022, SS, 8)
+    min_flow_line(s, 3.9, .5, Z, .6)
+    water_leg_pump(s, .62, 2.5, [(1.1, .5, 1.72), (1.1, .5, 2.5), (1.1, .22, 2.5)],
+                   [(.745, .8, 2.5), (.745, .8, 2.8), (.745, .1, 2.8), (4.3, .1, 2.8), (4.3, .1, 2.0), (4.3, .5, 2.0), (4.3, .5, 1.74)], MOTOR['lpcs'])
     decal(s, 'equipment tag', (X, .32, Z + rh * .99 + .01), (0, 0, 1), up, .5, .062, 'tag_lpcs', back=SS)
     decal(s, 'pump nameplate', (X - rh * .68, .6, Z - rh * .68), (-.7071, 0, -.7071), up, .26, .13, 'pump_plate', back=SS)
-    decal(s, 'caution label', (X - .2, 1.5, Z + .76 * .76 + .02), (0, 0, 1), up, .14, .07, 'caution')
+    decal(s, 'caution label', (X - .2, 1.47, Z + .68 * .76 + .02), (0, 0, 1), up, .14, .07, 'caution')
     return s
 
 
 def build_mfp():
-    """Horizontal barrel feed pump, spacer coupling, variable-speed fluid coupling and a horizontal TEFC motor."""
+    """Motor-driven reactor feed pump: single-stage double-suction pump (bottom suction, top discharge), speed-increasing
+    gear and a large horizontal weather-protected motor, with a lube oil console and a minimum-flow line."""
     s = new_scene('BWR | motor pump motor_feed_pump')
-    Z, A = 1.5, 1.02
+    Z, A = 1.5, 1.45
     ax = V(1, 0, 0)
     up = V(0, 1, 0)
+    mm = MOTOR['rfw']
     # Fabricated baseplate on a grout pad, with a drip rim and anchor bolts.
     box(s, 'grout pad', (.06, 0, .3), (6.94, .03, 2.7), GROUT)
     box(s, 'baseplate deck', (.12, .03, .38), (6.88, .17, 2.62), BASE)
@@ -622,91 +718,130 @@ def build_mfp():
     for x in (.4, 1.6, 2.8, 4.0, 5.2, 6.5):
         for z in (.5, 2.5):
             nut(s, 'baseplate anchor nut', (x, .17, z), (0, 1, 0), .035, .04)
-    # Barrel casing with discharge cover (non-drive end) and drive-end head.
-    x0, x1, rb = .78, 3.86, .52
-    cyl(s, 'barrel casing', (x0, A, Z), (x1, A, Z), rb, CAST, 40)
-    for x in (x0 + .5, x1 - .5):
-        tube(s, 'barrel girth ring', (x - .03, A, Z), (x + .03, A, Z), rb + .03, rb - .02, CAST, 40)
-    cyl(s, 'discharge cover flange', (x0 - .14, A, Z), (x0 + .02, A, Z), rb + .14, CAST, 40)
-    bolt_ring(s, 'cover stud nut', (x0 - .14, A, Z), -ax, rb + .07, 16, .035, .06)
-    lathe(s, 'discharge cover', (x0 - .14, A, Z), -ax, [(0, rb + .02), (.12, rb - .05), (.22, .26)], CAST, 32)
-    cyl(s, 'non-drive bearing housing', (x0 - .36, A, Z), (x0 - .58, A, Z), .2, CAST, 24)
-    cyl(s, 'thrust bearing cap', (x0 - .58, A, Z), (x0 - .64, A, Z), .14, CAST, 24)
-    cyl(s, 'drive head flange', (x1 - .02, A, Z), (x1 + .1, A, Z), rb + .1, CAST, 40)
-    bolt_ring(s, 'drive head nut', (x1 + .1, A, Z), ax, rb + .04, 16, .03, .05)
-    cyl(s, 'drive-end seal housing', (x1 + .1, A, Z), (x1 + .26, A, Z), .24, CAST, 24)
-    cyl(s, 'drive-end bearing housing', (x1 + .26, A, Z), (x1 + .48, A, Z), .21, CAST, 24)
-    for x in (x0 - .47, x1 + .37):
-        box(s, 'bearing pedestal', (x - .09, .17, Z - .17), (x + .09, A - .15, Z + .17), CAST)
-        pipe(s, 'bearing oil supply', [(x, A + .2, Z - .1), (x, A + .32, Z - .1), (x, A + .32, Z - .55), (x, .21, Z - .55)], .016, OIL, .06, 8, 4)
-    # Centreline support feet.
-    for x in (x0 + .25, x1 - .25):
+    # Pump: short forged casing between two bolted end covers, seal and bearing housings on each side.
+    P, rb = 3.5, .56
+    cyl(s, 'pump casing', (P - .34, A, Z), (P + .34, A, Z), rb, CAST, 40)
+    for sg in (-1, 1):
+        d = ax * sg
+        e = V(P, A, Z) + d * .34
+        cyl(s, 'casing end cover', e, e + d * .12, rb - .07, CAST, 40)
+        bolt_ring(s, 'cover stud nut', e + d * .12, d, rb - .15, 10, .034, .06)
+        cyl(s, 'seal housing', e + d * .12, e + d * .3, .2, CAST, 24)
+        cyl(s, 'bearing housing', e + d * .3, e + d * .58, .19, CAST, 24)
+        xb = (e + d * .44).x
+        box(s, 'bearing bracket saddle', (xb - .1, A - .24, Z - .37), (xb + .1, A - .12, Z + .37), CAST)
         for sz in (-1, 1):
-            za, zb = sorted((Z + sz * (rb - .05), Z + sz * (rb + .2)))
-            box(s, 'centreline support foot', (x - .14, A - .08, za), (x + .14, A + .02, zb), CAST)
-            zc = Z + sz * (rb + .1)
-            box(s, 'support pedestal', (x - .12, .17, zc - .1), (x + .12, A - .08, zc + .1), BASE)
-            nut(s, 'foot hold-down nut', (x, A + .02, zc + sz * .02), (0, 1, 0), .03, .04)
-    # Nozzles up to bolted spools, then the round port flanges at the block tops.
-    for role, x, cell in (('water_suction', 1.5, (1, 2, 1)), ('water_discharge', 3.5, (3, 2, 1))):
-        cyl(s, role + ' casing nozzle', (x, A + rb - .1, Z), (x, 1.78, Z), .29, CAST, 24)
-        joint(s, role + ' nozzle joint', (x, 1.84, Z), (0, 1, 0), .27, .42, 12)
-        port(s, role, cell, 'up', 1.88)
-        gauge(s, role + ' gauge', (x, 2.25, Z + .25), (0, 0, 1), (0, 0, 1), .12)
-    pipe(s, 'balance leak-off line', [(x0 - .2, A + .32, Z + .3), (x0 - .2, A + .5, Z + .3), (1.25, A + .5, Z + .3), (1.25, 1.95, Z + .25)], .035, SS, .08, 8, 4)
-    cyl(s, 'casing drain', (2.3, A - rb + .02, Z), (2.3, .25, Z), .03, SS, 8)
-    cyl(s, 'drain valve', (2.3, .4, Z), (2.3, .3, Z), .05, BRASS, 8)
-    # Shaft, coupling guard, fluid coupling and second guard.
-    cyl(s, 'pump shaft end', (x1 + .48, A, Z), (4.55, A, Z), .065, STEEL, 12)
-    lathe(s, 'coupling guard', (4.32, A, Z), ax, [(0, .0), (0, .27), (.33, .27), (.33, .0)], GUARD, 20)
-    decal(s, 'caution label', (4.485, A + .02, Z + .275), (0, 0, 1), up, .13, .065, 'caution')
-    fx0, fx1 = 4.65, 5.33
-    box(s, 'fluid coupling oil sump', (fx0, .17, Z - .48), (fx1, A - .05, Z + .48), CAST)
-    lathe(s, 'fluid coupling housing', (fx0, A, Z), ax, [(0, .0), (0, .44), (fx1 - fx0, .44), (fx1 - fx0, .0)], CAST, 32)
-    tube(s, 'fluid coupling split flange', (fx0 + .32, A, Z), (fx0 + .36, A, Z), .47, .4, CAST, 32)
-    box(s, 'scoop tube actuator', (fx0 + .15, A + .38, Z - .12), (fx0 + .45, A + .58, Z + .12), JBOX)
-    cyl(s, 'actuator lever shaft', (fx0 + .3, A + .48, Z + .12), (fx0 + .3, A + .48, Z + .22), .025, STEEL, 8)
-    obox(s, 'actuator lever', (fx0 + .3, A + .4, Z + .23), (.02, 0, 0), (0, .1, 0), (0, 0, .012), STEEL)
-    cyl(s, 'oil cooler', (fx0 - .05, .42, Z + .78), (fx1 + .1, .42, Z + .78), .14, CAST, 20)
-    for x in (fx0 + .05, fx1):
-        box(s, 'oil cooler saddle', (x - .04, .17, Z + .66), (x + .04, .32, Z + .9), BASE)
-        pipe(s, 'oil cooler line', [(x, .56, Z + .78), (x, .7, Z + .78), (x, .7, Z + .48)], .025, OIL, .06, 8, 4)
-    decal(s, 'sump sight glass', (fx1 - .12, .55, Z + .481), (0, 0, 1), up, .06, .12, 'sight_glass')
-    cyl(s, 'motor shaft end', (fx1, A, Z), (5.62, A, Z), .07, STEEL, 12)
-    lathe(s, 'motor coupling guard', (5.33, A, Z), ax, [(0, .0), (0, .23), (.24, .23), (.24, .0)], GUARD, 20)
-    # Horizontal TEFC motor: ribbed frame, feet, fan cowl, terminal box, eyes and nameplate.
-    mx0, mx1, mr = 5.57, 6.62, .68
-    mm = MOTOR['rfw']
-    cyl(s, 'motor drive end shield', (mx0, A, Z), (mx0 + .09, A, Z), mr * .9, mm, 32)
-    cyl(s, 'motor frame', (mx0 + .09, A, Z), (mx1, A, Z), mr * .92, mm, 32)
-    for i in range(28):
-        a = i * TAU / 28
-        if abs(math.sin(a) - 1) < .06 or math.sin(a) < -.75:
-            continue
-        rad = V(0, math.sin(a), math.cos(a))
-        obox(s, 'motor frame rib', V((mx0 + .12 + mx1) / 2, A, Z) + rad * mr * .95, ax * ((mx1 - mx0 - .14) / 2), rad * mr * .05, rad.cross(ax) * .011, mm)
-    lathe(s, 'motor fan cowl', (mx1, A, Z), ax, [(0, mr * .9), (.04, mr), (.27, mr), (.3, mr * .85), (.3, 0)], mm, 32)
-    decal(s, 'fan cowl grille', (mx1 + .3, A, Z), (1, 0, 0), up, mr * 1.15, mr * 1.15, 'fan_grille')
+            box(s, 'bearing bracket leg', (xb - .07, .17, Z + sz * .31 - .05), (xb + .07, A - .24, Z + sz * .31 + .05), CAST)
+        pipe(s, 'bearing oil supply', [(xb, A + .18, Z - .08), (xb, A + .3, Z - .08), (xb, A + .3, Z - .9), (xb, .21, Z - .9)], .016, OIL, .06, 6, 3)
+        xi = (e + d * .21).x
+        sweep(s, 'seal injection tube', fillet([(xi, A + .19, Z + .05), (xi, A + .34, Z + .05), (xi, A + .34, Z + .45)], .05, 3), .013, SS, 6)
+    cyl(s, 'thrust bearing cap', (P - .92, A, Z), (P - .98, A, Z), .14, CAST, 20)
+    # Centreline feet on pedestals.
     for sz in (-1, 1):
-        box(s, 'motor foot', (mx0 + .12, .17, Z + sz * mr * .78 - .1), (mx1 - .05, A - mr * .62, Z + sz * mr * .78 + .1), mm)
-        for x in (mx0 + .22, mx1 - .15):
-            nut(s, 'motor foot bolt', (x, A - mr * .62, Z + sz * mr * .78), (0, 1, 0), .03, .04)
-        box(s, 'motor shim pack', (mx0 + .1, .17, Z + sz * mr * .78 - .12), (mx1 - .03, .2, Z + sz * mr * .78 + .12), STEEL)
-    tb = V((mx0 + mx1) / 2 + .05, A + mr * .95 + .14, Z)
-    box(s, 'motor terminal box', tb - V(.17, .14, .2), tb + V(.17, .14, .2), JBOX)
-    box(s, 'terminal box lid', tb + V(-.15, .14, -.18), tb + V(.15, .16, .18), JBOX)
-    conduit(s, 'motor power conduit', [tb + V(0, 0, .2), tb + V(0, 0, .34), (tb.x, .6, Z + .84), (tb.x, .2, Z + .84)], .14)
-    for x in (mx0 + .2, mx1 - .15):
-        obox(s, 'motor lifting lug base', (x, A + mr * .92 + .02, Z - .3), (.05, 0, 0), (0, .03, 0), (0, 0, .02), mm)
-        torus(s, 'motor lifting eye', (x, A + mr * .92 + .09, Z - .3), (0, 0, 1), .05, .016, mm, 10, 5)
-    decal(s, 'motor nameplate', ((mx0 + mx1) / 2, A + .05, Z - mr * .92 - .004), (0, 0, -1), up, .3, .15, 'motor_plate', back=SS)
-    decal(s, 'equipment tag', (2.3, A + .1, Z - rb - .003), (0, 0, -1), up, .5, .062, 'tag_rfw', back=SS)
-    decal(s, 'pump nameplate', (2.3, A + .1, Z + rb + .003), (0, 0, 1), up, .26, .13, 'pump_plate', back=SS)
+        za, zb = sorted((Z + sz * (rb - .06), Z + sz * (rb + .22)))
+        box(s, 'centreline support foot', (P - .2, A - .08, za), (P + .2, A + .02, zb), CAST)
+        zc = Z + sz * (rb + .12)
+        box(s, 'support pedestal', (P - .16, .17, zc - .1), (P + .16, A - .08, zc + .1), BASE)
+        for x in (P - .12, P + .12):
+            nut(s, 'foot hold-down nut', (x, A + .02, zc + sz * .02), (0, 1, 0), .03, .04)
+    # Discharge nozzle on top, straight up to its port.
+    cyl(s, 'discharge casing nozzle', (P, A + rb - .1, Z), (P, 2.1, Z), .29, CAST, 24)
+    joint(s, 'discharge nozzle joint', (P, 2.16, Z), (0, 1, 0), .27, .42, 8)
+    port(s, 'water_discharge', (3, 2, 1), 'up', 2.2)
+    gauge(s, 'water_discharge gauge', (P, 2.55, Z + .25), (0, 0, 1), (0, 0, 1), .12)
+    # Suction nozzle underneath; the suction line runs below the outboard bearing and rises to its port.
+    cyl(s, 'suction casing nozzle', (P, A - rb + .1, Z), (P, .86, Z), .3, CAST, 24)
+    joint(s, 'suction nozzle joint', (P, .8, Z), (0, 1, 0), .27, .42, 8)
+    pipe(s, 'suction line', [(P, .75, Z), (P, .46, Z), (1.5, .46, Z), (1.5, 2.31, Z)], .25, BODY, .26)
+    port(s, 'water_suction', (1, 2, 1), 'up', 2.3)
+    gauge(s, 'water_suction gauge', (1.5, 1.9, Z + .25), (0, 0, 1), (0, 0, 1), .12)
+    # Minimum-flow (recirculation) line with an air-operated control valve.
+    mz = .45
+    pipe(s, 'minimum flow line', [(P, 1.98, Z - .2), (P, 1.98, mz), (P, .19, mz)], .07, BODY, .14, 12)
+    cyl(s, 'min flow valve body', (P, 1.3, mz), (P, 1.06, mz), .12, CAST, 14)
+    cyl(s, 'min flow valve bonnet', (P, 1.18, mz), (P + .22, 1.18, mz), .05, CAST, 10)
+    lathe(s, 'min flow valve diaphragm actuator', (P + .22, 1.18, mz), (1, 0, 0), [(0, .05), (.03, .15), (.07, .15), (.1, .06), (.1, 0)], JBOX, 16)
+    cyl(s, 'casing drain', (P + .2, A - rb + .02, Z + .2), (P + .2, .3, Z + .2), .025, SS, 8)
+    cyl(s, 'drain valve', (P + .2, .45, Z + .2), (P + .2, .35, Z + .2), .045, BRASS, 8)
+    # Pump shaft and coupling guard to the speed increaser.
+    gx0, gx1 = 4.76, 5.3
+    cyl(s, 'pump shaft end', (P + .92, A, Z), (gx0, A, Z), .06, STEEL, 12)
+    lathe(s, 'coupling guard', (P + .94, A, Z), ax, [(0, .0), (0, .21), (gx0 - P - .96, .21), (gx0 - P - .96, .0)], GUARD, 20)
+    decal(s, 'caution label', ((P + .94 + gx0) / 2, A + .02, Z + .215), (0, 0, 1), up, .13, .065, 'caution')
+    # Speed-increasing gear: parallel shafts side by side, split housing, bearing caps where the shafts leave.
+    Zm = Z + .18
+    gz0, gz1 = Z - .36, Zm + .42
+    box(s, 'gear case lower half', (gx0, .17, gz0), (gx1, A, gz1), CAST)
+    box(s, 'gear case base flange', (gx0 - .04, .17, gz0 - .04), (gx1 + .04, .23, gz1 + .04), CAST)
+    box(s, 'gear case split flange', (gx0 - .03, A - .03, gz0 - .03), (gx1 + .03, A + .03, gz1 + .03), CAST)
+    box(s, 'gear case cover', (gx0, A + .03, gz0), (gx1, A + .42, gz1), CAST)
+    box(s, 'gear inspection cover', (gx0 + .1, A + .42, Z - .2), (gx1 - .1, A + .45, Zm + .26), STEEL)
+    for x in (gx0 + .05, gx1 - .05):
+        for z in (gz0 + .06, (gz0 + gz1) / 2, gz1 - .06):
+            nut(s, 'gear case flange bolt', (x, A + .03, z), (0, 1, 0), .022, .03)
+    for x, d, z, r in ((gx0, -1, Z, .11), (gx1, 1, Z, .11), (gx0, -1, Zm + .1, .15), (gx1, 1, Zm + .1, .15)):
+        cyl(s, 'gear bearing cap', (x, A, z), (x + d * .05, A, z), r, CAST, 20)
+        bolt_ring(s, 'bearing cap screw', (x + d * .05, A, z), (d, 0, 0), r * .78, 6, .014, .015)
+    cyl(s, 'gear case breather', (gx0 + .15, A + .45, Zm + .1), (gx0 + .15, A + .55, Zm + .1), .035, BLACK, 8)
+    decal(s, 'gear oil sight glass', (gx1 - .12, .6, gz1 + .002), (0, 0, 1), up, .06, .12, 'sight_glass')
+    pipe(s, 'gear oil supply', [((gx0 + gx1) / 2, A + .45, gz0 + .1), ((gx0 + gx1) / 2, A + .55, gz0 + .1), ((gx0 + gx1) / 2, A + .55, Z - .9), ((gx0 + gx1) / 2, .21, Z - .9)], .02, OIL, .06, 6, 3)
+    # Motor shaft (offset from the pump shaft by the gear centre distance) and its guard.
+    mx0, mx1 = 5.58, 6.82
+    Zs = Zm + .1
+    cyl(s, 'motor shaft end', (gx1 + .05, A, Zs), (mx0, A, Zs), .075, STEEL, 12)
+    lathe(s, 'motor coupling guard', (gx1 + .06, A, Zs), ax, [(0, .0), (0, .23), (mx0 - gx1 - .1, .23), (mx0 - gx1 - .1, .0)], GUARD, 20)
+    # Large horizontal weather-protected motor: box frame, end brackets with bearing housings, top air housing.
+    hw = .6
+    box(s, 'motor sole rail', (mx0 + .05, .17, Zs - hw - .04), (mx1 - .05, .27, Zs + hw + .04), BASE)
+    box(s, 'motor frame', (mx0 + .1, .27, Zs - hw), (mx1 - .1, A + .5, Zs + hw), mm)
+    for x, d in ((mx0 + .1, -1), (mx1 - .1, 1)):
+        cyl(s, 'motor end bracket', (x, A, Zs), (x + d * .06, A, Zs), .5, mm, 32)
+        cyl(s, 'motor bearing housing', (x + d * .06, A, Zs), (x + d * .16, A, Zs), .2, mm, 20)
+        bolt_ring(s, 'end bracket bolt', (x + d * .06, A, Zs), (d, 0, 0), .44, 8, .02, .02)
+    cyl(s, 'motor bearing end cap', (mx1 + .06, A, Zs), (mx1 + .09, A, Zs), .13, mm, 16)
+    for z in (Zs - hw - .02, Zs + hw - .12):
+        for x in (mx0 + .2, mx1 - .2):
+            nut(s, 'motor foot bolt', (x, .27, z + .07), (0, 1, 0), .03, .04)
+    yt = A + .5
+    box(s, 'motor air housing', (mx0 + .04, yt, Zs - hw - .04), (mx1 - .04, 2.82, Zs + hw + .04), mm)
+    box(s, 'air housing rain cap', (mx0, 2.82, Zs - hw - .08), (mx1, 2.86, Zs + hw + .08), mm)
+    for sz in (-1, 1):
+        for k in (0, 1):
+            xa = mx0 + .12 + k * .52
+            n = (0, 0, sz)
+            decal(s, 'motor air louvre', (xa + .24, (yt + 2.82) / 2, Zs + sz * (hw + .042)), n, up, .46, 2.82 - yt - .16, 'louvre')
+    for sx, x in ((-1, mx0 + .04), (1, mx1 - .04)):
+        decal(s, 'motor air intake screen', (x + sx * .002, (yt + 2.82) / 2, Zs), (sx, 0, 0), up, .9, 2.82 - yt - .2, 'screen')
+    for x in (mx0 + .15, mx1 - .15):
+        for sz in (-1, 1):
+            torus(s, 'motor lifting eye', (x, 2.92, Zs + sz * .45), (1, 0, 0), .05, .016, mm, 10, 5)
+    tb = V((mx0 + mx1) / 2, A + .05, Zs + hw + .1)
+    box(s, 'motor terminal box', tb - V(.22, .3, .1), tb + V(.22, .3, .1), JBOX)
+    box(s, 'terminal box lid', tb + V(-.2, -.28, .1), tb + V(.2, .28, .115), JBOX)
+    conduit(s, 'motor power conduit', [tb - V(0, .3, 0), tb - V(0, .5, 0), (tb.x, .2, tb.z)], .08)
+    decal(s, 'conduit voltage tag', tb + V(0, .2, .117), (0, 0, 1), up, .1, .02, 'conduit_tag')
+    decal(s, 'motor nameplate', ((mx0 + mx1) / 2, A + .05, Zs - hw - .004), (0, 0, -1), up, .3, .15, 'motor_plate', back=SS)
+    # Lube oil console at the outboard end: reservoir, motor-driven oil pump, cooler and filter.
+    box(s, 'lube oil reservoir', (.3, .17, .8), (1.05, .72, 2.2), CAST)
+    box(s, 'reservoir cover', (.28, .72, .78), (1.07, .75, 2.22), CAST)
+    cyl(s, 'oil pump motor', (.55, .75, 1.1), (.55, 1.12, 1.1), .1, mm, 14)
+    cyl(s, 'oil pump mount', (.55, .75, 1.1), (.55, .8, 1.1), .13, CAST, 14)
+    cyl(s, 'oil filter', (.8, .75, 1.55), (.8, 1.0, 1.55), .07, SS, 12)
+    cyl(s, 'reservoir breather', (.5, .75, 1.95), (.5, .86, 1.95), .04, BLACK, 8)
+    cyl(s, 'lube oil cooler', (.42, .93, 2.0), (.95, .93, 2.0), .09, CAST, 16)
+    for x in (.5, .87):
+        box(s, 'oil cooler saddle', (x - .03, .75, 1.93), (x + .03, .86, 2.07), BASE)
+    decal(s, 'reservoir sight glass', (.9, .45, 2.202), (0, 0, 1), up, .06, .12, 'sight_glass')
+    pipe(s, 'lube oil header', [(.8, 1.0, 1.55), (.8, 1.08, 1.55), (.8, 1.08, Z - .9), (1.2, .21, Z - .9), (6.2, .21, Z - .9)], .022, OIL, .06, 6, 3)
+    gauge(s, 'lube oil pressure gauge', (.8, 1.08, 1.25), (0, 1, 0), (0, 0, 1), .1)
+    decal(s, 'equipment tag', (P, .62, Z + rb + .222), (0, 0, 1), up, .3, .037, 'tag_rfw', back=SS)
+    decal(s, 'pump nameplate', (P, .95, Z + rb + .222), (0, 0, 1), up, .28, .14, 'feed_plate', back=SS)
     return s
 
 
 def build_slc():
-    """Horizontal triplex plunger pump: fluid end with three plungers, power frame, gear reducer, motor, pulsation dampener."""
+    """Horizontal triplex plunger pump: liquid end with suction manifold below and discharge manifold above, power end,
+    triple-reduction gear reducer and motor; heat-traced suction piping; pulsation dampener and relief valve."""
     s = new_scene('BWR | motor pump slc_pump')
     up = V(0, 1, 0)
     sm = MOTOR['slc']
@@ -716,60 +851,66 @@ def build_slc():
     for x in (.25, 1.5, 2.75):
         for z in (.3, 2.7):
             nut(s, 'skid anchor', (x, .14, z), (0, 1, 0), .028, .03)
-    # Power frame (crankcase) along X, rounded top cover, breather and oil sight glass.
+    # Power end (crankcase) along X: the frame top slopes down toward the crossheads, with a vent on top.
     px0, px1, pz0, pz1 = .62, 1.95, 1.0, 1.72
-    box(s, 'power frame', (px0, .1, pz0), (px1, .86, pz1), POWER)
+    box(s, 'power frame', (px0, .1, pz0), (px1, .7, pz1), POWER)
     box(s, 'power frame base flange', (px0 - .04, .1, pz0 - .04), (px1 + .04, .16, pz1 + .04), POWER)
-    box(s, 'crankcase top cover', (px0 + .05, .86, pz0 + .05), (px1 - .05, .9, pz1 - .05), POWER)
-    for x in (px0 + .1, (px0 + px1) / 2, px1 - .1):
-        for z in (pz0 + .1, pz1 - .1):
-            nut(s, 'top cover screw', (x, .9, z), (0, 1, 0), .016, .015)
+    mesh_object(s, 'power frame sloped top', [(px0, .7, pz0), (px1, .7, pz0), (px1, .7, pz1), (px0, .7, pz1),
+                                              (px0, .78, pz0), (px1, .78, pz0), (px1, .92, pz1 - .3), (px0, .92, pz1 - .3),
+                                              (px1, .92, pz1), (px0, .92, pz1)],
+                [(0, 3, 2, 1), (0, 1, 5, 4), (4, 5, 6, 7), (7, 6, 8, 9), (3, 9, 8, 2), (0, 4, 7, 9, 3), (1, 2, 8, 6, 5)], POWER)
+    box(s, 'crankcase rear cover', (px0 + .1, .2, pz1), (px1 - .1, .84, pz1 + .025), POWER)
+    for x in (px0 + .15, (px0 + px1) / 2, px1 - .15):
+        for y in (.25, .79):
+            nut(s, 'rear cover screw', (x, y, pz1 + .025), (0, 0, 1), .015, .012)
     for x, sgn in ((px0, -1), (px1, 1)):
         cyl(s, 'main bearing cap', (x, .5, 1.36), (x + sgn * .06, .5, 1.36), .17, POWER, 20)
         bolt_ring(s, 'bearing cap screw', (x + sgn * .06, .5, 1.36), (sgn, 0, 0), .13, 6, .014, .015)
-    cyl(s, 'breather', (1.25, .9, 1.36), (1.25, 1.02, 1.36), .045, BLACK, 12)
-    cyl(s, 'oil fill cap', (.85, .9, 1.55), (.85, .96, 1.55), .035, WHEEL, 10)
-    decal(s, 'oil sight glass', (1.6, .4, pz1 + .002), (0, 0, 1), up, .06, .12, 'sight_glass')
-    box(s, 'inspection cover', (.75, .25, pz1), (1.35, .6, pz1 + .025), POWER)
-    for x in (.8, 1.3):
-        for y in (.3, .55):
-            nut(s, 'cover screw', (x, y, pz1 + .025), (0, 0, 1), .015, .012)
-    # Crosshead extension with three exposed plungers and packing glands.
+    cyl(s, 'crankcase vent', (1.25, .92, 1.55), (1.25, 1.03, 1.55), .05, BLACK, 12)
+    cyl(s, 'oil fill cap', (.85, .92, 1.6), (.85, .98, 1.6), .035, WHEEL, 10)
+    decal(s, 'oil sight glass', (1.72, .45, pz1 + .027), (0, 0, 1), up, .06, .12, 'sight_glass', back=SS)
+    # Crosshead extension with three exposed plungers and stuffing boxes.
     box(s, 'crosshead extension frame', (px0 + .05, .1, .7), (px1 - .05, .3, pz0), POWER)
     for x in (px0 + .02, px1 - .07):
-        box(s, 'extension side plate', (x, .1, .7), (x + .05, .8, pz0), POWER)
-    for x in (.8, 1.25, 1.7):
-        cyl(s, 'crosshead guide', (x, .5, pz0), (x, .5, pz0 - .1), .1, POWER, 16)
+        box(s, 'extension side plate', (x, .1, .7), (x + .05, .76, pz0), POWER)
     xs = (.8, 1.25, 1.7)
     yp = .5
     for x in xs:
+        cyl(s, 'crosshead guide', (x, yp, pz0), (x, yp, pz0 - .1), .1, POWER, 16)
         cyl(s, 'plunger', (x, yp, pz0), (x, yp, .7), .045, STEEL, 12)
-        cyl(s, 'packing gland', (x, yp, .76), (x, yp, .66), .085, SS, 16)
+        cyl(s, 'stuffing box gland', (x, yp, .76), (x, yp, .66), .085, SS, 16)
         for k in (-1, 1):
             nut(s, 'gland nut', (x + k * .07, yp, .76), (0, 0, 1), .016, .02)
-    # Fluid end block with suction / discharge valve covers.
-    box(s, 'fluid end manifold block', (.62, .3, .36), (1.95, .42, .66), FLUID)
+    # Liquid end: cylinder blocks, discharge valve covers on top, suction valves below.
+    box(s, 'liquid end base block', (.62, .3, .36), (1.95, .42, .66), FLUID)
     for x in xs:
-        box(s, 'fluid end cylinder block', (x - .2, .42, .32), (x + .2, .8, .66), FLUID)
+        box(s, 'liquid end cylinder', (x - .2, .42, .32), (x + .2, .8, .66), FLUID)
         for sx in (-1, 1):
             for y in (.48, .74):
-                nut(s, 'fluid end tie bolt nut', (x + sx * .15, y, .32), (0, 0, -1), .018, .02)
-    for x in xs:
+                nut(s, 'liquid end tie bolt nut', (x + sx * .15, y, .32), (0, 0, -1), .018, .02)
         cyl(s, 'discharge valve cover', (x, .8, .48), (x, .88, .48), .09, SS, 16)
         bolt_ring(s, 'valve cover nut', (x, .88, .48), up, .065, 4, .014, .02)
-        cyl(s, 'suction valve cover', (x, .5, .32), (x, .5, .25), .09, SS, 16)
-        bolt_ring(s, 'suction cover nut', (x, .5, .25), (0, 0, -1), .065, 4, .014, .02)
-    # Suction: west port, reducer, strainer pot and manifold under the fluid end.
+        cyl(s, 'cylinder head', (x, .5, .32), (x, .5, .25), .09, SS, 16)
+        bolt_ring(s, 'cylinder head nut', (x, .5, .25), (0, 0, -1), .065, 4, .014, .02)
+    # Suction: west port, reducer, strainer and the round suction manifold under the liquid end, all heat traced.
     port(s, 'water_suction', (0, 0, 1), 'west', .28)
     cone(s, 'suction reducer', (.26, .5, 1.5), (.36, .5, 1.5), .25, .11, BODY, 20)
-    pipe(s, 'suction header and manifold', [(.34, .5, 1.5), (.46, .5, 1.5), (.46, .5, .45), (.46, .19, .45), (2.0, .19, .45)], .09, SS, .1, 14)
+    run = [(.34, .5, 1.5), (.46, .5, 1.5), (.46, .5, .45), (.46, .19, .45), (2.0, .19, .45)]
+    pipe(s, 'suction header and manifold', run, .09, SS, .1, 10, 5)
     for x in xs:
         cyl(s, 'manifold riser', (x, .19, .45), (x, .31, .45), .055, SS, 12)
     cyl(s, 'Y-strainer body', (.46, .5, .92), (.46, .5, 1.18), .13, CAST, 20)
     cyl(s, 'Y-strainer screen leg', (.46, .46, 1.0), (.46, .27, .81), .085, CAST, 16)
     cyl(s, 'Y-strainer cap', (.46, .27, .81), (.46, .24, .78), .1, CAST, 16)
+    # Electric heat tracing spiralled along the suction manifold, with its power connection box.
+    turns, n = 9, 36
+    helix = [(.56 + 1.4 * i / n, .19 + .1 * math.cos(turns * TAU * i / n), .45 + .1 * math.sin(turns * TAU * i / n)) for i in range(n + 1)]
+    sweep(s, 'suction heat trace cable', helix, .012, OIL, 3, False)
+    box(s, 'heat trace power box', (2.02, .14, .3), (2.2, .34, .44), JBOX)
+    sweep(s, 'heat trace lead', fillet([(1.96, .19, .55), (2.1, .19, .55), (2.1, .3, .44)], .03, 3), .011, OIL, 4)
+    decal(s, 'heat trace tag', (2.11, .24, .298), (0, 0, -1), up, .16, .04, 'tag_trace')
     # Discharge: manifold on top, pulsation dampener, relief valve and line to the east port.
-    pipe(s, 'discharge manifold', [(.8, .97, .48), (2.6, .97, .48), (2.6, .97, 1.5), (2.6, .5, 1.5), (2.79, .5, 1.5)], .075, SS, .14)
+    pipe(s, 'discharge manifold', [(.8, .97, .48), (2.6, .97, .48), (2.6, .97, 1.5), (2.6, .5, 1.5), (2.79, .5, 1.5)], .075, SS, .14, 12, 5)
     for x in xs:
         cyl(s, 'discharge riser', (x, .88, .48), (x, .97, .48), .05, SS, 12)
     cyl(s, 'dampener stem', (2.2, .97, .48), (2.2, 1.12, .48), .05, SS, 12)
@@ -781,13 +922,25 @@ def build_slc():
     cyl(s, 'relief cap', (2.42, 1.29, 1.2), (2.42, 1.35, 1.2), .03, WHEEL, 8)
     cone(s, 'discharge expander', (2.72, .5, 1.5), (2.8, .5, 1.5), .08, .25, BODY, 20)
     port(s, 'water_discharge', (2, 0, 1), 'east', 2.78)
-    # Gear reducer at the east end of the power frame, coupled to a TEFC motor along the south side.
+    # Triple-reduction gear reducer between the motor and the crankshaft: four parallel shafts in a split housing,
+    # each with its bearing cap on the outboard face, stepping up in size from the motor pinion to the output gear.
     gx0, gx1 = 1.98, 2.42
-    box(s, 'gear reducer housing', (gx0, .1, pz0 + .05), (gx1, .8, 2.48), CAST)
-    box(s, 'reducer split line', (gx0 - .01, .62, pz0 + .04), (gx1 + .01, .66, 2.49), CAST)
-    cyl(s, 'reducer breather', (2.2, .8, 1.9), (2.2, .9, 1.9), .03, BLACK, 8)
-    cyl(s, 'crankshaft input', (px1, .5, 1.36), (gx0, .5, 1.36), .06, STEEL, 12)
     mz, my, mr = 2.12, .46, .3
+    box(s, 'gear reducer lower case', (gx0, .1, pz0 + .05), (gx1, .5, 2.48), CAST)
+    box(s, 'reducer split flange', (gx0 - .015, .48, pz0 + .035), (gx1 + .015, .52, 2.495), CAST)
+    mesh_object(s, 'gear reducer cover', [(gx0, .52, pz0 + .05), (gx1, .52, pz0 + .05), (gx1, .52, 2.48), (gx0, .52, 2.48),
+                                          (gx0, .9, pz0 + .05), (gx1, .9, pz0 + .05), (gx1, .9, 1.75), (gx0, .9, 1.75),
+                                          (gx1, .72, 2.48), (gx0, .72, 2.48)],
+                [(0, 3, 2, 1), (0, 1, 5, 4), (4, 5, 6, 7), (7, 6, 8, 9), (3, 9, 8, 2), (0, 4, 7, 9, 3), (1, 2, 8, 6, 5)], CAST)
+    for z in (pz0 + .12, 1.45, 1.8, 2.15, 2.42):
+        for x in (gx0 - .005, gx1 + .005):
+            nut(s, 'reducer flange bolt', (x, .52, z), (0, 1, 0), .014, .02)
+    for z, r in ((mz, .075), (1.88, .095), (1.63, .12), (1.36, .16)):
+        cyl(s, 'reducer bearing cap', (gx1, .5, z), (gx1 + .035, .5, z), r, CAST, 16)
+        nut(s, 'bearing cap plug', (gx1 + .035, .5, z), (1, 0, 0), r * .3, .012)
+    cyl(s, 'reducer breather', (2.2, .9, 1.4), (2.2, 1.0, 1.4), .03, BLACK, 8)
+    box(s, 'reducer inspection cover', (gx0 + .08, .9, 1.15), (gx1 - .08, .915, 1.65), STEEL)
+    cyl(s, 'crankshaft input', (px1, .5, 1.36), (gx0, .5, 1.36), .06, STEEL, 12)
     cyl(s, 'motor drive end', (1.72, my, mz), (1.8, my, mz), mr * .9, sm, 24)
     cyl(s, 'motor frame', (.58, my, mz), (1.72, my, mz), mr, sm, 24)
     for i in range(20):
@@ -899,6 +1052,7 @@ def export(scene, id):
     bmin = [min(p[a] for f in faces for p in f['vertices']) for a in range(3)]
     bmax = [max(p[a] for f in faces for p in f['vertices']) for a in range(3)]
     print(f'MOTOR PUMP {id}: {len(faces)} triangles, bounds {[round(v, 3) for v in bmin]} .. {[round(v, 3) for v in bmax]}', flush=True)
+    assert all(math.isfinite(x) for f in faces for p in f['vertices'] for x in p), id + ': non-finite vertex'
     assert all(bmin[a] >= -1e-6 and bmax[a] <= size[a] + 1e-6 for a in range(3)), (id, bmin, bmax)
 
 
@@ -924,7 +1078,15 @@ def preview(scene, id, out_dir, tag='after'):
     scene.collection.objects.link(so)
     so.rotation_euler = (math.radians(50), 0, math.radians(35))
     floor = box(scene, '_preview floor', (-6, -.02, -6), (w + 6, 0, d + 6), GROUT)
-    scene.render.engine = 'BLENDER_EEVEE'
+    if CYCLES_PREVIEW:
+        # No GPU/display (bpy as a Python module, or --cycles): render on the CPU.
+        scene.render.engine = 'CYCLES'
+        scene.cycles.device = 'CPU'
+        scene.cycles.samples = 20
+        scene.cycles.use_denoising = False
+        scene.cycles.max_bounces = 2
+    else:
+        scene.render.engine = 'BLENDER_EEVEE'
     scene.render.resolution_x, scene.render.resolution_y = 1600, 1000
     scene.render.image_settings.file_format = 'PNG'
     scene.view_settings.view_transform = 'Standard'

@@ -22,8 +22,9 @@ import java.util.List;
 /**
  * The panel linker (spec section 7). Sneak-right-click a plant device to store it; right-click a panel
  * component to open the binding screen listing that device's signals and commands (the client input hook
- * and {@link PanelBlock} do that part). Sneak-right-click the air to forget the device. Hovering a bound
- * component outlines the linked device (client).
+ * and {@link PanelBlock} do that part). Or the other way round: sneak-right-click a panel component to select it,
+ * then right-click a plant device ({@link LinkSelection}). Sneak-right-click the air to forget the device and the
+ * selected component. Hovering a bound component outlines the linked device (client).
  *
  * <p>The stored device is a {@link GlobalPos} data component, so it survives in chests and across
  * restarts. Whether it can actually be bound (same dimension, within {@link PanelConfig#linkRange()}, still
@@ -95,12 +96,17 @@ public final class PanelLinkerItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (player.isShiftKeyDown() && linked(stack) != null) {
-            if (!level.isClientSide()) {
-                stack.remove(BwrDataComponents.LINKED_DEVICE.get());
-                player.displayClientMessage(Component.translatable("message.bwr.panel_linker.cleared"), true);
+        if (player.isShiftKeyDown()) {
+            // Either selection is forgotten: the device on the stack and the component selected on the server.
+            boolean device = linked(stack) != null;
+            boolean component = !level.isClientSide() && LinkSelection.forget(player.getUUID());
+            if (device || component) {
+                if (!level.isClientSide()) {
+                    stack.remove(BwrDataComponents.LINKED_DEVICE.get());
+                    player.displayClientMessage(Component.translatable("message.bwr.panel_linker.cleared"), true);
+                }
+                return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
             }
-            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
         }
         return InteractionResultHolder.pass(stack);
     }
@@ -117,5 +123,6 @@ public final class PanelLinkerItem extends Item {
         }
         tooltip.add(Component.translatable("tooltip.bwr.panel_linker.store").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.bwr.panel_linker.bind").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.bwr.panel_linker.component").withStyle(ChatFormatting.GRAY));
     }
 }

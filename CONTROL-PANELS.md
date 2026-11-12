@@ -110,7 +110,7 @@ use the same one.
 | Control switch | 8x12 (the default), 12x16, 6x9; retired 1x2, 2x3 |
 | Thumbwheel | 3 cells wide per digit, 6 tall: 9x6 (3 digits), 3x6 to 24x6 (1 to 8 digits); **real** 1 cell wide per digit, 2 tall: 3x2 (3 digits), 1x2 to 8x2; **default** 6x4 (3 digits, 2 wide and 4 tall each) |
 | Lamp | 4x4, 6x6, ~~1x1~~, 2x2 (kept for packed indicator strips), **new** 3x3 (**default**) |
-| Annunciator window | 12x8, 16x12, ~~1x1~~, ~~2x2~~, **new** 8x6 (**default**), 8x8 |
+| Annunciator window | 12x8, 16x12, ~~1x1~~, ~~2x2~~, **new** 8x6 (**default**), 8x8; half height, one alarm of a split tile (see "Columbia style"): 8x3, 12x4, 16x6 |
 | Annunciator control module | 24x6, ~~2x1~~, ~~4x2~~, **new** 16x4, 32x8 (**default**) |
 | Bar graph | 3x24, 3x12, 3x16, 3x32 and the same lying down (24x3 ...); one segment per 2 cells; ~~1x3~~, ~~3x1~~, ~~1x6~~, ~~6x1~~, 2x6 (**default**), **new** 6x2 |
 | Round dial | 12x12, 16x16, 20x20, 24x24, 32x32, ~~2x2~~, ~~3x3~~, 4x4 (**default**), **new** 6x6, 8x8 |
@@ -182,7 +182,7 @@ chart, the nameplates and the mimic pieces are unchanged.
 | Lamp | 30.5 mm indicating light, 1.1 to 1.7 in (2.8 to 4.3 cm) | model README (pushbuttons, oiltight) | 1x1; **2x2** |
 | RPS trip assembly | the owner's CAD, 4.8 x 2.44 in (12.2 x 6.2 cm) | NEW-HARDWARE-SPEC.md | 2x1; **4x2** |
 | Push-to-turn switch | the owner's CAD, 2.3 x 2.2 in (5.8 x 5.6 cm) | NEW-HARDWARE-SPEC.md | 1x1 (retired); 2x2; the default is now **4x4** |
-| Annunciator window | tile 2.8125 x 2.625 in (7.1 x 6.7 cm); a double size window | CR-PANELS-BWR-RESEARCH.md; the double size is not real | 1x1, **2x2** |
+| Annunciator window | tile 2.8125 x 2.625 in (7.1 x 6.7 cm); a double size window | CR-PANELS-BWR-RESEARCH.md; the double size is not real. (This nearly square tile is not the 4 : 3 tile of Columbia's boxes: see "Columbia style", whose proportions come from photographs and whose real size is not known) | 1x1, **2x2** |
 | 7- and 16-segment display | a 4 digit panel meter window; each digit is made 1 x 2 cells (6 x 12.5 cm), larger than a real LED digit (about 1 x 1.4 cm) because a cell is the smallest step | estimate | 4x2 (4 digits), 1x2, 2x2, 3x2, 6x2, 8x2; **8x4** (4 digits) |
 | Thumbwheel | a real digit is under 1 cm wide; each digit is made 1 x 2 cells | estimate | 3x2 (3 digits), 1x2, 2x2, 4x2, 5x2, 6x2, 8x2; **6x4** (3 digits) |
 | Bar graph | an LED bar column or row, one cell thick | estimate | 1x3, 3x1, 1x6, 6x1; **2x6** |
@@ -218,14 +218,123 @@ by itself looks like a bezelled tile as before. Lit colour and flash are unchang
 dim version of its colour when off), the lettering is a dark tone of the colour on a white or amber tile and light on a
 red one, and dim when off. The legend is up to **four lines** (Engraved line 1 to 4 in the wrench screen; lines 3 and 4
 are saved only when used), each centred, one scale for all (`AnnunciatorLayout`). Not done: the row and column labels
-of the decorative header strip.
+of the decorative header strip (a box in the Columbia style, below, has its own).
 
 **Annunciator control module** (`annunciator_control`; 24x6, 16x4 and 32x8, the default; 2x1 and 4x2 are retired): ACK, RESET, SILENCE and TEST
 pushbuttons in one part. Each output (`ack`, `reset`, `silence`, `test`) is 1 while held, like a pushbutton, and only
 one button is held at a time; the quarter of the face a click lands on picks the button. ACK and RESET do what a
 pushbutton with that role does (`AnnunciatorGroups`, once per press, for the module's **Annunciator group**), nothing
-more. SILENCE has no horn to silence, so it is an output only. TEST lights every window of the module's group while it
+more. SILENCE stops the horn of the module's group (below) once per press and changes nothing else: the windows keep
+flashing until they are acknowledged; it is also an output like the others. TEST lights every window of the module's group while it
 is held (a lamp test the client draws from the synced output); it changes no alarm state and sends nothing to the plant.
+
+**Lens colour, light address and the horn.** *Tile colour* offers three swatches, **White** (F0F0E0), **Yellow**
+(FFD000) and **Red** (E02020); any other colour still loads, saves and shows as *Other colour*, and the default
+(FFB000 amber) is what it was. *Light address* is the optional number a computer drives the window by (section 4).
+**The horn:** a window that enters a new alarm sounds the annunciator horn, at the panel, until it is acknowledged or its
+group is silenced; an acknowledged or cleared alarm never sounds, and a silenced alarm that is still unacknowledged
+stays quiet however its condition comes and goes. The horn bit is part of the alarm sequence (`AnnunciatorLogic`), set
+on both sides by the same input change that starts the flash and cleared by ACK and SILENCE through the state the server
+already re-sends, so nothing new is sent; it is saved only while set, so a sounding alarm survives a restart and a save
+from before the horn loads silent. Each client loops one horn per panel group in the Blocks sound category with ordinary
+attenuation (16 blocks), placed among the group's blocks that hold a sounding window, and stops it when no loaded
+window of the group is sounding: acknowledged, silenced, the panel unloaded or broken, or the level left. The sound
+file is the one exception among the placeholder control-room sounds (SOUND-CREDITS.md, *Annunciator horn*).
+
+**Alarm sound.** *Alarm sound* in a window's wrench screen chooses what the horn is when that window sounds it:
+*Panel alarm* (the default, `bwr:annunciator_horn`), *Synthesised horn* (`bwr:annunciator_horn_synth`, a two-tone warble
+shipped with the mod) or *Custom*, the sound whose id is typed in **Custom sound id** below it: `namespace:path`, lower
+case, at most 64 characters, any sound the game knows (`minecraft:block.note_block.bell`) or one a resource pack adds.
+The setting is saved only when it is not the panel alarm. Each client loops one horn per panel group **and sound**, so
+two audible lights with different sounds are both heard, and any number with the same sound are one loop; range,
+category, start and stop are the horn's as described above. A horn is never silent because of its setting: an id that
+is not an id, and a sound the client playing it does not have (no resource pack there defines it), is the panel alarm.
+A server can switch custom sounds off with `customAlarmSounds = false` in `bwr-panels.toml`: it then does not tell
+clients of a window's custom choice, the window shows and sounds as the panel alarm, and saving its wrench screen
+while the switch is off stores what is shown; the synthesised horn is not affected. *A custom sound through a resource
+pack:* put a **mono** Ogg Vorbis file at `assets/mypack/sounds/alarm.ogg` (a stereo file is not placed in the world and
+does not fade with distance), define it in `assets/mypack/sounds.json` as
+`{"alarm": {"sounds": [{"name": "mypack:alarm", "stream": false}]}}`, enable the pack, and type `mypack:alarm` as the
+Custom sound id. The file is looped end to start, so cut it to loop. Everyone within the horn's 16 blocks who has the
+pack hears it, for as long as the alarm is neither acknowledged nor silenced; a player without the pack hears the panel
+alarm.
+
+**Box list.** The wrench screen of an annunciator window has a third button beside Done and Cancel, **Box list**, which
+opens one read-only screen for the whole box the window is in (the windows joined into one box, in any style, classic
+included; a window by itself is a box of one). It leaves the wrench screen as Cancel does. The heading is the box's name
+when a window carries one, with the counts *lights, wired, not wired, in alarm*. Each light takes two lines: its number as
+the box prints it (row-column, `3-2`), a swatch of its lens colour, its legend on one line and what it shows (*off*,
+*ALARM*, *acknowledged*, or *no signal* for a light that is off and has no input value); under them its light address
+or *none*, what its input is wired to (followed by *sound: ...* when the light's alarm sound is not the panel alarm
+and the line has room for it whole), and its trigger (*below -129*). The source reads as in the wrench screen
+(*Plant level @ x, y, z*, *Redstone (back face)*, *Component output LP-1*, a constant), except *Computer* for a CC source,
+*not wired* for none, and a machine by name (*MSIV A - position*) once the server has answered. **Show** filters the list:
+*All*, *Not wired*, *In alarm* (every lit light, flashing or acknowledged, which is also what the count counts) and
+*Computer-driven*. The list scrolls; clicking a light opens that light's wrench screen. Everything is read from the panels
+the client already holds, again every half second, so settings, wiring and state are live; only the machine names are a
+snapshot, asked of the server once when the screen opens, and the screen says so. A box of more than 512 lights lists its
+first 512. For the names the server applies the wrench screen's rule to the window the list was opened from (allowed to
+edit, the Panel Wrench in hand, the panel block within reach, loaded and permitted), looks at the box's other windows
+only in blocks you are permitted for, names a machine only when it is loaded (it loads nothing) and permitted for you,
+and names at most 128 machines; a refusal is no answer, and the list then shows plant signals by position. (The network
+protocol version went from 27 to 28 for the request and its reply, `panel_box_list_open` and `panel_box_names`.)
+
+**Columbia style (the tile box).** An annunciator window has a **Style** in the wrench screen: *Classic (simple)*, the
+procedural look described above and the default, or *Columbia tile box (model)*, after the annunciator boxes of Columbia
+Generating Station's P800 boards (boxes "ANN PANEL P800-C5" and "P800-C1" in two owner-supplied photographs, which are not in
+the repository; `art/models/panel/annunciator/README.md` says what was measured on them, what is by eye and what is unknown).
+The style is saved (key `Style`) only when it is not classic, so every saved window and every new one is classic until a
+player changes it, and a missing tile model draws classic too.
+
+* **What it looks like.** A black plate standing off the board carries ivory tray tiles (a raised rim with rounded corners
+  round a slightly darker face) that nearly touch. On Columbia's boxes every tile is **two alarms**, one above the other,
+  split by a thin dark line; the box has small white numerals down its left margin, one per alarm (1 to 10 on a box of
+  five tiles), "-1" to "-7" across the top, one per column, so an alarm is called row-column ("3-2"); a white nameplate
+  ("ANN PANEL" over the box's name) under the middle of the box; and a round bright latch half way up the right margin.
+* **One window is one alarm.** A window at least twice as wide as tall is one alarm of a split tile, so there are three
+  **half height sizes**: 8x3, 12x4 and 16x6 (two of them make a tile of 8x6, 12x8 or 16x12). Down each column the half
+  windows pair off, upper then lower; a half window left without a partner, and a window of any other size, is a whole
+  tile with rim all round. Windows sit exactly on their own cells with the small black gap between tiles, and each has its
+  own colour, legend (up to four lines, two read best in a half), condition and group, as always.
+* **The plate overhangs the box.** Each window draws the plate under itself and, on every side that is not joined to
+  another window, a strip of plate margin *outside its own cells*: 0.30 of a tile width on the left, 0.31 on the right, 0.19
+  above and 0.375 below (2.4, 2.5, 1.5 and 3.0 cells for 8 wide windows; half as much again for 12 wide). **Leave about 3
+  cells clear round a box** (about 5 for 12 wide windows, 6 for 16): the margin covers whatever is mounted there, and a box
+  at the edge of a board hangs over the edge. The margin is not part of the window: it cannot be clicked and takes no cells.
+* **Numerals, nameplate, latch.** The row number is printed beside each window on the box's left edge and "-N" above each
+  on its top edge; one window of the bottom row draws the nameplate, centred under the box, and one of the right column the
+  latch, half way up (`AnnunciatorBox.layout`, a pure function over the windows of the panel group, worked out where the
+  joined sides are, only when the set of windows or a window's settings change). The nameplate's first line is the language
+  string `text.bwr.annunciator.box_title` ("ANN PANEL"); its second is the box's name, the new optional setting **Box name
+  (nameplate)** of a window (key `BoxName`, at most 12 letters, saved only when not empty): the first window of the box, in
+  reading order, that has one names the box, so it can be typed into any of them. A window by itself is a box of one,
+  with its own plate, numerals, nameplate and latch.
+* **Lit and dark.** Dark, a tile is ivory whatever its colour (with a touch of the colour in its face, so a red window can
+  be told from a white one) and its legend is black, as in the photographs. Lit, flashing, acknowledged and under a lamp
+  test it behaves exactly as the classic window: the face inside the rim is the window's colour, full-bright, with the same
+  lettering; no signal puts the same grey flag in its corner. What colour Columbia's windows light is not known.
+* **How it is drawn.** `AnnunciatorTileBox` cuts the tile model `ann_window` at the outline of its face into four corners,
+  four runs of rim and the face, and lays the pieces on the window's cells: the gap and the rim keep their share of the
+  tile's width (a corner stays round), the runs and the face stretch, and the upper alarm of a split tile simply has no
+  bottom rim. The plate, its margins, the dividing line, the nameplate and the latch are drawn in code from the
+  proportions in `AnnunciatorBox` (the same numbers build the preview box in `art/models/panel/annunciator/build.py`).
+  One alarm of a split tile is 18 quads and a whole tile 26 (the classic window is 10 inside a box); a 7 x 10 box with
+  its margins, nameplate and latch is 1,356 quads against 870 for the same windows classic. A panel block's render bounds
+  are widened by 6 cells round a Columbia window, so a margin is not culled while its window is off screen.
+* **Limits.** Classic and Columbia windows may be mixed in one box, but they do not match: keep a box to one style. A
+  box whose outline is not a rectangle gets its margins side by side round the outline, with no closing edge where the
+  outline steps. On a benchboard or console the rows of every annunciator, classic or not, are drawn at their true
+  height, which is less than a cell there, so the rows of a box stand apart: boxes belong on vertical boards and header
+  strips. The header strip and canopy blocks are unchanged.
+
+**Pushbutton station style.** The annunciator control module has a **Style** too: *Classic (simple)*, or *Pushbutton
+station (model)*: four round black pushbuttons in bright bezel rings set straight in the panel face, each with a small
+black legend plate under it carrying ACK, RESET, SILENCE or TEST in white (the model `ann_control`). It follows an
+owner-supplied photograph of a local panel of an unnamed plant, with an 8 x 6 box of unsplit tiles above four such
+buttons; what the acknowledge and reset controls of Columbia's control room look like is not known. The station is four
+buttons wide like the module, so a click still picks the button in its quarter; a button slides in and glows in its own
+colour (white, blue, amber, green) while held; outputs and what the four buttons do are untouched. Saved (key `Style`)
+only when not classic, so a module at its defaults still saves nothing.
 
 **Distance fade of text.** Small printed text (annunciator legends, gauge numbers, captions) turns to speckle from across
 a room. The panel renderer works out, once per component per frame, how tall a glyph is on the screen (`TextFade`: the
@@ -298,6 +407,20 @@ the last operation. The switch's "Target red after" setting picks which operatio
 * **Right-click a component** (not sneaking) to open the binding screen. Choose a port (an *input* is a
   value the component displays, an *output* is a value a control produces), choose what to wire it to, and
   press Apply. Clear removes the wiring of the chosen port.
+* **Or the other way round, with the Panel Linker:** sneak-right-click a panel component to select it (the action
+  bar names it), walk to the plant device and right-click it (not sneaking). The device is stored on the linker as a
+  sneak-click would store it and the same binding screen opens for the selected component. The component stays selected
+  until you select another, sneak-right-click the air (which forgets the device and the component), change dimension or
+  leave; while it is selected, a plain right-click with the linker on a block that reports signals wires instead of
+  operating that block (a grid tie included), and that one component can be wired from beyond arm's reach of its
+  panel, since you are standing at the device. Everything else is the rule of any binding: the linker in hand, your
+  permissions at the panel and at the device, the same dimension, `linkRange` between panel and device, both loaded.
+  Selecting needs the panel in reach. The Networking Wrench has no component-first mode.
+* **An annunciator window's trigger is on the binding screen.** When the screen wires a window's input, the row of the
+  port selector also carries the window's **Alarm** condition (above, below or equal to the setpoint) and its setpoint,
+  the same two settings as *Alarm when input is* and *Alarm setpoint* in the wrench screen, which keeps them. Apply sends
+  them with the binding (only when you changed them); a setpoint that is not a number greys Apply out. With a wiring
+  tool in hand the server takes those two settings and nothing else from such an edit.
 * **Hold the linker and look at a wired component:** every plant device it reads from is outlined in cyan
   and every device it commands in orange, through walls, so you can follow a run across the plant.
 * A device can be bound only if it is **in the same dimension** and within `linkRange` blocks of the panel
@@ -581,7 +704,7 @@ input has exactly one source; an output can fan out to up to 8 sinks.**
 | Plant signal | One signal of the linked device, e.g. the reactor's `pressure` | Sampled on the server at most every `sampleTicks` ticks (default 2); only changes are sent to clients, batched per chunk and tick. An unloaded or removed device, or a signal with no value, reads **no signal**. Never loads a chunk |
 | Component | An output of another component **in the same group** | Pushed the moment the control changes, no polling. Follows the component by id, so renaming labels does not break it. Removing the control gives no signal |
 | Redstone | Signal strength 0 to 15 at the **back face** of the panel block that holds the anchor | Read like a repeater reads its input |
-| CC | A value a program sets with `set` | Shows **awaiting CC** (no signal) until the first set; the value is saved |
+| CC | A value a program sets with `set` | Shows **awaiting CC** (no signal) until the first set; the value is saved. An annunciator window that has a **Light address** and no source yet is given this source by the first `setAlarm` or `setValue` to its address (section 4) |
 | Constant / none | Wrench screen | A fixed number, or no signal |
 
 A panel is sampled only while it has a plant or redstone input; a panel with none costs nothing per tick.
@@ -1059,6 +1182,12 @@ server thread; a bad label or argument raises an error.
 | `getInputs()` | `{label = {port = value}}` | The current **output** of every control (switches, knobs, buttons): the "inputs" a program reads |
 | `set(label, value)` | boolean | Sets the first input of a component that is wired to **CC**. Errors if that input has another source or the value is not finite |
 | `setPort(label, port, value)` | boolean | Same, for the input named `port` (keys as in `get(label).inputs`) |
+| `setAlarm(address, on)` | number (windows driven) | Annunciator lights by **address** (below): every window of the group with that address gets 1 (`true`) or 0 on its input, as `set(label, 1)` would. A window with no source yet is wired to CC first; one wired to something else is an error naming that source, and then no window is changed. An address no window has is an error |
+| `setValue(address, number)` | number (windows driven) | The same with any finite number, for the window's own condition and setpoint to judge |
+| `getAlarm(address)` | `"off"`, `"alarm"` or `"acknowledged"` | What the light shows: off, a new alarm (flashing) or an acknowledged one (steady). Of several windows sharing the address, the most urgent |
+| `annunciators()` | `{ {address, label, legend = {lines}, color, group, state}, ... }` | Every annunciator window of the group; `address` is absent for a window that has none, `color` is `0xRRGGBB`, `state` as `getAlarm` |
+| `acknowledge(group)` | number (windows changed) | ACK for annunciator group 1 to 8, exactly as the pushbutton or the control module does it (it also stops the horn) |
+| `reset(group)` | number (windows changed) | RESET for annunciator group 1 to 8 |
 | `setText(label, text)` | boolean (changed) | Text of a nameplate (line 1), a text display, or the caption of a core display or rod select matrix |
 | `setTextField(label, field, text)` | boolean (changed) | One named text field: a nameplate's `line1`..`line3`, `cornerLeft`, `cornerRight`, `tag`; a core display's or matrix's `caption`. An unknown field is an error that lists the component's fields |
 | `getSize(label)` | `width, height` | Pixels (graphic display) or characters and rows (character LCD) |
@@ -1069,6 +1198,15 @@ server thread; a bad label or argument raises an error.
 | `blit(label, rows)` | boolean | `rows` is a table of hex strings, one palette index per digit, from the top-left |
 | `setPalette(label, index, rgb)` | boolean | `rgb` as `0xRRGGBB` |
 | `write(label, row, column, text)` | boolean | Character LCD, 0-based |
+
+**Annunciator light addresses.** An annunciator window has an optional **Light address** in the wrench screen: a
+whole number from 0 to 10000, shown and saved as five digits (`00042`), saved only when set; clear the field for none.
+Addresses need not be unique: windows that share one are one light and are driven together. `setAlarm(101, true)`
+writes 1 to the input of every window at 00101, so with the default trigger (alarm above 0.5) the window alarms and then
+runs its own sequence: it flashes and sounds the horn until ACK (or SILENCE for the horn), whatever the program does
+next, and turning the light off only clears the condition. A program that wants its own trigger writes the measurement
+with `setValue` and leaves condition and setpoint to the window. There is no silence call: SILENCE is the control
+module's button. `docs/lua/annunciator_alarms.lua` is a short example (a low reactor level and a bus undervoltage).
 
 The drawing calls work on components whose data implements `PanelDrawTarget`; on anything else they raise
 "is not a drawable display". Drawing is coalesced: however many calls arrive in a tick, each watching client
@@ -1140,7 +1278,8 @@ same wired network make that port read no signal; the wrench Networking screen s
   its own output, so it cannot latch itself.
 * Mimic paths: at most 64 points per path and 128 paths per panel block (fixed, not configurable); see section 2d.
 * `bwr-panels.toml`: `sampleTicks` (2), `linkRange` (64), `maxGroupColumns` (16), `maxGroupRows` (8),
-  `maxComponentsPerBlock` (256; 64 before real sizes), `maxLabelLength` (16).
+  `maxComponentsPerBlock` (256; 64 before real sizes), `maxLabelLength` (16), `customAlarmSounds` (true; an annunciator
+  window's custom alarm sound, see *Alarm sound*).
 * Network protocol version 22 (22 added the size picker's `panel_set_size`, client to server: the hand, and an index into the held component item's sizes, refused for any other item or index; 21 the Networking Wrench; 20 the mimic tape's `mimic_use`, `mimic_mode`, `mimic_configure` and `mimic_open_config`; 19 added the recorder's free message packet `panel_recorder_message`). Packets: `panel_linker_open` and `panel_bind` (client to server, validated:
   reach, claim permission, the linker's own device, dimension, range, key exists, momentary value within the
   command's range), `panel_linker_screen`

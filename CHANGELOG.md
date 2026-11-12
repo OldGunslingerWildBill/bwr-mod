@@ -16,6 +16,73 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **Each annunciator light can choose its alarm sound** (CONTROL-PANELS.md; the owner asked for a custom alarm option). The window's
+  wrench screen has **Alarm sound**: Panel alarm (the default, `bwr:annunciator_horn`), Synthesised horn (new, `bwr:annunciator_horn_synth`:
+  a two-tone warble between 600 and 800 Hz, 1.2 s, made by `tools-make-annunciator-sounds.py` from sine waves, under the project licence)
+  or Custom, with a **Custom sound id** (`namespace:path`, at most 64 characters) for a sound a resource pack adds; the how-to is in
+  CONTROL-PANELS.md. The horn is now one loop per panel group and sound, so lights with different sounds are heard together. A malformed
+  id, or a sound a player's client does not have, plays the panel alarm instead. Servers can switch custom ids off with
+  `customAlarmSounds = false` in `bwr-panels.toml`: the server then leaves the custom choice out of what it sends, clients play the panel
+  alarm, and saving such a window's wrench screen while it is off stores Panel alarm. The box list shows a light's sound when it is not
+  the default. No packet and no protocol change (still 28). Not yet compiled by CI and not heard in the game.
+- **Annunciator box list** (CONTROL-PANELS.md; the owner asked for it after a with-and-without comparison). An annunciator window's wrench
+  screen has a **Box list** button beside Done and Cancel. It opens one read-only screen for every light of the box the window is in, two
+  lines a light: its number as the box numbers it (3-2), lens colour, legend and state, then its light address, what it is wired to
+  (machine name and signal, Computer, redstone, a component, a constant, or not wired) and its trigger. The heading has the box name and
+  counts (lights, wired, not wired, in alarm: every lit light, flashing or acknowledged); **Show** filters to All, Not wired, In alarm or
+  Computer-driven. It updates twice a second while open and a click on a light opens that light's wrench screen. Machine names are asked
+  from the server once, when the list opens (two new packets, **network protocol 28**, so client and server must match); the server
+  answers only a player holding the Panel Wrench with the opening window in reach, and only for machines loaded and permitted for them.
+  Opening the list drops unsaved edits on the wrench screen, as Cancel does. Not yet compiled by CI (GitHub Actions is not starting runs
+  on the repository) and not seen in the game.
+- **Annunciator lights: lens swatches, addresses for computers, a horn, and linking in either order** (CONTROL-PANELS.md; the owner asked
+  for all four).
+  - **Lens colour.** The window's colour field has White, Yellow and Red swatches. Any colour still loads and the default is unchanged.
+  - **Light address.** A window can carry an address, 00000 to 10000 (wrench screen; saved only when set). One address may be given to
+    several windows of a group. On the `bwr_panel` peripheral: `setAlarm(address, on)`, `setValue(address, number)`, `getAlarm(address)`,
+    `annunciators()`, and `acknowledge(group)` and `reset(group)`, which do what the ACK and RESET buttons do. A window with no source
+    becomes computer-driven on the first call; one wired to a machine, redstone or a constant refuses with an error naming its source.
+    Example: `docs/lua/annunciator_alarms.lua` (a low level and a bus undervoltage alarm; it parses, it has not been run under CC here).
+  - **Horn.** A new alarm sounds `bwr:annunciator_horn` at the panel, one loop per panel group, 16 blocks, on the Blocks volume. ACK stops
+    it for the acknowledged windows; the control module's SILENCE stops it for its group and changes nothing else. A silenced,
+    unacknowledged alarm stays quiet if its condition clears and returns. The sound is the first recorded audio in the mod: converted
+    from a clip the owner supplied (level raised about 24 dB, 40 ms crossfade so the loop does not click). It is OpenLWR's `Assets/Audio/CGSPanelAlarm.mp3`
+    (byte-identical to that repository's file), so this one file is under AGPL-3.0, not the project licence; the licence text ships in
+    the JAR and the source and changes are in SOUND-CREDITS.md and THIRD-PARTY-NOTICES.md. The other placeholders stay silent.
+  - **Linker, component first.** Besides device first: sneak-right-click a component with the Panel Linker, then right-click a plant
+    device, and the binding screen opens for that component and device. Sneak-right-click the air forgets either selection. While a
+    component is selected its binding is accepted from the device, beyond arm's reach of the panel (link range, dimension and claims
+    still apply), and a plain linker click on any signal-reporting block wires it instead of the block's own linker action.
+  - **Trigger on the binding screen.** For an annunciator window the binding screen shows its alarm condition and setpoint and applies
+    them with the binding; a wiring tool in hand is enough for those two fields.
+  - No packet was added and the protocol number is unchanged. Compiled and tested only by CI; the horn, the binding-screen fields and
+    the sneak-click have not been seen in the game.
+- **Annunciator windows have a "Columbia tile box" style, after owner-supplied photographs of the P800-C1 and P800-C5 boxes**
+  (CONTROL-PANELS.md; `art/models/panel/annunciator/README.md`). Ivory tray tiles on a black plate, each tile split into an upper and a
+  lower alarm; row numbers down the left, "-1", "-2" and so on across the top; a nameplate under the box ("ANN PANEL" over a **Box name**
+  set on any window of the box) and a latch at the side. One window is one alarm, so three half-height sizes are added (8x3, 12x4, 16x6):
+  two stacked make one tile and each half lights by itself. The plate margin is drawn outside the windows, so leave about 3 cells clear
+  round a box of 8-wide windows. The annunciator control module has a "Pushbutton station" style: four round black pushbuttons in bright
+  rings with a legend plate under each (patterned on a photograph of a local panel, not on Columbia's control room). Both are chosen in
+  the wrench screen; existing panels and new parts stay classic. The generic lamp-box style that was briefly on this branch is gone (it
+  was never released). No real dimension or maker of the hardware is known; proportions are from the photographs, which are not in the
+  repository. Not seen in the game yet: `PanelAnnunciatorShowcase` has two new stages (`annun-columbia`, `annun-columbia-close`).
+- **The motor-driven pumps were reworked against pump references** (MOTOR-PUMP-REMODEL.md). LPCS, HPCS and RHR/LPCI carry open
+  air-cooled vertical motors sized by horsepower (HPCS largest, RHR smallest), a cyclone separator on the seal flush and a minimum-flow
+  line with an orifice and motor-operated valve; HPCS and LPCS gain a small water-leg pump. The motor feedwater pump is a single-stage
+  double-suction pump with top discharge and bottom suction, driven through a speed-increasing gear by a box-frame motor, with a lube oil
+  console. The SLC pump gains a triple-reduction reducer and heat tracing. Looks only: footprints, controller cells, ports and flange
+  centres are identical (checked vertex by vertex against the previous commit), and old one-block saves keep their compact models.
+- **The turbine-driven reactor feed pump has a new model** (TURBINE-FEED-PUMP-REMODEL.md): a single-stage, double-suction pump with
+  the discharge on top and the inlet underneath, on a multistage condensing turbine with separate low- and high-pressure steam trains, a
+  side exhaust through an expansion joint, a turning gear and a lube oil console. Same block, 9 x 3 x 3 footprint and four ports. Its
+  pump nameplate now reads "TURBINE DRIVEN" instead of "BARREL MULTISTAGE".
+- **What the pump references are, and are not.** The NRC website refuses automated downloads, so the Columbia FSAR and the NRC technology
+  manuals were not opened. What was read are three NRC contractor reports, two DOE-sponsored reports, two EPRI reports and an INL system study, on
+  osti.gov and nrcoe.inl.gov. An independent pass re-opened every cited page of both write-ups and the wording was corrected where a source covered
+  one pump and was applied to another by analogy; each claim is tagged [V] (read) or [S] (search result only), and the Gaps lists say
+  what is still unverified for Columbia (among them: the LPCS and RHR motor sizes, which way up the feed pumps' nozzles are, whether
+  Columbia has a motor-driven feed pump at all, and the look of the feed pump turbine).
 - **A canal gate no longer "holds back" water that stands over its own top.** A pool brim full at its rim and a well whose walls stand higher (a fill port keeps filling it) looked level in the canal, which draws both sides full to the brim, but the crane refused GATE OUT with "holds back 7.14 m": the head was counted from the well's whole surface, y 98.14, to the pool's rim, y 91.00. A gate holds back only its own height, so each side's surface now counts no higher than the gate's top (`CanalGateLift.headAcross`; the message still prints the surfaces as they stand). A stack of 5 plugs and a single plug are both lifted when the two sides brim over the gate, and are still refused when they differ below its top. Tests: `CanalGateLiftTests` (+2, `bwrplug`).
 - **Closing a Grid Tie on a stalled shaft motors the train up, then shakes it apart** (TURBINE-MAINTENANCE.md, *Closing on a stalled shaft*;
   GRID-TIE-SPEC.md 4.2). The owner asked for the real-life inadvertent energization: the grid drives the stopped machine like an induction

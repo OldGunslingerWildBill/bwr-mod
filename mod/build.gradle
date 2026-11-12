@@ -841,6 +841,7 @@ tasks.named('jar', Jar).configure {
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }
     from(rootProject.file('SOUND-CREDITS.md')) { into 'META-INF' }
     from(rootProject.file('licenses/legacy')) { into 'META-INF/licenses/legacy' }
+    from(rootProject.file('licenses/third-party')) { into 'META-INF/licenses/third-party' }
 }
 
 tasks.named('processResources', ProcessResources).configure {

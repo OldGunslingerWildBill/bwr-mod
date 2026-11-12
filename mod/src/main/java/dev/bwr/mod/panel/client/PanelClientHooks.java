@@ -59,6 +59,33 @@ public final class PanelClientHooks {
         }
     }
 
+    /**
+     * The server's answer to an open box list: the names of the machines its windows read. It goes to the list that is
+     * on the screen, if one still is; anything else (the screen was closed, an answer for another box) is dropped.
+     */
+    public static void boxNames(dev.bwr.mod.panel.net.PanelPayloads.BoxNames payload) {
+        try {
+            if (Minecraft.getInstance().screen instanceof AnnunciatorBoxListScreen list) {
+                list.accept(payload);
+            }
+        } catch (RuntimeException failure) {
+            com.mojang.logging.LogUtils.getLogger().warn("The annunciator box list could not take its machine names", failure);
+        }
+    }
+
+    /** Opens the box list of the annunciator box a window is in (from the window's wrench screen). */
+    public static void openBoxList(BlockPos owner, int id) {
+        try {
+            Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.level != null && minecraft.level.isLoaded(owner)
+                    && minecraft.level.getBlockEntity(owner) instanceof PanelBlockEntity be && be.component(id) != null) {
+                minecraft.setScreen(new AnnunciatorBoxListScreen(owner, id));
+            }
+        } catch (RuntimeException failure) {
+            com.mojang.logging.LogUtils.getLogger().warn("The annunciator box list could not be opened", failure);
+        }
+    }
+
     /** Opens the wrench screen for a component the client already knows about. */
     public static void openConfig(BlockPos owner, int id) {
         Minecraft minecraft = Minecraft.getInstance();

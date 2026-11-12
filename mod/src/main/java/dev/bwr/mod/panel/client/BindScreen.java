@@ -30,10 +30,25 @@ public final class BindScreen extends Screen {
     /** Ports a selector page shows; a component with more has a pager above the selector. */
     static final int PORTS_PER_PAGE = 12;
     private int portPage = -1;
+    /**
+     * The alarm trigger of an annunciator window (its Condition and Setpoint, as the wrench screen has them), shown
+     * beside the port selector when the screen wires that window's input and applied with the binding. A window has
+     * the one input, so its port selector needs little room and the screen grows no taller. Null for anything else.
+     */
+    private final dev.bwr.mod.panel.component.AnnunciatorData trigger;
+    private String triggerCondition = "";
+    private String triggerSetpoint = "";
+    /** Whether the trigger widgets are on the screen now (only then is the trigger checked and sent). */
+    private boolean triggerShown;
 
     public BindScreen(PanelBlockEntity block, PanelComponent component, PanelPayloads.LinkerScreen device) {
         super(Component.translatable("screen.bwr.panel_bind.title", component.label()));
         this.model = new BindModel(block, component, device);
+        this.trigger = component.data() instanceof dev.bwr.mod.panel.component.AnnunciatorData data ? data : null;
+        if (trigger != null) {
+            triggerCondition = trigger.condition;
+            triggerSetpoint = dev.bwr.mod.panel.component.AnnunciatorTrigger.format(trigger.setpoint);
+        }
         var player = net.minecraft.client.Minecraft.getInstance().player;
         if (player != null && !dev.bwr.mod.panel.LinkTools.heldWrench(player).isEmpty()) {
             model.preselect(); // the Networking Wrench offers the best fitting signal, so one click confirms
@@ -80,10 +95,42 @@ public final class BindScreen extends Screen {
             following.active = portPage < pages - 1;
             addRenderableWidget(following);
         }
+        // An annunciator window: the port selector keeps a quarter of the row, the trigger takes the rest.
+        boolean triggered = showsTrigger() && !pager;
+        int portWidth = triggered ? layout.width / 4 : layout.width;
+        if (triggered) {
+            try {
+                // "Alarm: Above setpoint" and the setpoint beside it, as in the wrench screen; Apply sends both with the binding.
+                int setpointWidth = Math.max(48, layout.width / 5);
+                int conditionX = layout.left + portWidth + 4;
+                int conditionWidth = layout.width - portWidth - setpointWidth - 8;
+                addRenderableWidget(CycleButton.<String>builder(value -> Component.translatable("component.bwr.option.Condition." + value))
+                        .withValues(dev.bwr.mod.panel.component.AnnunciatorData.CONDITIONS).withInitialValue(triggerCondition)
+                        .create(conditionX, layout.portY, conditionWidth, 20, Component.translatable("screen.bwr.panel_bind.trigger"),
+                                (button, value) -> triggerCondition = value));
+                EditBox setpoint = new EditBox(font, layout.left + layout.width - setpointWidth, layout.portY, setpointWidth, 20,
+                        Component.translatable("component.bwr.field.setpoint"));
+                setpoint.setMaxLength(24);
+                setpoint.setValue(triggerSetpoint);
+                setpoint.setResponder(value -> {
+                    triggerSetpoint = value;
+                    refresh();
+                });
+                addRenderableWidget(setpoint);
+                triggerShown = true;
+            } catch (RuntimeException failure) {
+                // The trigger row is an extra: without it the screen wires the window as it always did.
+                triggerShown = false;
+                portWidth = layout.width;
+                com.mojang.logging.LogUtils.getLogger().warn("The binding screen could not show the alarm trigger", failure);
+            }
+        } else {
+            triggerShown = false;
+        }
         addRenderableWidget(CycleButton.<BindModel.PortChoice>builder(BindModel.PortChoice::text)
                 .withValues(shown).withInitialValue(model.port)
                 .displayOnlyValue()
-                .create(layout.left, layout.portY, layout.width, 20, Component.empty(), (button, value) -> {
+                .create(layout.left, layout.portY, portWidth, 20, Component.empty(), (button, value) -> {
                     model.choose(value);
                     rebuildWidgets();
                 }));
@@ -204,7 +251,8 @@ public final class BindScreen extends Screen {
 
         int third = (layout.width - 8) / 3;
         apply = addRenderableWidget(Button.builder(Component.translatable("screen.bwr.panel_bind.apply"), button -> {
-            if (model.canApply()) {
+            if (model.canApply() && triggerValid()) {
+                sendTrigger();
                 PacketDistributor.sendToServer(model.toBind());
                 onClose();
             }
@@ -220,7 +268,34 @@ public final class BindScreen extends Screen {
 
     private void refresh() {
         if (apply != null) {
-            apply.active = model.canApply();
+            apply.active = model.canApply() && triggerValid();
+        }
+    }
+
+    /** Whether the trigger row is shown: the screen wires the input of an annunciator window. */
+    private boolean showsTrigger() {
+        return trigger != null && model.hasPorts() && model.port != null && !model.port.output();
+    }
+
+    /** Whether the setpoint typed is a number (always true when the trigger is not shown). */
+    private boolean triggerValid() {
+        return !triggerShown || dev.bwr.mod.panel.component.AnnunciatorTrigger.parse(triggerSetpoint) != null;
+    }
+
+    /** Sends the window's condition and setpoint ahead of the binding, when either was changed here. */
+    private void sendTrigger() {
+        if (!triggerShown || trigger == null) {
+            return;
+        }
+        try {
+            Double setpoint = dev.bwr.mod.panel.component.AnnunciatorTrigger.parse(triggerSetpoint);
+            if (setpoint == null || triggerCondition.equals(trigger.condition) && setpoint == trigger.setpoint) {
+                return;
+            }
+            PacketDistributor.sendToServer(new PanelPayloads.Configure(model.owner, model.componentId,
+                    dev.bwr.mod.panel.component.AnnunciatorTrigger.edit(triggerCondition, setpoint)));
+        } catch (RuntimeException failure) {
+            com.mojang.logging.LogUtils.getLogger().warn("The binding screen could not send the alarm trigger", failure);
         }
     }
 

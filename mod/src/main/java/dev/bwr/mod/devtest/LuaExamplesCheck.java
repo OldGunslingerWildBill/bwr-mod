@@ -70,7 +70,7 @@ public final class LuaExamplesCheck {
     private static final String TOKEN = UUID.randomUUID().toString();
     private static final Path OUTPUT = Path.of("lua-examples-check", "results.json");
     private static final List<String> FILES = List.of("startup.lua", "backup_scram.lua", "eccs_start.lua",
-            "containment_isolation.lua", "panel_display.lua", "spds.lua");
+            "containment_isolation.lua", "panel_display.lua", "spds.lua", "annunciator_alarms.lua");
     private record Scenario(String name, String file, String error, String... args) { }
     private static final List<Scenario> DEFAULT_SCENARIOS = List.of(
             new Scenario("startup-motion", "startup.lua", null, "left", ".2", "1", "2", "15", ".05"),
@@ -101,7 +101,11 @@ public final class LuaExamplesCheck {
             new Scenario("spds-touch", "spds.lua", null, "left", "right", "SPDS", "12", ".2"),
             new Scenario("spds-builtin-display", "spds.lua", "built-in page", "left", "right", "SPDS", "once"),
             new Scenario("spds-missing-label", "spds.lua", "No plant computer labelled", "left", "right", "ABSENT", "once"),
-            new Scenario("spds-small-display", "spds.lua", "at least 24 x 12", "left", "right", "SPDS", "once")
+            new Scenario("spds-small-display", "spds.lua", "at least 24 x 12", "left", "right", "SPDS", "once"),
+            new Scenario("alarms-two-lights", "annunciator_alarms.lua", null, "left", "right", "101", "102", "2", ".05"),
+            new Scenario("alarms-unknown-address", "annunciator_alarms.lua", "No annunciator light at address 00999",
+                    "left", "right", "101", "999", "once"),
+            new Scenario("alarms-missing-panel", "annunciator_alarms.lua", "No peripheral named", "missing", "right", "101", "102", "once")
     );
     private static final List<Scenario> SCENARIOS = scenarios();
     private static List<Scenario> scenarios() {
@@ -326,6 +330,8 @@ public final class LuaExamplesCheck {
         PlantComputerData plant;
         PanelComponent plantComponent;
         PanelBlockEntity plantOwner;
+        /** The two annunciator windows of annunciator_alarms.lua: level (address 101) and bus (address 102). */
+        PanelComponent levelLight, busLight;
         boolean closed;
 
         Fixture(ServerLevel level, int slot, Scenario scenario) {
@@ -338,7 +344,8 @@ public final class LuaExamplesCheck {
             hold(true);
             clear(); // Required even on the first run: the dedicated test world is reused.
             if (scenario.file().equals("startup.lua") || scenario.file().equals("backup_scram.lua")
-                    || scenario.file().equals("panel_display.lua") || scenario.file().equals("spds.lua")) buildReactor();
+                    || scenario.file().equals("panel_display.lua") || scenario.file().equals("spds.lua")
+                    || scenario.file().equals("annunciator_alarms.lua")) buildReactor();
             switch (scenario.file()) {
                 case "startup.lua", "backup_scram.lua" -> attach("left", reactor.getBlockPos(), "bwr_reactor");
                 case "eccs_start.lua" -> {
@@ -397,6 +404,19 @@ public final class LuaExamplesCheck {
                     plant = (PlantComputerData) plantComponent.data();
                     plantOwner = (PanelBlockEntity) level.getBlockEntity(panel);
                     if (scenario.name().equals("spds-builtin-display")) plant.mode = "overview";
+                    attach("left", panel, "bwr_panel");
+                    attach("right", reactor.getBlockPos(), "bwr_reactor");
+                }
+                case "annunciator_alarms.lua" -> {
+                    // Two unwired annunciator windows with light addresses on one panel block.
+                    BlockPos panel = origin.offset(12, 4, 0);
+                    level.setBlock(panel, BwrBlocks.CONTROL_PANEL_VERTICAL.get().defaultBlockState()
+                            .setValue(PanelBlock.FACING, Direction.NORTH), 3);
+                    levelLight = PanelOps.placeDirect(level, panel, 0, 0, ComponentTypes.ANNUNCIATOR, Footprint.of(8, 6));
+                    busLight = PanelOps.placeDirect(level, panel, 8, 0, ComponentTypes.ANNUNCIATOR, Footprint.of(8, 6));
+                    require(levelLight != null && busLight != null, "annunciator fixture did not fit");
+                    ((dev.bwr.mod.panel.component.AnnunciatorData) levelLight.data()).address = 101;
+                    ((dev.bwr.mod.panel.component.AnnunciatorData) busLight.data()).address = 102;
                     attach("left", panel, "bwr_panel");
                     attach("right", reactor.getBlockPos(), "bwr_reactor");
                 }
@@ -595,6 +615,28 @@ public final class LuaExamplesCheck {
                 if (name.equals("isolation-refused")) require(penetration.demandOpen() && penetration.position() == 1, "non-valved service was changed despite refusal");
             }
             if (plant != null) verifyPlant(out);
+            if (busLight != null) {
+                var levelData = (dev.bwr.mod.panel.component.AnnunciatorData) levelLight.data();
+                var busData = (dev.bwr.mod.panel.component.AnnunciatorData) busLight.data();
+                boolean wired = levelLight.source(0) instanceof dev.bwr.mod.panel.wiring.CcSource
+                        && busLight.source(0) instanceof dev.bwr.mod.panel.wiring.CcSource;
+                out.addProperty("lights_wired_to_cc", wired);
+                out.addProperty("level_light", dev.bwr.mod.panel.wiring.AnnunciatorAddresses.word(levelData.logic.state()));
+                out.addProperty("bus_light", dev.bwr.mod.panel.wiring.AnnunciatorAddresses.word(busData.logic.state()));
+                if (scenario.error() == null) {
+                    // No redstone reaches the fixture's computer, so the bus reads undervoltage; the level light follows the reactor.
+                    boolean low = reactor.core().getIndicatedLevelIn() < 12.5;
+                    require(wired && busData.logic.state() == dev.bwr.mod.panel.component.AnnunciatorLogic.State.ALARM && busData.logic.audible(),
+                            "the bus undervoltage light did not alarm and sound");
+                    out.addProperty("level_low", low);
+                    require(!low || levelData.logic.state() == dev.bwr.mod.panel.component.AnnunciatorLogic.State.ALARM,
+                            "the level is low and its light did not alarm");
+                } else {
+                    require(!wired && levelData.logic.state() == dev.bwr.mod.panel.component.AnnunciatorLogic.State.NORMAL
+                            && busData.logic.state() == dev.bwr.mod.panel.component.AnnunciatorLogic.State.NORMAL,
+                            "a refused alarm program wrote a light");
+                }
+            }
             if (graphic != null) {
                 int lit = 0;
                 for (int y = 0; y < graphic.height(); y++) for (int x = 0; x < graphic.width(); x++)

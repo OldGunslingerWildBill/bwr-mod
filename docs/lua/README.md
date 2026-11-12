@@ -1,6 +1,6 @@
 # Player Lua examples
 
-These six CC:Tweaked programs are the player's own automation, not part of the
+These seven CC:Tweaked programs are the player's own automation, not part of the
 mod. Nothing installs, starts, or runs them automatically. They call the same
 peripherals available to a player in the current mod; no extra control API is
 added by these examples.
@@ -153,13 +153,32 @@ The limits that make a function amber or red are a table at the top of the file 
 the mod judges nothing. The program reads the reactor and writes a display; it issues no plant commands, and the picture is not
 an independent alarm (it stays as it was if the program stops).
 
+## Annunciator alarms by light address
+
+```text
+examples/annunciator_alarms.lua <panel_name> <reactor_name> <level_address> <bus_address> [once|count] [interval_seconds=1]
+```
+
+[annunciator_alarms.lua](annunciator_alarms.lua) drives two annunciator windows by their **light address**: a low reactor
+level (`getWaterLevel()` below the `LOW_LEVEL_IN` written at the top of the file) and a bus undervoltage (no redstone signal on
+the computer's `BUS_HEALTHY_SIDE`; a computer has no bus voltage to read, so feed it a relay contact). Give each window an
+address in its wrench screen (**Light address**, 0 to 10000; several windows may share one) and pass the two numbers. A window
+must be unwired (the first `setAlarm` wires it to CC) or already wired to CC, and keep its default trigger, because `setAlarm`
+writes 1 or 0; for a window with its own setpoint send the measurement with `setValue(address, number)`.
+
+The program checks both addresses before it writes either, then reports the two conditions once per interval and prints what
+each light shows (`off`, `alarm`, `acknowledged`). The window runs its own alarm sequence: a new alarm flashes and sounds the horn
+until ACK is pressed (SILENCE stops the horn only). The program never acknowledges, issues no plant commands, and the lights keep
+their last state when it stops. See the [panel API](../../CONTROL-PANELS.md#4-cctweaked-reference) for `setAlarm`, `setValue`,
+`getAlarm`, `annunciators`, `acknowledge` and `reset`.
+
 ## Scope of these examples
 
 Startup demonstrates one explicit recirculation/rod manoeuvre in the player's
 chosen startup sequence. Backup scram applies player-supplied limits while the
 program is running. ECCS start commands one named train. Containment isolation
 closes named valves and waits for their actual travel. The panel driver and the SPDS only
-read the reactor and write a display.
+read the reactor and write a display; the annunciator program reads the reactor and a redstone input and writes two lights.
 
 Choose settings and equipment for your own in-game build. These examples do not
 establish a complete operating procedure or prove a whole plant's readiness.
@@ -181,7 +200,7 @@ dispatch. It attaches actual BWR capability objects to computer sides, exercises
 successful operations and failures, and verifies block-entity readbacks. It
 does not substitute a hand-written Lua peripheral API or validate cable-network
 construction. The harness owns this runtime and its lifetime; no physical
-computer block ticker competes for the direct side bindings. Its 29 scenarios
+computer block ticker competes for the direct side bindings. Its 32 scenarios
 include a separate real computer block with repeatedly invalidated native sides,
 verifying that native scans cannot erase the ECCS attachment. Script names and
 source hashes appear in the check's output.

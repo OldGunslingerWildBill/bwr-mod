@@ -84,8 +84,14 @@ desks (`Control Desk 1m.obj`, `Control Desk.obj`) were made by the project owner
 
 The suppression pool rumble (`rumble_pool.ogg`, the relief valve and pool rumble loop, same folder) is a recording supplied by the project owner, converted by
 `tools-make-rumble-sounds.py`; see SOUND-CREDITS.md. The shaft excursion sound (`turbine_excursion.ogg` and its `_distant` and `_muffled` variants, `mod/src/main/resources/assets/bwr/sounds`) is a
-recording supplied by the project owner (`Turbine_pure_v2`), converted by `tools-make-turbine-sounds.py`; see SOUND-CREDITS.md. Every other
-sound of the project is synthesised by its own tool from noise and sine waves.
+recording supplied by the project owner (`Turbine_pure_v2`), converted by `tools-make-turbine-sounds.py`; see SOUND-CREDITS.md. Apart from the annunciator
+horn below, every other sound of the project is synthesised by its own tool from noise and sine waves.
+
+**Annunciator horn (AGPL-3.0, from OpenLWR).** `assets/bwr/sounds/annunciator_horn.ogg` is a modified copy of
+`Assets/Audio/CGSPanelAlarm.mp3` from OpenLWR (<https://github.com/OpenLWR/OpenLWR>, commit `db56cd6`), copyright its
+contributors, licensed under the GNU Affero General Public License, version 3. It is included as a separately licensed
+file: the project license does not apply to it and adds no restriction to it. The licence text is
+`licenses/third-party/AGPL-3.0.txt`; the changes made to the clip are listed in SOUND-CREDITS.md.
 
 ## Previously published versions
 

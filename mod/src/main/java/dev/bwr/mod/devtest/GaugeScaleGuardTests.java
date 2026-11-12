@@ -13,6 +13,7 @@ import dev.bwr.mod.panel.component.GaugeData;
 import dev.bwr.mod.panel.component.PanelComponent;
 import dev.bwr.mod.panel.component.PanelStyles;
 import dev.bwr.mod.panel.component.SegmentDisplayData;
+import dev.bwr.mod.panel.model.AnnunciatorBox;
 import dev.bwr.mod.panel.model.BakedPanelModel;
 import dev.bwr.mod.panel.model.GaugeScale;
 import dev.bwr.mod.panel.model.Legends;
@@ -42,7 +43,9 @@ import java.util.function.Consumer;
  *       {@value #HIGH} times their share there (a least size fixed in cells, the bug this guards, made a 1 x 3 bar
  *       gauge's numbers twice and its ticks five times their share) and no less than {@value #LOW} (they do not vanish;
  *       a real size bar graph's finer LEDs are 0.75). Every other size may be no more than {@value #BIG_HIGH} times
- *       the design size's share.</li>
+ *       the design size's share. (An annunciator's half height windows, one alarm of a split tile, are another shape
+ *       from its design size, with a legend that fills half the height by design: they are held to the largest of
+ *       themselves instead.)</li>
  *   <li>Fit: at every size, and at Text size 50, 100 and 200 %, every piece of text lies inside the drawn component
  *       and clear of every other; for a round dial (a probe with a face colour) inside the face of the dial, not just
  *       the component, so none of it is printed on the bezel.</li>
@@ -65,6 +68,8 @@ public final class GaugeScaleGuardTests {
     static final float HIGH = 1.1f;
     static final float LOW = 0.6f;
     static final float BIG_HIGH = 1.25f;
+    /** The largest half height annunciator window: what the other half height sizes are compared with. */
+    static final Footprint ANNUNCIATOR_HALF = Footprint.of(16, 6);
     /** The classic gauges' ink (DialGaugeModel, EdgewiseGaugeModel), the GE meters' printed ink, the thumbwheel's engraved marks. */
     private static final int CLASSIC_INK = 0x202020;
     private static final int GE_INK = 0x1A1A1A;
@@ -380,6 +385,14 @@ public final class GaugeScaleGuardTests {
             }
             int m = multiple(size, design);
             Shot small = shot(probe, size, text, tick);
+            if (probe.type() == ComponentTypes.ANNUNCIATOR && AnnunciatorBox.halfShaped(size.w(), size.h())) {
+                // A half height window is one alarm of a split tile: its legend fills a window half as tall, so it is a
+                // bigger share of the height than on a whole tile by design. It is held to the largest half height size.
+                if (!size.equals(ANNUNCIATOR_HALF)) {
+                    compare(probe, small, shot(probe, ANNUNCIATOR_HALF, text, tick), 0.0f, BIG_HIGH, failures);
+                }
+                continue;
+            }
             if (probe.digitRow()) {
                 compare(probe, small, designShot, LOW, HIGH, failures);
             } else if (m >= 2) {

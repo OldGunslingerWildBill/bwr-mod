@@ -5,7 +5,8 @@ Headless only:
 First run `python art/models/turbine_pumps/make_textures.py` (gauge, nameplate and panel textures).
 
 Writes the mesh/UV snapshots that the existing exporters bake into block cells:
-    art/models/modern/turbine_feed_pump.json   -> python tools-export-modern.py
+    (the feed pump turbine JSON now comes from art/models/modern/build_turbine_feed_pump.py; build_tfp() below is
+     the earlier barrel-pump model, kept as the source of the frozen compact model and of turbine_pumps.blend)
     art/models/terry/rcic_twl.json             -> python tools-export-terry.py
     art/models/terry/hpci_turbine.json
 and the editable source art/models/turbine_pumps/turbine_pumps.blend.
@@ -613,7 +614,7 @@ def build_tfp():
     meta = {'id': 'turbine_feed_pump', 'size': [9, 3, 3], 'controller': [4, 0, 1], 'scale': 1.0,
             'ports': [{'role': r.upper(), 'cell': c, 'face': f} for r, c, f in TFP_PORTS]}
     check_wired('turbine_feed_pump_modern', TFP_PORTS, meta['size'], meta['controller'])
-    export(s, ROOT / 'art/models/modern/turbine_feed_pump.json', meta)
+    # Not exported: art/models/modern/build_turbine_feed_pump.py owns turbine_feed_pump.json (TURBINE-FEED-PUMP-REMODEL.md).
     return s
 
 

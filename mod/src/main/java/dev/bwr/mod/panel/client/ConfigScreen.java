@@ -30,6 +30,8 @@ public final class ConfigScreen extends Screen {
     private final int componentId;
     private final ConfigModel model;
     private final String typeKey;
+    /** An annunciator window: its wrench screen has a third button, the list of the whole box the window is in. */
+    private final boolean boxList;
     private ConfigLayout layout;
     private ScrollRows rows;
     private Button done;
@@ -42,6 +44,7 @@ public final class ConfigScreen extends Screen {
         this.componentId = component.id();
         this.model = new ConfigModel(component);
         this.typeKey = component.type().translationKey();
+        this.boxList = component.data() instanceof dev.bwr.mod.panel.component.AnnunciatorData;
     }
 
     @Override
@@ -164,9 +167,19 @@ public final class ConfigScreen extends Screen {
                 PacketDistributor.sendToServer(new PanelPayloads.Configure(owner, componentId, model.toEdit()));
                 onClose();
             }
-        }).bounds(layout.left, layout.buttonY, layout.width / 2 - 2, 20).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), button -> onClose())
-                .bounds(layout.left + layout.width / 2 + 2, layout.buttonY, layout.width / 2 - 2, 20).build());
+        }).bounds(layout.left, layout.buttonY, boxList ? (layout.width - 8) / 3 : layout.width / 2 - 2, 20).build());
+        if (boxList) {
+            // Done, Cancel and the box list share the row. The list is read-only and leaves this screen as Cancel does.
+            int third = (layout.width - 8) / 3;
+            addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), button -> onClose())
+                    .bounds(layout.left + third + 4, layout.buttonY, third, 20).build());
+            addRenderableWidget(Button.builder(Component.translatable("screen.bwr.panel_config.box_list"),
+                            button -> PanelClientHooks.openBoxList(owner, componentId))
+                    .bounds(layout.left + 2 * (third + 4), layout.buttonY, third, 20).build());
+        } else {
+            addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), button -> onClose())
+                    .bounds(layout.left + layout.width / 2 + 2, layout.buttonY, layout.width / 2 - 2, 20).build());
+        }
         refresh();
     }
 

@@ -20,6 +20,7 @@ tasks.withType(Jar).configureEach {
     from(rootProject.file('NOTICE')) { into 'META-INF' }
     from(rootProject.file('THIRD-PARTY-NOTICES.md')) { into 'META-INF' }
     from(rootProject.file('licenses/legacy')) { into 'META-INF/licenses/legacy' }
+    from(rootProject.file('licenses/third-party')) { into 'META-INF/licenses/third-party' }
 }
 
 repositories {

@@ -75,6 +75,13 @@ public final class PanelNetworkIndex {
         invalidate();
     }
 
+    /** A copy of the client's loaded panels, for client code that looks at all of them (the annunciator horn). */
+    public static List<PanelBlockEntity> clientPanels() {
+        synchronized (CLIENT_PANELS) {
+            return new ArrayList<>(CLIENT_PANELS);
+        }
+    }
+
     /** Panels held, for tests. */
     public static int tracked() {
         synchronized (CLIENT_PANELS) {
