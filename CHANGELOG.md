@@ -2,6 +2,15 @@
 
 ## Unreleased (alpha.60): turbine accident sounds
 
+- **Each annunciator light can choose its alarm sound** (CONTROL-PANELS.md; the owner asked for a custom alarm option). The window's
+  wrench screen has **Alarm sound**: Panel alarm (the default, `bwr:annunciator_horn`), Synthesised horn (new, `bwr:annunciator_horn_synth`:
+  a two-tone warble between 600 and 800 Hz, 1.2 s, made by `tools-make-annunciator-sounds.py` from sine waves, under the project licence)
+  or Custom, with a **Custom sound id** (`namespace:path`, at most 64 characters) for a sound a resource pack adds; the how-to is in
+  CONTROL-PANELS.md. The horn is now one loop per panel group and sound, so lights with different sounds are heard together. A malformed
+  id, or a sound a player's client does not have, plays the panel alarm instead. Servers can switch custom ids off with
+  `customAlarmSounds = false` in `bwr-panels.toml`: the server then leaves the custom choice out of what it sends, clients play the panel
+  alarm, and saving such a window's wrench screen while it is off stores Panel alarm. The box list shows a light's sound when it is not
+  the default. No packet and no protocol change (still 28). Not yet compiled by CI and not heard in the game.
 - **Annunciator box list** (CONTROL-PANELS.md; the owner asked for it after a with-and-without comparison). An annunciator window's wrench
   screen has a **Box list** button beside Done and Cancel. It opens one read-only screen for every light of the box the window is in, two
   lines a light: its number as the box numbers it (3-2), lens colour, legend and state, then its light address, what it is wired to
