@@ -78,7 +78,7 @@ def setup_scene():
         scene.collection.objects.link(ob)
         return ob
 
-    light("key", "SUN", 3.2, (50, 0, -30))       # from the operator side, upper left
+    light("key", "SUN", 3.0, (38, 0, -30))       # from the operator side, upper left
     light("fill", "SUN", 1.0, (60, 0, 160))       # from behind, upper right
     light("top", "SUN", 0.8, (5, 0, 0))
     return scene, engine
@@ -144,7 +144,7 @@ def main():
             pts = [ch.matrix_world @ v.co for v in ch.data.vertices]
             cc = sum(pts, Vector()) / len(pts)
             cc.z = 0.62
-            camera(scene, "cam", cc + nrm * 10.0, cc, ortho=1.75, aspect=(4, 3))
+            camera(scene, "cam", cc + nrm * 10.0, cc, ortho=2.2, aspect=(4, 3))
             shoot(scene, key + "_side.png")
         if want(key + "_top"):
             camera(scene, "cam", (cx, cy, 20.0), (cx, cy + 1e-4, 0.0), ortho=w * 1.1, aspect=(16, 9))
@@ -157,7 +157,7 @@ def main():
         camera(scene, "cam", (c.x, c.y, 30.0), (c.x, c.y + 1e-4, 0), ortho=(ahi.x - alo.x) * 1.05, aspect=(16, 5))
         shoot(scene, "all_top.png")
     if want("all_persp"):
-        camera(scene, "cam", (c.x - 6.0, c.y - 17.0, 6.0), (c.x, c.y, 0.3), lens=35, aspect=(16, 7))
+        camera(scene, "cam", (c.x - 3.0, c.y - 21.0, 8.0), (c.x, c.y + 0.5, 0.2), lens=42, aspect=(16, 7))
         shoot(scene, "all_persp.png")
 
     # --- imitations of the reference photos ---
@@ -168,22 +168,22 @@ def main():
                       lens=lens, aspect=aspect)
 
     if want("ref02_P_front"):
-        front_of("P", 3.6, 2.3, side=0.1, look_z=0.45, lens=26, aspect=(1752, 601))
+        front_of("P", 4.6, 1.75, side=0.1, look_z=0.55, lens=24, aspect=(1752, 601))
         shoot(scene, "ref02_P_front.png")
     if want("ref06_A_front"):
-        front_of("A", 4.3, 2.0, side=0.6, look_z=0.55, lens=30, aspect=(962, 460))
+        front_of("A", 5.8, 1.75, side=0.5, look_z=0.6, lens=30, aspect=(962, 460))
         shoot(scene, "ref06_A_front.png")
     if want("ref07_T_front"):
-        front_of("T", 4.6, 2.3, side=-0.2, look_z=0.45, lens=24, aspect=(2206, 707))
+        front_of("T", 6.6, 1.9, side=-0.3, look_z=0.55, lens=24, aspect=(2206, 707))
         shoot(scene, "ref07_T_front.png")
     if want("ref05_A_left_end"):
         org, lo, hi = info["A"]
-        camera(scene, "cam", (lo.x - 1.6, lo.y - 1.1, 1.45), (lo.x + 1.3, lo.y + 0.9, 0.62), lens=24,
+        camera(scene, "cam", (lo.x - 0.9, lo.y - 1.4, 1.5), (lo.x + 1.4, lo.y + 0.9, 0.62), lens=24,
                aspect=(1123, 785))
         shoot(scene, "ref05_A_left_end.png")
     if want("ref09_rear_doors"):
         org, lo, hi = info["P"]
-        camera(scene, "cam", (lo.x + 0.2, hi.y + 1.5, 2.1), (lo.x + 2.0, hi.y - 0.2, 0.6), lens=22,
+        camera(scene, "cam", (hi.x + 0.3, hi.y + 1.1, 1.95), (hi.x - 2.4, hi.y - 0.4, 0.55), lens=20,
                aspect=(1632, 1143))
         shoot(scene, "ref09_rear_doors.png")
     print("engine:", engine)
