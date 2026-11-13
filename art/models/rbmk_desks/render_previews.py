@@ -157,7 +157,7 @@ def main():
         camera(scene, "cam", (c.x, c.y, 30.0), (c.x, c.y + 1e-4, 0), ortho=(ahi.x - alo.x) * 1.05, aspect=(16, 5))
         shoot(scene, "all_top.png")
     if want("all_persp"):
-        camera(scene, "cam", (c.x - 3.0, c.y - 21.0, 8.0), (c.x, c.y + 0.5, 0.2), lens=42, aspect=(16, 7))
+        camera(scene, "cam", (c.x, c.y - 24.0, 10.0), (c.x, c.y, 0.0), lens=30, aspect=(16, 7))
         shoot(scene, "all_persp.png")
 
     # --- imitations of the reference photos ---

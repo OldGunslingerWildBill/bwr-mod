@@ -31,7 +31,7 @@ chord between the desk's two outer front corners (that chord is parallel to X); 
 desk's rear top edge (doors not counted). So the convex rear just touches the plane Y = origin.y.
 
 Object names (per section, <D> = A/P/T, <S> = section id):
-    <D>_<S>_body      the painted carcass: rear wall, flat top, apron, underside, knee-recess front (dark)
+    <D>_<S>_body      the painted carcass: rear wall, top, apron, underside, knee-recess front (dark)
     <D>_<S>_riser     the near-vertical instrument face (plain panel slab)
     <D>_<S>_desktop   the sloping blue-gray desktop slab (shortened in a writing-shelf section)
     <D>_<S>_shelf     only in a writing-shelf section: the lowered flat writing shelf at the front
@@ -56,53 +56,60 @@ BLEND = os.path.join(HERE, "rbmk_desks.blend")
 # PARAMETERS  (all lengths in millimetres, angles in degrees) -- edit here, then rerun the script
 # =====================================================================================================================
 PROFILE = dict(
-    HEIGHT=1200.0,           # floor to the flat top                                   (drawing 01: 1200)
+    # Scale comes from standard drawing 01 (1250 deep, 1200 high). Everything else was measured off the rectified
+    # end view 05 of the recreation; where drawing and recreation disagree the recreation wins.
+    HEIGHT=1200.0,           # floor to the top of the riser (front edge of the top)   (drawing 01: 1200)
     DEPTH=1250.0,            # desktop front top edge to the rear top edge             (drawing 01: 1250)
-    FRONT_Z=760.0,           # height of the desktop front top edge                    (drawing 01: 760)
-    PEDESTAL_BASE=450.0,     # pedestal depth at the floor, rear foot to knee-recess front (drawing 01: 450)
-    REAR_LEAN=140.0,         # the rear wall leans back: rear top edge is this much behind the rear foot (01, 05)
-    TOP_DEPTH=290.0,         # flat top, rear top edge to the riser's front top edge   (est. 01, 05)
-    RISER_LEAN=50.0,         # riser front face: its base is this much forward of its top (est. 01, 05; ~8 deg)
+    FRONT_Z=780.0,           # height of the desktop front top edge   (05: 784; drawing dimension says 760)
+    TOP_RISE=40.0,           # the top is not level: its rear edge is this much lower than its front edge (01, 05)
+    TOP_DEPTH=300.0,         # top, rear top edge to the riser's front top edge        (05: 297, 01: ~313)
+    REAR_LEAN=300.0,         # the rear wall leans back: rear top edge is this much behind the rear foot at the
+                             # floor (05: ~14.8 deg; drawing 01 shows only ~6 deg = ~120)
+    PEDESTAL_BASE=400.0,     # pedestal depth at the floor, rear foot to knee-recess front (05: 417 at plinth top)
+    RISER_LEAN=85.0,         # riser front face: its base is this much forward of its top (05: ~14 deg)
     RISER_THICK=30.0,        # riser panel slab thickness (horizontal)
-    DESK_SLOPE=6.0,          # desktop falls toward the operator by this angle         (est. 01)
-    DESK_THICK=40.0,         # desktop slab thickness at the front edge (vertical)    (est. 03, 05)
-    APRON_H=140.0,           # gray apron band under the desktop front edge            (est. 05, 07)
-    UNDER_Z=490.0,           # height where the underside meets the knee-recess front  (est. 01)
-    PLINTH_H=100.0,          # floor plinth height                                     (est. 05, 07)
-    PLINTH_OUT=15.0,         # how far the plinth stands proud of the faces above it   (est. 05)
-    CHEEK_THICK=20.0,        # end cheek plate thickness (counted inside the end section's width)
+    DESK_SLOPE=5.5,          # desktop falls toward the operator by this angle         (05: 5.3, 01: 5-6)
+    DESK_THICK=30.0,         # desktop slab thickness (vertical)                       (05: ~27)
+    APRON_H=130.0,           # gray apron band under the desktop slab                  (05: ~130)
+    APRON_SETBACK=20.0,      # the apron face stands this far behind the slab's front edge (05: ~23)
+    UNDER_Z=535.0,           # height where the diagonal underside meets the knee-recess front (05: 536, 01: 521)
+    PLINTH_H=105.0,          # floor plinth height                                     (05: 105)
+    PLINTH_OUT=20.0,         # how far the plinth stands proud of the faces above it   (05: 15-25)
+    CHEEK_THICK=20.0,        # end cheek plate thickness (counted inside the end section's width; not measurable)
     DOOR_THICK=20.0,         # rear service doors stand proud of the rear wall by this (09)
-    DOOR_TOP_GAP=70.0,       # rear wall above the doors (measured vertically from the top)  (est. 09)
+    DOOR_TOP_GAP=40.0,       # rear wall above the doors (measured vertically from the rear top edge) (est. 09)
     DOOR_BOTTOM_GAP=20.0,    # gap between the plinth top and the door bottoms (est. 09)
     DOOR_SIDE_GAP=30.0,      # gap from a section's edge to its outer door edge (est. 09)
-    DOOR_MID_GAP=10.0,       # gap between the two doors of a section (09)
-    SHELF_DROP=40.0,         # writing shelf top lies this far below FRONT_Z            (est. 02, 03)
-    SHELF_DEPTH=420.0,       # writing shelf depth from the front edge to the step up to the desktop (est. 03)
+    DOOR_MID_GAP=15.0,       # gap between the two doors of a section (09)
+    SHELF_DROP=0.0,          # writing shelf top lies this far below FRONT_Z (02, 07: level with the neighbours)
+    SHELF_DEPTH=410.0,       # level writing shelf, front edge to the step up to the sloping desktop (est. 03)
 )
 
 # Per desk: list of (section id, front-edge chord width mm, turn in degrees at the joint to the NEXT section,
 # writing shelf flag). The last section's turn is ignored. Turns are positive = the desk bends toward the operator.
+# Widths and turns were measured from the front views (02, 06, 07) with a fitted pinhole camera, scaled by the
+# 1200 height. The ratios between sections and between desks are better known than the absolute widths (+-10 %).
 LAYOUT = {
-    "A": [("1A", 1200.0, 6.0, False),
-          ("2A", 1200.0, 6.0, False),
-          ("3A", 1200.0, 6.0, True),
-          ("4A", 1200.0, 6.0, False),
-          ("5A", 1200.0, 0.0, False)],
-    "P": [("1P", 1000.0, 5.0, False),
-          ("2P", 1000.0, 5.0, False),
-          ("3P", 1000.0, 5.0, True),
-          ("4P", 1000.0, 5.0, False),
-          ("5P", 1000.0, 5.0, False),
-          ("6P", 1000.0, 0.0, False)],
-    "T": [("1T", 1000.0, 4.0, False),
-          ("2T", 1000.0, 4.0, False),
-          ("3T", 1000.0, 4.0, False),
-          ("4T", 1000.0, 4.0, True),
-          ("5T", 1000.0, 4.0, False),
-          ("6T", 1000.0, 4.0, False),
-          ("7T", 1000.0, 4.0, False),
-          ("1E", 1000.0, 4.0, False),
-          ("2E", 1000.0, 0.0, False)],
+    "A": [("1A", 880.0, 6.0, False),
+          ("2A", 880.0, 6.0, False),
+          ("3A", 880.0, 6.0, True),
+          ("4A", 880.0, 6.0, False),
+          ("5A", 880.0, 0.0, False)],
+    "P": [("1P", 890.0, 6.0, False),
+          ("2P", 890.0, 6.0, False),
+          ("3P", 890.0, 6.0, True),
+          ("4P", 890.0, 6.0, False),
+          ("5P", 890.0, 6.0, False),
+          ("6P", 890.0, 0.0, False)],
+    "T": [("1T", 660.0, 6.0, False),
+          ("2T", 660.0, 6.0, False),
+          ("3T", 805.0, 6.0, False),
+          ("4T", 805.0, 6.0, True),
+          ("5T", 640.0, 6.0, False),
+          ("6T", 640.0, 6.0, False),
+          ("7T", 765.0, 6.0, False),
+          ("1E", 710.0, 6.0, False),
+          ("2E", 710.0, 0.0, False)],
 }
 DESK_ORDER = ["A", "P", "T"]
 DESK_GAP = 1500.0            # clear gap between neighbouring desks' bounding boxes along X
@@ -112,7 +119,7 @@ COLOURS = {
     "paint":  "#7f8a8e",     # console gray paint: rear, top, riser, apron, cheeks, doors
     "desk":   "#4d5f6d",     # blue-gray desktop / writing shelf
     "knee":   "#1d2124",     # dark knee-recess front of the pedestal
-    "plinth": "#34383a",     # floor plinth
+    "plinth": "#5c676c",     # floor plinth: the console paint, a shade darker (02, 05, 07)
 }
 # =====================================================================================================================
 
@@ -158,10 +165,12 @@ class Profile:
         self.y_foot = D - p["REAR_LEAN"]                # rear wall at the floor
         self.y_ped = self.y_foot - p["PEDESTAL_BASE"]   # knee-recess front (vertical)
         self.z_under = p["UNDER_Z"]
+        self.zr = H - p["TOP_RISE"]                     # rear top edge height
+        self.sb = p["APRON_SETBACK"]
         self.zs = self.zf - p["SHELF_DROP"]
         self.sd = p["SHELF_DEPTH"]
         assert 0 < self.y_ped < self.yb and self.z_under < self.z_apron and self.pl < self.z_under
-        assert self.zs - self.t > self.z_apron and self.zs < self.zt(self.sd) and self.sd < self.yb
+        assert self.zs - self.t > self.z_apron and self.zs <= self.zt(self.sd) and self.sd < self.yb
 
     def zt(self, y):
         """Desktop top surface height at depth y."""
@@ -169,24 +178,24 @@ class Profile:
 
     def y_rear(self, z):
         """Rear wall depth at height z (the wall leans back toward the top)."""
-        return self.y_foot + self.p["REAR_LEAN"] * z / self.H
+        return self.y_foot + self.p["REAR_LEAN"] * z / self.zr
 
     def _lower(self):
         """Body outline from the riser's back up over the top, down the rear and round the knee, to the apron foot."""
         return [(self.yb + self.tr, self.zb, "paint"),       # riser back (contact)
                 (self.yt + self.tr, self.H, "paint"),        # flat top
-                (self.D, self.H, "paint"),                   # rear wall
+                (self.D, self.zr, "paint"),                  # rear wall
                 (self.y_rear(self.pl), self.pl, "plinth"),   # bottom (on the plinth, hidden)
                 (self.y_ped, self.pl, "knee"),               # knee-recess front
                 (self.y_ped, self.z_under, "paint"),         # underside
-                (0.0, self.z_apron, "paint")]                # apron, up to the desktop / shelf
+                (self.sb, self.z_apron, "paint")]            # apron, up to the desktop / shelf
 
     def body(self, shelf):
         if shelf:
-            head = [(0.0, self.zs - self.t, "desk"), (self.sd, self.zs - self.t, "desk"),
+            head = [(self.sb, self.zs - self.t, "desk"), (self.sd, self.zs - self.t, "desk"),
                     (self.sd, self.zs, "desk"), (self.yb, self.zb - self.t, "desk")]
         else:
-            head = [(0.0, self.zf - self.t, "desk"), (self.yb, self.zb - self.t, "desk")]
+            head = [(self.sb, self.zt(self.sb) - self.t, "desk"), (self.yb, self.zb - self.t, "desk")]
         return head + [(self.yb, self.zb, "paint")] + self._lower()
 
     def desktop(self, shelf):
@@ -207,12 +216,15 @@ class Profile:
     def outer(self, shelf):
         """Outline of the whole section, for the end cheeks."""
         if shelf:
-            head = [(0.0, self.zs, "paint"), (self.sd, self.zs, "paint"), (self.sd, self.zt(self.sd), "paint")]
+            head = [(0.0, self.zs - self.t, "paint"), (0.0, self.zs, "paint"), (self.sd, self.zs, "paint"),
+                    (self.sd, self.zt(self.sd), "paint")]
+            zu = self.zs - self.t
         else:
-            head = [(0.0, self.zf, "paint")]
-        return head + [(self.yb, self.zb, "paint"), (self.yt, self.H, "paint"), (self.D, self.H, "paint"),
+            head = [(0.0, self.zf - self.t, "paint"), (0.0, self.zf, "paint")]
+            zu = self.zf - self.t
+        return head + [(self.yb, self.zb, "paint"), (self.yt, self.H, "paint"), (self.D, self.zr, "paint"),
                        (self.y_rear(self.pl), self.pl, "paint"), (self.y_ped, self.pl, "paint"),
-                       (self.y_ped, self.z_under, "paint"), (0.0, self.z_apron, "paint")]
+                       (self.y_ped, self.z_under, "paint"), (self.sb, self.z_apron, "paint"), (self.sb, zu, "paint")]
 
     def plinth(self):
         o = self.p["PLINTH_OUT"]
@@ -351,12 +363,13 @@ def prism(name, poly, left, right, mats, cap_mat, offset, collection):
     # drop unused material slots so each object lists only what it uses
     used = sorted({p.material_index for p in me.polygons})
     remap = {old: new for new, old in enumerate(used)}
-    for p in me.polygons:
-        p.material_index = remap[p.material_index]
+    index = [remap[p.material_index] for p in me.polygons]
     keep = [me.materials[i] for i in used]
-    me.materials.clear()
+    me.materials.clear()                 # this resets every face to slot 0, so the indices are written afterwards
     for m in keep:
         me.materials.append(m)
+    for p, k in zip(me.polygons, index):
+        p.material_index = k
     ob = bpy.data.objects.new(name, me)
     collection.objects.link(ob)
     return ob
@@ -366,7 +379,7 @@ def doors(name, prof, plan, i, left, right, mats, offset, collection):
     """Two flat door slabs on section i's rear wall."""
     p = prof.p
     z0 = prof.pl + p["DOOR_BOTTOM_GAP"]
-    z1 = prof.H - p["DOOR_TOP_GAP"]
+    z1 = prof.zr - p["DOOR_TOP_GAP"]
     P0, u, r = plan.pts[i], plan.u(i), plan.r(i)
 
     def ucoord(pt):
@@ -377,7 +390,7 @@ def doors(name, prof, plan, i, left, right, mats, offset, collection):
     mid = 0.5 * (lo + hi)
     g = 0.5 * p["DOOR_MID_GAP"]
     # outward normal of the leaning rear wall in (y, z): rearward and slightly down
-    dy, dz = p["REAR_LEAN"], prof.H
+    dy, dz = p["REAR_LEAN"], prof.zr
     ln = math.hypot(dy, dz)
     ny, nz = dz / ln, -dy / ln
     t = p["DOOR_THICK"]
@@ -467,12 +480,16 @@ def main():
         for ob in objs:
             ob.location.x += shift
         x_cursor += (max(xs) - min(xs)) + DESK_GAP * MM
-        print("Desk_%s: %d objects, width %.3f m, origin at X=%.3f" % (key, len(objs), max(xs) - min(xs), shift))
+        print("Desk_%s: %d objects, width %.3f m" % (key, len(objs), max(xs) - min(xs)))
     # centre the whole row on X = 0
+    bpy.context.view_layer.update()
     allx = [(ob.matrix_world @ v.co).x for ob in scene.objects for v in ob.data.vertices]
     c = 0.5 * (min(allx) + max(allx))
     for ob in scene.objects:
         ob.location.x -= c
+    for key in DESK_ORDER:
+        o = bpy.data.collections["Desk_" + key].objects[0].location
+        print("Desk_%s origin (rear centre, floor): (%.3f, %.3f, 0) m" % (key, o.x, o.y))
     bpy.ops.wm.save_as_mainfile(filepath=BLEND)
     print("saved", BLEND)
 
